@@ -8,7 +8,10 @@ plugins {
 android {
     namespace = "com.example.doon_walkers"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Pinned to NDK 27 — required by supabase_flutter's transitive plugins
+    // (app_links, path_provider_android, shared_preferences_android, url_launcher_android).
+    // NDK versions are backward-compatible; this is safe to raise.
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
