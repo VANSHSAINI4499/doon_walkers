@@ -25,6 +25,9 @@ class AppConstants {
   static const String routeUpcomingTreks = '/upcoming-treks';
   static const String routeProfile = '/profile';
   static const String routeAdmin = '/admin';
+  static const String routeSignIn = '/sign-in';
+  static const String routeSignUp = '/sign-up';
+  static const String routeForgotPassword = '/forgot-password';
 
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';

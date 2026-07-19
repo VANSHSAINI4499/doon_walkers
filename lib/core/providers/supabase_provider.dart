@@ -1,3 +1,5 @@
+import 'package:doon_walkers/features/auth/data/models/user_model.dart';
+import 'package:doon_walkers/features/auth/domain/entities/user_entity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -13,6 +15,52 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final supabaseClientProvider = Provider<SupabaseClient>(
   (ref) => Supabase.instance.client,
   name: 'supabaseClientProvider',
+);
+
+/// Exposes the raw Supabase [AuthState] stream.
+final authStateChangesProvider = StreamProvider<AuthState>(
+  (ref) {
+    final supabase = ref.watch(supabaseClientProvider);
+    return supabase.auth.onAuthStateChange;
+  },
+  name: 'authStateChangesProvider',
+);
+
+/// Exposes the current user's profile row from `public.users` (`role`, `name`, etc.).
+///
+/// Automatically streams updates (such as manual admin role assignment in Supabase dashboard)
+/// or yields null if no user is signed in.
+final currentUserProvider = StreamProvider<UserModel?>(
+  (ref) async* {
+    ref.watch(authStateChangesProvider);
+    final supabase = ref.watch(supabaseClientProvider);
+
+    final sessionUser = supabase.auth.currentUser;
+    if (sessionUser == null) {
+      yield null;
+      return;
+    }
+
+    // Stream live row updates from public.users table
+    yield* supabase
+        .from('users')
+        .stream(primaryKey: ['id'])
+        .eq('id', sessionUser.id)
+        .map((rows) {
+          if (rows.isEmpty) return null;
+          return UserModel.fromJson(rows.first);
+        });
+  },
+  name: 'currentUserProvider',
+);
+
+/// Derived boolean provider checking if the active user has the `admin` role.
+final isAdminProvider = Provider<bool>(
+  (ref) {
+    final userAsync = ref.watch(currentUserProvider);
+    return userAsync.value?.role == UserRole.admin;
+  },
+  name: 'isAdminProvider',
 );
 
 /// Example trivial provider — demonstrates the Riverpod pattern works.

@@ -18,7 +18,7 @@ Future<void> main() async {
   if (EnvConfig.isConfigured) {
     await Supabase.initialize(
       url: EnvConfig.supabaseUrl,
-      anonKey: EnvConfig.supabaseAnonKey, // ignore: deprecated_member_use
+      publishableKey: EnvConfig.supabaseAnonKey,
     );
   }
 
