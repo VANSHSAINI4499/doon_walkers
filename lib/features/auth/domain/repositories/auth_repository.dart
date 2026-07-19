@@ -1,3 +1,14 @@
+/// Outcome of a sign-up attempt.
+enum SignUpResult {
+  /// A session was created immediately — email confirmation is disabled
+  /// on this Supabase project, so the user is already signed in.
+  sessionCreated,
+
+  /// Sign-up succeeded, but no session was created because the account
+  /// is awaiting email confirmation ("Confirm email" is enabled).
+  confirmationPending,
+}
+
 /// Abstract interface for authentication operations.
 abstract class AuthRepository {
   /// Signs in with email and password.
@@ -8,7 +19,11 @@ abstract class AuthRepository {
 
   /// Signs up with email, password, and full name.
   /// Passes `full_name` in user metadata so the database trigger sets `public.users.name`.
-  Future<void> signUpWithEmailPassword({
+  ///
+  /// Returns a [SignUpResult] so callers can distinguish an immediate
+  /// session from a pending email confirmation — Supabase does not throw
+  /// in either case, so this can't be inferred from an exception.
+  Future<SignUpResult> signUpWithEmailPassword({
     required String email,
     required String password,
     required String fullName,

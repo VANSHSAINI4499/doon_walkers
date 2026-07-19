@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:doon_walkers/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:doon_walkers/features/auth/domain/repositories/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Riverpod AsyncNotifier managing the state of auth actions (loading, error, success).
@@ -29,19 +30,28 @@ class AuthController extends AsyncNotifier<void> {
   }
 
   /// Signs up a new user with [fullName], [email], and [password].
-  Future<void> signUp({
+  ///
+  /// Returns the [SignUpResult] on success so the caller can branch UI
+  /// (e.g. show a "check your email" state vs. relying on the router's
+  /// auto-redirect). [state] stays `AsyncValue<void>` — shared with the
+  /// other auth actions — so the result is only available via this
+  /// method's return value, not through `state.value`. Returns `null`
+  /// if sign-up failed; the error itself is exposed via [state].
+  Future<SignUpResult?> signUp({
     required String fullName,
     required String email,
     required String password,
   }) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signUpWithEmailPassword(
+    SignUpResult? result;
+    state = await AsyncValue.guard(() async {
+      result = await ref.read(authRepositoryProvider).signUpWithEmailPassword(
             email: email,
             password: password,
             fullName: fullName,
-          ),
-    );
+          );
+    });
+    return result;
   }
 
   /// Signs out the current user session.

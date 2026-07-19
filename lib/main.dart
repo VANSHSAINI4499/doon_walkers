@@ -28,16 +28,16 @@ Future<void> main() async {
 }
 
 /// Root widget for the DoonWalkers application.
-class DoonWalkersApp extends StatelessWidget {
+class DoonWalkersApp extends ConsumerWidget {
   const DoonWalkersApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'Doon Walkers',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      routerConfig: appRouter,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

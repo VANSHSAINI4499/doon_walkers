@@ -12,26 +12,55 @@ import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_library_screen.dart';
 import 'package:doon_walkers/features/upcoming_treks/presentation/screens/upcoming_treks_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// A [ChangeNotifier] that notifies listeners whenever the provided [stream] emits an event.
-class GoRouterRefreshStream extends ChangeNotifier {
-  late final StreamSubscription<dynamic> _subscription;
+/// A [ChangeNotifier] that drives GoRouter's [refreshListenable].
+///
+/// Notifies on two independent signals:
+///   1. Supabase's raw `onAuthStateChange` — sign-in, sign-out, token refresh.
+///   2. [currentUserProvider] — the `public.users` row for the signed-in user.
+///      This is what lets a *late-arriving* role (the row loading a moment
+///      after sign-in) re-trigger the redirect logic, instead of only
+///      re-evaluating on the initial auth event. Without this, an admin who
+///      hits `/admin` before their row has loaded once would get redirected
+///      to Home by the loading-guard in [redirect] and then never get
+///      re-checked, since raw auth events don't fire again just because a
+///      Riverpod stream resolved.
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier(Ref ref) {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange
+        .asBroadcastStream()
+        .listen((_) => notifyListeners());
 
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+    ref.listen(currentUserProvider, (previous, next) => notifyListeners());
   }
+
+  late final StreamSubscription<AuthState> _authSubscription;
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _authSubscription.cancel();
     super.dispose();
   }
 }
+
+/// Exposes the [GoRouter] instance as a Riverpod provider (rather than a
+/// bare top-level field) so its `redirect` logic can [Ref.read] Riverpod
+/// state directly and its refresh listenable can [Ref.listen] to it — see
+/// [_RouterRefreshNotifier].
+final routerProvider = Provider<GoRouter>(
+  (ref) {
+    final refreshNotifier = _RouterRefreshNotifier(ref);
+    ref.onDispose(refreshNotifier.dispose);
+
+    return _buildRouter(ref, refreshNotifier);
+  },
+  name: 'routerProvider',
+);
 
 /// DoonWalkers application router.
 ///
@@ -42,10 +71,10 @@ class GoRouterRefreshStream extends ChangeNotifier {
 ///     but as standalone branches not surfaced in the bottom nav.
 ///   - Auth routes (/sign-in, /sign-up, /forgot-password) are top-level outside
 ///     the shell so bottom navigation bars are suppressed.
-final GoRouter appRouter = GoRouter(
+GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRouter(
   initialLocation: AppConstants.routeHome,
-  debugLogDiagnostics: true, // disable in release builds
-  refreshListenable: GoRouterRefreshStream(Supabase.instance.client.auth.onAuthStateChange),
+  debugLogDiagnostics: kDebugMode,
+  refreshListenable: refreshNotifier,
   routes: [
     // Top-Level Auth Routes (Outside AppShell)
     GoRoute(
@@ -178,14 +207,20 @@ final GoRouter appRouter = GoRouter(
 
     // 3. If user is signed in and trying to visit /admin, verify admin role
     if (sessionUser != null && location == AppConstants.routeAdmin) {
-      try {
-        final container = ProviderScope.containerOf(context);
-        final isAdmin = container.read(isAdminProvider);
-        if (!isAdmin) {
-          // Non-admin registered user hitting /admin -> silently bounced to Home per AGENTS.md rules
-          return AppConstants.routeHome;
-        }
-      } catch (_) {
+      final userAsync = ref.read(currentUserProvider);
+
+      // The public.users row hasn't resolved yet (e.g. immediately after
+      // sign-in) — don't gate on isAdminProvider while it's unknown, that
+      // silently and permanently bounces real admins to Home. Let the
+      // navigation through for now; _RouterRefreshNotifier re-runs this
+      // check the moment currentUserProvider actually resolves.
+      if (userAsync.isLoading && !userAsync.hasValue) {
+        return null;
+      }
+
+      final isAdmin = ref.read(isAdminProvider);
+      if (!isAdmin) {
+        // Non-admin registered user hitting /admin -> silently bounced to Home per AGENTS.md rules
         return AppConstants.routeHome;
       }
     }
