@@ -101,6 +101,12 @@ class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScr
 
     if (!mounted || uploaded == null) return;
 
+    // allGalleryMediaProvider/trekGalleryProvider are one-shot fetches
+    // (not live streams — see their docs), so they need an explicit
+    // invalidate to pick up this upload.
+    ref.invalidate(allGalleryMediaProvider);
+    ref.invalidate(trekGalleryProvider(trekId));
+
     setState(() {
       _pickedFile = null;
       _pickedBytes = null;
@@ -112,7 +118,10 @@ class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScr
     );
   }
 
-  String _cleanError(Object error) => error.toString().replaceAll('Exception: ', '');
+  String _cleanError(Object error) {
+    debugPrint('AdminGalleryUploadScreen: upload failed: $error');
+    return 'Something went wrong. Please try again.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +155,22 @@ class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScr
                 children: [
                   treksAsync.when(
                     loading: () => const LinearProgressIndicator(),
-                    error: (error, stack) => Text('Could not load treks: $error'),
+                    error: (error, stack) {
+                      debugPrint('AdminGalleryUploadScreen: failed to load treks: $error');
+                      return InputDecorator(
+                        decoration: const InputDecoration(labelText: 'Trek'),
+                        child: Row(
+                          children: [
+                            const Expanded(child: Text('Could not load treks.')),
+                            IconButton(
+                              icon: const Icon(Icons.refresh_rounded),
+                              tooltip: 'Retry',
+                              onPressed: () => ref.invalidate(adminAllTreksProvider),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     data: (treks) => DropdownButtonFormField<String>(
                       value: _selectedTrekId,
                       decoration: const InputDecoration(labelText: 'Trek'),

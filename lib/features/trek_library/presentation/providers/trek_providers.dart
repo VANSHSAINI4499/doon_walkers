@@ -6,17 +6,26 @@ import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Published treks only — used by the public Trek Library screen for
-/// every viewer, admin included. See [TrekRepository.watchPublishedTreks].
-final publishedTreksProvider = StreamProvider<List<Trek>>(
-  (ref) => ref.watch(trekRepositoryProvider).watchPublishedTreks(),
+/// every viewer, admin included. See [TrekRepository.fetchPublishedTreks].
+///
+/// One-shot fetch rather than `.stream()` — `treks` is the
+/// highest-traffic table in the app (every guest hits Trek Library),
+/// and edits are made by the same small admin team viewing this same
+/// list, so a live-push channel per session isn't worth the cost. The
+/// screen refetches via pull-to-refresh or the error state's Retry
+/// button (`ref.invalidate(publishedTreksProvider)`).
+final publishedTreksProvider = FutureProvider<List<Trek>>(
+  (ref) => ref.watch(trekRepositoryProvider).fetchPublishedTreks(),
   name: 'publishedTreksProvider',
 );
 
 /// All treks (published + draft) — admin trek list only. RLS returns
 /// draft rows only when the caller is actually an admin; anyone else
 /// gets the same result as [publishedTreksProvider].
-final adminAllTreksProvider = StreamProvider<List<Trek>>(
-  (ref) => ref.watch(trekRepositoryProvider).watchAllTreks(),
+///
+/// One-shot fetch — same reasoning as [publishedTreksProvider].
+final adminAllTreksProvider = FutureProvider<List<Trek>>(
+  (ref) => ref.watch(trekRepositoryProvider).fetchAllTreks(),
   name: 'adminAllTreksProvider',
 );
 

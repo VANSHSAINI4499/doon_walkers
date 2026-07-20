@@ -21,22 +21,22 @@ class TrekRepositoryImpl implements TrekRepository {
   const TrekRepositoryImpl(this._supabase);
 
   @override
-  Stream<List<Trek>> watchPublishedTreks() {
-    return _supabase
+  Future<List<Trek>> fetchPublishedTreks() async {
+    final rows = await _supabase
         .from(AppConstants.tableTreks)
-        .stream(primaryKey: ['id'])
+        .select()
         .eq('is_published', true)
-        .order('created_at', ascending: false)
-        .map((rows) => rows.map(TrekModel.fromJson).toList());
+        .order('created_at', ascending: false);
+    return rows.map(TrekModel.fromJson).toList();
   }
 
   @override
-  Stream<List<Trek>> watchAllTreks() {
-    return _supabase
+  Future<List<Trek>> fetchAllTreks() async {
+    final rows = await _supabase
         .from(AppConstants.tableTreks)
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .map((rows) => rows.map(TrekModel.fromJson).toList());
+        .select()
+        .order('created_at', ascending: false);
+    return rows.map(TrekModel.fromJson).toList();
   }
 
   @override

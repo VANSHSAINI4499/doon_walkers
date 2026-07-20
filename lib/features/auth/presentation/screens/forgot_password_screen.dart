@@ -182,6 +182,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   String _cleanErrorMessage(Object error) {
-    return error.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+    debugPrint('ForgotPasswordScreen: reset email failed: $error');
+    return 'Something went wrong. Please try again.';
   }
 }

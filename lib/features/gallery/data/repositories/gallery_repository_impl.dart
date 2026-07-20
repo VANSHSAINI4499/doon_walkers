@@ -21,22 +21,22 @@ class GalleryRepositoryImpl implements GalleryRepository {
   const GalleryRepositoryImpl(this._supabase);
 
   @override
-  Stream<List<GalleryMedia>> watchMediaForTrek(String trekId) {
-    return _supabase
+  Future<List<GalleryMedia>> fetchMediaForTrek(String trekId) async {
+    final rows = await _supabase
         .from(AppConstants.tableGallery)
-        .stream(primaryKey: ['id'])
+        .select()
         .eq('trek_id', trekId)
-        .order('uploaded_at', ascending: false)
-        .map((rows) => rows.map(GalleryMediaModel.fromJson).toList());
+        .order('uploaded_at', ascending: false);
+    return rows.map(GalleryMediaModel.fromJson).toList();
   }
 
   @override
-  Stream<List<GalleryMedia>> watchAllMedia() {
-    return _supabase
+  Future<List<GalleryMedia>> fetchAllMedia() async {
+    final rows = await _supabase
         .from(AppConstants.tableGallery)
-        .stream(primaryKey: ['id'])
-        .order('uploaded_at', ascending: false)
-        .map((rows) => rows.map(GalleryMediaModel.fromJson).toList());
+        .select()
+        .order('uploaded_at', ascending: false);
+    return rows.map(GalleryMediaModel.fromJson).toList();
   }
 
   @override

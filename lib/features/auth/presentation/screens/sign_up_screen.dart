@@ -251,6 +251,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   String _cleanErrorMessage(Object error) {
-    return error.toString().replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+    debugPrint('SignUpScreen: sign-up failed: $error');
+    return 'Something went wrong. Please try again.';
   }
 }

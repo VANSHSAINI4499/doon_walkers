@@ -17,7 +17,7 @@ import 'package:go_router/go_router.dart';
 ///
 /// The selected tab is derived from the current [GoRouterState] location
 /// so that deep-links automatically highlight the correct tab.
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
   /// Provided by GoRouter's [StatefulShellRoute].
@@ -57,15 +57,33 @@ class AppShell extends StatelessWidget {
     ),
   ];
 
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  // Branches 5 (Profile) and 6 (Admin) are drawer-only and have no
+  // corresponding bottom nav destination, so `navigationShell.currentIndex`
+  // can't be fed to NavigationBar directly — it would exceed
+  // destinations.length and trip its selectedIndex assertion. Instead we
+  // track whichever of the 5 primary tabs was last actually active, and
+  // keep showing that as "selected" while a secondary branch is active.
+  int _lastPrimaryIndex = 0;
+
   void _onTabSelected(BuildContext context, int index) {
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = widget.navigationShell.currentIndex;
+    if (currentIndex < AppShell._primaryDestinations.length) {
+      _lastPrimaryIndex = currentIndex;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -130,9 +148,9 @@ class AppShell extends StatelessWidget {
 
       // ── Primary navigation: Material 3 NavigationBar ─────────────
       bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
+        selectedIndex: _lastPrimaryIndex,
         onDestinationSelected: (i) => _onTabSelected(context, i),
-        destinations: _primaryDestinations
+        destinations: AppShell._primaryDestinations
             .map(
               (d) => NavigationDestination(
                 icon: Icon(d.icon),
@@ -144,7 +162,7 @@ class AppShell extends StatelessWidget {
       ),
 
       // ── Shell body ───────────────────────────────────────────────
-      body: navigationShell,
+      body: widget.navigationShell,
     );
   }
 }

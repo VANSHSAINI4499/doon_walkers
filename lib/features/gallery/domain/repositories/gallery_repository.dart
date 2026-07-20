@@ -13,12 +13,17 @@ import 'package:doon_walkers/features/gallery/domain/entities/gallery_media.dart
 abstract class GalleryRepository {
   /// Media for a single trek, newest first — used by the Trek Detail
   /// screen's embedded gallery section.
-  Stream<List<GalleryMedia>> watchMediaForTrek(String trekId);
+  ///
+  /// One-shot fetch, not a live stream — see [trekGalleryProvider]'s
+  /// doc for why this table isn't on Realtime.
+  Future<List<GalleryMedia>> fetchMediaForTrek(String trekId);
 
   /// Every media row across every trek, newest first — used by the
   /// admin manage-all-media screen and (combined with the published
   /// treks list) the standalone public Gallery screen.
-  Stream<List<GalleryMedia>> watchAllMedia();
+  ///
+  /// One-shot fetch — same reasoning as [fetchMediaForTrek].
+  Future<List<GalleryMedia>> fetchAllMedia();
 
   /// Uploads [bytes] to the `trek-gallery` bucket under [trekId] and
   /// inserts the corresponding `public.gallery` row. Always uploads to

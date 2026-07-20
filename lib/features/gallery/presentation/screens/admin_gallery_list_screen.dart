@@ -61,7 +61,12 @@ class _AdminGalleryListScreenState extends ConsumerState<AdminGalleryListScreen>
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
+      return;
     }
+    // One-shot fetches (not live streams — see allGalleryMediaProvider's
+    // doc), so the lists need an explicit invalidate to drop this media.
+    ref.invalidate(allGalleryMediaProvider);
+    ref.invalidate(trekGalleryProvider(media.trekId));
   }
 
   @override
@@ -79,12 +84,31 @@ class _AdminGalleryListScreenState extends ConsumerState<AdminGalleryListScreen>
       ),
       body: treksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('Could not load treks: $error', textAlign: TextAlign.center),
-          ),
-        ),
+        error: (error, stack) {
+          debugPrint('AdminGalleryListScreen: failed to load treks: $error');
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load treks.',
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => ref.invalidate(adminAllTreksProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
         data: (treks) {
           final trekTitles = {for (final t in treks) t.id: t.title};
 
@@ -105,56 +129,85 @@ class _AdminGalleryListScreenState extends ConsumerState<AdminGalleryListScreen>
               Expanded(
                 child: mediaAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text('Could not load gallery media: $error', textAlign: TextAlign.center),
-                    ),
-                  ),
+                  error: (error, stack) {
+                    debugPrint('AdminGalleryListScreen: failed to load gallery media: $error');
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Could not load gallery media.',
+                              style: theme.textTheme.titleMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            FilledButton(
+                              onPressed: () => ref.invalidate(allGalleryMediaProvider),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                   data: (allMedia) {
                     final media = _trekFilter == null
                         ? allMedia
                         : allMedia.where((m) => m.trekId == _trekFilter).toList();
 
                     if (media.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.photo_library_outlined, size: 48, color: theme.colorScheme.outline),
-                              const SizedBox(height: 16),
-                              Text(
-                                _trekFilter == null ? 'No media uploaded yet' : 'No media for this trek yet',
-                                style: theme.textTheme.titleMedium,
+                      return RefreshIndicator(
+                        onRefresh: () => ref.refresh(allGalleryMediaProvider.future),
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.photo_library_outlined, size: 48, color: theme.colorScheme.outline),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _trekFilter == null ? 'No media uploaded yet' : 'No media for this trek yet',
+                                    style: theme.textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Tap "Upload Media" to add the first photo or video.',
+                                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Tap "Upload Media" to add the first photo or video.',
-                                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       );
                     }
 
-                    return ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                      itemCount: media.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final item = media[index];
-                        final trekTitle = trekTitles[item.trekId] ?? 'Unknown trek';
-                        return AdminGalleryListTile(
-                          media: item,
-                          trekTitle: trekTitle,
-                          isPending: _pendingId == item.id,
-                          onDelete: () => _confirmDelete(item, trekTitle),
-                        );
-                      },
+                    return RefreshIndicator(
+                      onRefresh: () => ref.refresh(allGalleryMediaProvider.future),
+                      child: ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                        itemCount: media.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final item = media[index];
+                          final trekTitle = trekTitles[item.trekId] ?? 'Unknown trek';
+                          return AdminGalleryListTile(
+                            media: item,
+                            trekTitle: trekTitle,
+                            isPending: _pendingId == item.id,
+                            onDelete: () => _confirmDelete(item, trekTitle),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),

@@ -18,10 +18,8 @@ class SettingsRepositoryImpl implements SettingsRepository {
   const SettingsRepositoryImpl(this._supabase);
 
   @override
-  Stream<AppSettings> watchSettings() {
-    return _supabase
-        .from(AppConstants.tableSettings)
-        .stream(primaryKey: ['key'])
-        .map(AppSettings.fromRows);
+  Future<AppSettings> fetchSettings() async {
+    final rows = await _supabase.from(AppConstants.tableSettings).select();
+    return AppSettings.fromRows(rows);
   }
 }

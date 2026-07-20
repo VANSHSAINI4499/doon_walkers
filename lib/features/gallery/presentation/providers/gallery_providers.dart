@@ -8,15 +8,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Media for a single trek — Trek Detail screen's embedded gallery
 /// section. `autoDispose` since detail pages are visited transiently,
 /// same reasoning as `trekByIdProvider`.
-final trekGalleryProvider = StreamProvider.autoDispose.family<List<GalleryMedia>, String>(
-  (ref, trekId) => ref.watch(galleryRepositoryProvider).watchMediaForTrek(trekId),
+///
+/// One-shot fetch rather than `.stream()` — new uploads showing up live
+/// is a nice-to-have for browse-then-view content, not worth an open
+/// websocket channel per session. Refetches via `ref.invalidate` after
+/// an admin's own upload/delete, or the error state's Retry button.
+final trekGalleryProvider = FutureProvider.autoDispose.family<List<GalleryMedia>, String>(
+  (ref, trekId) => ref.watch(galleryRepositoryProvider).fetchMediaForTrek(trekId),
   name: 'trekGalleryProvider',
 );
 
 /// Every media row across every trek — admin manage-all screen and the
 /// standalone public Gallery screen (grouped by trek there).
-final allGalleryMediaProvider = StreamProvider<List<GalleryMedia>>(
-  (ref) => ref.watch(galleryRepositoryProvider).watchAllMedia(),
+///
+/// One-shot fetch — same reasoning as [trekGalleryProvider].
+final allGalleryMediaProvider = FutureProvider<List<GalleryMedia>>(
+  (ref) => ref.watch(galleryRepositoryProvider).fetchAllMedia(),
   name: 'allGalleryMediaProvider',
 );
 

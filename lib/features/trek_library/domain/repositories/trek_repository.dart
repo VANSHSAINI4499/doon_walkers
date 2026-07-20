@@ -4,7 +4,7 @@ import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 
 /// Abstract interface for reading and managing treks.
 ///
-/// The read methods (`watchPublishedTreks`, `watchAllTreks`,
+/// The read methods (`fetchPublishedTreks`, `fetchAllTreks`,
 /// `fetchTrekById`) are safe to call regardless of caller role — RLS
 /// (0002_role_policies.sql) already restricts what rows come back.
 /// The write methods are only ever exposed through admin-gated UI, but
@@ -14,12 +14,18 @@ abstract class TrekRepository {
   /// every viewer, admin included. Filtered explicitly rather than left
   /// to RLS, so an admin browsing the public screen sees the same list
   /// a guest would; drafts are only visible in the dedicated admin list.
-  Stream<List<Trek>> watchPublishedTreks();
+  ///
+  /// One-shot fetch, not a live stream — see [publishedTreksProvider]'s
+  /// doc for why this table isn't on Realtime.
+  Future<List<Trek>> fetchPublishedTreks();
 
   /// All treks, published and draft. RLS only actually returns drafts
   /// to an admin caller — for anyone else this behaves the same as
-  /// [watchPublishedTreks]. Intended for the admin trek list only.
-  Stream<List<Trek>> watchAllTreks();
+  /// [fetchPublishedTreks]. Intended for the admin trek list only.
+  ///
+  /// One-shot fetch, not a live stream — see [adminAllTreksProvider]'s
+  /// doc for why this table isn't on Realtime.
+  Future<List<Trek>> fetchAllTreks();
 
   /// A single trek by id, or `null` if it doesn't exist *or* the caller
   /// isn't allowed to see it (e.g. a guest requesting a draft's id) —

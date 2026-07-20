@@ -195,10 +195,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
   String _cleanErrorMessage(Object error) {
+    debugPrint('SignInScreen: sign-in failed: $error');
     final msg = error.toString();
     if (msg.contains('Invalid login credentials')) {
       return 'Invalid email or password.';
     }
-    return msg.replaceAll('Exception: ', '').replaceAll('AuthException: ', '');
+    return 'Something went wrong. Please try again.';
   }
 }

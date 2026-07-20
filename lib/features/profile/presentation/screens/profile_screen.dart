@@ -18,7 +18,31 @@ class ProfileScreen extends ConsumerWidget {
       ),
       body: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading profile: $err')),
+        error: (err, stack) {
+          debugPrint('ProfileScreen: failed to load current user: $err');
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load your profile.',
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => ref.invalidate(currentUserProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
         data: (user) {
           if (user == null) {
             return const Center(child: Text('No active session found.'));

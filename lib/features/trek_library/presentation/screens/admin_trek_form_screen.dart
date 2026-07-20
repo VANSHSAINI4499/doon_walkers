@@ -99,8 +99,12 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         previousCoverImageUrl: _existingCoverImage,
       );
       if (!mounted || !success) return;
-      // Detail/list providers are live streams — they'll reflect this
-      // edit on their own; nothing to invalidate manually.
+      // publishedTreksProvider/adminAllTreksProvider are one-shot fetches
+      // (not live streams — see their docs), so they need an explicit
+      // invalidate to pick up this edit.
+      ref.invalidate(publishedTreksProvider);
+      ref.invalidate(adminAllTreksProvider);
+      ref.invalidate(trekByIdProvider(widget.trekId!));
       context.pop();
     } else {
       final created = await controller.createTrek(
@@ -117,6 +121,8 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         coverImageExtension: _pickedImageExtension,
       );
       if (!mounted || created == null) return;
+      ref.invalidate(publishedTreksProvider);
+      ref.invalidate(adminAllTreksProvider);
       context.pop();
     }
   }
@@ -126,7 +132,11 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
   String? _emptyToNull(String text) => text.trim().isEmpty ? null : text.trim();
 
   String _cleanError(Object error) {
-    return error.toString().replaceAll('Exception: ', '');
+    debugPrint('AdminTrekFormScreen: mutation failed: $error');
+    if (error is TrekCoverUploadException) {
+      return error.message;
+    }
+    return 'Something went wrong. Please try again.';
   }
 
   @override
@@ -153,10 +163,34 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
           appBar: AppBar(title: const Text('Edit Trek')),
           body: const Center(child: CircularProgressIndicator()),
         ),
-        error: (error, stack) => Scaffold(
-          appBar: AppBar(title: const Text('Edit Trek')),
-          body: Center(child: Text('Could not load trek: $error')),
-        ),
+        error: (error, stack) {
+          debugPrint('AdminTrekFormScreen: failed to load trek ${widget.trekId}: $error');
+          return Scaffold(
+            appBar: AppBar(title: const Text('Edit Trek')),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Could not load this trek.',
+                      style: theme.textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => ref.invalidate(trekByIdProvider(widget.trekId!)),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
         data: (trek) {
           if (trek == null) {
             return Scaffold(

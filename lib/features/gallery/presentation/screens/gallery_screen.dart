@@ -48,17 +48,32 @@ class GalleryScreen extends ConsumerWidget {
                 if (trekMedia.isNotEmpty) sections.add((trek, trekMedia));
               }
 
+              Future<void> onRefresh() => Future.wait([
+                    ref.refresh(publishedTreksProvider.future),
+                    ref.refresh(allGalleryMediaProvider.future),
+                  ]);
+
               if (sections.isEmpty) {
-                return const _EmptyGallery();
+                return RefreshIndicator(
+                  onRefresh: onRefresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: const [_EmptyGallery()],
+                  ),
+                );
               }
 
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: sections.length,
-                itemBuilder: (context, index) {
-                  final (trek, trekMedia) = sections[index];
-                  return _TrekGallerySection(trek: trek, media: trekMedia);
-                },
+              return RefreshIndicator(
+                onRefresh: onRefresh,
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: sections.length,
+                  itemBuilder: (context, index) {
+                    final (trek, trekMedia) = sections[index];
+                    return _TrekGallerySection(trek: trek, media: trekMedia);
+                  },
+                ),
               );
             },
           ),

@@ -59,7 +59,12 @@ class _AdminTrekListScreenState extends ConsumerState<AdminTrekListScreen> {
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
+      return;
     }
+    // One-shot fetches (not live streams — see publishedTreksProvider's
+    // doc), so the lists need an explicit invalidate to drop this trek.
+    ref.invalidate(publishedTreksProvider);
+    ref.invalidate(adminAllTreksProvider);
   }
 
   Future<void> _togglePublished(Trek trek) async {
@@ -77,7 +82,10 @@ class _AdminTrekListScreenState extends ConsumerState<AdminTrekListScreen> {
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
+      return;
     }
+    ref.invalidate(publishedTreksProvider);
+    ref.invalidate(adminAllTreksProvider);
   }
 
   @override
@@ -94,48 +102,77 @@ class _AdminTrekListScreenState extends ConsumerState<AdminTrekListScreen> {
       ),
       body: treksAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('Could not load treks: $error', textAlign: TextAlign.center),
-          ),
-        ),
+        error: (error, stack) {
+          debugPrint('AdminTrekListScreen: failed to load treks: $error');
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load treks.',
+                    style: theme.textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => ref.invalidate(adminAllTreksProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
         data: (treks) {
           if (treks.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_location_alt_outlined, size: 48, color: theme.colorScheme.outline),
-                    const SizedBox(height: 16),
-                    Text('No treks yet', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap "Add Trek" to create the first one.',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            return RefreshIndicator(
+              onRefresh: () => ref.refresh(adminAllTreksProvider.future),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_location_alt_outlined, size: 48, color: theme.colorScheme.outline),
+                        const SizedBox(height: 16),
+                        Text('No treks yet', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tap "Add Trek" to create the first one.',
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-            itemCount: treks.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final trek = treks[index];
-              return AdminTrekListTile(
-                trek: trek,
-                isPending: _pendingId == trek.id,
-                onEdit: () => context.push(AppConstants.adminTrekEditLocation(trek.id)),
-                onDelete: () => _confirmDelete(trek),
-                onTogglePublished: () => _togglePublished(trek),
-              );
-            },
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(adminAllTreksProvider.future),
+            child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+              itemCount: treks.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final trek = treks[index];
+                return AdminTrekListTile(
+                  trek: trek,
+                  isPending: _pendingId == trek.id,
+                  onEdit: () => context.push(AppConstants.adminTrekEditLocation(trek.id)),
+                  onDelete: () => _confirmDelete(trek),
+                  onTogglePublished: () => _togglePublished(trek),
+                );
+              },
+            ),
           );
         },
       ),

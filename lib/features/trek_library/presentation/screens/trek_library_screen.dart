@@ -45,24 +45,34 @@ class TrekLibraryScreen extends ConsumerWidget {
           ),
           data: (treks) {
             if (treks.isEmpty) {
-              return const _EmptyTrekLibrary();
+              return RefreshIndicator(
+                onRefresh: () => ref.refresh(publishedTreksProvider.future),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: const [_EmptyTrekLibrary()],
+                ),
+              );
             }
-            return GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 340,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.8,
+            return RefreshIndicator(
+              onRefresh: () => ref.refresh(publishedTreksProvider.future),
+              child: GridView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 340,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: treks.length,
+                itemBuilder: (context, index) {
+                  final trek = treks[index];
+                  return TrekCard(
+                    trek: trek,
+                    onTap: () => context.push(AppConstants.trekDetailLocation(trek.id)),
+                  );
+                },
               ),
-              itemCount: treks.length,
-              itemBuilder: (context, index) {
-                final trek = treks[index];
-                return TrekCard(
-                  trek: trek,
-                  onTap: () => context.push(AppConstants.trekDetailLocation(trek.id)),
-                );
-              },
             );
           },
         ),
