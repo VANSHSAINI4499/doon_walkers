@@ -29,6 +29,15 @@ class AppConstants {
   static const String routeSignUp = '/sign-up';
   static const String routeForgotPassword = '/forgot-password';
 
+  // Nested routes (child GoRoutes under an existing top-level route —
+  // see app_router.dart) — full locations for navigation call sites.
+  static const String routeAdminTreks = '/admin/treks';
+  static const String routeAdminTrekNew = '/admin/treks/new';
+  static const String routeAdminGallery = '/admin/gallery';
+  static const String routeAdminGalleryUpload = '/admin/gallery/upload';
+  static String trekDetailLocation(String id) => '$routeTrekLibrary/$id';
+  static String adminTrekEditLocation(String id) => '$routeAdminTreks/$id/edit';
+
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
   static const String tableTreks = 'treks';
@@ -37,4 +46,8 @@ class AppConstants {
   static const String tableRegistrations = 'registrations';
   static const String tableNotifications = 'notifications';
   static const String tableSettings = 'settings';
+
+  // ── Supabase Storage buckets ─────────────────────────────────────
+  static const String bucketTrekCovers = 'trek-covers';
+  static const String bucketTrekGallery = 'trek-gallery';
 }

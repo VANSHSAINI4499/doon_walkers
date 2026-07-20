@@ -33,6 +33,12 @@ dependencies:
   # Launching external URLs (Instagram, WhatsApp, mailto/tel)
   url_launcher: ^6.3.1
 
+  # Picking a cover image for admin trek forms (mobile-first choice —
+  # see Phase 4 report for the image_picker vs file_picker call)
+  image_picker: ^1.1.2
+  video_player: ^2.10.1
+  chewie: ^1.12.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -7,9 +7,14 @@ import 'package:doon_walkers/features/admin/presentation/screens/admin_screen.da
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:doon_walkers/features/gallery/presentation/screens/admin_gallery_list_screen.dart';
+import 'package:doon_walkers/features/gallery/presentation/screens/admin_gallery_upload_screen.dart';
 import 'package:doon_walkers/features/gallery/presentation/screens/gallery_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
+import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_form_screen.dart';
+import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_list_screen.dart';
+import 'package:doon_walkers/features/trek_library/presentation/screens/trek_detail_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_library_screen.dart';
 import 'package:doon_walkers/features/upcoming_treks/presentation/screens/upcoming_treks_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -47,6 +52,13 @@ class _RouterRefreshNotifier extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// True for `/admin` itself and any nested route under it (e.g.
+/// `/admin/treks`, `/admin/treks/new`, `/admin/treks/:id/edit`).
+/// Centralised here so the redirect guard can't gate the exact `/admin`
+/// path while missing a nested one added later.
+bool _isAdminRoute(String location) =>
+    location == AppConstants.routeAdmin || location.startsWith('${AppConstants.routeAdmin}/');
 
 /// Exposes the [GoRouter] instance as a Riverpod provider (rather than a
 /// bare top-level field) so its `redirect` logic can [Ref.read] Riverpod
@@ -120,6 +132,17 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
               path: AppConstants.routeTrekLibrary,
               name: 'trek-library',
               builder: (context, state) => const TrekLibraryScreen(),
+              routes: [
+                // /trek-library/:id — trek detail, public (RLS gates
+                // draft visibility server-side; see TrekDetailScreen).
+                GoRoute(
+                  path: ':id',
+                  name: 'trek-detail',
+                  builder: (context, state) => TrekDetailScreen(
+                    trekId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -175,6 +198,44 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
               path: AppConstants.routeAdmin,
               name: 'admin',
               builder: (context, state) => const AdminScreen(),
+              routes: [
+                // /admin/treks, /admin/treks/new, /admin/treks/:id/edit —
+                // all admin-gated by the same route-prefix check the
+                // /admin redirect already does; see _isAdminRoute below.
+                GoRoute(
+                  path: 'treks',
+                  name: 'admin-trek-list',
+                  builder: (context, state) => const AdminTrekListScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'new',
+                      name: 'admin-trek-new',
+                      builder: (context, state) => const AdminTrekFormScreen(),
+                    ),
+                    GoRoute(
+                      path: ':id/edit',
+                      name: 'admin-trek-edit',
+                      builder: (context, state) => AdminTrekFormScreen(
+                        trekId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ],
+                ),
+                // /admin/gallery, /admin/gallery/upload — same admin-gated
+                // pattern as /admin/treks above.
+                GoRoute(
+                  path: 'gallery',
+                  name: 'admin-gallery-list',
+                  builder: (context, state) => const AdminGalleryListScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'upload',
+                      name: 'admin-gallery-upload',
+                      builder: (context, state) => const AdminGalleryUploadScreen(),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -198,15 +259,20 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       return state.uri.queryParameters['redirectTo'] ?? AppConstants.routeHome;
     }
 
-    // 2. If user is guest and trying to visit protected routes (/profile or /admin), redirect to Sign In
-    final isProtectedRoute = location == AppConstants.routeProfile ||
-        location == AppConstants.routeAdmin;
+    // 2. If user is guest and trying to visit protected routes (/profile,
+    //    /admin, or any nested /admin/... route — e.g. /admin/treks/new),
+    //    redirect to Sign In
+    final isProtectedRoute = location == AppConstants.routeProfile || _isAdminRoute(location);
     if (sessionUser == null && isProtectedRoute) {
       return '${AppConstants.routeSignIn}?redirectTo=${Uri.encodeComponent(state.uri.toString())}';
     }
 
-    // 3. If user is signed in and trying to visit /admin, verify admin role
-    if (sessionUser != null && location == AppConstants.routeAdmin) {
+    // 3. If user is signed in and trying to visit /admin or any nested
+    //    /admin/... route, verify admin role. Checking the exact path
+    //    alone would only gate /admin itself — a non-admin could still
+    //    deep-link straight to /admin/treks/new otherwise, even though
+    //    the UI never offers that button to them.
+    if (sessionUser != null && _isAdminRoute(location)) {
       final userAsync = ref.read(currentUserProvider);
 
       // The public.users row hasn't resolved yet (e.g. immediately after

@@ -1,6 +1,8 @@
+import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class AdminScreen extends ConsumerWidget {
   const AdminScreen({super.key});
@@ -85,14 +87,16 @@ class AdminScreen extends ConsumerWidget {
                         _buildModuleCard(
                           context,
                           title: 'Trek Library CRUD',
-                          subtitle: 'Create & edit published treks',
+                          subtitle: 'Create, edit & publish treks',
                           icon: Icons.landscape_rounded,
+                          onTap: () => context.push(AppConstants.routeAdminTreks),
                         ),
                         _buildModuleCard(
                           context,
                           title: 'Gallery Media Upload',
                           subtitle: 'Upload official photos & videos',
                           icon: Icons.photo_library_rounded,
+                          onTap: () => context.push(AppConstants.routeAdminGallery),
                         ),
                         _buildModuleCard(
                           context,
@@ -123,31 +127,36 @@ class AdminScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     required IconData icon,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: theme.colorScheme.primary, size: 28),
-            const Spacer(),
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: theme.colorScheme.primary, size: 28),
+              const Spacer(),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

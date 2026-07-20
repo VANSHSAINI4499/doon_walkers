@@ -42,6 +42,12 @@ abstract final class AppColors {
   static const Color error = Color(0xFFBA1A1A);
   static const Color onError = Color(0xFFFFFFFF);
 
+  // ── Trek difficulty scale (Phase 4) ─────────────────────────────────
+  static const Color difficultyEasy = Color(0xFF2D8A4E);
+  static const Color difficultyModerate = Color(0xFFCB8A17);
+  static const Color difficultyHard = Color(0xFFD9622B);
+  static const Color difficultyExtreme = error;
+
   // ── Semantic shortcuts ────────────────────────────────────────────
   static const Color divider = neutral200;
   static const Color textPrimary = neutral900;
