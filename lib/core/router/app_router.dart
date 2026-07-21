@@ -7,13 +7,12 @@ import 'package:doon_walkers/features/admin/presentation/screens/admin_screen.da
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.dart';
-import 'package:doon_walkers/features/gallery/presentation/screens/admin_gallery_list_screen.dart';
-import 'package:doon_walkers/features/gallery/presentation/screens/admin_gallery_upload_screen.dart';
 import 'package:doon_walkers/features/gallery/presentation/screens/gallery_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
+import 'package:doon_walkers/features/registrations/presentation/screens/admin_registration_detail_screen.dart';
+import 'package:doon_walkers/features/registrations/presentation/screens/admin_registrations_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_form_screen.dart';
-import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_list_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_detail_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_library_screen.dart';
 import 'package:doon_walkers/features/upcoming_treks/presentation/screens/upcoming_treks_screen.dart';
@@ -53,12 +52,48 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   }
 }
 
-/// True for `/admin` itself and any nested route under it (e.g.
-/// `/admin/treks`, `/admin/treks/new`, `/admin/treks/:id/edit`).
+/// True for `/admin` itself and any nested route under it (currently
+/// `/admin/registrations`).
 /// Centralised here so the redirect guard can't gate the exact `/admin`
 /// path while missing a nested one added later.
+///
+/// Note this no longer covers trek editing: that moved under
+/// `/trek-library/...` when admin controls were inlined onto the public
+/// screens. Those paths are matched by [_isTrekAdminRoute] instead and
+/// gated by the same admin check below.
 bool _isAdminRoute(String location) =>
     location == AppConstants.routeAdmin || location.startsWith('${AppConstants.routeAdmin}/');
+
+/// True for the admin-only trek create/edit forms that now live under the
+/// public `/trek-library` branch — `/trek-library/new` and
+/// `/trek-library/:id/edit`.
+///
+/// Without this, inlining the admin controls would have quietly widened
+/// access: the forms used to sit behind `/admin/treks/...` and were
+/// covered by [_isAdminRoute], so a non-admin deep-linking to them got
+/// bounced. RLS (`treks_insert_admin` / `treks_update_admin`) always
+/// rejected the actual write either way, but showing a stranger a
+/// working-looking trek form that fails only on save is bad UX — this
+/// keeps the pre-restructure behaviour of redirecting instead.
+/// Exposed for test: the matching is easy to get subtly wrong (matching
+/// the plain detail route would lock members out of trek pages entirely;
+/// failing to match `/edit` would leave the form open to them), and there
+/// is no deep-link scheme registered on Android to exercise it at runtime.
+@visibleForTesting
+bool isTrekAdminRoute(String location) => _isTrekAdminRoute(location);
+
+bool _isTrekAdminRoute(String location) {
+  if (location == AppConstants.routeTrekNew) return true;
+
+  // Match the exact `/trek-library/{id}/edit` shape by segment count
+  // rather than a suffix check: a plain `endsWith('/edit')` would also
+  // match `/trek-library/edit`, which is really the *detail* route for a
+  // trek whose id happens to be "edit".
+  final segments = Uri.parse(location).pathSegments;
+  return segments.length == 3 &&
+      '/${segments.first}' == AppConstants.routeTrekLibrary &&
+      segments.last == 'edit';
+}
 
 /// Exposes the [GoRouter] instance as a Riverpod provider (rather than a
 /// bare top-level field) so its `redirect` logic can [Ref.read] Riverpod
@@ -133,6 +168,15 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
               name: 'trek-library',
               builder: (context, state) => const TrekLibraryScreen(),
               routes: [
+                // /trek-library/new — admin trek create form. Declared
+                // BEFORE ':id' on purpose: GoRouter matches in order, so
+                // without this ordering "new" would be captured as a trek
+                // id and routed to the detail screen instead.
+                GoRoute(
+                  path: 'new',
+                  name: 'trek-new',
+                  builder: (context, state) => const AdminTrekFormScreen(),
+                ),
                 // /trek-library/:id — trek detail, public (RLS gates
                 // draft visibility server-side; see TrekDetailScreen).
                 GoRoute(
@@ -140,7 +184,25 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                   name: 'trek-detail',
                   builder: (context, state) => TrekDetailScreen(
                     trekId: state.pathParameters['id']!,
+                    // Set by TrekRegisterButton's sign-in return path so a
+                    // guest who signed in mid-registration lands back in
+                    // the form rather than just on the trek page.
+                    openRegistration: state.uri.queryParameters['register'] == '1',
                   ),
+                  routes: [
+                    // /trek-library/:id/edit — admin trek edit form.
+                    // Lives under the public branch (not /admin/treks)
+                    // now that admin controls render inline on the
+                    // public screens; treks_update_admin RLS is the
+                    // real gate either way.
+                    GoRoute(
+                      path: 'edit',
+                      name: 'trek-edit',
+                      builder: (context, state) => AdminTrekFormScreen(
+                        trekId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -199,39 +261,30 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
               name: 'admin',
               builder: (context, state) => const AdminScreen(),
               routes: [
-                // /admin/treks, /admin/treks/new, /admin/treks/:id/edit —
-                // all admin-gated by the same route-prefix check the
-                // /admin redirect already does; see _isAdminRoute below.
+                // /admin/registrations — the one admin surface that stays
+                // its own destination. Trek and gallery CRUD used to live
+                // here too (/admin/treks, /admin/gallery); those moved
+                // inline onto the public Trek Library and Gallery screens,
+                // since each has an obvious public screen to embed into.
+                // A cross-trek roster doesn't, so it stays here.
+                //
+                // Admin-gated by the same route-prefix check the /admin
+                // redirect already does; see _isAdminRoute below.
                 GoRoute(
-                  path: 'treks',
-                  name: 'admin-trek-list',
-                  builder: (context, state) => const AdminTrekListScreen(),
+                  path: 'registrations',
+                  name: 'admin-registrations',
+                  builder: (context, state) => const AdminRegistrationsScreen(),
                   routes: [
+                    // /admin/registrations/:id — full detail incl. the
+                    // sensitive registrant fields and the admin-only
+                    // payment_status control. Nested here so it inherits
+                    // the /admin prefix gate rather than needing its own.
                     GoRoute(
-                      path: 'new',
-                      name: 'admin-trek-new',
-                      builder: (context, state) => const AdminTrekFormScreen(),
-                    ),
-                    GoRoute(
-                      path: ':id/edit',
-                      name: 'admin-trek-edit',
-                      builder: (context, state) => AdminTrekFormScreen(
-                        trekId: state.pathParameters['id']!,
+                      path: ':id',
+                      name: 'admin-registration-detail',
+                      builder: (context, state) => AdminRegistrationDetailScreen(
+                        registrationId: state.pathParameters['id']!,
                       ),
-                    ),
-                  ],
-                ),
-                // /admin/gallery, /admin/gallery/upload — same admin-gated
-                // pattern as /admin/treks above.
-                GoRoute(
-                  path: 'gallery',
-                  name: 'admin-gallery-list',
-                  builder: (context, state) => const AdminGalleryListScreen(),
-                  routes: [
-                    GoRoute(
-                      path: 'upload',
-                      name: 'admin-gallery-upload',
-                      builder: (context, state) => const AdminGalleryUploadScreen(),
                     ),
                   ],
                 ),
@@ -260,27 +313,35 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     }
 
     // 2. If user is guest and trying to visit protected routes (/profile,
-    //    /admin, or any nested /admin/... route — e.g. /admin/treks/new),
-    //    redirect to Sign In
-    final isProtectedRoute = location == AppConstants.routeProfile || _isAdminRoute(location);
+    //    /admin + nested, or the inlined trek admin forms), redirect to
+    //    Sign In.
+    final isProtectedRoute = location == AppConstants.routeProfile ||
+        _isAdminRoute(location) ||
+        _isTrekAdminRoute(location);
     if (sessionUser == null && isProtectedRoute) {
       return '${AppConstants.routeSignIn}?redirectTo=${Uri.encodeComponent(state.uri.toString())}';
     }
 
-    // 3. If user is signed in and trying to visit /admin or any nested
-    //    /admin/... route, verify admin role. Checking the exact path
+    // 3. If user is signed in and trying to visit /admin (or any nested
+    //    /admin/... route), or one of the trek admin forms now living
+    //    under /trek-library, verify admin role. Checking the exact path
     //    alone would only gate /admin itself — a non-admin could still
-    //    deep-link straight to /admin/treks/new otherwise, even though
-    //    the UI never offers that button to them.
-    if (sessionUser != null && _isAdminRoute(location)) {
+    //    deep-link straight to /admin/registrations or
+    //    /trek-library/new otherwise, even though the UI never offers
+    //    those to them.
+    if (sessionUser != null && (_isAdminRoute(location) || _isTrekAdminRoute(location))) {
       final userAsync = ref.read(currentUserProvider);
 
-      // The public.users row hasn't resolved yet (e.g. immediately after
-      // sign-in) — don't gate on isAdminProvider while it's unknown, that
-      // silently and permanently bounces real admins to Home. Let the
-      // navigation through for now; _RouterRefreshNotifier re-runs this
-      // check the moment currentUserProvider actually resolves.
-      if (userAsync.isLoading && !userAsync.hasValue) {
+      // The public.users row hasn't resolved into a value yet — either
+      // still loading (e.g. immediately after sign-in) or a transient
+      // RealtimeSubscribeException from a WebSocket reconnect landed
+      // before any data ever arrived (rare, but possible on a flaky
+      // first connection). Don't gate on isAdminProvider while there's
+      // no confirmed value either way, that would silently and
+      // permanently bounce a real admin to Home. Let the navigation
+      // through for now; _RouterRefreshNotifier re-runs this check the
+      // moment currentUserProvider actually resolves.
+      if (!userAsync.hasValue) {
         return null;
       }
 

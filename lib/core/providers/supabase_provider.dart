@@ -55,6 +55,15 @@ final currentUserProvider = StreamProvider<UserModel?>(
 );
 
 /// Derived boolean provider checking if the active user has the `admin` role.
+///
+/// Reads `.value` rather than `.when()`/pattern-matching the state, so a
+/// transient RealtimeSubscribeException on the underlying stream (a
+/// WebSocket reconnect — fires routinely on app background/foreground or
+/// a network blip; see [currentUserProvider]) doesn't flip this to false
+/// just because the state is momentarily AsyncError. Riverpod carries the
+/// last-known [UserModel] through that transition via `copyWithPrevious`,
+/// so `.value` still reflects the real role until a *confirmed* new value
+/// (or a sign-out) replaces it.
 final isAdminProvider = Provider<bool>(
   (ref) {
     final userAsync = ref.watch(currentUserProvider);

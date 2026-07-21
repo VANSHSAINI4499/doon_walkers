@@ -1,9 +1,14 @@
+import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/utils/link_launcher.dart';
 import 'package:doon_walkers/core/widgets/section_header.dart';
 import 'package:doon_walkers/features/gallery/presentation/widgets/trek_gallery_section.dart';
+import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
+import 'package:doon_walkers/features/registrations/presentation/widgets/registration_form_sheet.dart';
+import 'package:doon_walkers/features/registrations/presentation/widgets/trek_register_button.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/difficulty_badge.dart';
+import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_admin_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,14 +16,63 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// indistinguishable on purpose — the id doesn't exist, or it's a draft
 /// a non-admin isn't allowed to see — both render the same "not found"
 /// state rather than leaking which case it was.
-class TrekDetailScreen extends ConsumerWidget {
-  const TrekDetailScreen({super.key, required this.trekId});
+class TrekDetailScreen extends ConsumerStatefulWidget {
+  const TrekDetailScreen({
+    super.key,
+    required this.trekId,
+    this.openRegistration = false,
+  });
 
   final String trekId;
 
+  /// Set from the `?register=1` query flag that [TrekRegisterButton]
+  /// attaches to its sign-in return path. When a guest taps Register,
+  /// [AuthGuard] bounces them to sign-in and the router returns them
+  /// here — this reopens the form so they land back *in the flow* rather
+  /// than on the trek page having to find the button again.
+  final bool openRegistration;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trekAsync = ref.watch(trekByIdProvider(trekId));
+  ConsumerState<TrekDetailScreen> createState() => _TrekDetailScreenState();
+}
+
+class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
+  /// Guards against reopening the sheet on every rebuild — the flag is
+  /// part of the route and therefore survives as long as the page does.
+  bool _handledAutoOpen = false;
+
+  /// Waits for the trek to load before opening, so the sheet always has
+  /// a real title to show and we never prompt for a trek that turned out
+  /// not to exist (or that RLS hid).
+  void _maybeAutoOpenRegistration(Trek trek) {
+    if (!widget.openRegistration || _handledAutoOpen || !trek.isPublished) return;
+    _handledAutoOpen = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      // Only if they aren't already registered — otherwise the sheet
+      // would just fail on the UNIQUE constraint.
+      final existing = await ref.read(
+        myRegistrationForTrekProvider(widget.trekId).future,
+      );
+      if (!mounted || existing != null) return;
+
+      final registered = await showRegistrationFormSheet(
+        context,
+        trekId: widget.trekId,
+        trekTitle: trek.title,
+      );
+      if (registered == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You're registered — see you on the trail!")),
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final trekAsync = ref.watch(trekByIdProvider(widget.trekId));
 
     return Scaffold(
       body: trekAsync.when(
@@ -27,14 +81,18 @@ class TrekDetailScreen extends ConsumerWidget {
           icon: Icons.error_outline_rounded,
           title: 'Could not load this trek.',
           actionLabel: 'Retry',
-          onAction: () => ref.invalidate(trekByIdProvider(trekId)),
+          onAction: () => ref.invalidate(trekByIdProvider(widget.trekId)),
         ),
-        data: (trek) => trek == null
-            ? const _DetailMessage(
-                icon: Icons.search_off_rounded,
-                title: 'Trek not found.',
-              )
-            : _TrekDetailBody(trek: trek),
+        data: (trek) {
+          if (trek == null) {
+            return const _DetailMessage(
+              icon: Icons.search_off_rounded,
+              title: 'Trek not found.',
+            );
+          }
+          _maybeAutoOpenRegistration(trek);
+          return _TrekDetailBody(trek: trek, isAdmin: ref.watch(isAdminProvider));
+        },
       ),
     );
   }
@@ -85,9 +143,14 @@ class _DetailMessage extends StatelessWidget {
 }
 
 class _TrekDetailBody extends StatelessWidget {
-  const _TrekDetailBody({required this.trek});
+  const _TrekDetailBody({required this.trek, required this.isAdmin});
 
   final Trek trek;
+
+  /// Drives whether inline management controls render. Same shared screen
+  /// for every role — an admin just gets an extra actions menu and a
+  /// draft banner; guests and members see neither.
+  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +162,18 @@ class _TrekDetailBody extends StatelessWidget {
         SliverAppBar(
           expandedHeight: 260,
           pinned: true,
+          actions: [
+            if (isAdmin)
+              TrekAdminActions(
+                trek: trek,
+                iconColor: Colors.white,
+                // The trek this screen is showing no longer exists —
+                // pop rather than sit on a dangling detail view.
+                onDeleted: () {
+                  if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+                },
+              ),
+          ],
           flexibleSpace: FlexibleSpaceBar(
             background: (coverImage == null || coverImage.isEmpty)
                 ? Container(
@@ -126,6 +201,38 @@ class _TrekDetailBody extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Only an admin can reach an unpublished trek at all
+                    // (treks_select gates it), so this banner doubles as
+                    // a reminder that members can't see this page yet.
+                    if (isAdmin && !trek.isPublished) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.tertiaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.edit_note_rounded,
+                              size: 18,
+                              color: theme.colorScheme.onTertiaryContainer,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Draft — not visible to members yet.',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onTertiaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -172,13 +279,10 @@ class _TrekDetailBody extends StatelessWidget {
                       const SizedBox(height: 16),
                     ],
 
-                    // Registration flow is Phase 6 — a real disabled button
-                    // rather than a fake-clickable one, so it's honest about
-                    // not doing anything yet.
-                    FilledButton(
-                      onPressed: null,
-                      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: const Text('Registration Opens Soon'),
+                    TrekRegisterButton(
+                      trekId: trek.id,
+                      trekTitle: trek.title,
+                      isPublished: trek.isPublished,
                     ),
                     const SizedBox(height: 28),
 
@@ -186,7 +290,7 @@ class _TrekDetailBody extends StatelessWidget {
                     const SizedBox(height: 20),
                     const SectionHeader(title: 'Gallery & Videos', icon: Icons.photo_library_outlined),
                     const SizedBox(height: 12),
-                    TrekGallerySection(trekId: trek.id),
+                    TrekGallerySection(trekId: trek.id, trekTitle: trek.title),
                     const SizedBox(height: 28),
 
                     // Phase 7 (comments) slots in here — this placeholder

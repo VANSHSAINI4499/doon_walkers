@@ -8,32 +8,52 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// Admin gallery upload — pick a trek, pick a photo or video (media
-/// type is auto-detected from the file, never asked of the admin),
-/// add an optional caption, upload.
+/// Opens the admin media-upload flow as a modal sheet over whichever
+/// gallery surface launched it.
 ///
-/// Reuses [adminAllTreksProvider] from the trek_library feature for the
-/// trek picker rather than duplicating a trek list query — drafts are
-/// included on purpose, since an admin may want to line up a trek's
-/// media before publishing it.
+/// Replaces the former standalone `/admin/gallery/upload` screen: uploads
+/// now happen in-place on the public Gallery screen (and on a trek's
+/// gallery section), so an admin never leaves the screen they're curating.
 ///
-/// After a successful upload the form resets (file + caption) but
-/// keeps the selected trek, so an admin can upload several photos to
-/// the same trek back-to-back without leaving the screen.
-class AdminGalleryUploadScreen extends ConsumerStatefulWidget {
-  const AdminGalleryUploadScreen({super.key});
-
-  @override
-  ConsumerState<AdminGalleryUploadScreen> createState() => _AdminGalleryUploadScreenState();
+/// [trekId] pre-selects — and locks — the trek when launched from a
+/// specific trek's gallery section, where the target is unambiguous.
+/// Passing null shows a trek picker instead.
+Future<void> showGalleryUploadSheet(
+  BuildContext context, {
+  String? trekId,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    builder: (sheetContext) => _GalleryUploadSheet(lockedTrekId: trekId),
+  );
 }
 
-class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScreen> {
+class _GalleryUploadSheet extends ConsumerStatefulWidget {
+  const _GalleryUploadSheet({this.lockedTrekId});
+
+  /// When non-null the trek is fixed and no picker is shown.
+  final String? lockedTrekId;
+
+  @override
+  ConsumerState<_GalleryUploadSheet> createState() => _GalleryUploadSheetState();
+}
+
+class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
   final _captionController = TextEditingController();
 
   String? _selectedTrekId;
   XFile? _pickedFile;
   Uint8List? _pickedBytes;
   MediaType? _pickedMediaType;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTrekId = widget.lockedTrekId;
+  }
 
   @override
   void dispose() {
@@ -56,7 +76,9 @@ class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScr
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Unsupported file type. Please choose a JPG, PNG, WEBP, MP4, MOV, or WEBM file.'),
+            content: Text(
+              'Unsupported file type. Please choose a JPG, PNG, WEBP, MP4, MOV, or WEBM file.',
+            ),
           ),
         );
       }
@@ -72,11 +94,17 @@ class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScr
     });
   }
 
+  String _cleanError(Object error) {
+    debugPrint('GalleryUploadSheet: upload failed: $error');
+    return 'Something went wrong. Please try again.';
+  }
+
   Future<void> _upload() async {
     final trekId = _selectedTrekId;
     final bytes = _pickedBytes;
     final mediaType = _pickedMediaType;
     final file = _pickedFile;
+
     if (trekId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please choose a trek.')),
@@ -101,32 +129,22 @@ class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScr
 
     if (!mounted || uploaded == null) return;
 
-    // allGalleryMediaProvider/trekGalleryProvider are one-shot fetches
-    // (not live streams — see their docs), so they need an explicit
-    // invalidate to pick up this upload.
+    // One-shot fetches (not live streams) — refetch so the new item shows
+    // up on whichever gallery surface launched this sheet.
     ref.invalidate(allGalleryMediaProvider);
     ref.invalidate(trekGalleryProvider(trekId));
 
-    setState(() {
-      _pickedFile = null;
-      _pickedBytes = null;
-      _pickedMediaType = null;
-      _captionController.clear();
-    });
+    Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Uploaded.')),
     );
   }
 
-  String _cleanError(Object error) {
-    debugPrint('AdminGalleryUploadScreen: upload failed: $error');
-    return 'Something went wrong. Please try again.';
-  }
+  String _trekLabel(Trek trek) => trek.isPublished ? trek.title : '${trek.title} (Draft)';
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final treksAsync = ref.watch(adminAllTreksProvider);
     final isSaving = ref.watch(galleryAdminControllerProvider).isLoading;
 
     ref.listen<AsyncValue<void>>(galleryAdminControllerProvider, (previous, next) {
@@ -142,85 +160,108 @@ class _AdminGalleryUploadScreenState extends ConsumerState<AdminGalleryUploadScr
       );
     });
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Upload Media')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  treksAsync.when(
-                    loading: () => const LinearProgressIndicator(),
-                    error: (error, stack) {
-                      debugPrint('AdminGalleryUploadScreen: failed to load treks: $error');
-                      return InputDecorator(
-                        decoration: const InputDecoration(labelText: 'Trek'),
-                        child: Row(
-                          children: [
-                            const Expanded(child: Text('Could not load treks.')),
-                            IconButton(
-                              icon: const Icon(Icons.refresh_rounded),
-                              tooltip: 'Retry',
-                              onPressed: () => ref.invalidate(adminAllTreksProvider),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    data: (treks) => DropdownButtonFormField<String>(
-                      value: _selectedTrekId,
-                      decoration: const InputDecoration(labelText: 'Trek'),
-                      items: treks
-                          .map((t) => DropdownMenuItem(value: t.id, child: Text(_trekLabel(t))))
-                          .toList(),
-                      onChanged: (value) => setState(() => _selectedTrekId = value),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  _MediaPickerArea(
-                    pickedBytes: _pickedBytes,
-                    pickedMediaType: _pickedMediaType,
-                    fileName: _pickedFile?.name,
-                    onTap: _pickFile,
-                  ),
-                  const SizedBox(height: 20),
-
-                  TextFormField(
-                    controller: _captionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Caption (optional)',
-                    ),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 28),
-
-                  FilledButton(
-                    onPressed: isSaving ? null : _upload,
-                    style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                    child: isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Upload'),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+    return Padding(
+      // Keeps the form above the keyboard when the caption field focuses.
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Add Photo or Video',
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-          ),
+            const SizedBox(height: 20),
+
+            if (widget.lockedTrekId == null) ...[
+              _TrekPicker(
+                selectedTrekId: _selectedTrekId,
+                labelBuilder: _trekLabel,
+                onChanged: (value) => setState(() => _selectedTrekId = value),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            _MediaPickerArea(
+              pickedBytes: _pickedBytes,
+              pickedMediaType: _pickedMediaType,
+              fileName: _pickedFile?.name,
+              onTap: _pickFile,
+            ),
+            const SizedBox(height: 20),
+
+            TextFormField(
+              controller: _captionController,
+              decoration: const InputDecoration(labelText: 'Caption (optional)'),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 24),
+
+            FilledButton(
+              onPressed: isSaving ? null : _upload,
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+              child: isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Upload'),
+            ),
+          ],
         ),
       ),
     );
   }
+}
 
-  String _trekLabel(Trek trek) => trek.isPublished ? trek.title : '${trek.title} (Draft)';
+/// Trek dropdown for the unscoped (all-treks) upload case. Drafts are
+/// included on purpose — an admin may want media staged before publishing.
+class _TrekPicker extends ConsumerWidget {
+  const _TrekPicker({
+    required this.selectedTrekId,
+    required this.labelBuilder,
+    required this.onChanged,
+  });
+
+  final String? selectedTrekId;
+  final String Function(Trek) labelBuilder;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final treksAsync = ref.watch(adminAllTreksProvider);
+
+    return treksAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (error, stack) {
+        debugPrint('GalleryUploadSheet: failed to load treks: $error');
+        return InputDecorator(
+          decoration: const InputDecoration(labelText: 'Trek'),
+          child: Row(
+            children: [
+              const Expanded(child: Text('Could not load treks.')),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Retry',
+                onPressed: () => ref.invalidate(adminAllTreksProvider),
+              ),
+            ],
+          ),
+        );
+      },
+      data: (treks) => DropdownButtonFormField<String>(
+        value: selectedTrekId,
+        decoration: const InputDecoration(labelText: 'Trek'),
+        items: treks
+            .map((t) => DropdownMenuItem(value: t.id, child: Text(labelBuilder(t))))
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
 }
 
 class _MediaPickerArea extends StatelessWidget {
@@ -278,9 +319,9 @@ class _MediaPickerArea extends StatelessWidget {
       return Image.memory(bytes, fit: BoxFit.cover, width: double.infinity);
     }
 
-    // Video bytes aren't previewed inline here — that would need a
-    // second VideoPlayerController just for this form. Confirming the
-    // filename is picked is enough for the upload flow to be usable.
+    // Video bytes aren't previewed inline — that would need a second
+    // VideoPlayerController just for this form. Confirming the filename
+    // is enough for the upload flow to be usable.
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

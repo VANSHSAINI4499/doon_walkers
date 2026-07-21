@@ -17,6 +17,14 @@ class AdminScreen extends ConsumerWidget {
         title: const Text('Admin Panel'),
       ),
       body: userAsync.when(
+        // A transient RealtimeSubscribeException (WebSocket reconnect —
+        // fires routinely on app background/foreground, screen lock, or
+        // a network blip) would otherwise discard a still-valid cached
+        // admin row and show the error state instead, which reads to the
+        // user as if their admin access had disappeared. skipError
+        // prefers the last-known-good value whenever one is cached and
+        // only falls through to `error` when there truly is none yet.
+        skipError: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
           debugPrint('AdminScreen: failed to load current user: $err');
@@ -108,25 +116,34 @@ class AdminScreen extends ConsumerWidget {
                       mainAxisSpacing: 16,
                       childAspectRatio: 1.05,
                       children: [
+                        // Trek and gallery management no longer have their
+                        // own admin screens — the controls are inline on
+                        // the public Trek Library and Gallery screens now.
+                        // These cards are shortcuts to those screens, kept
+                        // so the dashboard still surfaces where the work
+                        // happens. `go` rather than `push`: these are
+                        // bottom-nav branches, so switching to them should
+                        // select the tab, not stack on top of /admin.
                         _buildModuleCard(
                           context,
-                          title: 'Trek Library CRUD',
-                          subtitle: 'Create, edit & publish treks',
+                          title: 'Manage Treks',
+                          subtitle: 'Add, edit & publish on the Treks tab',
                           icon: Icons.landscape_rounded,
-                          onTap: () => context.push(AppConstants.routeAdminTreks),
+                          onTap: () => context.go(AppConstants.routeTrekLibrary),
                         ),
                         _buildModuleCard(
                           context,
-                          title: 'Gallery Media Upload',
-                          subtitle: 'Upload official photos & videos',
+                          title: 'Manage Gallery',
+                          subtitle: 'Add & remove media on the Gallery tab',
                           icon: Icons.photo_library_rounded,
-                          onTap: () => context.push(AppConstants.routeAdminGallery),
+                          onTap: () => context.go(AppConstants.routeGallery),
                         ),
                         _buildModuleCard(
                           context,
                           title: 'Registrations',
                           subtitle: 'View & export trek rosters',
                           icon: Icons.people_alt_rounded,
+                          onTap: () => context.push(AppConstants.routeAdminRegistrations),
                         ),
                         _buildModuleCard(
                           context,

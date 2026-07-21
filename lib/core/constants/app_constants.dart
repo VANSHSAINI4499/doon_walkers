@@ -31,12 +31,25 @@ class AppConstants {
 
   // Nested routes (child GoRoutes under an existing top-level route —
   // see app_router.dart) — full locations for navigation call sites.
-  static const String routeAdminTreks = '/admin/treks';
-  static const String routeAdminTrekNew = '/admin/treks/new';
-  static const String routeAdminGallery = '/admin/gallery';
-  static const String routeAdminGalleryUpload = '/admin/gallery/upload';
+  //
+  // Trek create/edit live under the *public* /trek-library branch rather
+  // than a separate /admin/treks section: admin controls are rendered
+  // inline on the public Treks screen now, so the form they open belongs
+  // to that same branch (keeps the bottom-nav tab selected while editing).
+  // Admin-gating happens via isAdminProvider in the UI plus the
+  // treks_insert_admin/treks_update_admin RLS policies server-side.
+  static const String routeTrekNew = '$routeTrekLibrary/new';
   static String trekDetailLocation(String id) => '$routeTrekLibrary/$id';
-  static String adminTrekEditLocation(String id) => '$routeAdminTreks/$id/edit';
+  static String trekEditLocation(String id) => '$routeTrekLibrary/$id/edit';
+
+  /// Cross-trek registrations roster — kept as its own admin destination
+  /// since it has no single-trek screen to inline into.
+  static const String routeAdminRegistrations = '/admin/registrations';
+
+  /// Per-registration admin detail (sensitive fields + payment control).
+  /// Nested under the roster so `_isAdminRoute` gates it automatically.
+  static String adminRegistrationDetailLocation(String id) =>
+      '$routeAdminRegistrations/$id';
 
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
