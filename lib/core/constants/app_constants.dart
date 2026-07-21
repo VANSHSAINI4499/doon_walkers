@@ -18,11 +18,14 @@ class AppConstants {
   static const String orgCountry = 'India';
 
   // ── Route paths (single source of truth for GoRouter) ───────────
+  //
+  // routeAbout and routeUpcomingTreks were removed in the Part B nav
+  // restructure — About's content moved into Home, and the Upcoming
+  // Treks tab (a "coming soon" placeholder with no real content) was
+  // dropped entirely rather than replaced.
   static const String routeHome = '/';
-  static const String routeAbout = '/about';
   static const String routeTrekLibrary = '/trek-library';
   static const String routeGallery = '/gallery';
-  static const String routeUpcomingTreks = '/upcoming-treks';
   static const String routeProfile = '/profile';
   static const String routeAdmin = '/admin';
   static const String routeSignIn = '/sign-in';
@@ -63,4 +66,10 @@ class AppConstants {
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';
   static const String bucketTrekGallery = 'trek-gallery';
+
+  /// PRIVATE bucket (0011_payment_verification.sql) — unlike the two
+  /// above, this is not public-read. Every object is scoped to the
+  /// registration it belongs to; see RegistrationRepository for the
+  /// upload/signed-URL flow.
+  static const String bucketPaymentProofs = 'payment-proofs';
 }

@@ -221,6 +221,17 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
               ),
               const SizedBox(height: 20),
 
+              // ── Payment proof (only for paid-trek registrations) ─
+              if (r.paymentScreenshotUrl != null) ...[
+                Text(
+                  'Payment Proof',
+                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                _PaymentProofCard(path: r.paymentScreenshotUrl!),
+                const SizedBox(height: 20),
+              ],
+
               // ── Admin-only payment control ──────────────────────
               Text(
                 'Payment Status',
@@ -266,6 +277,73 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
               ),
               const SizedBox(height: 24),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Displays the member's uploaded payment screenshot for admin review
+/// before they mark the registration paid.
+///
+/// [path] is a storage object path, not a URL — `payment-proofs` is a
+/// private bucket, so every view needs a fresh signed URL rather than a
+/// stored public one (see [paymentProofSignedUrlProvider]).
+class _PaymentProofCard extends ConsumerWidget {
+  const _PaymentProofCard({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final signedUrlAsync = ref.watch(paymentProofSignedUrlProvider(path));
+
+    return Card(
+      elevation: 1,
+      clipBehavior: Clip.antiAlias,
+      child: signedUrlAsync.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, stack) {
+          debugPrint('_PaymentProofCard: failed to sign $path: $error');
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline_rounded, color: theme.colorScheme.error),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Could not load the payment screenshot.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => ref.invalidate(paymentProofSignedUrlProvider(path)),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        },
+        data: (signedUrl) => InteractiveViewer(
+          child: Image.network(
+            signedUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stack) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.broken_image_outlined, color: theme.colorScheme.error),
+                  const SizedBox(width: 12),
+                  const Expanded(child: Text('Could not display the screenshot.')),
+                ],
+              ),
+            ),
           ),
         ),
       ),

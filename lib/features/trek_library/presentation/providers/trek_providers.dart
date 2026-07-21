@@ -14,8 +14,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// list, so a live-push channel per session isn't worth the cost. The
 /// screen refetches via pull-to-refresh or the error state's Retry
 /// button (`ref.invalidate(publishedTreksProvider)`).
+///
+/// [sortTreksForLibrary] runs here rather than in the repository, which
+/// stays a plain data-access layer — ordering is a presentation rule.
 final publishedTreksProvider = FutureProvider<List<Trek>>(
-  (ref) => ref.watch(trekRepositoryProvider).fetchPublishedTreks(),
+  (ref) async {
+    final treks = await ref.watch(trekRepositoryProvider).fetchPublishedTreks();
+    return sortTreksForLibrary(treks);
+  },
   name: 'publishedTreksProvider',
 );
 
@@ -23,9 +29,14 @@ final publishedTreksProvider = FutureProvider<List<Trek>>(
 /// draft rows only when the caller is actually an admin; anyone else
 /// gets the same result as [publishedTreksProvider].
 ///
-/// One-shot fetch — same reasoning as [publishedTreksProvider].
+/// One-shot fetch — same reasoning as [publishedTreksProvider]. Same
+/// [sortTreksForLibrary] ordering as the public list, so an admin's view
+/// doesn't reshuffle relative to what members see.
 final adminAllTreksProvider = FutureProvider<List<Trek>>(
-  (ref) => ref.watch(trekRepositoryProvider).fetchAllTreks(),
+  (ref) async {
+    final treks = await ref.watch(trekRepositoryProvider).fetchAllTreks();
+    return sortTreksForLibrary(treks);
+  },
   name: 'adminAllTreksProvider',
 );
 
@@ -38,10 +49,11 @@ final trekByIdProvider = FutureProvider.autoDispose.family<Trek?, String>(
 );
 
 /// Thrown when a trek row was created/updated successfully but its
-/// cover image failed to upload — distinct from a full failure so the
-/// form can show a more specific message than a generic error.
-class TrekCoverUploadException implements Exception {
-  const TrekCoverUploadException(this.message);
+/// cover image or QR code image failed to upload — distinct from a
+/// full failure so the form can show a more specific message than a
+/// generic error.
+class TrekImageUploadException implements Exception {
+  const TrekImageUploadException(this.message);
   final String message;
 
   @override
@@ -64,7 +76,7 @@ class TrekAdminController extends AsyncNotifier<void> {
   /// Creates a trek (starts as a draft — see repository), then uploads
   /// the cover image if one was picked. Returns the created [Trek] even
   /// if the image upload step fails, since the row itself did save —
-  /// [state] carries the [TrekCoverUploadException] separately so the
+  /// [state] carries the [TrekImageUploadException] separately so the
   /// caller can distinguish "nothing saved" from "saved, image failed".
   Future<Trek?> createTrek({
     required String title,
@@ -76,8 +88,12 @@ class TrekAdminController extends AsyncNotifier<void> {
     String? bestSeason,
     String? thingsToCarry,
     String? googleMapLink,
+    DateTime? trekDate,
+    double registrationFee = 0,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
+    Uint8List? qrCodeBytes,
+    String? qrCodeExtension,
   }) async {
     state = const AsyncLoading();
     Trek? created;
@@ -93,6 +109,8 @@ class TrekAdminController extends AsyncNotifier<void> {
         bestSeason: bestSeason,
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
+        trekDate: trekDate,
+        registrationFee: registrationFee,
       );
       created = trek;
 
@@ -104,8 +122,26 @@ class TrekAdminController extends AsyncNotifier<void> {
             fileExtension: coverImageExtension,
           );
         } catch (_) {
-          throw const TrekCoverUploadException(
+          throw const TrekImageUploadException(
             'Trek saved, but the cover image failed to upload. '
+            'You can add it from Edit.',
+          );
+        }
+      }
+
+      // Only meaningful when registrationFee > 0 — the form doesn't
+      // offer a QR picker at all for a free trek, so these should
+      // always be null together in that case.
+      if (qrCodeBytes != null && qrCodeExtension != null) {
+        try {
+          await repo.uploadPaymentQrCode(
+            trekId: trek.id,
+            bytes: qrCodeBytes,
+            fileExtension: qrCodeExtension,
+          );
+        } catch (_) {
+          throw const TrekImageUploadException(
+            'Trek saved, but the payment QR code failed to upload. '
             'You can add it from Edit.',
           );
         }
@@ -114,8 +150,9 @@ class TrekAdminController extends AsyncNotifier<void> {
     return created;
   }
 
-  /// Updates a trek's fields, then replaces the cover image if a new
-  /// one was picked. Same partial-failure semantics as [createTrek].
+  /// Updates a trek's fields, then replaces the cover image and/or QR
+  /// code if new ones were picked. Same partial-failure semantics as
+  /// [createTrek].
   Future<bool> updateTrek({
     required String id,
     required String title,
@@ -127,9 +164,14 @@ class TrekAdminController extends AsyncNotifier<void> {
     String? bestSeason,
     String? thingsToCarry,
     String? googleMapLink,
+    DateTime? trekDate,
+    double registrationFee = 0,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
     String? previousCoverImageUrl,
+    Uint8List? qrCodeBytes,
+    String? qrCodeExtension,
+    String? previousQrCodeUrl,
   }) async {
     state = const AsyncLoading();
     var success = false;
@@ -146,6 +188,8 @@ class TrekAdminController extends AsyncNotifier<void> {
         bestSeason: bestSeason,
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
+        trekDate: trekDate,
+        registrationFee: registrationFee,
       );
       success = true;
 
@@ -158,9 +202,25 @@ class TrekAdminController extends AsyncNotifier<void> {
             previousImageUrl: previousCoverImageUrl,
           );
         } catch (_) {
-          throw const TrekCoverUploadException(
+          throw const TrekImageUploadException(
             'Trek updated, but the new cover image failed to upload. '
             'The previous image (if any) is unchanged.',
+          );
+        }
+      }
+
+      if (qrCodeBytes != null && qrCodeExtension != null) {
+        try {
+          await repo.uploadPaymentQrCode(
+            trekId: id,
+            bytes: qrCodeBytes,
+            fileExtension: qrCodeExtension,
+            previousImageUrl: previousQrCodeUrl,
+          );
+        } catch (_) {
+          throw const TrekImageUploadException(
+            'Trek updated, but the new payment QR code failed to upload. '
+            'The previous QR code (if any) is unchanged.',
           );
         }
       }

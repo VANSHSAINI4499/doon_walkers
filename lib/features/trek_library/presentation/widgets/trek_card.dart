@@ -90,6 +90,40 @@ class TrekCard extends StatelessWidget {
                         child: adminActions!,
                       ),
                     ),
+                  // Bottom-left so it never collides with the draft
+                  // marker (top-left) or the admin actions menu
+                  // (top-right). Automatic from trek_date — see
+                  // Trek.isUpcoming — never a manually-set flag.
+                  if (trek.isUpcoming)
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.event_available_rounded,
+                              size: 12,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Upcoming',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -42,6 +42,8 @@ abstract class TrekRepository {
     String? bestSeason,
     String? thingsToCarry,
     String? googleMapLink,
+    DateTime? trekDate,
+    double registrationFee = 0,
   });
 
   Future<void> updateTrek({
@@ -55,6 +57,8 @@ abstract class TrekRepository {
     String? bestSeason,
     String? thingsToCarry,
     String? googleMapLink,
+    DateTime? trekDate,
+    double registrationFee = 0,
   });
 
   /// Deletes the trek row. Best-effort deletes its cover image from
@@ -71,6 +75,18 @@ abstract class TrekRepository {
   /// rather than overwriting — avoids serving a stale cached image at
   /// an unchanged URL after a replacement.
   Future<String> uploadCoverImage({
+    required String trekId,
+    required Uint8List bytes,
+    required String fileExtension,
+    String? previousImageUrl,
+  });
+
+  /// Uploads [bytes] to the same public `trek-covers` bucket
+  /// [uploadCoverImage] uses (a QR code is meant to be publicly
+  /// scannable, so it doesn't need the private `payment-proofs`
+  /// bucket) and updates `treks.payment_qr_code`. Same fresh-path and
+  /// best-effort-cleanup behaviour as [uploadCoverImage].
+  Future<String> uploadPaymentQrCode({
     required String trekId,
     required Uint8List bytes,
     required String fileExtension,

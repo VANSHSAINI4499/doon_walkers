@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/registrations/data/models/registration_model.dart';
@@ -20,7 +22,7 @@ final registrationRepositoryProvider = Provider<RegistrationRepository>(
 /// filtered: `users_select_own_or_admin` and `treks_select` both
 /// short-circuit on `is_admin()`, which is SECURITY DEFINER so it reads
 /// `users` outside RLS without recursion.
-const _selectWithJoins = '*, users(name, email, phone), treks(title)';
+const _selectWithJoins = '*, users(name, email, phone), treks(title, trek_date)';
 
 /// Postgres unique-violation SQLSTATE — raised by `UNIQUE(trek_id, user_id)`.
 const _uniqueViolation = '23505';
@@ -135,5 +137,43 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
     await _supabase
         .from(AppConstants.tableRegistrations)
         .update({'payment_status': status.toDbString()}).eq('id', id);
+  }
+
+  @override
+  Future<String> uploadPaymentScreenshot({
+    required String registrationId,
+    required Uint8List bytes,
+    required String fileExtension,
+  }) async {
+    // {registrationId}/{filename} — the payment_proofs_insert policy
+    // reads the first path segment as the registration id and checks it
+    // against a real row owned by the caller (see 0011's migration
+    // comment). A fresh timestamped filename, never an overwrite, same
+    // reasoning as trek cover images.
+    final path =
+        '$registrationId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+
+    await _supabase.storage
+        .from(AppConstants.bucketPaymentProofs)
+        .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+
+    return path;
+  }
+
+  @override
+  Future<void> setPaymentScreenshotPath(String registrationId, String path) async {
+    await _supabase
+        .from(AppConstants.tableRegistrations)
+        .update({'payment_screenshot_url': path}).eq('id', registrationId);
+  }
+
+  @override
+  Future<String> getPaymentProofSignedUrl(String path) async {
+    // 10 minutes — long enough to load one Image.network call, short
+    // enough that a leaked/cached URL doesn't stay useful for long.
+    // Bucket is private, so this is the only way to ever view a proof.
+    return _supabase.storage
+        .from(AppConstants.bucketPaymentProofs)
+        .createSignedUrl(path, 600);
   }
 }

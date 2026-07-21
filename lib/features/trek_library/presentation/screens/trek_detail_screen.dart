@@ -46,6 +46,10 @@ class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
   /// not to exist (or that RLS hid).
   void _maybeAutoOpenRegistration(Trek trek) {
     if (!widget.openRegistration || _handledAutoOpen || !trek.isPublished) return;
+    // A completed trek never auto-opens the form — mirrors
+    // TrekRegisterButton's own gating, so a stale `?register=1` return
+    // link for a trek that has since passed can't pop the sheet anyway.
+    if (trek.isCompleted) return;
     _handledAutoOpen = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -57,11 +61,7 @@ class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
       );
       if (!mounted || existing != null) return;
 
-      final registered = await showRegistrationFormSheet(
-        context,
-        trekId: widget.trekId,
-        trekTitle: trek.title,
-      );
+      final registered = await showRegistrationFormSheet(context, trek: trek);
       if (registered == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("You're registered — see you on the trail!")),
@@ -279,11 +279,7 @@ class _TrekDetailBody extends StatelessWidget {
                       const SizedBox(height: 16),
                     ],
 
-                    TrekRegisterButton(
-                      trekId: trek.id,
-                      trekTitle: trek.title,
-                      isPublished: trek.isPublished,
-                    ),
+                    TrekRegisterButton(trek: trek),
                     const SizedBox(height: 28),
 
                     const Divider(),

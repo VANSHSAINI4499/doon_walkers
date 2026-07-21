@@ -99,7 +99,7 @@ void main() {
         'email': 'aarav@example.com',
         'phone': '+91 98765 43210',
       },
-      'treks': {'title': 'Nag Tibba Weekend Trek'},
+      'treks': {'title': 'Nag Tibba Weekend Trek', 'trek_date': '2026-08-15'},
     };
 
     test('parses every field, flattening the joined user and trek', () {
@@ -114,6 +114,16 @@ void main() {
       expect(registration.userEmail, 'aarav@example.com');
       expect(registration.userPhone, '+91 98765 43210');
       expect(registration.trekTitle, 'Nag Tibba Weekend Trek');
+      expect(registration.trekDate, DateTime.parse('2026-08-15'));
+    });
+
+    test('a trek with no trek_date parses to a null trekDate', () {
+      final json = {
+        ...fullJson,
+        'treks': {'title': 'Nag Tibba Weekend Trek'},
+      };
+
+      expect(RegistrationModel.fromJson(json).trekDate, isNull);
     });
 
     test('parses the sensitive registrant fields', () {

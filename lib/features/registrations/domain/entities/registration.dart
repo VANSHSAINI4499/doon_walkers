@@ -106,6 +106,27 @@ class Registration {
   /// Joined from `public.treks`.
   final String trekTitle;
 
+  /// The joined trek's scheduled start date (0010_trek_scheduling.sql),
+  /// or null for an unscheduled trek — see [Trek.isUpcoming] for what
+  /// "unscheduled" means. Drives [RegistrationStats]' automatic
+  /// "attended" approximation (Part D): a registration counts as
+  /// attended once this date has passed, per the user's explicit choice
+  /// of date-based approximation over admin-marked attendance.
+  final DateTime? trekDate;
+
+  /// Path of the uploaded payment-proof screenshot in the private
+  /// `payment-proofs` bucket (0011_payment_verification.sql) — a
+  /// *path*, not a ready-to-use URL, since the bucket is private and
+  /// every read needs a freshly-signed URL (see
+  /// [RegistrationRepository.getPaymentProofSignedUrl]).
+  ///
+  /// Null for a free-trek registration, and briefly null for a
+  /// paid-trek registration mid-flow (row created before the upload
+  /// completes) — see [involvedPayment] for the derived "was this ever
+  /// a paid registration" signal used to decide whether to show
+  /// payment-status UI at all.
+  final String? paymentScreenshotUrl;
+
   const Registration({
     required this.id,
     required this.trekId,
@@ -120,7 +141,27 @@ class Registration {
     required this.userEmail,
     this.userPhone,
     required this.trekTitle,
+    this.paymentScreenshotUrl,
+    this.trekDate,
   });
+
+  /// True when this registration required payment — derived from
+  /// whether a screenshot was ever attached, not from the trek's
+  /// *current* `registration_fee` (which could have changed since this
+  /// registration was created). Drives whether member-facing UI shows
+  /// any payment_status badge at all: a free-trek registration shows
+  /// none ("nothing to verify"), per the Part C brief.
+  bool get involvedPayment => paymentScreenshotUrl != null;
+
+  /// Member-facing status label — only meaningful when [involvedPayment]
+  /// is true; callers should check that first and render no badge at
+  /// all otherwise. Relabels `pending` as "Pending Verification" for a
+  /// paid registration, since "Pending" alone reads as "nothing has
+  /// happened yet" rather than "we're waiting on you/admin to confirm
+  /// the payment you already made". Every other status uses the same
+  /// label admin sees — cosmetic label change only, not a new status.
+  String get memberFacingStatusLabel =>
+      paymentStatus == PaymentStatus.pending ? 'Pending Verification' : paymentStatus.label;
 }
 
 /// Thrown when an insert violates `UNIQUE(trek_id, user_id)` — i.e. the
@@ -134,4 +175,37 @@ class DuplicateRegistrationException implements Exception {
 
   @override
   String toString() => "You're already registered for this trek.";
+}
+
+/// Thrown when a paid-trek registration's row was created but its
+/// payment screenshot failed to upload or link. By the time this is
+/// thrown the row has already been rolled back (deleted) by
+/// [RegistrationController.register] — there's no "add it later" flow
+/// for a screenshot, so a half-registered row would otherwise be a
+/// stuck, unpayable state. Distinct type so the UI can show this
+/// specific message rather than the generic registration-failed one.
+class PaymentScreenshotUploadException implements Exception {
+  const PaymentScreenshotUploadException();
+
+  @override
+  String toString() =>
+      'Could not upload your payment screenshot. Please try registering again.';
+}
+
+/// Thrown by [RegistrationController.register] when called for a trek
+/// whose `trek_date` has already passed.
+///
+/// A deliberate app-level (not RLS) guard — this is a business
+/// availability rule like `is_published`, not a security boundary the
+/// way `payment_status` is: nothing sensitive leaks if it were somehow
+/// bypassed, it would just create a semantically odd row. [TrekRegisterButton]
+/// already hides the Register button for a completed trek; this exists
+/// so a direct call to `register()` can't create one anyway, satisfying
+/// "an actual guard, not just a hidden button" without adding a
+/// trek-date subquery to every `registrations_insert`.
+class TrekRegistrationClosedException implements Exception {
+  const TrekRegistrationClosedException();
+
+  @override
+  String toString() => 'Registration is closed — this trek has already taken place.';
 }

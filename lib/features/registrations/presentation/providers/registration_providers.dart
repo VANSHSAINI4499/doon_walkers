@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/registrations/data/repositories/registration_repository_impl.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
+import 'package:doon_walkers/features/registrations/domain/entities/registration_stats.dart';
+import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Every registration across every trek — admin roster screen only.
@@ -53,6 +56,28 @@ final myRegistrationForTrekProvider =
   name: 'myRegistrationForTrekProvider',
 );
 
+/// Profile stats (Part D) — derived from [myRegistrationsProvider] rather
+/// than a separate fetch, so it always agrees with "My Registrations" and
+/// invalidates on the same triggers (register/cancel/status change).
+final myRegistrationStatsProvider = FutureProvider<RegistrationStats>(
+  (ref) async {
+    final registrations = await ref.watch(myRegistrationsProvider.future);
+    return RegistrationStats.fromRegistrations(registrations);
+  },
+  name: 'myRegistrationStatsProvider',
+);
+
+/// A short-lived signed URL for a payment-proof screenshot at [path]
+/// (the private `payment-proofs` bucket has no public URL — see
+/// RegistrationRepository.getPaymentProofSignedUrl). `autoDispose`
+/// since the signed URL expires anyway; re-fetching a fresh one on
+/// every visit to the detail screen is the point, not a waste.
+final paymentProofSignedUrlProvider =
+    FutureProvider.autoDispose.family<String, String>(
+  (ref, path) => ref.watch(registrationRepositoryProvider).getPaymentProofSignedUrl(path),
+  name: 'paymentProofSignedUrlProvider',
+);
+
 /// Riverpod AsyncNotifier managing registration mutations (create,
 /// cancel, admin status change). Mirrors [TrekAdminController]'s shape:
 /// [state] carries shared loading/error status, while each method also
@@ -75,31 +100,83 @@ class RegistrationController extends AsyncNotifier<void> {
     ref.invalidate(allRegistrationsProvider);
   }
 
-  /// Registers the signed-in user for [trekId].
+  /// Registers the signed-in user for [trek].
+  ///
+  /// Takes the whole [Trek], not just its id, so this can guard on
+  /// [Trek.isCompleted] itself rather than trusting the caller to have
+  /// checked — [TrekRegisterButton] already hides the Register button
+  /// for a completed trek, but that's UI-only; this is the "actual
+  /// guard" so a direct call here can't create one anyway. See
+  /// [TrekRegistrationClosedException] for why this is enforced here
+  /// and not in `registrations_insert`'s RLS.
+  ///
+  /// When [paymentScreenshotBytes] is provided (paid trek), the sequence
+  /// is create row → upload screenshot → link path onto the row — the
+  /// bucket's INSERT policy requires the registration to already exist
+  /// (see uploadPaymentScreenshot's doc), so this order is required, not
+  /// arbitrary. If the upload or link step fails, the just-created row
+  /// is deleted (best-effort) rather than left behind screenshot-less:
+  /// there's no "add it later" flow, so a stuck half-registered paid
+  /// row would otherwise be unrecoverable except by the user manually
+  /// cancelling it themselves.
   ///
   /// Returns the created [Registration], or null on failure — in which
   /// case [state] carries the error. A [DuplicateRegistrationException]
-  /// surfaces there too, so the caller can show the friendly
-  /// already-registered message.
+  /// or [TrekRegistrationClosedException] surfaces there too, so the
+  /// caller can show the friendly, specific message.
   Future<Registration?> register({
-    required String trekId,
+    required Trek trek,
     required int age,
     required GenderType gender,
     required String emergencyContact,
     String? medicalNotes,
+    Uint8List? paymentScreenshotBytes,
+    String? paymentScreenshotExtension,
   }) async {
+    if (trek.isCompleted) {
+      state = AsyncError(const TrekRegistrationClosedException(), StackTrace.current);
+      return null;
+    }
+
     state = const AsyncLoading();
     Registration? created;
     state = await AsyncValue.guard(() async {
-      created = await ref.read(registrationRepositoryProvider).createRegistration(
-            trekId: trekId,
-            age: age,
-            gender: gender,
-            emergencyContact: emergencyContact,
-            medicalNotes: medicalNotes,
-          );
+      final repo = ref.read(registrationRepositoryProvider);
+      final registration = await repo.createRegistration(
+        trekId: trek.id,
+        age: age,
+        gender: gender,
+        emergencyContact: emergencyContact,
+        medicalNotes: medicalNotes,
+      );
+
+      if (paymentScreenshotBytes == null || paymentScreenshotExtension == null) {
+        created = registration;
+        return;
+      }
+
+      try {
+        final path = await repo.uploadPaymentScreenshot(
+          registrationId: registration.id,
+          bytes: paymentScreenshotBytes,
+          fileExtension: paymentScreenshotExtension,
+        );
+        await repo.setPaymentScreenshotPath(registration.id, path);
+      } catch (_) {
+        try {
+          await repo.deleteRegistration(registration.id);
+        } catch (_) {
+          // Best-effort rollback — if even this fails there's nothing
+          // more to safely do here; the exception below still surfaces.
+        }
+        throw const PaymentScreenshotUploadException();
+      }
+
+      // Re-fetch rather than trust the pre-upload snapshot, so the
+      // returned Registration actually carries paymentScreenshotUrl.
+      created = await repo.fetchRegistrationById(registration.id) ?? registration;
     });
-    if (created != null) _invalidateRegistrationViews(trekId);
+    if (created != null) _invalidateRegistrationViews(trek.id);
     return created;
   }
 

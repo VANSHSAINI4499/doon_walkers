@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 
 /// Abstract interface for reading and managing trek registrations.
@@ -68,4 +70,33 @@ abstract class RegistrationRepository {
   /// non-admin caller, so this fails server-side even if the UI were
   /// mis-gated. This is the intended use of that guard, not a bypass.
   Future<void> updatePaymentStatus(String id, PaymentStatus status);
+
+  /// Uploads [bytes] to the PRIVATE `payment-proofs` bucket
+  /// (0011_payment_verification.sql) at `{registrationId}/{filename}`
+  /// and returns the stored PATH — not a public URL, since the bucket
+  /// has no public read at all. Use [getPaymentProofSignedUrl] to
+  /// actually display it later.
+  ///
+  /// Requires [registrationId] to already exist: the bucket's INSERT
+  /// policy checks the path's registration id against a real row owned
+  /// by the caller, so this must run AFTER [createRegistration], not
+  /// before — mirrors the existing createTrek-then-uploadCoverImage
+  /// sequencing in trek_repository_impl.dart.
+  Future<String> uploadPaymentScreenshot({
+    required String registrationId,
+    required Uint8List bytes,
+    required String fileExtension,
+  });
+
+  /// Sets `payment_screenshot_url` to [path] (the value returned by
+  /// [uploadPaymentScreenshot]) — the final step of the
+  /// create-then-upload-then-link sequence.
+  Future<void> setPaymentScreenshotPath(String registrationId, String path);
+
+  /// Generates a short-lived signed URL for [path] so it can actually be
+  /// displayed (`Image.network`) — the bucket is private, so there is no
+  /// bare public URL to hand `Image.network` directly. RLS on
+  /// `storage.objects` still applies to who is even allowed to request a
+  /// signed URL for this path in the first place (owner or admin).
+  Future<String> getPaymentProofSignedUrl(String path);
 }

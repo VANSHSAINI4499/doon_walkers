@@ -1,5 +1,6 @@
 import 'package:doon_walkers/core/widgets/section_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/community_stats_section.dart';
+import 'package:doon_walkers/features/home/presentation/widgets/home_about_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_hero_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/join_community_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/trek_section_placeholder.dart';
@@ -71,6 +72,15 @@ class HomeScreen extends StatelessWidget {
                         SizedBox(height: 28),
 
                         JoinCommunitySection(),
+                        SizedBox(height: 32),
+
+                        Divider(),
+                        SizedBox(height: 24),
+
+                        // About content — folded in here now that the
+                        // standalone About screen/tab is gone (Part B of
+                        // the navigation restructure); see HomeAboutSection.
+                        HomeAboutSection(),
                         SizedBox(height: 24),
                       ],
                     ),

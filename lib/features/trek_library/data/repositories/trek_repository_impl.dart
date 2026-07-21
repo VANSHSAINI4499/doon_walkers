@@ -61,6 +61,8 @@ class TrekRepositoryImpl implements TrekRepository {
     String? bestSeason,
     String? thingsToCarry,
     String? googleMapLink,
+    DateTime? trekDate,
+    double registrationFee = 0,
   }) async {
     final row = await _supabase
         .from(AppConstants.tableTreks)
@@ -74,6 +76,8 @@ class TrekRepositoryImpl implements TrekRepository {
           bestSeason: bestSeason,
           thingsToCarry: thingsToCarry,
           googleMapLink: googleMapLink,
+          trekDate: trekDate,
+          registrationFee: registrationFee,
         ))
         .select()
         .single();
@@ -95,6 +99,8 @@ class TrekRepositoryImpl implements TrekRepository {
     String? bestSeason,
     String? thingsToCarry,
     String? googleMapLink,
+    DateTime? trekDate,
+    double registrationFee = 0,
   }) async {
     await _supabase
         .from(AppConstants.tableTreks)
@@ -108,6 +114,8 @@ class TrekRepositoryImpl implements TrekRepository {
           bestSeason: bestSeason,
           thingsToCarry: thingsToCarry,
           googleMapLink: googleMapLink,
+          trekDate: trekDate,
+          registrationFee: registrationFee,
         ))
         .eq('id', id);
   }
@@ -182,6 +190,43 @@ class TrekRepositoryImpl implements TrekRepository {
     return newUrl;
   }
 
+  @override
+  Future<String> uploadPaymentQrCode({
+    required String trekId,
+    required Uint8List bytes,
+    required String fileExtension,
+    String? previousImageUrl,
+  }) async {
+    // Same public trek-covers bucket as uploadCoverImage, under a
+    // `qr-codes/` prefix so the two purposes don't collide or get
+    // visually mixed up when browsing the bucket directly.
+    final path = 'qr-codes/$trekId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+
+    await _supabase.storage
+        .from(AppConstants.bucketTrekCovers)
+        .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+
+    final newUrl = _supabase.storage.from(AppConstants.bucketTrekCovers).getPublicUrl(path);
+
+    if (previousImageUrl != null) {
+      try {
+        final oldPath = _extractObjectPath(previousImageUrl);
+        if (oldPath != null) {
+          await _supabase.storage.from(AppConstants.bucketTrekCovers).remove([oldPath]);
+        }
+      } catch (_) {
+        // Same reasoning as uploadCoverImage — don't fail a successful
+        // upload over a failed cleanup of the old file.
+      }
+    }
+
+    await _supabase
+        .from(AppConstants.tableTreks)
+        .update({'payment_qr_code': newUrl}).eq('id', trekId);
+
+    return newUrl;
+  }
+
   Map<String, dynamic> _writablePayload({
     required String title,
     required String description,
@@ -192,6 +237,8 @@ class TrekRepositoryImpl implements TrekRepository {
     String? bestSeason,
     String? thingsToCarry,
     String? googleMapLink,
+    DateTime? trekDate,
+    double registrationFee = 0,
   }) {
     return {
       'title': title,
@@ -203,6 +250,15 @@ class TrekRepositoryImpl implements TrekRepository {
       'best_season': bestSeason,
       'things_to_carry': thingsToCarry,
       'google_map_link': googleMapLink,
+      // Postgres `date` accepts a plain "YYYY-MM-DD" string; slicing off
+      // the time avoids sending timezone-dependent instant data for a
+      // column that only ever stores a calendar day.
+      'trek_date': trekDate == null
+          ? null
+          : '${trekDate.year.toString().padLeft(4, '0')}-'
+              '${trekDate.month.toString().padLeft(2, '0')}-'
+              '${trekDate.day.toString().padLeft(2, '0')}',
+      'registration_fee': registrationFee,
     };
   }
 

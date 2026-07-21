@@ -17,6 +17,9 @@ class TrekModel extends Trek {
     super.coverImage,
     required super.isPublished,
     required super.createdAt,
+    super.trekDate,
+    super.registrationFee,
+    super.paymentQrCode,
   });
 
   factory TrekModel.fromJson(Map<String, dynamic> json) {
@@ -36,6 +39,20 @@ class TrekModel extends Trek {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
+      // Postgres `date` comes back as an ISO date string ("2026-08-15"),
+      // parseable directly by DateTime.parse — no time component to worry
+      // about since the column has none.
+      trekDate: json['trek_date'] != null
+          ? DateTime.parse(json['trek_date'] as String)
+          : null,
+      // NOT NULL DEFAULT 0 in the schema, but Postgres numeric arrives as
+      // a String or num depending on driver — handle both defensively.
+      registrationFee: switch (json['registration_fee']) {
+        null => 0,
+        final num n => n.toDouble(),
+        final Object v => double.tryParse(v.toString()) ?? 0,
+      },
+      paymentQrCode: json['payment_qr_code'] as String?,
     );
   }
 }

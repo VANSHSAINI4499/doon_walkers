@@ -32,11 +32,22 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
   final _bestSeasonController = TextEditingController();
   final _thingsToCarryController = TextEditingController();
   final _googleMapController = TextEditingController();
+  final _feeController = TextEditingController(text: '0');
 
   TrekDifficulty _difficulty = TrekDifficulty.moderate;
+  DateTime? _trekDate;
   Uint8List? _pickedImageBytes;
   String? _pickedImageExtension;
   String? _existingCoverImage;
+
+  /// Tracked separately from `_feeController.text` (rather than parsed
+  /// only at submit time) so the QR code picker below can appear/
+  /// disappear live as the admin types, instead of only after saving.
+  double _registrationFee = 0;
+  Uint8List? _pickedQrBytes;
+  String? _pickedQrExtension;
+  String? _existingQrCode;
+
   bool _prefilled = false;
 
   @override
@@ -49,6 +60,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _bestSeasonController.dispose();
     _thingsToCarryController.dispose();
     _googleMapController.dispose();
+    _feeController.dispose();
     super.dispose();
   }
 
@@ -62,12 +74,38 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _bestSeasonController.text = trek.bestSeason ?? '';
     _thingsToCarryController.text = trek.thingsToCarry ?? '';
     _googleMapController.text = trek.googleMapLink ?? '';
+    _feeController.text = _trimZero(trek.registrationFee);
     _difficulty = trek.difficulty;
+    _trekDate = trek.trekDate;
+    _registrationFee = trek.registrationFee;
     _existingCoverImage = trek.coverImage;
+    _existingQrCode = trek.paymentQrCode;
     _prefilled = true;
   }
 
   String _trimZero(double v) => v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  Future<void> _pickTrekDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _trekDate ?? now,
+      // Editing an existing trek scheduled in the past (e.g. fixing a
+      // typo after the fact) shouldn't be blocked by "must be in the
+      // future" — only the lower bound is a sane calendar floor.
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked != null) setState(() => _trekDate = picked);
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -94,9 +132,16 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         bestSeason: bestSeason,
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
+        trekDate: _trekDate,
+        registrationFee: _registrationFee,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
         previousCoverImageUrl: _existingCoverImage,
+        // Only sent when the fee is actually > 0 — if an admin drops the
+        // fee to 0 after having picked a QR code, don't upload it.
+        qrCodeBytes: _registrationFee > 0 ? _pickedQrBytes : null,
+        qrCodeExtension: _registrationFee > 0 ? _pickedQrExtension : null,
+        previousQrCodeUrl: _existingQrCode,
       );
       if (!mounted || !success) return;
       // publishedTreksProvider/adminAllTreksProvider are one-shot fetches
@@ -117,8 +162,12 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         bestSeason: bestSeason,
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
+        trekDate: _trekDate,
+        registrationFee: _registrationFee,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
+        qrCodeBytes: _registrationFee > 0 ? _pickedQrBytes : null,
+        qrCodeExtension: _registrationFee > 0 ? _pickedQrExtension : null,
       );
       if (!mounted || created == null) return;
       ref.invalidate(publishedTreksProvider);
@@ -133,7 +182,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
 
   String _cleanError(Object error) {
     debugPrint('AdminTrekFormScreen: mutation failed: $error');
-    if (error is TrekCoverUploadException) {
+    if (error is TrekImageUploadException) {
       return error.message;
     }
     return 'Something went wrong. Please try again.';
@@ -296,6 +345,27 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                     ),
                     const SizedBox(height: 16),
 
+                    InkWell(
+                      onTap: _pickTrekDate,
+                      borderRadius: BorderRadius.circular(4),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Trek date (optional)',
+                          suffixIcon: _trekDate == null
+                              ? const Icon(Icons.calendar_today_outlined)
+                              : IconButton(
+                                  icon: const Icon(Icons.clear_rounded),
+                                  tooltip: 'Clear date',
+                                  onPressed: () => setState(() => _trekDate = null),
+                                ),
+                        ),
+                        child: Text(
+                          _trekDate == null ? 'Not scheduled yet' : _formatDate(_trekDate!),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     Row(
                       children: [
                         Expanded(
@@ -339,6 +409,42 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                       ),
                       keyboardType: TextInputType.url,
                     ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _feeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Registration fee (₹)',
+                        hintText: '0 = free, no payment step for members',
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: (value) {
+                        final text = value?.trim() ?? '';
+                        if (text.isEmpty) return null; // treated as 0
+                        final parsed = double.tryParse(text);
+                        if (parsed == null) return 'Invalid number';
+                        if (parsed < 0) return 'Fee can\'t be negative';
+                        return null;
+                      },
+                      onChanged: (value) {
+                        setState(() => _registrationFee = double.tryParse(value.trim()) ?? 0);
+                      },
+                    ),
+
+                    // Only offered once a fee is actually set — a free
+                    // trek has no payment step, so there's nothing for a
+                    // QR code to be attached to.
+                    if (_registrationFee > 0) ...[
+                      const SizedBox(height: 16),
+                      CoverImagePicker(
+                        initialImageUrl: _existingQrCode,
+                        hintText: 'Tap to add a payment QR code',
+                        onImagePicked: (bytes, extension) {
+                          _pickedQrBytes = bytes;
+                          _pickedQrExtension = extension;
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 28),
 
                     FilledButton(

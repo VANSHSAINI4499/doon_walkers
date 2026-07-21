@@ -1,6 +1,8 @@
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/auth/domain/entities/user_entity.dart';
 import 'package:doon_walkers/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:doon_walkers/features/profile/presentation/widgets/loyalty_badge_section.dart';
+import 'package:doon_walkers/features/profile/presentation/widgets/profile_stats_section.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/my_registrations_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -175,6 +177,10 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 28),
+                    const LoyaltyBadgeSection(),
+                    const SizedBox(height: 20),
+                    const ProfileStatsSection(),
                     const SizedBox(height: 28),
                     // The member's own registered treks, with self-service
                     // cancellation. Scoped to this user by

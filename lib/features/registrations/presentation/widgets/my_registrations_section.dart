@@ -196,8 +196,12 @@ class _MyRegistrationTileState extends ConsumerState<_MyRegistrationTile> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
-                RegistrationStatusChip(status: r.paymentStatus),
+                // A free-trek registration shows no payment_status badge
+                // at all — "nothing to verify" — per the Part C brief.
+                if (r.involvedPayment) ...[
+                  const SizedBox(width: 8),
+                  RegistrationStatusChip(status: r.paymentStatus, label: r.memberFacingStatusLabel),
+                ],
               ],
             ),
             const SizedBox(height: 8),

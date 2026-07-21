@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// Tap-to-pick cover image field for the admin trek form. Shows a
+/// Tap-to-pick image field for the admin trek form. Shows a
 /// newly-picked image if there is one, else the trek's existing
 /// [initialImageUrl] (edit mode), else an empty placeholder.
 ///
@@ -11,15 +11,22 @@ import 'package:image_picker/image_picker.dart';
 /// doesn't upload anything itself. Upload happens when the form is
 /// submitted (see TrekAdminController), so backing out of the form
 /// without saving never touches Storage.
+///
+/// Generic enough to double as the payment QR code picker
+/// ([hintText] is the only thing that differs) — both are a single
+/// admin-picked image feeding a `TrekAdminController` upload method,
+/// just targeting a different trek column.
 class CoverImagePicker extends StatefulWidget {
   const CoverImagePicker({
     super.key,
     required this.onImagePicked,
     this.initialImageUrl,
+    this.hintText = 'Tap to add a cover image',
   });
 
   final String? initialImageUrl;
   final void Function(Uint8List bytes, String fileExtension) onImagePicked;
+  final String hintText;
 
   @override
   State<CoverImagePicker> createState() => _CoverImagePickerState();
@@ -132,7 +139,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
           if (showHint) ...[
             const SizedBox(height: 8),
             Text(
-              'Tap to add a cover image',
+              widget.hintText,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],

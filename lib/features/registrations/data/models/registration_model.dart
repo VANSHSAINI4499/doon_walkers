@@ -3,7 +3,8 @@ import 'package:doon_walkers/features/registrations/domain/entities/registration
 /// Serialisation layer for [Registration].
 ///
 /// [fromJson] expects the PostgREST embedded-resource shape produced by
-/// `.select('*, users(name, email, phone), treks(title)')` — i.e. the
+/// `.select('*, users(name, email, phone), treks(title, trek_date)')` —
+/// i.e. the
 /// joined rows arrive as nested maps under `users` / `treks`, inferred
 /// from `registrations_user_id_fkey` and `registrations_trek_id_fkey`.
 ///
@@ -32,6 +33,10 @@ class RegistrationModel {
       userEmail: (user?['email'] as String?) ?? '—',
       userPhone: _emptyToNull(user?['phone'] as String?),
       trekTitle: (trek?['title'] as String?) ?? 'Unknown trek',
+      paymentScreenshotUrl: json['payment_screenshot_url'] as String?,
+      trekDate: trek?['trek_date'] != null
+          ? DateTime.parse(trek!['trek_date'] as String)
+          : null,
     );
   }
 

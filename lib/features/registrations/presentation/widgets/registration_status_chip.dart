@@ -4,10 +4,16 @@ import 'package:flutter/material.dart';
 /// Shared `payment_status` pill, used by the admin roster, the admin
 /// detail view, and the member's own "My Registrations" list so the same
 /// status never renders three slightly different ways.
+///
+/// [label] overrides the displayed text while [status] still drives the
+/// colour — used by member-facing surfaces to show
+/// [Registration.memberFacingStatusLabel] ("Pending Verification")
+/// instead of the generic admin-facing [PaymentStatus.label] ("Pending").
 class RegistrationStatusChip extends StatelessWidget {
-  const RegistrationStatusChip({super.key, required this.status});
+  const RegistrationStatusChip({super.key, required this.status, this.label});
 
   final PaymentStatus status;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +37,7 @@ class RegistrationStatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Text(
-        status.label,
+        label ?? status.label,
         style: theme.textTheme.labelSmall?.copyWith(color: fg, fontWeight: FontWeight.bold),
       ),
     );

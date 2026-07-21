@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/widgets/app_shell.dart';
-import 'package:doon_walkers/features/about/presentation/screens/about_screen.dart';
 import 'package:doon_walkers/features/admin/presentation/screens/admin_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
@@ -15,7 +14,6 @@ import 'package:doon_walkers/features/registrations/presentation/screens/admin_r
 import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_form_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_detail_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_library_screen.dart';
-import 'package:doon_walkers/features/upcoming_treks/presentation/screens/upcoming_treks_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -112,12 +110,24 @@ final routerProvider = Provider<GoRouter>(
 /// DoonWalkers application router.
 ///
 /// Uses [GoRouter] with a [StatefulShellRoute] so that:
-///   - The 5 primary tabs each maintain their own navigation stack.
+///   - The 4 primary tabs (Home, Trek Library, Gallery, Profile) each
+///     maintain their own navigation stack.
 ///   - The [AppShell] (bottom nav + drawer) persists across route transitions.
-///   - Profile and Admin routes live inside the shell (drawer keeps visible)
-///     but as standalone branches not surfaced in the bottom nav.
+///   - Admin lives inside the shell (drawer keeps visible) but as a
+///     standalone branch not surfaced in the bottom nav — the ONE
+///     remaining non-tabbed branch since Part B moved Profile into the
+///     tab bar. See AppShell's doc for the branch-index implications.
 ///   - Auth routes (/sign-in, /sign-up, /forgot-password) are top-level outside
 ///     the shell so bottom navigation bars are suppressed.
+///
+/// Branch layout (branch index — must match [AppShell]'s
+/// `_primaryDestinations` order for the first 4):
+///   0: Home            1: Trek Library     2: Gallery
+///   3: Profile (tab)   4: Admin (drawer-only)
+///
+/// About and Upcoming Treks were removed in Part B — About's content
+/// moved into Home, Upcoming Treks (a placeholder with no real content)
+/// was dropped rather than replaced.
 GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRouter(
   initialLocation: AppConstants.routeHome,
   debugLogDiagnostics: kDebugMode,
@@ -220,29 +230,7 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           ],
         ),
 
-        // Branch 3 — Upcoming Treks
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: AppConstants.routeUpcomingTreks,
-              name: 'upcoming-treks',
-              builder: (context, state) => const UpcomingTreksScreen(),
-            ),
-          ],
-        ),
-
-        // Branch 4 — About
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: AppConstants.routeAbout,
-              name: 'about',
-              builder: (context, state) => const AboutScreen(),
-            ),
-          ],
-        ),
-
-        // Branch 5 — Profile (secondary, drawer)
+        // Branch 3 — Profile (now a bottom-nav tab; previously drawer-only)
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -253,7 +241,8 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           ],
         ),
 
-        // Branch 6 — Admin (secondary, drawer)
+        // Branch 4 — Admin (secondary, drawer-only; the one remaining
+        // non-tabbed branch)
         StatefulShellBranch(
           routes: [
             GoRoute(
