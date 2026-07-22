@@ -16,11 +16,12 @@ import 'package:go_router/go_router.dart';
 ///     regular user, and admin).
 ///   - Admin additionally gets a 4th tab: Trek Registrations.
 ///
-/// Secondary destination (Navigation Drawer):
-///   Admin Dashboard — only rendered at all when the signed-in user is
-///   an admin (see [isAdminProvider] watch below); a guest or regular
-///   member sees an empty drawer body (just branding/version), not a
-///   non-functional item they can tap.
+/// Navigation Drawer: branding/version only now — its one entry, "Admin
+/// Dashboard", was removed along with the screen it opened (see
+/// app_router.dart's top doc). Every remaining admin-only affordance is
+/// either inline (Trek Library, Trek Detail's comments/gallery), a
+/// bottom-nav tab (Trek Registrations), or on Profile (Send
+/// Notification) — none of them need a drawer entry of their own.
 ///
 /// The selected tab is derived from the current [GoRouterState] location
 /// so that deep-links automatically highlight the correct tab.
@@ -111,9 +112,10 @@ const _adminDestination = _NavDestination(
 /// `NavigationBar` and tripping its assertion, the crash history this
 /// project has already hit once — has direct unit coverage instead of
 /// only the manual device trace. Covers both directions: [currentIndex]
-/// pointing at the always-drawer-only Admin Dashboard branch (4), AND
-/// pointing at the admin-only Trek Registrations branch (3) right after
-/// a demotion shrinks [destinationsLength] out from under it.
+/// pointing at the never-a-tab admin-only branch (4, no index screen of
+/// its own — see app_router.dart), AND pointing at the admin-only Trek
+/// Registrations branch (3) right after a demotion shrinks
+/// [destinationsLength] out from under it.
 @visibleForTesting
 (int selectedIndex, int nextLastPrimaryIndex) resolveSelectedTabIndex({
   required int currentIndex,
@@ -135,15 +137,15 @@ const _adminDestination = _NavDestination(
 
 // Branch index of Trek Registrations — must match its position in
 // app_router.dart's branches list (0 Home, 1 Treks, 2 Profile, 3 Trek
-// Registrations, 4 Admin Dashboard).
+// Registrations, 4 admin-only standalone screens).
 const _trekRegistrationsBranchIndex = 3;
 
 class _AppShellState extends ConsumerState<AppShell> {
   // Tracks whichever primary tab was last actually valid to show
   // selected — see [resolveSelectedTabIndex] for the full reasoning and
-  // the two cases it now has to handle (the always-drawer-only Admin
-  // Dashboard branch, and the admin-only Trek Registrations branch
-  // right after a demotion).
+  // the two cases it now has to handle (the never-a-tab admin-only
+  // branch, and the admin-only Trek Registrations branch right after a
+  // demotion).
   int _lastPrimaryIndex = 0;
 
   void _onTabSelected(BuildContext context, int index) {
@@ -158,7 +160,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     // GoRouter's own `redirect` (app_router.dart) is the primary guard
     // against a demoted admin staying on an admin-only route, and it's
     // enough for most cases (verified live: it correctly bounces a
-    // demoted user off /admin itself). But it re-evaluates against the
+    // demoted user off admin-only paths). But it re-evaluates against the
     // router's declarative top-level location, and Trek Registrations'
     // detail routes are reached via push() *within* this branch's own
     // Navigator — verified live that a demotion while several pushes
@@ -167,12 +169,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     // precisely-scoped line of defense: the ONE transition that can
     // strand a viewer on now-forbidden content is admin-with-role
     // becoming non-admin while sitting on branch 3 specifically (not
-    // branch 4, the Admin Dashboard — reaching that one via the drawer
-    // is normal for an admin and must NOT trigger this). When that exact
-    // transition happens, actively navigate to Home — a plain context.go
-    // call, which (unlike push) always resets to a clean top-level
-    // match, so it works regardless of how many pages were pushed within
-    // the branch.
+    // branch 4, whose screens are reached via push() from elsewhere —
+    // e.g. Profile's Send Notification card — and must NOT trigger
+    // this). When that exact transition happens, actively navigate to
+    // Home — a plain context.go call, which (unlike push) always resets
+    // to a clean top-level match, so it works regardless of how many
+    // pages were pushed within the branch.
     ref.listen<bool>(isAdminProvider, (previous, next) {
       if (previous == true &&
           next == false &&
@@ -220,13 +222,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
 
       // ── Secondary navigation: Material 3 NavigationDrawer ────────
+      // Branding/version only now — its one destination (Admin
+      // Dashboard) was removed along with the screen it opened; see
+      // this class's top doc.
       endDrawer: NavigationDrawer(
-        onDestinationSelected: (index) {
-          Navigator.of(context).pop(); // close drawer
-          // The Admin Dashboard is the only destination ever present,
-          // so any selection here — index is always 0 — means it.
-          if (isAdmin) context.go(AppConstants.routeAdmin);
-        },
+        onDestinationSelected: (index) => Navigator.of(context).pop(),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 24, 16, 10),
@@ -237,13 +237,6 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
             ),
           ),
-          const Divider(indent: 28, endIndent: 28),
-          if (isAdmin)
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.admin_panel_settings_outlined),
-              selectedIcon: Icon(Icons.admin_panel_settings),
-              label: Text('Admin'),
-            ),
           const Divider(indent: 28, endIndent: 28),
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 8, 16, 0),

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/widgets/app_shell.dart';
-import 'package:doon_walkers/features/admin/presentation/screens/admin_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.dart';
@@ -117,12 +116,9 @@ final routerProvider = Provider<GoRouter>(
 /// Uses [GoRouter] with a [StatefulShellRoute] so that:
 ///   - Every primary tab maintains its own navigation stack.
 ///   - The [AppShell] (bottom nav + drawer) persists across route transitions.
-///   - The Admin Dashboard lives inside the shell (drawer keeps visible)
-///     but as a standalone branch never surfaced in the bottom nav — the
-///     one branch that's ALWAYS drawer-only regardless of role. Trek
-///     Registrations, by contrast, IS a bottom tab, but only for an
-///     admin — see AppShell's doc for how it handles that role-dependent
-///     tab count without an invalid `selectedIndex`.
+///   - Trek Registrations IS a bottom tab, but only for an admin — see
+///     AppShell's doc for how it handles that role-dependent tab count
+///     without an invalid `selectedIndex`.
 ///   - Auth routes (/sign-in, /sign-up, /forgot-password) are top-level outside
 ///     the shell so bottom navigation bars are suppressed.
 ///
@@ -130,7 +126,8 @@ final routerProvider = Provider<GoRouter>(
 /// order for the ones that ARE tabs):
 ///   0: Home                        1: Trek Library
 ///   2: Profile (tab)               3: Trek Registrations (admin-only tab)
-///   4: Admin Dashboard (drawer-only, every role)
+///   4: Admin-only standalone screens (drawer/dashboard-only, no index
+///      screen of their own — see branch 4's own doc)
 ///
 /// About and Upcoming Treks were removed in Part B — About's content
 /// moved into Home, Upcoming Treks (a placeholder with no real content)
@@ -138,6 +135,17 @@ final routerProvider = Provider<GoRouter>(
 /// the standalone cross-trek tab is gone for every role; gallery
 /// MANAGEMENT stays exactly where it was, inline on each Trek Detail
 /// page's TrekGallerySection.
+///
+/// The Admin Dashboard (`/admin` itself, a static "access verified"
+/// banner with a module-card grid) was removed once every card either
+/// had an inline/tab equivalent elsewhere or — Send Notification — moved
+/// onto Profile (admin-only, gated on [isAdminProvider]). Its three
+/// surviving admin-only screens (Registrations, Comment Moderation,
+/// Send Notification) no longer share a `/admin` parent route in the
+/// tree; each is its own standalone top-level route in branch 4 below,
+/// still under an `/admin/...` path so [_isAdminRoute]'s prefix check
+/// keeps gating them exactly as before. There is deliberately no route
+/// left for bare `/admin` — nothing in the UI links there anymore.
 GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRouter(
   initialLocation: AppConstants.routeHome,
   debugLogDiagnostics: kDebugMode,
@@ -313,74 +321,73 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           ],
         ),
 
-        // Branch 4 — Admin Dashboard (secondary, drawer-only; the one
-        // remaining non-tabbed branch — the flat cross-trek roster and
-        // Comment Moderation live here, unlike Trek Registrations above)
+        // Branch 4 — admin-only standalone screens, no shared parent
+        // route or index screen (the old `/admin` Admin Dashboard was
+        // removed — see this file's top doc). Each is its own full-path
+        // top-level route rather than nested under a common `/admin`
+        // GoRoute, since there's no longer a shared screen for them to
+        // nest under; `/admin/...` is still the literal path string on
+        // each one purely so [_isAdminRoute]'s prefix check keeps gating
+        // them without needing a matching change.
         StatefulShellBranch(
           routes: [
+            // /admin/registrations — the flat cross-trek roster. Trek and
+            // gallery CRUD used to live under /admin too (/admin/treks,
+            // /admin/gallery); those moved inline onto the public Trek
+            // Library screen (and TrekGallerySection on Trek Detail for
+            // gallery), since each has an obvious public screen to embed
+            // into. A cross-trek roster doesn't, so it stays a standalone
+            // admin-only screen — no other entry point in the app links
+            // to it, only reachable by direct navigation (there is none
+            // wired up in the UI right now).
             GoRoute(
-              path: AppConstants.routeAdmin,
-              name: 'admin',
-              builder: (context, state) => const AdminScreen(),
+              path: AppConstants.routeAdminRegistrations,
+              name: 'admin-registrations',
+              builder: (context, state) => const AdminRegistrationsScreen(),
               routes: [
-                // /admin/registrations — the one admin surface that stays
-                // its own destination. Trek and gallery CRUD used to live
-                // here too (/admin/treks, /admin/gallery); those moved
-                // inline onto the public Trek Library screen (and
-                // TrekGallerySection on Trek Detail for gallery), since
-                // each has an obvious public screen to embed into. A
-                // cross-trek roster doesn't, so it stays here.
-                //
-                // Admin-gated by the same route-prefix check the /admin
-                // redirect already does; see _isAdminRoute below.
+                // /admin/registrations/:id — full detail incl. the
+                // sensitive registrant fields and the admin-only
+                // payment_status control. Nested here so it inherits
+                // the /admin prefix gate rather than needing its own.
                 GoRoute(
-                  path: 'registrations',
-                  name: 'admin-registrations',
-                  builder: (context, state) => const AdminRegistrationsScreen(),
-                  routes: [
-                    // /admin/registrations/:id — full detail incl. the
-                    // sensitive registrant fields and the admin-only
-                    // payment_status control. Nested here so it inherits
-                    // the /admin prefix gate rather than needing its own.
-                    GoRoute(
-                      path: ':id',
-                      name: 'admin-registration-detail',
-                      builder: (context, state) => AdminRegistrationDetailScreen(
-                        registrationId: state.pathParameters['id']!,
-                      ),
-                    ),
-                  ],
-                ),
-                // /admin/comments — cross-trek hidden-comments
-                // moderation queue (Phase 7). Same drawer/dashboard-only
-                // shape as /admin/registrations, not a bottom-nav tab —
-                // see CommentModerationScreen's doc for why.
-                GoRoute(
-                  path: 'comments',
-                  name: 'admin-comment-moderation',
-                  builder: (context, state) => const CommentModerationScreen(),
-                  routes: [
-                    // /admin/comments/blocklist — add/remove blocklist
-                    // terms in-app. Nested here rather than its own
-                    // Admin Dashboard card since it's a secondary tool
-                    // of comment moderation, not a first-class
-                    // destination — see AdminBlocklistScreen's doc.
-                    GoRoute(
-                      path: 'blocklist',
-                      name: 'admin-comment-blocklist',
-                      builder: (context, state) => const AdminBlocklistScreen(),
-                    ),
-                  ],
-                ),
-                // /admin/notifications — broadcast composer (Phase 8).
-                // Same drawer/dashboard-only shape as Registrations and
-                // Comment Moderation, not a bottom-nav tab.
-                GoRoute(
-                  path: 'notifications',
-                  name: 'admin-send-notification',
-                  builder: (context, state) => const AdminSendNotificationScreen(),
+                  path: ':id',
+                  name: 'admin-registration-detail',
+                  builder: (context, state) => AdminRegistrationDetailScreen(
+                    registrationId: state.pathParameters['id']!,
+                  ),
                 ),
               ],
+            ),
+            // /admin/comments — cross-trek hidden-comments moderation
+            // queue (Phase 7). No UI entry point currently links here
+            // either — inline hide/show on each Trek Detail's comment
+            // thread is the primary moderation surface; this cross-trek
+            // overview is standalone and unlinked, same situation as
+            // Registrations above.
+            GoRoute(
+              path: AppConstants.routeCommentModeration,
+              name: 'admin-comment-moderation',
+              builder: (context, state) => const CommentModerationScreen(),
+              routes: [
+                // /admin/comments/blocklist — add/remove blocklist terms
+                // in-app. Nested here (relative, composes onto the full
+                // path above) since it's a secondary tool of comment
+                // moderation, not a first-class destination of its own —
+                // see AdminBlocklistScreen's doc.
+                GoRoute(
+                  path: 'blocklist',
+                  name: 'admin-comment-blocklist',
+                  builder: (context, state) => const AdminBlocklistScreen(),
+                ),
+              ],
+            ),
+            // /admin/notifications — broadcast composer (Phase 8). The
+            // one screen in this branch WITH a real entry point: the
+            // admin-only "Send Notification" card on the Profile screen.
+            GoRoute(
+              path: AppConstants.routeAdminSendNotification,
+              name: 'admin-send-notification',
+              builder: (context, state) => const AdminSendNotificationScreen(),
             ),
           ],
         ),

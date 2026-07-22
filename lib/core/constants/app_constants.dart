@@ -32,6 +32,14 @@ class AppConstants {
   static const String routeHome = '/';
   static const String routeTrekLibrary = '/trek-library';
   static const String routeProfile = '/profile';
+
+  /// No GoRoute matches this bare path anymore — the Admin Dashboard
+  /// screen that used to live here (a static "access verified" banner
+  /// plus a module-card grid) was removed once every card had an
+  /// inline/tab equivalent elsewhere or (Send Notification) moved onto
+  /// Profile. Kept only as the prefix app_router.dart's admin route
+  /// guard matches against, since every surviving admin-only screen's
+  /// path still starts with `/admin/...`.
   static const String routeAdmin = '/admin';
   static const String routeSignIn = '/sign-in';
   static const String routeSignUp = '/sign-up';
@@ -51,7 +59,10 @@ class AppConstants {
   static String trekEditLocation(String id) => '$routeTrekLibrary/$id/edit';
 
   /// Cross-trek registrations roster — kept as its own admin destination
-  /// since it has no single-trek screen to inline into.
+  /// since it has no single-trek screen to inline into. No UI entry
+  /// point links here since the Admin Dashboard grid was removed; still
+  /// registered as a standalone route in app_router.dart, just currently
+  /// unreachable except by direct navigation.
   static const String routeAdminRegistrations = '/admin/registrations';
 
   /// Per-registration admin detail (sensitive fields + payment control).
@@ -61,15 +72,15 @@ class AppConstants {
 
   /// Per-trek registrations — trek picker (this path) plus a trek-scoped
   /// roster ([adminTrekRegistrationsLocation]). A separate destination
-  /// from [routeAdminRegistrations] (the flat cross-trek roster, still
-  /// drawer/dashboard-only) rather than a filter on it — they serve
-  /// different workflows: the flat roster is recency-triage across every
-  /// trek, this is a single trek's full attendee list.
+  /// from [routeAdminRegistrations] (the flat cross-trek roster) rather
+  /// than a filter on it — they serve different workflows: the flat
+  /// roster is recency-triage across every trek, this is a single
+  /// trek's full attendee list.
   ///
   /// Promoted to its own bottom-nav TAB (branch) for admins in the final
-  /// nav restructure, unlike [routeAdminRegistrations] which stays
-  /// reachable only via the Admin Dashboard/drawer — important enough to
-  /// an admin's day-to-day use to deserve one tap from anywhere, not two.
+  /// nav restructure, unlike [routeAdminRegistrations] which has no UI
+  /// entry point at all now — important enough to an admin's day-to-day
+  /// use to deserve one tap from anywhere, not two.
   static const String routeAdminTrekRegistrations = '/admin/trek-registrations';
 
   /// The roster for one trek, nested under [routeAdminTrekRegistrations]
