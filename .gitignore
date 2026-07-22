@@ -53,6 +53,11 @@ app.*.map.json
 # bearer secret; regenerate/re-place from the Firebase console per-clone.
 android/app/google-services.json
 
+# Firebase Admin SDK service account key — a real bearer credential
+# (grants server-side FCM send access). Stored only as a Supabase
+# secret; never commit the local file used to seed that secret.
+doon-walkers-firebase-adminsdk-fbsvc-*.json
+
 # build_runner generated files (regenerate with: dart run build_runner build)
 **/*.g.dart
 **/*.freezed.dart

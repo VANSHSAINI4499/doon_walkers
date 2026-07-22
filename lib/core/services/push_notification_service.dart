@@ -66,9 +66,12 @@ class PushNotificationService {
   /// main.dart; not guarded against repeat calls since there's no
   /// legitimate reason to call it twice.
   Future<void> initialize() async {
+    debugPrint('[Push] initialize() starting...');
+
     await _localNotifications
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_androidChannel);
+    debugPrint('[Push] local notification channel "${_androidChannel.id}" created');
 
     await _localNotifications.initialize(
       const InitializationSettings(
@@ -78,6 +81,7 @@ class PushNotificationService {
       // banner we posted ourselves in _showForegroundNotification).
       onDidReceiveNotificationResponse: (_) => _openNotifications(),
     );
+    debugPrint('[Push] flutter_local_notifications initialized');
 
     // Required top-level handler registration — see its own doc for why
     // it stays minimal.
@@ -86,7 +90,11 @@ class PushNotificationService {
     // Triggers the Android 13+ POST_NOTIFICATIONS runtime permission
     // prompt; firebase_messaging handles that internally as of the
     // version pinned in pubspec.yaml.
-    await FirebaseMessaging.instance.requestPermission();
+    debugPrint('[Push] requesting notification permission...');
+    final settings = await FirebaseMessaging.instance.requestPermission();
+    debugPrint('[Push] permission result: '
+        'authorizationStatus=${settings.authorizationStatus}, '
+        'alert=${settings.alert}, badge=${settings.badge}, sound=${settings.sound}');
 
     FirebaseMessaging.onMessage.listen(_showForegroundNotification);
 
@@ -102,9 +110,21 @@ class PushNotificationService {
     // no error — a stale token just silently stops receiving pushes —
     // so this has to be a standing subscription, not a one-time read.
     _tokenRefreshSubscription ??= FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
-      if (Supabase.instance.client.auth.currentUser == null) return;
-      await _ref.read(deviceTokenRepositoryProvider).upsertToken(token);
+      debugPrint('[Push] onTokenRefresh fired: token=$token');
+      if (Supabase.instance.client.auth.currentUser == null) {
+        debugPrint('[Push] onTokenRefresh: no signed-in user, skipping upsert');
+        return;
+      }
+      try {
+        await _ref.read(deviceTokenRepositoryProvider).upsertToken(token);
+        debugPrint('[Push] onTokenRefresh: token upserted successfully');
+      } catch (e, st) {
+        debugPrint('[Push] onTokenRefresh: upsert FAILED: $e');
+        debugPrint('[Push] $st');
+      }
     });
+
+    debugPrint('[Push] initialize() complete');
   }
 
   Future<void> _showForegroundNotification(RemoteMessage message) async {
@@ -134,9 +154,31 @@ class PushNotificationService {
   /// Registers (upserts) this device's current FCM token for the
   /// signed-in user. Called on sign-in — see [pushTokenSyncProvider].
   Future<void> registerTokenForCurrentUser() async {
-    final token = await FirebaseMessaging.instance.getToken();
-    if (token == null) return;
-    await _ref.read(deviceTokenRepositoryProvider).upsertToken(token);
+    debugPrint('[Push] registerTokenForCurrentUser() starting...');
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      final now = DateTime.now();
+      final expiresAt = session?.expiresAt;
+      debugPrint('[Push] currentSession at registration time: '
+          'present=${session != null}, '
+          'accessTokenLen=${session?.accessToken.length}, '
+          'expiresAt=${expiresAt != null ? DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000) : null}, '
+          'now=$now, '
+          'isExpired=${session?.isExpired}');
+
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) {
+        debugPrint('[Push] getToken() returned null — cannot register');
+        return;
+      }
+      debugPrint('[Push] getToken() returned: $token');
+
+      await _ref.read(deviceTokenRepositoryProvider).upsertToken(token);
+      debugPrint('[Push] token upserted to device_tokens successfully');
+    } catch (e, st) {
+      debugPrint('[Push] registerTokenForCurrentUser() FAILED: $e');
+      debugPrint('[Push] $st');
+    }
   }
 
   /// Removes this device's token row. MUST be called BEFORE sign-out
@@ -146,9 +188,14 @@ class PushNotificationService {
   /// `auth.uid()` left to satisfy the policy and would silently fail.
   /// See AuthController.signOut for the call site.
   Future<void> removeTokenForCurrentUser() async {
+    debugPrint('[Push] removeTokenForCurrentUser() starting...');
     final token = await FirebaseMessaging.instance.getToken();
-    if (token == null) return;
+    if (token == null) {
+      debugPrint('[Push] getToken() returned null — nothing to remove');
+      return;
+    }
     await _ref.read(deviceTokenRepositoryProvider).removeToken(token);
+    debugPrint('[Push] token removed from device_tokens');
   }
 }
 
@@ -168,22 +215,40 @@ class PushNotificationService {
 /// therefore `auth.uid()`) is already gone.
 final pushTokenSyncProvider = Provider<void>(
   (ref) {
-    ref.listen<AsyncValue<AuthState>>(authStateChangesProvider, (previous, next) {
-      final event = next.valueOrNull?.event;
-      final service = ref.read(pushNotificationServiceProvider);
-      switch (event) {
-        case AuthChangeEvent.initialSession:
-        case AuthChangeEvent.signedIn:
-        case AuthChangeEvent.tokenRefreshed:
-          if (Supabase.instance.client.auth.currentUser != null) {
-            service.registerTokenForCurrentUser();
-          }
-        case AuthChangeEvent.signedOut:
-          service.removeTokenForCurrentUser();
-        default:
-          break;
-      }
-    });
+    ref.listen<AsyncValue<AuthState>>(
+      authStateChangesProvider,
+      (previous, next) {
+        final event = next.valueOrNull?.event;
+        final hasUser = Supabase.instance.client.auth.currentUser != null;
+        debugPrint('[Push] pushTokenSyncProvider: authStateChanges event=$event, '
+            'currentUser=${hasUser ? "present" : "null"}');
+
+        final service = ref.read(pushNotificationServiceProvider);
+        switch (event) {
+          case AuthChangeEvent.initialSession:
+          case AuthChangeEvent.signedIn:
+          case AuthChangeEvent.tokenRefreshed:
+            if (hasUser) {
+              service.registerTokenForCurrentUser();
+            }
+          case AuthChangeEvent.signedOut:
+            service.removeTokenForCurrentUser();
+          default:
+            break;
+        }
+      },
+      // Without this, a session already restored from disk before this
+      // listener attaches (e.g. currentUserProvider/isAdminProvider
+      // subscribing to authStateChangesProvider earlier during initial
+      // route resolution) means the `initialSession` event was already
+      // consumed as this provider's cached "current" value by the time
+      // ref.listen runs — plain ref.listen only fires on CHANGES after
+      // it's registered, so that first event would silently never be
+      // seen and a returning signed-in user's token would never
+      // register. fireImmediately forces one synthetic call with
+      // whatever the already-cached value is, closing that gap.
+      fireImmediately: true,
+    );
   },
   name: 'pushTokenSyncProvider',
 );

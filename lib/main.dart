@@ -27,7 +27,17 @@ Future<void> main() async {
   // 3. Firebase must be initialised before any other Firebase plugin —
   //    reads android/app/google-services.json under the hood via the
   //    Gradle plugin wired in android/app/build.gradle.kts.
-  await Firebase.initializeApp();
+  debugPrint('[Push] Firebase.initializeApp() starting...');
+  try {
+    final app = await Firebase.initializeApp();
+    debugPrint('[Push] Firebase.initializeApp() succeeded: '
+        'name=${app.name}, projectId=${app.options.projectId}, '
+        'appId=${app.options.appId}');
+  } catch (e, st) {
+    debugPrint('[Push] Firebase.initializeApp() FAILED: $e');
+    debugPrint('[Push] $st');
+    rethrow;
+  }
 
   // 4. Wrap the widget tree in ProviderScope so every widget can access
   //    Riverpod providers via ref, THEN initialise push notifications —
