@@ -5,6 +5,8 @@ import 'package:doon_walkers/core/widgets/app_shell.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:doon_walkers/features/challenges/presentation/screens/admin_challenge_form_screen.dart';
+import 'package:doon_walkers/features/challenges/presentation/screens/admin_challenges_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
@@ -393,7 +395,58 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           ],
         ),
 
-        // Branch 4 — admin-only standalone screens, no shared parent
+        // Branch 4 — Challenges (admin-only bottom-nav TAB, Version 2
+        // Phase C1). Originally reached only via a "Manage Challenges"
+        // card on Profile; moved to its own tab per explicit request —
+        // same structural reasoning as Trek Registrations (branch 3)
+        // just above: a bottom-nav tab needs its own standalone
+        // StatefulShellBranch, since a route nested inside another
+        // branch's GoRoute tree can't be separately tab-selected.
+        //
+        // Admin-only for now because there is no public-facing content
+        // to show a non-admin here yet — the progress bars/badges/tab
+        // UI a regular member would actually want is explicitly C2
+        // scope, not built in C1. AppShell only lists this as a 5th
+        // destination when isAdminProvider is true, same conditional
+        // visibility as Trek Registrations; the branch itself always
+        // exists in the tree for every role. Path still starts with
+        // /admin/... so [_isAdminRoute]'s prefix check gates it exactly
+        // like every other admin surface — including a demotion mid-tab,
+        // backed up by AppShell's own explicit redirect-to-Home listener
+        // (see `_challengesBranchIndex`).
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppConstants.routeAdminChallenges,
+              name: 'admin-challenges',
+              builder: (context, state) => const AdminChallengesScreen(),
+              routes: [
+                // /admin/challenges/new — declared BEFORE ':id', same
+                // reasoning as /merchandise/new: GoRouter matches in
+                // order, so without this ordering "new" would be
+                // captured as a challenge id instead.
+                GoRoute(
+                  path: 'new',
+                  name: 'admin-challenges-new',
+                  builder: (context, state) => const AdminChallengeFormScreen(),
+                ),
+                // /admin/challenges/:id/edit — a single multi-segment
+                // relative path rather than a nested ':id' parent, since
+                // there is no bare /admin/challenges/:id screen to act
+                // as that parent.
+                GoRoute(
+                  path: ':id/edit',
+                  name: 'admin-challenges-edit',
+                  builder: (context, state) => AdminChallengeFormScreen(
+                    challengeId: state.pathParameters['id']!,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        // Branch 5 — admin-only standalone screens, no shared parent
         // route or index screen (the old `/admin` Admin Dashboard was
         // removed — see this file's top doc). Each is its own full-path
         // top-level route rather than nested under a common `/admin`

@@ -160,6 +160,23 @@ class AppConstants {
   /// — see AdminMerchInquiriesCard.
   static const String routeAdminMerchInquiries = '/admin/merch-inquiries';
 
+  /// Admin challenge management — Version 2, Phase C1. Entirely
+  /// admin-only this phase (there is no public Challenges tab yet —
+  /// that's C2), so the whole `/admin/challenges/...` subtree is
+  /// covered by the existing `_isAdminRoute` prefix check with no
+  /// `_isChallengeAdminRoute`-style split needed (unlike Merchandise,
+  /// which has a public catalog alongside admin-only forms). This is
+  /// the index route of its own admin-only bottom-nav tab
+  /// ("Challenges" — see app_router.dart's Branch 4 / AppShell), not a
+  /// Profile-card destination.
+  static const String routeAdminChallenges = '/admin/challenges';
+
+  /// Declared BEFORE `:id` in app_router.dart, same reasoning as
+  /// [routeTrekNew]/[routeMerchandiseNew].
+  static const String routeAdminChallengesNew = '$routeAdminChallenges/new';
+
+  static String adminChallengeEditLocation(String id) => '$routeAdminChallenges/$id/edit';
+
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
   static const String tableTreks = 'treks';
@@ -193,6 +210,21 @@ class AppConstants {
   /// A user's saved products (0019_user_wishlist.sql) — own-row only,
   /// deliberately no admin visibility; see that migration's doc.
   static const String tableUserWishlist = 'user_wishlist';
+
+  /// Challenge definitions (0022_challenges.sql) — Version 2, Phase C1.
+  static const String tableChallenges = 'challenges';
+
+  /// One row per (challenge, tier) — one-to-many with [tableChallenges],
+  /// always all 4 tiers together; see the Challenge entity's doc.
+  static const String tableChallengeTiers = 'challenge_tiers';
+
+  // ── Supabase RPC functions ───────────────────────────────────────
+
+  /// Live-computes the SIGNED-IN caller's progress across every active
+  /// challenge — see ChallengeRepository.fetchMyProgress's doc for why
+  /// this takes no user-id parameter (auth.uid() is read inside the
+  /// function itself; that's the entire security model for it).
+  static const String rpcGetMyChallengeProgress = 'get_my_challenge_progress';
 
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';
