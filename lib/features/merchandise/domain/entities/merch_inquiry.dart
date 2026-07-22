@@ -29,10 +29,9 @@ enum MerchInquiryStatus {
 /// Core domain representation of a row in `public.merch_inquiries`,
 /// with the joined display fields the admin roster needs (who asked,
 /// about what product/size) — see MerchInquiryRepository's select shape.
-///
-/// This is admin-facing only in this phase: there is no member-facing
-/// "my past inquiries" list yet, only the submit flow — see
-/// [MerchInquiryRepository]'s doc.
+/// Also backs "My Inquiries" on Profile (Version 2, Phase M2 fix) —
+/// the same joined fields (product name/size) are exactly what that
+/// read-only list needs too, so one entity serves both surfaces.
 class MerchInquiry {
   final String id;
   final String userId;
@@ -51,10 +50,19 @@ class MerchInquiry {
   /// been deleted (ON DELETE SET NULL — see the migration).
   final String? variantSize;
 
-  /// Joined from `public.users` — how the admin follows up.
+  /// Joined from `public.users` — the requester's account contact
+  /// info, always shown to admin alongside [phoneNumber] below.
   final String userName;
   final String userEmail;
   final String? userPhone;
+
+  /// The contact number for THIS SPECIFIC inquiry (0020_merch_inquiry_
+  /// phone.sql) — pre-filled from the requester's account phone in the
+  /// form but editable, since they may want a different number reached
+  /// for this particular order. Deliberately distinct from [userPhone]
+  /// (the account's phone, which may differ or go stale) — the admin
+  /// sees both.
+  final String? phoneNumber;
 
   const MerchInquiry({
     required this.id,
@@ -70,5 +78,6 @@ class MerchInquiry {
     required this.userName,
     required this.userEmail,
     this.userPhone,
+    this.phoneNumber,
   });
 }

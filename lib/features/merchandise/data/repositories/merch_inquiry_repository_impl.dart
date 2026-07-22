@@ -44,6 +44,7 @@ class MerchInquiryRepositoryImpl implements MerchInquiryRepository {
     String? variantId,
     required int quantity,
     String? note,
+    required String phoneNumber,
   }) async {
     final row = await _supabase
         .from(AppConstants.tableMerchInquiries)
@@ -53,6 +54,7 @@ class MerchInquiryRepositoryImpl implements MerchInquiryRepository {
           'variant_id': variantId,
           'quantity': quantity,
           'note': note,
+          'phone_number': phoneNumber,
         })
         .select(_selectWithJoins)
         .single();
@@ -64,6 +66,16 @@ class MerchInquiryRepositoryImpl implements MerchInquiryRepository {
     final rows = await _supabase
         .from(AppConstants.tableMerchInquiries)
         .select(_selectWithJoins)
+        .order('created_at', ascending: false);
+    return rows.map(MerchInquiryModel.fromJson).toList();
+  }
+
+  @override
+  Future<List<MerchInquiry>> fetchMyInquiries() async {
+    final rows = await _supabase
+        .from(AppConstants.tableMerchInquiries)
+        .select(_selectWithJoins)
+        .eq('user_id', _currentUserId)
         .order('created_at', ascending: false);
     return rows.map(MerchInquiryModel.fromJson).toList();
   }

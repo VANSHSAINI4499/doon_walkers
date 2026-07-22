@@ -1,4 +1,6 @@
-// Phase 8 — broadcast push delivery.
+// Phase 8 — push delivery. Originally broadcast-only; Version 2, Phase
+// M2 fix added targeted (single-recipient) delivery on top — see the
+// target_user_id handling below and 0021_notifications_targeting.sql.
 //
 // Invoked by a Supabase Database Webhook on INSERT into public.notifications
 // (see the webhook config drafted alongside this file — NOT YET CREATED,
@@ -12,8 +14,8 @@
 // which lets you attach the key without it ever passing through chat or a
 // file. Never disable verify_jwt here: this function reads title/body
 // straight from the request body and blasts them to every registered
-// device, so an unauthenticated version of this endpoint would be an open
-// mass-push spam vector.
+// device (or, now, a specific one), so an unauthenticated version of this
+// endpoint would be an open mass-push spam vector.
 //
 // Credentials: the Firebase service account is read from the
 // FIREBASE_SERVICE_ACCOUNT secret (Deno.env.get) — never hardcoded.
@@ -23,6 +25,15 @@
 // which has no SELECT policy for any client role by design (see the
 // device_tokens migration) — only this server-side, service-role path can
 // ever read raw tokens.
+//
+// DEPLOYMENT NOTE: this file was updated for target_user_id filtering as
+// part of the Phase M2 fix, but has NOT been redeployed — the deployed
+// version (as of this change) is still the Phase 8 broadcast-only
+// original. Redeploying is a deliberate follow-up step via Claude Code's
+// Supabase MCP connection, not done automatically by this change. Until
+// that redeploy happens, EVERY notification — targeted or not — still
+// broadcasts to all device_tokens, because the currently-live function
+// doesn't know about target_user_id at all.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { GoogleAuth } from "npm:google-auth-library@9";
 
@@ -30,6 +41,10 @@ interface NotificationRecord {
   id: string;
   title: string;
   body: string;
+  // Version 2, Phase M2 fix. Absent/null = broadcast to everyone
+  // (original Phase 8 behavior, unchanged). Set = deliver only to
+  // this user's device tokens — see 0021_notifications_targeting.sql.
+  target_user_id?: string | null;
 }
 
 interface WebhookPayload {
@@ -55,8 +70,10 @@ Deno.serve(async (req: Request) => {
     console.error("[send-push-notification] payload.record missing title/body — aborting");
     return new Response("missing notification title/body", { status: 400 });
   }
+  const targetUserId = notification.target_user_id ?? null;
   console.log(
-    `[send-push-notification] notification id=${notification.id} title="${notification.title}"`,
+    `[send-push-notification] notification id=${notification.id} title="${notification.title}" ` +
+      `mode=${targetUserId ? `targeted(user_id=${targetUserId})` : "broadcast"}`,
   );
 
   const serviceAccountRaw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
@@ -84,16 +101,23 @@ Deno.serve(async (req: Request) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const { data: deviceTokens, error: fetchError } = await supabase
-    .from("device_tokens")
-    .select("id, fcm_token");
+  // Targeted: only this user's tokens. Broadcast (targetUserId null):
+  // every token, same as the original Phase 8 behavior — unchanged.
+  let deviceTokensQuery = supabase.from("device_tokens").select("id, fcm_token");
+  if (targetUserId) {
+    deviceTokensQuery = deviceTokensQuery.eq("user_id", targetUserId);
+  }
+  const { data: deviceTokens, error: fetchError } = await deviceTokensQuery;
 
   if (fetchError) {
     console.error("[send-push-notification] failed to read device_tokens:", JSON.stringify(fetchError));
     return new Response("failed to read device tokens", { status: 500 });
   }
 
-  console.log(`[send-push-notification] found ${deviceTokens?.length ?? 0} device token(s) in device_tokens`);
+  console.log(
+    `[send-push-notification] found ${deviceTokens?.length ?? 0} device token(s) ` +
+      `in device_tokens${targetUserId ? ` for user_id=${targetUserId}` : ""}`,
+  );
   if (!deviceTokens || deviceTokens.length === 0) {
     console.log("No device tokens found");
     return new Response(

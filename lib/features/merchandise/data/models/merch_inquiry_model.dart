@@ -20,6 +20,7 @@ class MerchInquiryModel extends MerchInquiry {
     required super.userName,
     required super.userEmail,
     super.userPhone,
+    super.phoneNumber,
   });
 
   factory MerchInquiryModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +44,9 @@ class MerchInquiryModel extends MerchInquiry {
       userName: (user?['name'] as String?) ?? '',
       userEmail: (user?['email'] as String?) ?? '',
       userPhone: user?['phone'] as String?,
+      // Absent on rows created before 0020_merch_inquiry_phone.sql —
+      // stays null rather than throwing.
+      phoneNumber: json['phone_number'] as String?,
     );
   }
 }

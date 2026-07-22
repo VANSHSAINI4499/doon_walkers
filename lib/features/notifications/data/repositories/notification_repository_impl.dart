@@ -20,11 +20,21 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
   @override
   Future<List<NotificationItem>> fetchNotifications() async {
-    final rows = await _supabase
-        .from(AppConstants.tableNotifications)
-        .select()
-        .order('created_at', ascending: false);
+    // Explicit filter *as well as* RLS — the policy is the real
+    // boundary, but being explicit keeps this correct if an admin
+    // (who has no special SELECT bypass on this table — see
+    // 0021_notifications_targeting.sql, deliberately no is_admin() OR
+    // clause) opens their own notification list. A guest never reaches
+    // this call at all (the /notifications route redirect-guards
+    // them), but the null-safe fallback (broadcasts only) keeps this
+    // defensively correct even so.
+    final userId = _supabase.auth.currentUser?.id;
+    final query = _supabase.from(AppConstants.tableNotifications).select();
+    final filtered = userId == null
+        ? query.isFilter('target_user_id', null)
+        : query.or('target_user_id.is.null,target_user_id.eq.$userId');
 
+    final rows = await filtered.order('created_at', ascending: false);
     return rows.map(NotificationModel.fromJson).toList();
   }
 
@@ -32,10 +42,15 @@ class NotificationRepositoryImpl implements NotificationRepository {
   Future<NotificationItem> createNotification({
     required String title,
     required String body,
+    String? targetUserId,
   }) async {
     final row = await _supabase
         .from(AppConstants.tableNotifications)
-        .insert(NotificationModel.toInsertJson(title: title, body: body))
+        .insert(NotificationModel.toInsertJson(
+          title: title,
+          body: body,
+          targetUserId: targetUserId,
+        ))
         .select()
         .single();
     return NotificationModel.fromJson(row);

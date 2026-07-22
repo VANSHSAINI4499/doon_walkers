@@ -136,7 +136,7 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
     setState(() => _isSaving = true);
     final success = await ref
         .read(merchInquiryControllerProvider.notifier)
-        .updateStatus(widget.inquiry.id, status);
+        .updateStatus(widget.inquiry, status);
     if (!mounted) return;
     setState(() => _isSaving = false);
 
@@ -197,6 +197,26 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
                 ),
               ],
             ),
+            // The number to actually call about THIS order — may differ
+            // from the account phone above (editable per-inquiry, see
+            // MerchInquiry.phoneNumber's doc). Bold to stand out as the
+            // one to use.
+            if ((inquiry.phoneNumber ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.call_outlined, size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Contact for this order: ${inquiry.phoneNumber}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if ((inquiry.note ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(

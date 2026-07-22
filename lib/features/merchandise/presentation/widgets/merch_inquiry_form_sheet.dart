@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/merch_inquiry_providers.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController(text: '1');
   final _noteController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   ProductVariant? _selectedVariant;
 
@@ -53,12 +55,18 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
     super.initState();
     final variants = _inStockVariants;
     if (variants.length == 1) _selectedVariant = variants.first;
+
+    // Pre-fill from the account's phone if set — still editable, since
+    // the member may want a different number reached for this specific
+    // order (see MerchInquiry.phoneNumber's doc).
+    _phoneController.text = ref.read(currentUserProvider).valueOrNull?.phone ?? '';
   }
 
   @override
   void dispose() {
     _quantityController.dispose();
     _noteController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -76,6 +84,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
           variantId: _selectedVariant?.id,
           quantity: int.parse(_quantityController.text.trim()),
           note: note.isEmpty ? null : note,
+          phoneNumber: _phoneController.text.trim(),
         );
 
     if (!mounted || created == null) return;
@@ -153,6 +162,20 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                 ),
                 const SizedBox(height: 16),
               ],
+
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Contact phone number',
+                  hintText: "We'll call or text this number about your order",
+                ),
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Please enter a phone number'
+                    : null,
+              ),
+              const SizedBox(height: 16),
 
               TextFormField(
                 controller: _quantityController,

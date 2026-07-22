@@ -16,7 +16,12 @@ class NotificationModel {
   static Map<String, dynamic> toInsertJson({
     required String title,
     required String body,
+    String? targetUserId,
   }) {
-    return {'title': title, 'body': body};
+    return {
+      'title': title,
+      'body': body,
+      'target_user_id': targetUserId,
+    };
   }
 }

@@ -2,6 +2,7 @@ import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/auth/domain/entities/user_entity.dart';
 import 'package:doon_walkers/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/admin_merch_inquiries_card.dart';
+import 'package:doon_walkers/features/merchandise/presentation/widgets/my_inquiries_section.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/my_wishlist_section.dart';
 import 'package:doon_walkers/features/notifications/presentation/widgets/admin_send_notification_card.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/loyalty_badge_section.dart';
@@ -201,6 +202,11 @@ class ProfileScreen extends ConsumerWidget {
                     // MyWishlistSection's doc for why this has no admin
                     // visibility at all, unlike every list above it.
                     const MyWishlistSection(),
+                    const SizedBox(height: 28),
+                    // The member's own "Buy Now" inquiries and their
+                    // current status (Version 2, Phase M2 fix) — read-
+                    // only; see MyInquiriesSection's doc.
+                    const MyInquiriesSection(),
                     const SizedBox(height: 8),
                   ],
                 ),
