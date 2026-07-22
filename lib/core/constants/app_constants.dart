@@ -130,6 +130,27 @@ class AppConstants {
   /// (drawer/dashboard-only, not a bottom-nav tab).
   static const String routeAdminSendNotification = '/admin/notifications';
 
+  /// Merchandise Catalog — Version 2, Phase M1. A plain top-level route
+  /// OUTSIDE the StatefulShellRoute, same reasoning as
+  /// [routeNotifications]: it's reached from the Navigation Drawer,
+  /// which (like the AppBar's bell icon) is visible from every branch,
+  /// so nesting it under any ONE branch would silently switch tabs
+  /// depending on which was current when the drawer opened. Not a
+  /// bottom-nav tab — see MerchandiseCatalogScreen's doc for the full
+  /// placement reasoning. Publicly browsable (no sign-in redirect);
+  /// only the admin create/edit forms below are admin-gated.
+  static const String routeMerchandise = '/merchandise';
+
+  /// Admin create form. Admin-gated the same way [routeTrekNew] is —
+  /// see app_router.dart's `_isMerchAdminRoute`.
+  static const String routeMerchandiseNew = '$routeMerchandise/new';
+
+  static String merchandiseDetailLocation(String id) => '$routeMerchandise/$id';
+
+  /// Admin edit form, nested under the detail route it edits — mirrors
+  /// [trekEditLocation]'s shape exactly.
+  static String merchandiseEditLocation(String id) => '$routeMerchandise/$id/edit';
+
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
   static const String tableTreks = 'treks';
@@ -146,6 +167,16 @@ class AppConstants {
   /// policy at all; see that migration's doc for why.
   static const String tableDeviceTokens = 'device_tokens';
 
+  /// Merchandise catalog (0016_merchandise_catalog.sql).
+  static const String tableProducts = 'products';
+
+  /// Optional per-size stock, one-to-many with [tableProducts]. Empty
+  /// for a product with no sizes — see the Product entity's doc.
+  static const String tableProductVariants = 'product_variants';
+
+  /// One-to-many product photos, mirrors [tableGallery]'s shape.
+  static const String tableProductImages = 'product_images';
+
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';
   static const String bucketTrekGallery = 'trek-gallery';
@@ -155,4 +186,9 @@ class AppConstants {
   /// registration it belongs to; see RegistrationRepository for the
   /// upload/signed-URL flow.
   static const String bucketPaymentProofs = 'payment-proofs';
+
+  /// Product photos (0017_merch_images_storage.sql) — a NEW bucket, not
+  /// a reuse of trek-covers/trek-gallery; same public-read/admin-write
+  /// shape as trek-covers.
+  static const String bucketMerchImages = 'merch-images';
 }

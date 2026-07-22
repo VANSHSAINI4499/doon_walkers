@@ -8,6 +8,9 @@ import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.d
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
+import 'package:doon_walkers/features/merchandise/presentation/screens/admin_product_form_screen.dart';
+import 'package:doon_walkers/features/merchandise/presentation/screens/merchandise_catalog_screen.dart';
+import 'package:doon_walkers/features/merchandise/presentation/screens/product_detail_screen.dart';
 import 'package:doon_walkers/features/notifications/presentation/screens/admin_send_notification_screen.dart';
 import 'package:doon_walkers/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
@@ -97,6 +100,21 @@ bool _isTrekAdminRoute(String location) {
       segments.last == 'edit';
 }
 
+/// True for the admin-only merchandise create/edit forms
+/// (`/merchandise/new` and `/merchandise/:id/edit`) — mirrors
+/// [_isTrekAdminRoute] exactly. The catalog and detail routes
+/// themselves are public (browsing merch needs no admin check); only
+/// these two mutate data, so only these two need gating here on top of
+/// RLS.
+bool _isMerchAdminRoute(String location) {
+  if (location == AppConstants.routeMerchandiseNew) return true;
+
+  final segments = Uri.parse(location).pathSegments;
+  return segments.length == 3 &&
+      '/${segments.first}' == AppConstants.routeMerchandise &&
+      segments.last == 'edit';
+}
+
 /// Exposes the [GoRouter] instance as a Riverpod provider (rather than a
 /// bare top-level field) so its `redirect` logic can [Ref.read] Riverpod
 /// state directly and its refresh listenable can [Ref.listen] to it — see
@@ -121,6 +139,13 @@ final routerProvider = Provider<GoRouter>(
 ///     without an invalid `selectedIndex`.
 ///   - Auth routes (/sign-in, /sign-up, /forgot-password) are top-level outside
 ///     the shell so bottom navigation bars are suppressed.
+///   - /notifications and /merchandise (Version 2, Phase M1) are ALSO
+///     top-level, outside the shell — both are reached from an
+///     AppBar/Drawer affordance visible on every branch (the bell
+///     icon, the drawer's Merchandise entry), so nesting either under
+///     one specific branch would silently switch tabs depending on
+///     which was current when opened. See each route constant's own
+///     doc for the full reasoning.
 ///
 /// Branch layout (branch index — must match [AppShell]'s destinations
 /// order for the ones that ARE tabs):
@@ -183,6 +208,44 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       path: AppConstants.routeNotifications,
       name: 'notifications',
       builder: (context, state) => const NotificationsScreen(),
+    ),
+    // /merchandise — deliberately top-level, same reasoning as
+    // /notifications above: reached from the Navigation Drawer, which
+    // is visible from every branch, so nesting this under any ONE of
+    // them would silently switch tabs depending on which was current
+    // when the drawer opened. Publicly browsable — no redirect guard
+    // here, only the nested new/edit admin forms are gated (see
+    // `_isMerchAdminRoute` below).
+    GoRoute(
+      path: AppConstants.routeMerchandise,
+      name: 'merchandise',
+      builder: (context, state) => const MerchandiseCatalogScreen(),
+      routes: [
+        // /merchandise/new — declared BEFORE ':id', same reasoning as
+        // /trek-library/new: GoRouter matches in order, so without this
+        // ordering "new" would be captured as a product id instead.
+        GoRoute(
+          path: 'new',
+          name: 'merchandise-new',
+          builder: (context, state) => const AdminProductFormScreen(),
+        ),
+        GoRoute(
+          path: ':id',
+          name: 'merchandise-detail',
+          builder: (context, state) => ProductDetailScreen(
+            productId: state.pathParameters['id']!,
+          ),
+          routes: [
+            GoRoute(
+              path: 'edit',
+              name: 'merchandise-edit',
+              builder: (context, state) => AdminProductFormScreen(
+                productId: state.pathParameters['id']!,
+              ),
+            ),
+          ],
+        ),
+      ],
     ),
 
     // StatefulShellRoute for App Navigation Tabs & Drawer Screens
@@ -423,19 +486,22 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     final isProtectedRoute = location == AppConstants.routeProfile ||
         location == AppConstants.routeNotifications ||
         _isAdminRoute(location) ||
-        _isTrekAdminRoute(location);
+        _isTrekAdminRoute(location) ||
+        _isMerchAdminRoute(location);
     if (sessionUser == null && isProtectedRoute) {
       return '${AppConstants.routeSignIn}?redirectTo=${Uri.encodeComponent(state.uri.toString())}';
     }
 
     // 3. If user is signed in and trying to visit /admin (or any nested
-    //    /admin/... route), or one of the trek admin forms now living
-    //    under /trek-library, verify admin role. Checking the exact path
+    //    /admin/... route), one of the trek admin forms now living
+    //    under /trek-library, or a merchandise admin form under
+    //    /merchandise, verify admin role. Checking the exact path
     //    alone would only gate /admin itself — a non-admin could still
-    //    deep-link straight to /admin/registrations or
-    //    /trek-library/new otherwise, even though the UI never offers
-    //    those to them.
-    if (sessionUser != null && (_isAdminRoute(location) || _isTrekAdminRoute(location))) {
+    //    deep-link straight to /admin/registrations,
+    //    /trek-library/new, or /merchandise/new otherwise, even though
+    //    the UI never offers those to them.
+    if (sessionUser != null &&
+        (_isAdminRoute(location) || _isTrekAdminRoute(location) || _isMerchAdminRoute(location))) {
       final userAsync = ref.read(currentUserProvider);
 
       // The public.users row hasn't resolved into a value yet — either

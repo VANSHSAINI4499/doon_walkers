@@ -16,12 +16,19 @@ import 'package:go_router/go_router.dart';
 ///     regular user, and admin).
 ///   - Admin additionally gets a 4th tab: Trek Registrations.
 ///
-/// Navigation Drawer: branding/version only now — its one entry, "Admin
-/// Dashboard", was removed along with the screen it opened (see
-/// app_router.dart's top doc). Every remaining admin-only affordance is
-/// either inline (Trek Library, Trek Detail's comments/gallery), a
-/// bottom-nav tab (Trek Registrations), or on Profile (Send
-/// Notification) — none of them need a drawer entry of their own.
+/// Navigation Drawer: branding/version, plus a "Merchandise" entry
+/// (Version 2, Phase M1) — the drawer's former "Admin Dashboard" entry
+/// was removed along with the screen it opened (see app_router.dart's
+/// top doc), and Merchandise is what now occupies that otherwise-empty
+/// space. Every admin-only affordance is either inline (Trek Library,
+/// Trek Detail's comments/gallery), a bottom-nav tab (Trek
+/// Registrations), or on Profile (Send Notification) — none of them
+/// need a drawer entry. Merchandise is different: it's a genuinely new
+/// top-level, PUBLICLY browsable surface (not admin-only) that isn't a
+/// bottom-nav tab (see MerchandiseCatalogScreen's doc for why not) —
+/// the drawer is the natural, always-reachable-from-anywhere home for
+/// it, reusing an affordance (the menu icon, visible on every branch)
+/// that would otherwise sit completely unused.
 ///
 /// The selected tab is derived from the current [GoRouterState] location
 /// so that deep-links automatically highlight the correct tab.
@@ -222,11 +229,15 @@ class _AppShellState extends ConsumerState<AppShell> {
       ),
 
       // ── Secondary navigation: Material 3 NavigationDrawer ────────
-      // Branding/version only now — its one destination (Admin
-      // Dashboard) was removed along with the screen it opened; see
-      // this class's top doc.
+      // Branding/version plus "Merchandise" — see this class's top doc
+      // for why Merchandise lives here rather than as a bottom-nav tab.
       endDrawer: NavigationDrawer(
-        onDestinationSelected: (index) => Navigator.of(context).pop(),
+        onDestinationSelected: (index) {
+          Navigator.of(context).pop(); // close drawer
+          // "Merchandise" is the only destination present, so any
+          // selection here — index is always 0 — means it.
+          context.push(AppConstants.routeMerchandise);
+        },
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 24, 16, 10),
@@ -236,6 +247,12 @@ class _AppShellState extends ConsumerState<AppShell> {
                 color: AppColors.primary,
               ),
             ),
+          ),
+          const Divider(indent: 28, endIndent: 28),
+          const NavigationDrawerDestination(
+            icon: Icon(Icons.storefront_outlined),
+            selectedIcon: Icon(Icons.storefront),
+            label: Text('Merchandise'),
           ),
           const Divider(indent: 28, endIndent: 28),
           Padding(
