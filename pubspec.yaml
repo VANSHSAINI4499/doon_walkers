@@ -45,6 +45,16 @@ dependencies:
   # this without either overflowing or wasting space.
   flutter_staggered_grid_view: ^0.7.0
 
+  # Phase 8 — push notifications (FCM). firebase_core must be
+  # initialized before any other Firebase plugin; firebase_messaging is
+  # the FCM client; flutter_local_notifications displays a heads-up
+  # banner while the app is in the foreground, since FCM's own
+  # `notification` payload is only auto-displayed by the OS when the
+  # app is backgrounded/terminated — see notification_service.dart.
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
+  flutter_local_notifications: ^18.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

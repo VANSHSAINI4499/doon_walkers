@@ -1,6 +1,8 @@
 import 'package:doon_walkers/core/config/env_config.dart';
 import 'package:doon_walkers/core/router/app_router.dart';
+import 'package:doon_walkers/core/services/push_notification_service.dart';
 import 'package:doon_walkers/core/theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,9 +24,25 @@ Future<void> main() async {
     );
   }
 
-  // 3. Wrap the widget tree in ProviderScope so every widget can access
-  //    Riverpod providers via ref.
-  runApp(const ProviderScope(child: DoonWalkersApp()));
+  // 3. Firebase must be initialised before any other Firebase plugin —
+  //    reads android/app/google-services.json under the hood via the
+  //    Gradle plugin wired in android/app/build.gradle.kts.
+  await Firebase.initializeApp();
+
+  // 4. Wrap the widget tree in ProviderScope so every widget can access
+  //    Riverpod providers via ref, THEN initialise push notifications —
+  //    it needs a ProviderContainer to read/invalidate providers
+  //    (device token upserts, router navigation on tap), so it can't
+  //    run before runApp.
+  final container = ProviderContainer();
+  await container.read(pushNotificationServiceProvider).initialize();
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const DoonWalkersApp(),
+    ),
+  );
 }
 
 /// Root widget for the DoonWalkers application.
@@ -33,6 +51,11 @@ class DoonWalkersApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Fire-and-forget for the app's whole lifetime — see its own doc.
+    // `watch` (not `read`) so it's created here and Riverpod knows this
+    // widget "owns" keeping it alive for as long as the app runs.
+    ref.watch(pushTokenSyncProvider);
+
     return MaterialApp.router(
       title: 'Doon Walkers',
       debugShowCheckedModeBanner: false,

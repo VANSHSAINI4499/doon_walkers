@@ -3,6 +3,10 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Must be applied AFTER com.android.application — reads
+    // google-services.json (this file must exist at android/app/) and
+    // wires the project_id/api_key it needs into the build.
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -27,7 +31,10 @@ android {
         applicationId = "com.example.doon_walkers"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // 23, not flutter.minSdkVersion (21) — firebase_messaging's current
+        // Android implementation requires API 23+; building below that
+        // fails at compile time with a manifest merger/dependency error.
+        minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

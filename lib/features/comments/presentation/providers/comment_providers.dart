@@ -98,4 +98,30 @@ class CommentController extends AsyncNotifier<void> {
     }
     return success;
   }
+
+  /// Admin-only: adds a blocklist term. Returns false (with
+  /// [DuplicateBlocklistTermException] in [state]) if it's already
+  /// present — see AdminBlocklistScreen.
+  Future<bool> addBlocklistTerm(String term) async {
+    state = const AsyncLoading();
+    var success = false;
+    state = await AsyncValue.guard(() async {
+      await ref.read(commentRepositoryProvider).addBlocklistTerm(term);
+      success = true;
+    });
+    if (success) ref.invalidate(commentBlocklistProvider);
+    return success;
+  }
+
+  /// Admin-only: removes a blocklist term.
+  Future<bool> removeBlocklistTerm(String term) async {
+    state = const AsyncLoading();
+    var success = false;
+    state = await AsyncValue.guard(() async {
+      await ref.read(commentRepositoryProvider).removeBlocklistTerm(term);
+      success = true;
+    });
+    if (success) ref.invalidate(commentBlocklistProvider);
+    return success;
+  }
 }

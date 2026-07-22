@@ -6,8 +6,11 @@ import 'package:doon_walkers/features/admin/presentation/screens/admin_screen.da
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
+import 'package:doon_walkers/features/notifications/presentation/screens/admin_send_notification_screen.dart';
+import 'package:doon_walkers/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registration_detail_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registrations_screen.dart';
@@ -159,6 +162,19 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       path: AppConstants.routeForgotPassword,
       name: 'forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    // /notifications — deliberately top-level, not nested under any
+    // StatefulShellRoute branch. See AppConstants.routeNotifications'
+    // doc for why: the bell icon that opens it lives in AppShell's
+    // AppBar, visible from every branch, and a notification tap can
+    // fire from ANY app state — nesting it under one specific branch
+    // would silently switch tabs when opened from a different one
+    // (push() resolves to whichever branch a route structurally
+    // belongs to). Protected like /profile — see the redirect guard.
+    GoRoute(
+      path: AppConstants.routeNotifications,
+      name: 'notifications',
+      builder: (context, state) => const NotificationsScreen(),
     ),
 
     // StatefulShellRoute for App Navigation Tabs & Drawer Screens
@@ -343,6 +359,26 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                   path: 'comments',
                   name: 'admin-comment-moderation',
                   builder: (context, state) => const CommentModerationScreen(),
+                  routes: [
+                    // /admin/comments/blocklist — add/remove blocklist
+                    // terms in-app. Nested here rather than its own
+                    // Admin Dashboard card since it's a secondary tool
+                    // of comment moderation, not a first-class
+                    // destination — see AdminBlocklistScreen's doc.
+                    GoRoute(
+                      path: 'blocklist',
+                      name: 'admin-comment-blocklist',
+                      builder: (context, state) => const AdminBlocklistScreen(),
+                    ),
+                  ],
+                ),
+                // /admin/notifications — broadcast composer (Phase 8).
+                // Same drawer/dashboard-only shape as Registrations and
+                // Comment Moderation, not a bottom-nav tab.
+                GoRoute(
+                  path: 'notifications',
+                  name: 'admin-send-notification',
+                  builder: (context, state) => const AdminSendNotificationScreen(),
                 ),
               ],
             ),
@@ -369,9 +405,16 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     }
 
     // 2. If user is guest and trying to visit protected routes (/profile,
-    //    /admin + nested, or the inlined trek admin forms), redirect to
-    //    Sign In.
+    //    /notifications, /admin + nested, or the inlined trek admin
+    //    forms), redirect to Sign In. /notifications is protected for
+    //    the same reason /profile is — notifications_select only
+    //    allows authenticated readers, so a guest would just see a
+    //    confusing empty list rather than genuinely private content,
+    //    but redirecting is consistent with every other authenticated-
+    //    only surface in this app rather than a special-cased silent
+    //    empty state.
     final isProtectedRoute = location == AppConstants.routeProfile ||
+        location == AppConstants.routeNotifications ||
         _isAdminRoute(location) ||
         _isTrekAdminRoute(location);
     if (sessionUser == null && isProtectedRoute) {

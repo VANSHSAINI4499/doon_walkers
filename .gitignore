@@ -48,6 +48,11 @@ app.*.map.json
 .env
 # .env.example is intentionally tracked
 
+# Firebase (Phase 8) — project-identifying config, not committed even
+# though its API key is package/fingerprint-restricted rather than a
+# bearer secret; regenerate/re-place from the Firebase console per-clone.
+android/app/google-services.json
+
 # build_runner generated files (regenerate with: dart run build_runner build)
 **/*.g.dart
 **/*.freezed.dart

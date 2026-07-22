@@ -18,6 +18,10 @@ final commentRepositoryProvider = Provider<CommentRepository>(
 /// than the bare-RAISE default `P0001`.
 const _blocklistViolation = 'DWB01';
 
+/// Postgres unique-violation SQLSTATE — raised by `comment_blocklist`'s
+/// PRIMARY KEY on `term`.
+const _uniqueViolation = '23505';
+
 /// Supabase implementation of [CommentRepository].
 class CommentRepositoryImpl implements CommentRepository {
   final SupabaseClient _supabase;
@@ -56,8 +60,28 @@ class CommentRepositoryImpl implements CommentRepository {
 
   @override
   Future<List<String>> fetchBlocklistTerms() async {
-    final rows = await _supabase.from(AppConstants.tableCommentBlocklist).select('term');
+    final rows =
+        await _supabase.from(AppConstants.tableCommentBlocklist).select('term').order('term');
     return rows.map((row) => row['term'] as String).toList();
+  }
+
+  @override
+  Future<void> addBlocklistTerm(String term) async {
+    try {
+      await _supabase
+          .from(AppConstants.tableCommentBlocklist)
+          .insert({'term': term.trim().toLowerCase()});
+    } on PostgrestException catch (error) {
+      if (error.code == _uniqueViolation) {
+        throw const DuplicateBlocklistTermException();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> removeBlocklistTerm(String term) async {
+    await _supabase.from(AppConstants.tableCommentBlocklist).delete().eq('term', term);
   }
 
   @override

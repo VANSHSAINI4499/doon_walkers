@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:doon_walkers/core/services/push_notification_service.dart';
 import 'package:doon_walkers/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:doon_walkers/features/auth/domain/repositories/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,9 +58,23 @@ class AuthController extends AsyncNotifier<void> {
   /// Signs out the current user session.
   Future<void> signOut() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signOut(),
-    );
+    state = await AsyncValue.guard(() async {
+      // MUST run before the actual sign-out, not after — removing this
+      // device's token row needs auth.uid() to still resolve to this
+      // user (device_tokens_delete_own's RLS check); once the session
+      // is cleared there's no matching auth.uid() left to satisfy it.
+      // Best-effort: a failure here shouldn't block the user from
+      // actually signing out.
+      try {
+        await ref.read(pushNotificationServiceProvider).removeTokenForCurrentUser();
+      } catch (_) {
+        // Worst case: a stale token row lingers until the next device
+        // that signs in on this phone reassigns it (upsert-by-token) or
+        // FCM itself reports it invalid and the Edge Function prunes
+        // it — not worth failing sign-out over.
+      }
+      await ref.read(authRepositoryProvider).signOut();
+    });
   }
 
   /// Sends a password recovery link to [email].

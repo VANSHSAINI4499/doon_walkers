@@ -161,6 +161,15 @@ class AdminScreen extends ConsumerWidget {
                           icon: Icons.forum_rounded,
                           onTap: () => context.push(AppConstants.routeCommentModeration),
                         ),
+                        // Phase 8 — broadcast composer. `push`, same
+                        // drawer/dashboard-only shape as Registrations.
+                        _buildModuleCard(
+                          context,
+                          title: 'Send Notification',
+                          subtitle: 'Broadcast an announcement to everyone',
+                          icon: Icons.campaign_rounded,
+                          onTap: () => context.push(AppConstants.routeAdminSendNotification),
+                        ),
                       ],
                     ),
                   ],

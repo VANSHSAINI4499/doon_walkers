@@ -60,4 +60,19 @@ abstract class CommentRepository {
   /// non-admin caller, so this fails server-side even if the UI were
   /// mis-gated.
   Future<void> setVisibility(String id, bool isVisible);
+
+  /// Admin-only: adds a term to the blocklist —
+  /// `comment_blocklist_insert_admin` (0012) rejects this for any
+  /// non-admin caller. This is what makes ongoing list maintenance
+  /// (Hindi/Hinglish terms, anything the starter list missed) a normal
+  /// in-app admin action rather than something requiring a migration
+  /// or direct Supabase dashboard access — see
+  /// AdminBlocklistScreen.
+  ///
+  /// Throws [DuplicateBlocklistTermException] if the term (trimmed,
+  /// lowercased) is already in the list.
+  Future<void> addBlocklistTerm(String term);
+
+  /// Admin-only: removes a term from the blocklist.
+  Future<void> removeBlocklistTerm(String term);
 }

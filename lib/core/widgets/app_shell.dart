@@ -198,6 +198,16 @@ class _AppShellState extends ConsumerState<AppShell> {
           style: AppTextStyles.titleLarge.copyWith(color: AppColors.onPrimary),
         ),
         actions: [
+          // Notifications (Phase 8) — always shown regardless of role
+          // or sign-in state, same convention as the Profile tab: the
+          // router's own guest-redirect guard is what protects
+          // /notifications, not conditional visibility of the
+          // affordance that opens it.
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: AppColors.onPrimary),
+            tooltip: 'Notifications',
+            onPressed: () => context.push(AppConstants.routeNotifications),
+          ),
           // Opens the secondary NavigationDrawer
           Builder(
             builder: (ctx) => IconButton(

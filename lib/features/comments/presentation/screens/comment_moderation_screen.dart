@@ -1,7 +1,9 @@
+import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/features/comments/presentation/providers/comment_providers.dart';
 import 'package:doon_walkers/features/comments/presentation/widgets/comment_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Cross-trek comment moderation queue — every currently-hidden
 /// comment, across every trek, in one place.
@@ -28,7 +30,16 @@ class CommentModerationScreen extends ConsumerWidget {
     final hiddenAsync = ref.watch(hiddenCommentsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Comment Moderation')),
+      appBar: AppBar(
+        title: const Text('Comment Moderation'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.block_rounded),
+            tooltip: 'Manage blocklist',
+            onPressed: () => context.push(AppConstants.routeCommentBlocklist),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: hiddenAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),

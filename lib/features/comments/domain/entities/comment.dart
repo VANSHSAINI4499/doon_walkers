@@ -54,3 +54,15 @@ class CommentBlocklistException implements Exception {
   String toString() =>
       'This comment contains inappropriate language and cannot be posted. Please revise it.';
 }
+
+/// Thrown when [CommentRepository.addBlocklistTerm] is called with a
+/// term (trimmed, lowercased) already present — `comment_blocklist`'s
+/// PRIMARY KEY on `term` (0012) is what actually enforces uniqueness;
+/// this maps the resulting 23505 to a message that reads as "already
+/// covered" rather than a raw constraint-violation string.
+class DuplicateBlocklistTermException implements Exception {
+  const DuplicateBlocklistTermException();
+
+  @override
+  String toString() => 'That term is already in the blocklist.';
+}

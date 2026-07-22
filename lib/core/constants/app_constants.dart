@@ -96,6 +96,29 @@ class AppConstants {
   /// [routeAdminTrekRegistrations].
   static const String routeCommentModeration = '/admin/comments';
 
+  /// In-app blocklist management (add/remove terms) — the real,
+  /// ongoing answer to keeping `public.comment_blocklist` current,
+  /// reachable without touching code or the Supabase dashboard.
+  /// Nested under [routeCommentModeration], not its own Admin
+  /// Dashboard destination — see AdminBlocklistScreen's doc.
+  static const String routeCommentBlocklist = '$routeCommentModeration/blocklist';
+
+  /// In-app notification list — top-level, OUTSIDE the StatefulShellRoute
+  /// entirely (like /sign-in), not nested under any bottom-nav branch.
+  /// The bell icon that opens it lives in AppShell's AppBar, which is
+  /// visible from every branch (Home/Treks/Profile/Registrations) — if
+  /// this were nested under any ONE of them, opening it from a
+  /// different branch would silently switch tabs (the exact bug class
+  /// fixed in the nav restructure: push() resolves to whichever branch
+  /// a route structurally belongs to, regardless of what's currently
+  /// visible). A plain top-level route sidesteps that entirely.
+  static const String routeNotifications = '/notifications';
+
+  /// Admin composer — broadcast a title+body to every registered
+  /// device. Nested under /admin like Comment Moderation/Registrations
+  /// (drawer/dashboard-only, not a bottom-nav tab).
+  static const String routeAdminSendNotification = '/admin/notifications';
+
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
   static const String tableTreks = 'treks';
@@ -107,6 +130,10 @@ class AppConstants {
 
   /// Admin-editable content-filter blocklist (0012_comments_moderation.sql).
   static const String tableCommentBlocklist = 'comment_blocklist';
+
+  /// Per-device FCM tokens (0014_device_tokens.sql) — no client SELECT
+  /// policy at all; see that migration's doc for why.
+  static const String tableDeviceTokens = 'device_tokens';
 
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';
