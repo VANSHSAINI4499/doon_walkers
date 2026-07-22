@@ -2,10 +2,13 @@ import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/widgets/section_header.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/product_providers.dart';
+import 'package:doon_walkers/features/merchandise/presentation/widgets/merch_inquiry_form_sheet.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/product_admin_actions.dart';
+import 'package:doon_walkers/features/merchandise/presentation/widgets/product_buy_button.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/product_category_badge.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/product_images_section.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/stock_status_badge.dart';
+import 'package:doon_walkers/features/merchandise/presentation/widgets/wishlist_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,9 +18,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// "not found" state rather than leaking which case it was. Mirrors
 /// TrekDetailScreen's identical `trek == null` handling.
 class ProductDetailScreen extends ConsumerWidget {
-  const ProductDetailScreen({super.key, required this.productId});
+  const ProductDetailScreen({
+    super.key,
+    required this.productId,
+    this.openBuyForm = false,
+    this.openWishlist = false,
+  });
 
   final String productId;
+
+  /// Set from the `?buy=1` query flag [ProductBuyButton] attaches to
+  /// its sign-in return path — mirrors TrekRegisterButton/
+  /// TrekDetailScreen's `register=1` round trip.
+  final bool openBuyForm;
+
+  /// Set from the `?wishlist=1` query flag [WishlistButton] attaches to
+  /// its sign-in return path.
+  final bool openWishlist;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -39,7 +56,12 @@ class ProductDetailScreen extends ConsumerWidget {
               title: 'Product not found.',
             );
           }
-          return _ProductDetailBody(product: product, isAdmin: ref.watch(isAdminProvider));
+          return _ProductDetailBody(
+            product: product,
+            isAdmin: ref.watch(isAdminProvider),
+            openBuyForm: openBuyForm,
+            openWishlist: openWishlist,
+          );
         },
       ),
     );
@@ -90,8 +112,13 @@ class _DetailMessage extends StatelessWidget {
   }
 }
 
-class _ProductDetailBody extends StatelessWidget {
-  const _ProductDetailBody({required this.product, required this.isAdmin});
+class _ProductDetailBody extends ConsumerStatefulWidget {
+  const _ProductDetailBody({
+    required this.product,
+    required this.isAdmin,
+    required this.openBuyForm,
+    required this.openWishlist,
+  });
 
   final Product product;
 
@@ -100,9 +127,44 @@ class _ProductDetailBody extends StatelessWidget {
   /// and a draft banner; guests and members see neither.
   final bool isAdmin;
 
+  final bool openBuyForm;
+  final bool openWishlist;
+
+  @override
+  ConsumerState<_ProductDetailBody> createState() => _ProductDetailBodyState();
+}
+
+class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
+  /// Auto-opens the inquiry sheet once, from the `?buy=1` sign-in
+  /// return flag — no extra "handled" guard needed the way
+  /// TrekDetailScreen's `_maybeAutoOpenRegistration` requires one:
+  /// `product` is already resolved by the time this widget is built
+  /// (unlike TrekDetailScreen, which re-runs its own check on every
+  /// rebuild of the outer async-loading widget), so `initState`'s
+  /// once-per-State-lifetime guarantee is sufficient on its own.
+  @override
+  void initState() {
+    super.initState();
+    if (widget.openBuyForm && !widget.isAdmin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final submitted = await showMerchInquiryFormSheet(context, product: widget.product);
+        if (submitted == true && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Thanks! We'll be in touch to arrange payment and pickup."),
+            ),
+          );
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final product = widget.product;
+    final isAdmin = widget.isAdmin;
     final coverImage = product.coverImageUrl;
 
     return CustomScrollView(
@@ -189,9 +251,22 @@ class _ProductDetailBody extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    Text(
-                      product.name,
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product.name,
+                            style: theme.textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        // Admins manage the catalog, they don't wish-
+                        // list from it — same convention as the Buy Now
+                        // CTA below not rendering for them at all.
+                        if (!isAdmin)
+                          WishlistButton(productId: product.id, autoAdd: widget.openWishlist),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -235,28 +310,14 @@ class _ProductDetailBody extends StatelessWidget {
                       const SizedBox(height: 28),
                     ],
 
-                    // Buy Now / checkout is M2 scope — this is a
-                    // deliberate disabled placeholder rather than an
-                    // omitted button, so the purchase path is visibly
-                    // "coming soon" rather than silently absent. Admins
-                    // manage the catalog, they don't buy from it — same
-                    // convention as TrekRegisterButton not rendering a
-                    // CTA for them at all.
+                    // Buy Now (Version 2, Phase M2) — an inquiry-to-
+                    // admin flow, not real checkout; see
+                    // ProductBuyButton's doc. Admins manage the
+                    // catalog, they don't buy from it — same convention
+                    // as TrekRegisterButton not rendering a CTA for
+                    // them at all.
                     if (!isAdmin) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FilledButton.icon(
-                              onPressed: null,
-                              icon: const Icon(Icons.shopping_cart_outlined),
-                              label: const Text('Buy Now — Coming Soon'),
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      ProductBuyButton(product: product),
                       const SizedBox(height: 28),
                     ],
 

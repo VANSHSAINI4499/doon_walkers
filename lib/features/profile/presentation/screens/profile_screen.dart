@@ -1,6 +1,8 @@
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/auth/domain/entities/user_entity.dart';
 import 'package:doon_walkers/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:doon_walkers/features/merchandise/presentation/widgets/admin_merch_inquiries_card.dart';
+import 'package:doon_walkers/features/merchandise/presentation/widgets/my_wishlist_section.dart';
 import 'package:doon_walkers/features/notifications/presentation/widgets/admin_send_notification_card.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/loyalty_badge_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/profile_stats_section.dart';
@@ -178,10 +180,13 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Admin-only — renders nothing for a regular member.
-                    // Placed right under identity/role so an admin sees
-                    // it immediately, ahead of the personal stats below.
+                    // Admin-only — both render nothing for a regular
+                    // member. Placed right under identity/role so an
+                    // admin sees them immediately, ahead of the
+                    // personal stats/lists below.
                     const AdminSendNotificationCard(),
+                    const SizedBox(height: 12),
+                    const AdminMerchInquiriesCard(),
                     const SizedBox(height: 28),
                     const LoyaltyBadgeSection(),
                     const SizedBox(height: 20),
@@ -191,6 +196,11 @@ class ProfileScreen extends ConsumerWidget {
                     // cancellation. Scoped to this user by
                     // myRegistrationsProvider + registrations_select RLS.
                     const MyRegistrationsSection(),
+                    const SizedBox(height: 28),
+                    // The member's own wishlisted products — see
+                    // MyWishlistSection's doc for why this has no admin
+                    // visibility at all, unlike every list above it.
+                    const MyWishlistSection(),
                     const SizedBox(height: 8),
                   ],
                 ),

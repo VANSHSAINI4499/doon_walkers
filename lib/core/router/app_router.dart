@@ -8,6 +8,7 @@ import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.d
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
+import 'package:doon_walkers/features/merchandise/presentation/screens/admin_merch_inquiries_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/admin_product_form_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/merchandise_catalog_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/product_detail_screen.dart';
@@ -234,6 +235,14 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           name: 'merchandise-detail',
           builder: (context, state) => ProductDetailScreen(
             productId: state.pathParameters['id']!,
+            // Set by ProductBuyButton's sign-in return path so a guest
+            // who signed in mid-inquiry lands back in the form rather
+            // than just on the product page — mirrors
+            // TrekRegisterButton's `register=1` round trip.
+            openBuyForm: state.uri.queryParameters['buy'] == '1',
+            // Set by WishlistButton's sign-in return path — same idea,
+            // completes the original add-to-wishlist tap automatically.
+            openWishlist: state.uri.queryParameters['wishlist'] == '1',
           ),
           routes: [
             GoRoute(
@@ -451,6 +460,14 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
               path: AppConstants.routeAdminSendNotification,
               name: 'admin-send-notification',
               builder: (context, state) => const AdminSendNotificationScreen(),
+            ),
+            // /admin/merch-inquiries — "Buy Now" inquiry roster
+            // (Version 2, Phase M2). Same shape as /admin/notifications:
+            // reached only via Profile's "Merchandise Inquiries" card.
+            GoRoute(
+              path: AppConstants.routeAdminMerchInquiries,
+              name: 'admin-merch-inquiries',
+              builder: (context, state) => const AdminMerchInquiriesScreen(),
             ),
           ],
         ),

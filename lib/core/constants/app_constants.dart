@@ -151,6 +151,15 @@ class AppConstants {
   /// [trekEditLocation]'s shape exactly.
   static String merchandiseEditLocation(String id) => '$routeMerchandise/$id/edit';
 
+  /// Admin "Buy Now" inquiries roster — Version 2, Phase M2. Under
+  /// `/admin/...` so the EXISTING `_isAdminRoute` prefix check already
+  /// gates it (viewing this list is admin-only outright, unlike the
+  /// public catalog, so it doesn't need its own `_isMerchAdminRoute`-
+  /// style guard — the blanket admin check is exactly what's wanted
+  /// here). Reachable only via Profile's "Merchandise Inquiries" card
+  /// — see AdminMerchInquiriesCard.
+  static const String routeAdminMerchInquiries = '/admin/merch-inquiries';
+
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
   static const String tableTreks = 'treks';
@@ -176,6 +185,14 @@ class AppConstants {
 
   /// One-to-many product photos, mirrors [tableGallery]'s shape.
   static const String tableProductImages = 'product_images';
+
+  /// "Buy Now" inquiries (0018_merch_inquiries.sql) — an
+  /// inquiry-to-admin flow, not real checkout. See MerchInquiryRepository.
+  static const String tableMerchInquiries = 'merch_inquiries';
+
+  /// A user's saved products (0019_user_wishlist.sql) — own-row only,
+  /// deliberately no admin visibility; see that migration's doc.
+  static const String tableUserWishlist = 'user_wishlist';
 
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';
