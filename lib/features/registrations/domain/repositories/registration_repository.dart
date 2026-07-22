@@ -27,6 +27,15 @@ abstract class RegistrationRepository {
   /// allowed to see it; RLS makes those indistinguishable on purpose.
   Future<Registration?> fetchRegistrationById(String id);
 
+  /// Every registration for one trek — the per-trek roster (Admin
+  /// Dashboard → Trek Registrations), newest first.
+  ///
+  /// Filters server-side with `.eq('trek_id', ...)` rather than fetching
+  /// [fetchAllRegistrations] and filtering client-side, so a trek with
+  /// many registrations across a growing roster of ~35+ treks doesn't
+  /// pull every other trek's rows over the wire just to discard them.
+  Future<List<Registration>> fetchRegistrationsForTrek(String trekId);
+
   /// The signed-in user's own registrations, newest first.
   ///
   /// Relies on `registrations_select` to scope the result rather than

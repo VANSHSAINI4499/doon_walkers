@@ -69,6 +69,17 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
   }
 
   @override
+  Future<List<Registration>> fetchRegistrationsForTrek(String trekId) async {
+    final rows = await _supabase
+        .from(AppConstants.tableRegistrations)
+        .select(_selectWithJoins)
+        .eq('trek_id', trekId)
+        .order('created_at', ascending: false);
+
+    return rows.map(RegistrationModel.fromJson).toList();
+  }
+
+  @override
   Future<List<Registration>> fetchMyRegistrations() async {
     // Filtered explicitly *as well as* by RLS. The policy is the real
     // boundary, but being explicit keeps this correct if an admin (who

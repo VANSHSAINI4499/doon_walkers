@@ -18,15 +18,6 @@ final trekGalleryProvider = FutureProvider.autoDispose.family<List<GalleryMedia>
   name: 'trekGalleryProvider',
 );
 
-/// Every media row across every trek — admin manage-all screen and the
-/// standalone public Gallery screen (grouped by trek there).
-///
-/// One-shot fetch — same reasoning as [trekGalleryProvider].
-final allGalleryMediaProvider = FutureProvider<List<GalleryMedia>>(
-  (ref) => ref.watch(galleryRepositoryProvider).fetchAllMedia(),
-  name: 'allGalleryMediaProvider',
-);
-
 /// Riverpod AsyncNotifier managing admin gallery mutations (upload,
 /// delete). Mirrors TrekAdminController's shape: [state] is shared
 /// loading/error status across all actions.

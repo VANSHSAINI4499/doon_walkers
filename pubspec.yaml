@@ -39,6 +39,12 @@ dependencies:
   video_player: ^2.10.1
   chewie: ^1.12.1
 
+  # Trek Library grid — card height driven by content (description
+  # length varies per trek) rather than a fixed aspect ratio; see the
+  # trek_library_screen.dart comment on why a plain GridView can't do
+  # this without either overflowing or wasting space.
+  flutter_staggered_grid_view: ^0.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

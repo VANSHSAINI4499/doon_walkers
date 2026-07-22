@@ -131,6 +131,12 @@ class TrekCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                // Every text child below caps itself with maxLines and
+                // TextOverflow.ellipsis, so intrinsic height stays within
+                // the GridView cell's fixed height (from
+                // childAspectRatio) regardless of description length —
+                // that bound is what keeps every card the same height,
+                // not anything on this Column itself.
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,17 +153,37 @@ class TrekCard extends StatelessWidget {
                       DifficultyBadge(difficulty: trek.difficulty, dense: true),
                     ],
                   ),
+                  if (trek.description.trim().isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      trek.description.trim(),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   if (trek.distanceKm != null || trek.durationDays != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
+                    const SizedBox(height: 10),
+                    // Wrap, not Row — on a narrow masonry column two
+                    // tinted-pill chips (wider than the plain icon+text
+                    // they replaced) don't reliably fit side by side;
+                    // a plain Row overflowed by ~20px on cards this
+                    // narrow. Wrap drops the second chip to its own
+                    // line instead, which the masonry grid (card height
+                    // driven by content, not a fixed ratio) already
+                    // handles cleanly.
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         if (trek.distanceKm != null)
                           _FactChip(
                             icon: Icons.straighten_rounded,
                             label: '${_formatDistance(trek.distanceKm!)} km',
                           ),
-                        if (trek.distanceKm != null && trek.durationDays != null)
-                          const SizedBox(width: 10),
                         if (trek.durationDays != null)
                           _FactChip(
                             icon: Icons.calendar_today_outlined,
@@ -196,6 +222,10 @@ class _CoverPlaceholder extends StatelessWidget {
   }
 }
 
+/// Small tinted pill for a distance/duration fact — mirrors
+/// [DifficultyBadge]'s tinted-fill-plus-outline treatment (same alpha
+/// values) instead of plain icon+text, so the card's lower half reads as
+/// deliberately designed rather than default Flutter text.
 class _FactChip extends StatelessWidget {
   const _FactChip({required this.icon, required this.label});
 
@@ -205,16 +235,28 @@ class _FactChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-        ),
-      ],
+    final color = theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withAlpha(70)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/utils/link_launcher.dart';
 import 'package:doon_walkers/core/widgets/section_header.dart';
+import 'package:doon_walkers/features/comments/presentation/widgets/comment_thread.dart';
 import 'package:doon_walkers/features/gallery/presentation/widgets/trek_gallery_section.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_form_sheet.dart';
@@ -21,6 +22,7 @@ class TrekDetailScreen extends ConsumerStatefulWidget {
     super.key,
     required this.trekId,
     this.openRegistration = false,
+    this.openComment = false,
   });
 
   final String trekId;
@@ -31,6 +33,14 @@ class TrekDetailScreen extends ConsumerStatefulWidget {
   /// here — this reopens the form so they land back *in the flow* rather
   /// than on the trek page having to find the button again.
   final bool openRegistration;
+
+  /// Same idea as [openRegistration] but for [CommentThread]'s input —
+  /// set from `?comment=1`, which its own "Sign in to comment" tap
+  /// attaches to the sign-in return path via [AuthGuard]. Passed
+  /// straight through as [CommentThread.autoFocusInput]; unlike the
+  /// registration sheet this doesn't need a "handled" guard here — see
+  /// that field's doc for why.
+  final bool openComment;
 
   @override
   ConsumerState<TrekDetailScreen> createState() => _TrekDetailScreenState();
@@ -50,6 +60,10 @@ class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
     // TrekRegisterButton's own gating, so a stale `?register=1` return
     // link for a trek that has since passed can't pop the sheet anyway.
     if (trek.isCompleted) return;
+    // Admins manage treks, they don't register for them — mirrors
+    // TrekRegisterButton not rendering a CTA for them at all, so a
+    // stale/crafted `?register=1` link can't pop the sheet either.
+    if (ref.read(isAdminProvider)) return;
     _handledAutoOpen = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -91,7 +105,11 @@ class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
             );
           }
           _maybeAutoOpenRegistration(trek);
-          return _TrekDetailBody(trek: trek, isAdmin: ref.watch(isAdminProvider));
+          return _TrekDetailBody(
+            trek: trek,
+            isAdmin: ref.watch(isAdminProvider),
+            openComment: widget.openComment,
+          );
         },
       ),
     );
@@ -143,9 +161,12 @@ class _DetailMessage extends StatelessWidget {
 }
 
 class _TrekDetailBody extends StatelessWidget {
-  const _TrekDetailBody({required this.trek, required this.isAdmin});
+  const _TrekDetailBody({required this.trek, required this.isAdmin, this.openComment = false});
 
   final Trek trek;
+
+  /// See [TrekDetailScreen.openComment].
+  final bool openComment;
 
   /// Drives whether inline management controls render. Same shared screen
   /// for every role — an admin just gets an extra actions menu and a
@@ -279,8 +300,14 @@ class _TrekDetailBody extends StatelessWidget {
                       const SizedBox(height: 16),
                     ],
 
-                    TrekRegisterButton(trek: trek),
-                    const SizedBox(height: 28),
+                    // Admins manage treks, they don't register for them —
+                    // nothing renders in this slot at all for them (the
+                    // app bar's TrekAdminActions menu is their management
+                    // surface), rather than a disabled/placeholder CTA.
+                    if (!isAdmin) ...[
+                      TrekRegisterButton(trek: trek),
+                      const SizedBox(height: 28),
+                    ],
 
                     const Divider(),
                     const SizedBox(height: 20),
@@ -289,13 +316,9 @@ class _TrekDetailBody extends StatelessWidget {
                     TrekGallerySection(trekId: trek.id, trekTitle: trek.title),
                     const SizedBox(height: 28),
 
-                    // Phase 7 (comments) slots in here — this placeholder
-                    // marks where, deliberately not built out yet.
-                    const _ComingSoonSection(
-                      icon: Icons.forum_outlined,
-                      title: 'Comments',
-                      message: 'Community comments for this trek are coming soon.',
-                    ),
+                    const SectionHeader(title: 'Comments', icon: Icons.forum_outlined),
+                    const SizedBox(height: 12),
+                    CommentThread(trekId: trek.id, autoFocusInput: openComment),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -316,6 +339,11 @@ class _QuickFactsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final facts = <_QuickFact>[
+      // First — "when" is the most decision-relevant fact once a trek
+      // has a real date. Omitted entirely for an older trek not yet
+      // backfilled with one, rather than showing a blank placeholder.
+      if (trek.trekDate != null)
+        _QuickFact(Icons.calendar_month_rounded, 'Trek Date', _formatTrekDate(trek.trekDate!)),
       if (trek.distanceKm != null)
         _QuickFact(Icons.straighten_rounded, 'Distance', '${_formatNum(trek.distanceKm!)} km'),
       if (trek.durationDays != null)
@@ -336,6 +364,19 @@ class _QuickFactsRow extends StatelessWidget {
   }
 
   String _formatNum(double v) => v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+}
+
+/// Local rather than shared with the registrations feature's
+/// `formatRegistrationDate` — trek_library and registrations already
+/// depend on each other in one direction (registrations -> trek_library
+/// for [Trek]); reaching back the other way for a one-line date format
+/// would just make that a cycle for no real reuse benefit.
+String _formatTrekDate(DateTime dt) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
 }
 
 class _QuickFact {
@@ -380,39 +421,3 @@ class _QuickFactTile extends StatelessWidget {
   }
 }
 
-class _ComingSoonSection extends StatelessWidget {
-  const _ComingSoonSection({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: theme.colorScheme.outline),
-            const SizedBox(height: 12),
-            Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

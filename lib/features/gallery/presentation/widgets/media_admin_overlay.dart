@@ -78,8 +78,7 @@ class _MediaAdminOverlayState extends ConsumerState<MediaAdminOverlay> {
       return;
     }
 
-    // One-shot fetches — refetch both surfaces this item could appear on.
-    ref.invalidate(allGalleryMediaProvider);
+    // One-shot fetch — refetch the trek's own gallery section.
     ref.invalidate(trekGalleryProvider(widget.media.trekId));
   }
 

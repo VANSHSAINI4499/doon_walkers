@@ -5,6 +5,7 @@ import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_adm
 import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 
 /// Trek Library — one shared screen for every role.
@@ -80,19 +81,30 @@ class TrekLibraryScreen extends ConsumerWidget {
               );
             }
 
+            // A masonry grid, not a fixed-childAspectRatio GridView — a
+            // trek's description length varies row to row (some treks
+            // have none, some have several sentences), so a fixed cell
+            // height either wastes space below short content or clips
+            // long content. Same underlying failure mode as the earlier
+            // Admin Panel card overflow bug: a fixed aspect ratio assumes
+            // every cell needs the same height, when in fact it should be
+            // driven by each card's own content. MasonryGridView sizes
+            // each card to its own intrinsic height and packs them into
+            // columns, so a short-description card and a long-description
+            // card both look correct without either wasting space or
+            // needing another guessed ratio number.
             return RefreshIndicator(
               onRefresh: onRefresh,
-              child: GridView.builder(
+              child: MasonryGridView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
                 // Extra bottom padding for admins so the FAB never covers
                 // the last row's action menu.
                 padding: EdgeInsets.fromLTRB(16, 16, 16, isAdmin ? 96 : 16),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                gridDelegate: const SliverSimpleGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 340,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 0.8,
                 ),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
                 itemCount: treks.length,
                 itemBuilder: (context, index) {
                   final trek = treks[index];

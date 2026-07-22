@@ -26,6 +26,15 @@ final registrationByIdProvider =
   name: 'registrationByIdProvider',
 );
 
+/// Registrations for one trek — Admin Dashboard's per-trek roster.
+/// `autoDispose` since it's a transiently-visited screen, same reasoning
+/// as [registrationByIdProvider].
+final registrationsForTrekProvider =
+    FutureProvider.autoDispose.family<List<Registration>, String>(
+  (ref, trekId) => ref.watch(registrationRepositoryProvider).fetchRegistrationsForTrek(trekId),
+  name: 'registrationsForTrekProvider',
+);
+
 /// The signed-in user's own registrations — "My Registrations" on Profile.
 ///
 /// Watches [authStateChangesProvider] so signing out (or switching
@@ -98,6 +107,7 @@ class RegistrationController extends AsyncNotifier<void> {
     ref.invalidate(myRegistrationsProvider);
     ref.invalidate(myRegistrationForTrekProvider(trekId));
     ref.invalidate(allRegistrationsProvider);
+    ref.invalidate(registrationsForTrekProvider(trekId));
   }
 
   /// Registers the signed-in user for [trek].

@@ -116,14 +116,16 @@ class AdminScreen extends ConsumerWidget {
                       mainAxisSpacing: 16,
                       childAspectRatio: 1.05,
                       children: [
-                        // Trek and gallery management no longer have their
-                        // own admin screens — the controls are inline on
-                        // the public Trek Library and Gallery screens now.
-                        // These cards are shortcuts to those screens, kept
-                        // so the dashboard still surfaces where the work
-                        // happens. `go` rather than `push`: these are
-                        // bottom-nav branches, so switching to them should
-                        // select the tab, not stack on top of /admin.
+                        // Trek management has no own admin screen — its
+                        // controls are inline on the public Trek Library
+                        // screen now. Gallery's equivalent shortcut was
+                        // removed for the same reason (inline on the
+                        // public Gallery tab, already reachable from
+                        // bottom nav) — keeping both here would just be
+                        // two paths to the same place. `go` rather than
+                        // `push`: this is a bottom-nav branch, so
+                        // switching to it should select the tab, not
+                        // stack on top of /admin.
                         _buildModuleCard(
                           context,
                           title: 'Manage Treks',
@@ -133,23 +135,31 @@ class AdminScreen extends ConsumerWidget {
                         ),
                         _buildModuleCard(
                           context,
-                          title: 'Manage Gallery',
-                          subtitle: 'Add & remove media on the Gallery tab',
-                          icon: Icons.photo_library_rounded,
-                          onTap: () => context.go(AppConstants.routeGallery),
-                        ),
-                        _buildModuleCard(
-                          context,
                           title: 'Registrations',
                           subtitle: 'View & export trek rosters',
                           icon: Icons.people_alt_rounded,
                           onTap: () => context.push(AppConstants.routeAdminRegistrations),
                         ),
+                        // Trek Registrations is now also its own bottom-nav
+                        // tab for admins — `go`, same reasoning as Manage
+                        // Treks: this should switch to that tab, not stack
+                        // a second copy of it on top of /admin.
+                        _buildModuleCard(
+                          context,
+                          title: 'Trek Registrations',
+                          subtitle: 'View registered members by trek',
+                          icon: Icons.groups_rounded,
+                          onTap: () => context.go(AppConstants.routeAdminTrekRegistrations),
+                        ),
+                        // Cross-trek hidden-comments queue — `push`, not
+                        // `go`: this stays under the /admin branch (same
+                        // as Registrations above), not a bottom-nav tab.
                         _buildModuleCard(
                           context,
                           title: 'Comment Moderation',
                           subtitle: 'Approve or hide community posts',
                           icon: Icons.forum_rounded,
+                          onTap: () => context.push(AppConstants.routeCommentModeration),
                         ),
                       ],
                     ),

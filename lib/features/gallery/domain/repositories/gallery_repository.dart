@@ -18,13 +18,6 @@ abstract class GalleryRepository {
   /// doc for why this table isn't on Realtime.
   Future<List<GalleryMedia>> fetchMediaForTrek(String trekId);
 
-  /// Every media row across every trek, newest first — used by the
-  /// admin manage-all-media screen and (combined with the published
-  /// treks list) the standalone public Gallery screen.
-  ///
-  /// One-shot fetch — same reasoning as [fetchMediaForTrek].
-  Future<List<GalleryMedia>> fetchAllMedia();
-
   /// Uploads [bytes] to the `trek-gallery` bucket under [trekId] and
   /// inserts the corresponding `public.gallery` row. Always uploads to
   /// a fresh, timestamped path — same reasoning as trek cover uploads

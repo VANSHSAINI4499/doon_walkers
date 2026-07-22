@@ -2,40 +2,31 @@ import 'dart:typed_data';
 
 import 'package:doon_walkers/features/gallery/domain/entities/gallery_media.dart';
 import 'package:doon_walkers/features/gallery/presentation/providers/gallery_providers.dart';
-import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
-import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// Opens the admin media-upload flow as a modal sheet over whichever
-/// gallery surface launched it.
-///
-/// Replaces the former standalone `/admin/gallery/upload` screen: uploads
-/// now happen in-place on the public Gallery screen (and on a trek's
-/// gallery section), so an admin never leaves the screen they're curating.
-///
-/// [trekId] pre-selects — and locks — the trek when launched from a
-/// specific trek's gallery section, where the target is unambiguous.
-/// Passing null shows a trek picker instead.
+/// Opens the admin media-upload flow as a modal sheet over a trek's
+/// gallery section — the only place this launches from now that the
+/// standalone cross-trek Gallery screen is gone, so [trekId] is always
+/// known and required rather than an optional lock.
 Future<void> showGalleryUploadSheet(
   BuildContext context, {
-  String? trekId,
+  required String trekId,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (sheetContext) => _GalleryUploadSheet(lockedTrekId: trekId),
+    builder: (sheetContext) => _GalleryUploadSheet(trekId: trekId),
   );
 }
 
 class _GalleryUploadSheet extends ConsumerStatefulWidget {
-  const _GalleryUploadSheet({this.lockedTrekId});
+  const _GalleryUploadSheet({required this.trekId});
 
-  /// When non-null the trek is fixed and no picker is shown.
-  final String? lockedTrekId;
+  final String trekId;
 
   @override
   ConsumerState<_GalleryUploadSheet> createState() => _GalleryUploadSheetState();
@@ -44,16 +35,9 @@ class _GalleryUploadSheet extends ConsumerStatefulWidget {
 class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
   final _captionController = TextEditingController();
 
-  String? _selectedTrekId;
   XFile? _pickedFile;
   Uint8List? _pickedBytes;
   MediaType? _pickedMediaType;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedTrekId = widget.lockedTrekId;
-  }
 
   @override
   void dispose() {
@@ -100,17 +84,10 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
   }
 
   Future<void> _upload() async {
-    final trekId = _selectedTrekId;
     final bytes = _pickedBytes;
     final mediaType = _pickedMediaType;
     final file = _pickedFile;
 
-    if (trekId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose a trek.')),
-      );
-      return;
-    }
     if (bytes == null || mediaType == null || file == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please choose a photo or video.')),
@@ -120,7 +97,7 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
 
     final caption = _captionController.text.trim();
     final uploaded = await ref.read(galleryAdminControllerProvider.notifier).uploadMedia(
-          trekId: trekId,
+          trekId: widget.trekId,
           bytes: bytes,
           fileExtension: _extensionOf(file.name),
           mediaType: mediaType,
@@ -129,18 +106,15 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
 
     if (!mounted || uploaded == null) return;
 
-    // One-shot fetches (not live streams) — refetch so the new item shows
-    // up on whichever gallery surface launched this sheet.
-    ref.invalidate(allGalleryMediaProvider);
-    ref.invalidate(trekGalleryProvider(trekId));
+    // One-shot fetch (not a live stream) — refetch so the new item shows
+    // up on the trek's own gallery section.
+    ref.invalidate(trekGalleryProvider(widget.trekId));
 
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Uploaded.')),
     );
   }
-
-  String _trekLabel(Trek trek) => trek.isPublished ? trek.title : '${trek.title} (Draft)';
 
   @override
   Widget build(BuildContext context) {
@@ -175,15 +149,6 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
             ),
             const SizedBox(height: 20),
 
-            if (widget.lockedTrekId == null) ...[
-              _TrekPicker(
-                selectedTrekId: _selectedTrekId,
-                labelBuilder: _trekLabel,
-                onChanged: (value) => setState(() => _selectedTrekId = value),
-              ),
-              const SizedBox(height: 20),
-            ],
-
             _MediaPickerArea(
               pickedBytes: _pickedBytes,
               pickedMediaType: _pickedMediaType,
@@ -212,53 +177,6 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Trek dropdown for the unscoped (all-treks) upload case. Drafts are
-/// included on purpose — an admin may want media staged before publishing.
-class _TrekPicker extends ConsumerWidget {
-  const _TrekPicker({
-    required this.selectedTrekId,
-    required this.labelBuilder,
-    required this.onChanged,
-  });
-
-  final String? selectedTrekId;
-  final String Function(Trek) labelBuilder;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final treksAsync = ref.watch(adminAllTreksProvider);
-
-    return treksAsync.when(
-      loading: () => const LinearProgressIndicator(),
-      error: (error, stack) {
-        debugPrint('GalleryUploadSheet: failed to load treks: $error');
-        return InputDecorator(
-          decoration: const InputDecoration(labelText: 'Trek'),
-          child: Row(
-            children: [
-              const Expanded(child: Text('Could not load treks.')),
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded),
-                tooltip: 'Retry',
-                onPressed: () => ref.invalidate(adminAllTreksProvider),
-              ),
-            ],
-          ),
-        );
-      },
-      data: (treks) => DropdownButtonFormField<String>(
-        value: selectedTrekId,
-        decoration: const InputDecoration(labelText: 'Trek'),
-        items: treks
-            .map((t) => DropdownMenuItem(value: t.id, child: Text(labelBuilder(t))))
-            .toList(),
-        onChanged: onChanged,
       ),
     );
   }

@@ -1,34 +1,42 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_tile.dart';
+import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Admin registrations roster — every registration across every trek.
+/// One trek's registered members only — reached by tapping a trek on
+/// [AdminTrekPickerScreen]. Shows name, phone, email, registration date
+/// and status, via the shared [RegistrationTile] with the trek-title
+/// row suppressed (it's already this screen's AppBar title).
 ///
-/// Kept as its own Admin Dashboard destination rather than inlined into a
-/// trek screen (unlike trek/gallery CRUD): a cross-trek roster has no
-/// single-trek screen it naturally belongs to.
-///
-/// Reachable only via the admin-gated `/admin/registrations` route;
-/// `registrations_select` backs that up independently by returning only
-/// the caller's own rows to a non-admin.
-class AdminRegistrationsScreen extends ConsumerWidget {
-  const AdminRegistrationsScreen({super.key});
+/// Reuses [registrationsForTrekProvider], which reuses
+/// [RegistrationRepository] with a `.eq('trek_id', ...)` filter — no
+/// parallel registrations implementation for this screen.
+class AdminTrekRegistrationsScreen extends ConsumerWidget {
+  const AdminTrekRegistrationsScreen({super.key, required this.trekId});
+
+  final String trekId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final registrationsAsync = ref.watch(allRegistrationsProvider);
+    final trekAsync = ref.watch(trekByIdProvider(trekId));
+    final registrationsAsync = ref.watch(registrationsForTrekProvider(trekId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Registrations')),
+      appBar: AppBar(
+        title: trekAsync.maybeWhen(
+          data: (trek) => Text(trek?.title ?? 'Trek Registrations'),
+          orElse: () => const Text('Trek Registrations'),
+        ),
+      ),
       body: SafeArea(
         child: registrationsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) {
-            debugPrint('AdminRegistrationsScreen: failed to load registrations: $error');
+            debugPrint('AdminTrekRegistrationsScreen: failed to load registrations: $error');
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -38,13 +46,13 @@ class AdminRegistrationsScreen extends ConsumerWidget {
                     Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
                     const SizedBox(height: 12),
                     Text(
-                      'Could not load registrations.',
+                      'Could not load registrations for this trek.',
                       style: theme.textTheme.titleMedium,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
-                      onPressed: () => ref.invalidate(allRegistrationsProvider),
+                      onPressed: () => ref.invalidate(registrationsForTrekProvider(trekId)),
                       child: const Text('Retry'),
                     ),
                   ],
@@ -53,14 +61,15 @@ class AdminRegistrationsScreen extends ConsumerWidget {
             );
           },
           data: (registrations) {
-            Future<void> onRefresh() => ref.refresh(allRegistrationsProvider.future);
+            Future<void> onRefresh() =>
+                ref.refresh(registrationsForTrekProvider(trekId).future);
 
             if (registrations.isEmpty) {
               return RefreshIndicator(
                 onRefresh: onRefresh,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  children: const [_EmptyRegistrations()],
+                  children: const [_EmptyTrekRegistrations()],
                 ),
               );
             }
@@ -76,11 +85,16 @@ class AdminRegistrationsScreen extends ConsumerWidget {
                   final registration = registrations[index];
                   return RegistrationTile(
                     registration: registration,
-                    // Sensitive fields (age/gender/emergency contact/
-                    // medical notes) live behind this tap rather than in
-                    // the list — see AdminRegistrationDetailScreen.
+                    showTrekTitle: false,
+                    // Nested under THIS tab's own branch, not
+                    // adminRegistrationDetailLocation — see that
+                    // constant's doc for why pushing the flat roster's
+                    // path here would switch tabs and misplace "back".
                     onTap: () => context.push(
-                      AppConstants.adminRegistrationDetailLocation(registration.id),
+                      AppConstants.adminTrekRegistrationsDetailLocation(
+                        trekId,
+                        registration.id,
+                      ),
                     ),
                   );
                 },
@@ -93,12 +107,8 @@ class AdminRegistrationsScreen extends ConsumerWidget {
   }
 }
 
-/// Empty state. Deliberately explicit that the *user-facing registration
-/// flow doesn't exist yet* (Phase 6) rather than a bare "nothing here" —
-/// otherwise a working-but-empty roster reads as broken to an admin who
-/// knows the community has members.
-class _EmptyRegistrations extends StatelessWidget {
-  const _EmptyRegistrations();
+class _EmptyTrekRegistrations extends StatelessWidget {
+  const _EmptyTrekRegistrations();
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +127,7 @@ class _EmptyRegistrations extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Trek registrations will appear here once members can sign up for treks.',
+            'Members who register for this trek will show up here.',
             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -126,4 +136,3 @@ class _EmptyRegistrations extends StatelessWidget {
     );
   }
 }
-

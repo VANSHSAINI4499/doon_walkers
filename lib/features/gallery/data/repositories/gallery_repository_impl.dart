@@ -31,15 +31,6 @@ class GalleryRepositoryImpl implements GalleryRepository {
   }
 
   @override
-  Future<List<GalleryMedia>> fetchAllMedia() async {
-    final rows = await _supabase
-        .from(AppConstants.tableGallery)
-        .select()
-        .order('uploaded_at', ascending: false);
-    return rows.map(GalleryMediaModel.fromJson).toList();
-  }
-
-  @override
   Future<GalleryMedia> uploadMedia({
     required String trekId,
     required Uint8List bytes,

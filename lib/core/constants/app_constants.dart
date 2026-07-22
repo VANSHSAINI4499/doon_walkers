@@ -23,9 +23,14 @@ class AppConstants {
   // restructure — About's content moved into Home, and the Upcoming
   // Treks tab (a "coming soon" placeholder with no real content) was
   // dropped entirely rather than replaced.
+  //
+  // routeGallery was removed in a later restructure — the standalone
+  // cross-trek Gallery tab is gone for every role. Gallery MANAGEMENT
+  // (admin add/delete) was never on this route to begin with; it lives
+  // entirely on TrekGallerySection, embedded in each Trek Detail page,
+  // and is unaffected by this removal.
   static const String routeHome = '/';
   static const String routeTrekLibrary = '/trek-library';
-  static const String routeGallery = '/gallery';
   static const String routeProfile = '/profile';
   static const String routeAdmin = '/admin';
   static const String routeSignIn = '/sign-in';
@@ -54,6 +59,43 @@ class AppConstants {
   static String adminRegistrationDetailLocation(String id) =>
       '$routeAdminRegistrations/$id';
 
+  /// Per-trek registrations — trek picker (this path) plus a trek-scoped
+  /// roster ([adminTrekRegistrationsLocation]). A separate destination
+  /// from [routeAdminRegistrations] (the flat cross-trek roster, still
+  /// drawer/dashboard-only) rather than a filter on it — they serve
+  /// different workflows: the flat roster is recency-triage across every
+  /// trek, this is a single trek's full attendee list.
+  ///
+  /// Promoted to its own bottom-nav TAB (branch) for admins in the final
+  /// nav restructure, unlike [routeAdminRegistrations] which stays
+  /// reachable only via the Admin Dashboard/drawer — important enough to
+  /// an admin's day-to-day use to deserve one tap from anywhere, not two.
+  static const String routeAdminTrekRegistrations = '/admin/trek-registrations';
+
+  /// The roster for one trek, nested under [routeAdminTrekRegistrations]
+  /// so it inherits the `/admin` prefix gate automatically.
+  static String adminTrekRegistrationsLocation(String trekId) =>
+      '$routeAdminTrekRegistrations/$trekId';
+
+  /// A registration's detail view, reached from the per-trek roster.
+  /// Deliberately NOT [adminRegistrationDetailLocation] (the flat
+  /// roster's path under the /admin branch) — that belongs to a
+  /// different StatefulShellRoute branch than this tab, and pushing
+  /// across branches would switch tabs and put "back" on the Admin
+  /// Dashboard instead of this trek's roster. Same screen, a path
+  /// nested under this branch instead.
+  static String adminTrekRegistrationsDetailLocation(String trekId, String registrationId) =>
+      '${adminTrekRegistrationsLocation(trekId)}/$registrationId';
+
+  /// Cross-trek comment moderation queue — every currently-hidden
+  /// comment across every trek. Drawer/dashboard-only like
+  /// [routeAdminRegistrations], not a bottom-nav tab: inline hide/show
+  /// on each comment (on Trek Detail) is the primary moderation
+  /// surface; this is the "what have I already hidden, anywhere"
+  /// overview, same relationship [routeAdminRegistrations] has to
+  /// [routeAdminTrekRegistrations].
+  static const String routeCommentModeration = '/admin/comments';
+
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
   static const String tableTreks = 'treks';
@@ -62,6 +104,9 @@ class AppConstants {
   static const String tableRegistrations = 'registrations';
   static const String tableNotifications = 'notifications';
   static const String tableSettings = 'settings';
+
+  /// Admin-editable content-filter blocklist (0012_comments_moderation.sql).
+  static const String tableCommentBlocklist = 'comment_blocklist';
 
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';
