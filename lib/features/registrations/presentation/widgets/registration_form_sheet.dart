@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
@@ -14,12 +15,17 @@ import 'package:image_picker/image_picker.dart';
 /// only asks for what it genuinely can't infer.
 ///
 /// Takes the whole [trek] (not just id/title) because the payment
-/// section's presence depends on it: [Trek.requiresPayment]. A free
-/// trek (`registrationFee == 0`) shows none of the payment UI at all —
-/// not even a zeroed-out section — per the Part C brief.
+/// section's presence depends on it: [Trek.requiresPayment]. A free trek
+/// (`registrationFee == 0`) shows none of the payment UI at all — not even
+/// a zeroed-out section — per the Part C brief.
 ///
-/// Returns true when a registration was created, so the caller can show
-/// a confirmation.
+/// Returns true when a registration was created, so the caller can show a
+/// confirmation.
+///
+/// Redesign Phase 3 restyles this sheet onto the design system. All of its
+/// logic is unchanged: the age CHECK-mirroring validator, the explicit
+/// gender check, the paid-trek screenshot-required guard, the submit path,
+/// and the error mapping.
 Future<bool?> showRegistrationFormSheet(BuildContext context, {required Trek trek}) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -52,8 +58,8 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
   String? _screenshotExtension;
 
   /// Set once, on submit — screenshot-missing is only worth complaining
-  /// about after the admin's actually tried to submit, same as the
-  /// gender dropdown below (no live-validate-while-typing noise).
+  /// about after the user's actually tried to submit, same as the gender
+  /// dropdown below (no live-validate-while-typing noise).
   bool _showScreenshotRequiredError = false;
 
   @override
@@ -65,8 +71,8 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
   }
 
   /// Mirrors the `registrations_age_check` CHECK constraint
-  /// (`age > 0 AND age < 120`) so an out-of-range value is caught here
-  /// with a readable message rather than coming back as a raw constraint
+  /// (`age > 0 AND age < 120`) so an out-of-range value is caught here with
+  /// a readable message rather than coming back as a raw constraint
   /// violation from Postgres.
   String? _validateAge(String? value) {
     final text = value?.trim() ?? '';
@@ -118,10 +124,10 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
       return;
     }
 
-    // Required screenshot upload before submission is allowed, for a
-    // paid trek — same "check explicitly, no FormField wrapper" pattern
-    // as gender above, since an image picker isn't a Form-validatable
-    // field type.
+    // Required screenshot upload before submission is allowed, for a paid
+    // trek — same "check explicitly, no FormField wrapper" pattern as
+    // gender above, since an image picker isn't a Form-validatable field
+    // type.
     if (widget.trek.requiresPayment && _screenshotBytes == null) {
       setState(() => _showScreenshotRequiredError = true);
       return;
@@ -142,9 +148,8 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
     Navigator.of(context).pop(true);
   }
 
-  /// Keeps raw Postgres/Storage detail out of the UI while still giving
-  /// the duplicate and screenshot-upload cases their own actionable
-  /// messages.
+  /// Keeps raw Postgres/Storage detail out of the UI while still giving the
+  /// duplicate and screenshot-upload cases their own actionable messages.
   String _errorMessage(Object error) {
     debugPrint('RegistrationFormSheet: registration failed: $error');
     if (error is DuplicateRegistrationException) {
@@ -161,7 +166,6 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isSaving = ref.watch(registrationControllerProvider).isLoading;
 
     ref.listen<AsyncValue<void>>(registrationControllerProvider, (previous, next) {
@@ -170,7 +174,7 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_errorMessage(error)),
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: AppColors.danger,
             ),
           );
         },
@@ -180,25 +184,48 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xs,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Register for this trek',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const AppIcon(AppIcons.hiking, size: 20, color: AppColors.onPrimary),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Register for this trek', style: AppTextStyles.titleLarge),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.trek.title,
+                          style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                widget.trek.title,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
               TextFormField(
                 controller: _ageController,
@@ -207,7 +234,7 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                 textInputAction: TextInputAction.next,
                 validator: _validateAge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
 
               DropdownButtonFormField<GenderType>(
                 value: _gender,
@@ -217,7 +244,7 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                     .toList(),
                 onChanged: (value) => setState(() => _gender = value),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
 
               TextFormField(
                 controller: _emergencyContactController,
@@ -230,7 +257,7 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                     ? 'Please provide an emergency contact'
                     : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
 
               TextFormField(
                 controller: _medicalNotesController,
@@ -240,21 +267,25 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                 ),
                 maxLines: 3,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
 
-              Text(
-                'Only you and the Doon Walkers organisers can see these details.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              Row(
+                children: [
+                  const AppIcon(AppIcons.lock, size: 14, color: AppColors.textSecondary),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Only you and the Doon Walkers organisers can see these details.',
+                      style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                    ),
+                  ),
+                ],
               ),
 
-              // Payment section — entirely absent for a free trek, per
-              // the Part C brief ("skip this section entirely").
+              // Payment section — entirely absent for a free trek, per the
+              // Part C brief ("skip this section entirely").
               if (widget.trek.requiresPayment) ...[
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xl),
                 _PaymentSection(
                   fee: widget.trek.registrationFee,
                   qrCodeUrl: widget.trek.paymentQrCode,
@@ -264,18 +295,15 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                 ),
               ],
 
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
-              FilledButton(
+              PremiumButton(
+                label: 'Confirm Registration',
+                icon: AppIcons.checkCircle,
+                size: PremiumButtonSize.large,
+                fullWidth: true,
+                isLoading: isSaving,
                 onPressed: isSaving ? null : _submit,
-                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Confirm Registration'),
               ),
             ],
           ),
@@ -305,97 +333,108 @@ class _PaymentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return GlassCard(
+      blurEnabled: false,
+      glowColor: AppColors.gold,
+      glowOpacity: 0.12,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: AppColors.gold.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: const AppIcon(AppIcons.payment, size: 18, color: AppColors.gold),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Registration fee', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                    Text(
+                      '₹${_formatFee(fee)}',
+                      style: AppTextStyles.tinted(AppTextStyles.statSmall, AppColors.gold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.currency_rupee_rounded, size: 20, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text(
-              'Registration fee: ₹${_formatFee(fee)}',
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          if (qrCodeUrl != null && qrCodeUrl!.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Text('Scan to pay', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+            const SizedBox(height: AppSpacing.sm),
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Image.network(
+                  qrCodeUrl!,
+                  height: 220,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stack) => Container(
+                    height: 120,
+                    width: 120,
+                    alignment: Alignment.center,
+                    color: AppColors.cardHigh,
+                    child: const AppIcon(AppIcons.imageBroken, color: AppColors.textDisabled),
+                  ),
+                ),
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
 
-        if (qrCodeUrl != null && qrCodeUrl!.isNotEmpty) ...[
-          Text(
-            'Scan to pay',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              qrCodeUrl!,
-              height: 220,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stack) => Container(
-                height: 120,
-                alignment: Alignment.center,
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Icon(Icons.broken_image_outlined, color: theme.colorScheme.outline),
+          const SizedBox(height: AppSpacing.lg),
+          Text('Upload payment screenshot', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+          const SizedBox(height: AppSpacing.sm),
+          Pressable(
+            onTap: onPickScreenshot,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Container(
+              height: 160,
+              width: double.infinity,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                color: AppColors.surface,
+                border: Border.all(
+                  color: showRequiredError ? AppColors.danger : AppColors.glassBorder,
+                  width: showRequiredError ? 2 : 1,
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-
-        Text(
-          'Upload payment screenshot',
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: onPickScreenshot,
-          child: Container(
-            height: 160,
-            width: double.infinity,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: theme.colorScheme.surfaceContainerHighest,
-              border: Border.all(
-                color: showRequiredError
-                    ? theme.colorScheme.error
-                    : theme.colorScheme.outlineVariant,
-                width: showRequiredError ? 2 : 1,
-              ),
-            ),
-            child: screenshotBytes != null
-                ? Image.memory(screenshotBytes!, fit: BoxFit.cover, width: double.infinity)
-                : Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate_outlined,
-                          size: 32,
-                          color: theme.colorScheme.outline,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap to add your payment screenshot',
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                        ),
-                      ],
+              child: screenshotBytes != null
+                  ? Image.memory(screenshotBytes!, fit: BoxFit.cover, width: double.infinity)
+                  : const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppIcon(AppIcons.addPhoto, size: 32, color: AppColors.textSecondary),
+                          SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Tap to add your payment screenshot',
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+            ),
           ),
-        ),
-        if (showRequiredError) ...[
-          const SizedBox(height: 6),
-          Text(
-            'Please upload proof of payment before confirming.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
-          ),
+          if (showRequiredError) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Please upload proof of payment before confirming.',
+              style: AppTextStyles.tinted(AppTextStyles.bodySmall, AppColors.danger),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

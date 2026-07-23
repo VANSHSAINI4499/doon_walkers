@@ -1,9 +1,13 @@
-import 'package:doon_walkers/core/theme/app_colors.dart';
-import 'package:doon_walkers/core/theme/app_text_styles.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:flutter/material.dart';
 
 /// Small colour-coded pill showing a trek's difficulty.
+///
+/// The colour mapping is unchanged (easy→green, moderate→gold, hard→
+/// orange, extreme→red) — those [AppColors.difficulty*] tokens already
+/// point at the Phase 1 palette. Restyled to the design system's pill:
+/// a tinted glass fill, a signal icon, and the bold label type.
 class DifficultyBadge extends StatelessWidget {
   const DifficultyBadge({super.key, required this.difficulty, this.dense = false});
 
@@ -19,22 +23,30 @@ class DifficultyBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _color;
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: dense ? 8 : 10,
-        vertical: dense ? 3 : 5,
+        horizontal: dense ? AppSpacing.sm : AppSpacing.md,
+        vertical: dense ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: _color.withAlpha(28),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _color.withAlpha(90)),
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
-      child: Text(
-        difficulty.label,
-        style: AppTextStyles.labelSmall.copyWith(
-          color: _color,
-          fontWeight: FontWeight.bold,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIcon(AppIcons.difficulty, size: dense ? 12 : 14, color: color),
+          SizedBox(width: dense ? 4 : AppSpacing.xs),
+          Text(
+            difficulty.label,
+            style: AppTextStyles.tinted(
+              dense ? AppTextStyles.labelSmall : AppTextStyles.labelMedium,
+              color,
+            ),
+          ),
+        ],
       ),
     );
   }

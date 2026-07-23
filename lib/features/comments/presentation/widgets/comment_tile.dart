@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/comments/domain/entities/comment.dart';
 import 'package:doon_walkers/features/comments/presentation/providers/comment_providers.dart';
@@ -8,15 +9,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// cross-trek moderation queue, rather than each keeping its own copy.
 ///
 /// A hidden comment only ever reaches this widget for an admin viewer —
-/// `comments_select`'s RLS bypass for admin is what makes that true,
-/// not any filtering here (see [CommentRepository]'s doc) — so
-/// [comment.isVisible] being false is trusted as "the viewer is
-/// admin," and rendered with a visible "Hidden" marker rather than
-/// silently looking identical to a normal comment.
+/// `comments_select`'s RLS bypass for admin is what makes that true, not
+/// any filtering here — so [comment.isVisible] being false is trusted as
+/// "the viewer is admin," and rendered with a visible "Hidden" marker
+/// rather than silently looking identical to a normal comment.
 ///
-/// [showTrekTitle] is for the moderation queue, which spans every
-/// trek — same optional-parameter reuse pattern as
-/// `RegistrationTile.showTrekTitle`.
+/// [showTrekTitle] is for the moderation queue, which spans every trek.
+///
+/// Redesign Phase 3 restyles this onto the design system. Every rule is
+/// unchanged: who sees the Hide/Unhide and Delete controls (admin, and the
+/// author for delete), the hidden-comment styling, and the mutations.
 class CommentTile extends ConsumerStatefulWidget {
   const CommentTile({
     super.key,
@@ -47,30 +49,33 @@ class _CommentTileState extends ConsumerState<CommentTile> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not update this comment. Please try again.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+        const SnackBar(
+          content: Text('Could not update this comment. Please try again.'),
+          backgroundColor: AppColors.danger,
         ),
       );
     }
   }
 
   Future<void> _confirmDelete() async {
-    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete comment?'),
         content: const Text('This removes the comment permanently. This cannot be undone.'),
         actions: [
-          TextButton(
+          PremiumButton(
+            label: 'Keep it',
+            variant: PremiumButtonVariant.glass,
+            size: PremiumButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Keep it'),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error),
+          PremiumButton(
+            label: 'Delete',
+            icon: AppIcons.delete,
+            variant: PremiumButtonVariant.danger,
+            size: PremiumButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
           ),
         ],
       ),
@@ -88,9 +93,9 @@ class _CommentTileState extends ConsumerState<CommentTile> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not delete this comment. Please try again.'),
-          backgroundColor: theme.colorScheme.error,
+        const SnackBar(
+          content: Text('Could not delete this comment. Please try again.'),
+          backgroundColor: AppColors.danger,
         ),
       );
     }
@@ -98,24 +103,21 @@ class _CommentTileState extends ConsumerState<CommentTile> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final c = widget.comment;
     final currentUserId = ref.watch(supabaseClientProvider).auth.currentUser?.id;
     final isAdmin = ref.watch(isAdminProvider);
     final isOwnComment = currentUserId != null && currentUserId == c.userId;
     final avatar = c.userAvatar;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: c.isVisible
-            ? theme.colorScheme.surfaceContainerHighest.withAlpha(90)
-            : theme.colorScheme.errorContainer.withAlpha(60),
-        borderRadius: BorderRadius.circular(12),
-        border: c.isVisible
-            ? null
-            : Border.all(color: theme.colorScheme.error.withAlpha(90)),
-      ),
+    return GlassCard(
+      blurEnabled: false,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      borderRadius: AppRadius.card,
+      // Hidden comments (admin-only, per the class doc) get a danger-tinted
+      // treatment so they never look like a normal comment.
+      glowColor: c.isVisible ? null : AppColors.danger,
+      glowOpacity: 0.12,
+      borderColor: c.isVisible ? null : AppColors.danger.withValues(alpha: 0.4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -123,23 +125,19 @@ class _CommentTileState extends ConsumerState<CommentTile> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                radius: 16,
-                backgroundColor: theme.colorScheme.primaryContainer,
+                radius: 18,
+                backgroundColor: AppColors.primaryContainer,
                 backgroundImage: (avatar != null && avatar.isNotEmpty)
                     ? NetworkImage(avatar)
                     : null,
                 child: (avatar == null || avatar.isEmpty)
                     ? Text(
                         c.userName.isNotEmpty ? c.userName[0].toUpperCase() : '?',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
+                        style: AppTextStyles.tinted(AppTextStyles.labelLarge, AppColors.primaryLight),
                       )
                     : null,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,41 +147,37 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                         Expanded(
                           child: Text(
                             c.userName,
-                            style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                            style: AppTextStyles.titleSmall,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (!c.isVisible) ...[
-                          const SizedBox(width: 6),
-                          _HiddenBadge(theme: theme),
+                          const SizedBox(width: AppSpacing.sm),
+                          const _HiddenBadge(),
                         ],
                       ],
                     ),
                     if (widget.showTrekTitle && (c.trekTitle ?? '').isNotEmpty)
                       Text(
                         'on ${c.trekTitle}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                        style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     Text(
                       _formatCommentDate(c.createdAt),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(c.commentText, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
+          const SizedBox(height: AppSpacing.md),
+          Text(c.commentText, style: AppTextStyles.bodyMedium),
           if (isOwnComment || isAdmin) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -191,28 +185,32 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                   const SizedBox(
                     height: 16,
                     width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                   )
                 else ...[
                   if (isAdmin)
                     TextButton.icon(
                       onPressed: _toggleVisibility,
-                      icon: Icon(
-                        c.isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      icon: AppIcon(
+                        c.isVisible ? AppIcons.hidden : AppIcons.visible,
                         size: 16,
+                        color: AppColors.textSecondary,
                       ),
-                      label: Text(c.isVisible ? 'Hide' : 'Unhide'),
+                      label: Text(
+                        c.isVisible ? 'Hide' : 'Unhide',
+                        style: AppTextStyles.secondary(AppTextStyles.labelMedium),
+                      ),
                       style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
                     ),
                   if (isOwnComment || isAdmin)
                     TextButton.icon(
                       onPressed: _confirmDelete,
-                      icon: const Icon(Icons.delete_outline_rounded, size: 16),
-                      label: const Text('Delete'),
-                      style: TextButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        foregroundColor: theme.colorScheme.error,
+                      icon: const AppIcon(AppIcons.delete, size: 16, color: AppColors.danger),
+                      label: Text(
+                        'Delete',
+                        style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.danger),
                       ),
+                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
                     ),
                 ],
               ],
@@ -225,23 +223,19 @@ class _CommentTileState extends ConsumerState<CommentTile> {
 }
 
 class _HiddenBadge extends StatelessWidget {
-  const _HiddenBadge({required this.theme});
-  final ThemeData theme;
+  const _HiddenBadge();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
       decoration: BoxDecoration(
-        color: theme.colorScheme.error,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.danger,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         'Hidden',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onError,
-          fontWeight: FontWeight.bold,
-        ),
+        style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.onDanger),
       ),
     );
   }

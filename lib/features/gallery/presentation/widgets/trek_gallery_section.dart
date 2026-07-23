@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/gallery/presentation/providers/gallery_providers.dart';
 import 'package:doon_walkers/features/gallery/presentation/widgets/gallery_upload_sheet.dart';
@@ -9,9 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Gallery grid for a single trek — the Trek Detail screen's "Gallery &
 /// Videos" section.
 ///
-/// Same section for every role; an admin additionally gets an inline
-/// "Add" button (with this trek pre-selected, since the target is
-/// unambiguous here) and per-item delete controls.
+/// Same section for every role; an admin additionally gets an inline "Add"
+/// button (with this trek pre-selected, since the target is unambiguous
+/// here) and per-item delete controls.
+///
+/// Redesign Phase 3 restyles the loading/empty/error states and the add
+/// button onto the design system. The gallery data, the per-item
+/// thumbnail/admin-overlay widgets, and the upload flow are all unchanged.
 class TrekGallerySection extends ConsumerWidget {
   const TrekGallerySection({
     super.key,
@@ -26,30 +31,28 @@ class TrekGallerySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final isAdmin = ref.watch(isAdminProvider);
     final mediaAsync = ref.watch(trekGalleryProvider(trekId));
 
     return mediaAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () => const _GallerySkeleton(),
       error: (error, stack) {
         debugPrint('TrekGallerySection: failed to load media for $trekId: $error');
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   'Could not load the gallery for this trek.',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+                  style: AppTextStyles.tinted(AppTextStyles.bodySmall, AppColors.danger),
                 ),
               ),
-              TextButton(
+              PremiumButton(
+                label: 'Retry',
+                variant: PremiumButtonVariant.ghost,
+                size: PremiumButtonSize.small,
                 onPressed: () => ref.invalidate(trekGalleryProvider(trekId)),
-                child: const Text('Retry'),
               ),
             ],
           ),
@@ -59,10 +62,12 @@ class TrekGallerySection extends ConsumerWidget {
         final addButton = isAdmin
             ? Align(
                 alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
+                child: PremiumButton(
+                  label: 'Add Photo/Video',
+                  icon: AppIcons.addPhoto,
+                  variant: PremiumButtonVariant.glass,
+                  size: PremiumButtonSize.small,
                   onPressed: () => showGalleryUploadSheet(context, trekId: trekId),
-                  icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-                  label: const Text('Add Photo/Video'),
                 ),
               )
             : null;
@@ -71,16 +76,26 @@ class TrekGallerySection extends ConsumerWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'No photos or videos for this trek yet.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+              GlassCard(
+                blurEnabled: false,
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Row(
+                  children: [
+                    const AppIcon(AppIcons.photo, size: 22, color: AppColors.textSecondary),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Text(
+                        'No photos or videos for this trek yet.',
+                        style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (addButton != null) addButton,
+              if (addButton != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                addButton,
+              ],
             ],
           );
         }
@@ -93,8 +108,8 @@ class TrekGallerySection extends ConsumerWidget {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 160,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
+                mainAxisSpacing: AppSpacing.sm,
+                crossAxisSpacing: AppSpacing.sm,
                 childAspectRatio: 1,
               ),
               itemCount: media.length,
@@ -109,12 +124,36 @@ class TrekGallerySection extends ConsumerWidget {
               },
             ),
             if (addButton != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               addButton,
             ],
           ],
         );
       },
+    );
+  }
+}
+
+/// A short shimmer grid of square placeholders while the gallery loads.
+class _GallerySkeleton extends StatelessWidget {
+  const _GallerySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 160,
+          mainAxisSpacing: AppSpacing.sm,
+          crossAxisSpacing: AppSpacing.sm,
+          childAspectRatio: 1,
+        ),
+        itemCount: 3,
+        itemBuilder: (context, index) =>
+            const SkeletonBox(height: 160, borderRadius: AppRadius.sm),
+      ),
     );
   }
 }
