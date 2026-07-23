@@ -160,15 +160,16 @@ class AppConstants {
   /// — see AdminMerchInquiriesCard.
   static const String routeAdminMerchInquiries = '/admin/merch-inquiries';
 
-  /// Admin challenge management — Version 2, Phase C1. Entirely
-  /// admin-only this phase (there is no public Challenges tab yet —
-  /// that's C2), so the whole `/admin/challenges/...` subtree is
-  /// covered by the existing `_isAdminRoute` prefix check with no
-  /// `_isChallengeAdminRoute`-style split needed (unlike Merchandise,
-  /// which has a public catalog alongside admin-only forms). This is
-  /// the index route of its own admin-only bottom-nav tab
-  /// ("Challenges" — see app_router.dart's Branch 4 / AppShell), not a
-  /// Profile-card destination.
+  /// Path prefix for the admin challenge create/edit forms — NOT a
+  /// screen of its own (there is no bare `/admin/challenges` route).
+  /// C1 gave this its own admin-only bottom-nav tab with a full list
+  /// screen at this exact path; C2 retired that tab once
+  /// [routeChallenges] gave Challenges a real public tab that admin
+  /// now also manages from inline (see ChallengeAdminActions on
+  /// ChallengesScreen) — kept only as the prefix
+  /// [routeAdminChallengesNew]/[adminChallengeEditLocation] build on,
+  /// still covered by the existing `_isAdminRoute` prefix check with
+  /// no dedicated guard needed.
   static const String routeAdminChallenges = '/admin/challenges';
 
   /// Declared BEFORE `:id` in app_router.dart, same reasoning as
@@ -176,6 +177,35 @@ class AppConstants {
   static const String routeAdminChallengesNew = '$routeAdminChallenges/new';
 
   static String adminChallengeEditLocation(String id) => '$routeAdminChallenges/$id/edit';
+
+  /// Public Challenges tab (Version 2, Phase C2) — browsable by guests
+  /// (RLS already scopes drafts to admin-only via `challenges_select`);
+  /// no redirect guard here, same as [routeMerchandise]. Admin sees the
+  /// same screen plus inline management (drafts included, marked as
+  /// such, an actions menu, an "Add Challenge" FAB) — mirrors
+  /// TrekLibraryScreen's single-shared-screen pattern exactly, not a
+  /// separate admin screen.
+  static const String routeChallenges = '/challenges';
+
+  static String challengeDetailLocation(String id) => '$routeChallenges/$id';
+
+  /// Nested under the challenge detail route it's reached from —
+  /// Version 2, Phase C3. See ChallengeLeaderboardScreen's doc for why
+  /// there's no standalone leaderboard tab.
+  static String challengeLeaderboardLocation(String id) => '$routeChallenges/$id/leaderboard';
+
+  /// Declared BEFORE `:id` in app_router.dart, same reasoning as every
+  /// other `new`-before-`:id` ordering in this file — without it,
+  /// "history" would be captured as a challenge id instead.
+  ///
+  /// Router-level guarded (added to `isProtectedRoute` in
+  /// app_router.dart, same treatment as [routeProfile]/
+  /// [routeNotifications]) rather than the client-side
+  /// AuthGuard.requireAuth pattern Register/Wishlist/Buy use — this is
+  /// a full destination screen reached by direct navigation, not one
+  /// action within an otherwise-public screen, so it fits the
+  /// "whole screen requires sign-in" case those two already establish.
+  static const String routeChallengeHistory = '$routeChallenges/history';
 
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
@@ -225,6 +255,29 @@ class AppConstants {
   /// this takes no user-id parameter (auth.uid() is read inside the
   /// function itself; that's the entire security model for it).
   static const String rpcGetMyChallengeProgress = 'get_my_challenge_progress';
+
+  /// Live-computes the real DATE the signed-in caller reached each
+  /// tier they've actually reached, per challenge (0023_challenge_tier_
+  /// history.sql) — same no-parameter security model as
+  /// [rpcGetMyChallengeProgress].
+  static const String rpcGetMyChallengeTierHistory = 'get_my_challenge_tier_history';
+
+  /// Live-computes the SIGNED-IN caller's current/longest trekking
+  /// streak in consecutive calendar months (0024_streaks.sql) —
+  /// Version 2, Phase C3. Same no-parameter security model as
+  /// [rpcGetMyChallengeProgress]. Not scoped to any challenge — a
+  /// general attendance-consistency stat.
+  static const String rpcGetMyStreak = 'get_my_streak';
+
+  /// Ranks every leaderboard-visible user by their progress on ONE
+  /// challenge (0025_leaderboard.sql) — Version 2, Phase C3. Takes a
+  /// challenge id parameter (unlike the auth.uid()-internal RPCs
+  /// above) since it's showing OTHER users' standings, not just the
+  /// caller's own; the privacy boundary is the function's fixed
+  /// `(display_name, rank, score)` return shape plus its own
+  /// `show_on_leaderboard = TRUE` filter, not RLS. See
+  /// ChallengeRepository.fetchLeaderboard's doc.
+  static const String rpcGetChallengeLeaderboard = 'get_challenge_leaderboard';
 
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';

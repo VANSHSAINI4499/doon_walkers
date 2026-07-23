@@ -11,6 +11,7 @@ class UserModel extends UserEntity {
     required super.role,
     super.profileImage,
     required super.createdAt,
+    super.showOnLeaderboard,
   });
 
   /// Creates a [UserModel] from a database row (JSON map).
@@ -25,6 +26,9 @@ class UserModel extends UserEntity {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
+      // Missing (older cached row shape) defaults true, matching the
+      // DB column's own default — never silently opts someone out.
+      showOnLeaderboard: json['show_on_leaderboard'] as bool? ?? true,
     );
   }
 
@@ -38,6 +42,7 @@ class UserModel extends UserEntity {
       'role': role.toDbString(),
       if (profileImage != null) 'profile_image': profileImage,
       'created_at': createdAt.toIso8601String(),
+      'show_on_leaderboard': showOnLeaderboard,
     };
   }
 
@@ -48,6 +53,7 @@ class UserModel extends UserEntity {
     String? phone,
     UserRole? role,
     String? profileImage,
+    bool? showOnLeaderboard,
   }) {
     return UserModel(
       id: id,
@@ -57,6 +63,7 @@ class UserModel extends UserEntity {
       role: role ?? this.role,
       profileImage: profileImage ?? this.profileImage,
       createdAt: createdAt,
+      showOnLeaderboard: showOnLeaderboard ?? this.showOnLeaderboard,
     );
   }
 }

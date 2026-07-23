@@ -38,6 +38,15 @@ class UserEntity {
   final String? profileImage;
   final DateTime createdAt;
 
+  /// The user's own privacy preference for challenge leaderboards
+  /// (Version 2, Phase C3) — defaults TRUE at the DB column level
+  /// (0025_leaderboard.sql), self-editable via the existing
+  /// `users_update_own_or_admin` policy. Enforced server-side inside
+  /// `get_challenge_leaderboard()` itself, not just read here for
+  /// display — this field only drives the Profile toggle's initial
+  /// state.
+  final bool showOnLeaderboard;
+
   const UserEntity({
     required this.id,
     required this.name,
@@ -46,6 +55,7 @@ class UserEntity {
     required this.role,
     this.profileImage,
     required this.createdAt,
+    this.showOnLeaderboard = true,
   });
 
   bool get isAdmin => role == UserRole.admin;

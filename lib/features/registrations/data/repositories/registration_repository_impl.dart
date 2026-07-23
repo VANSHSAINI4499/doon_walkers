@@ -3,7 +3,9 @@ import 'dart:typed_data';
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/registrations/data/models/registration_model.dart';
+import 'package:doon_walkers/features/registrations/data/models/trekking_streak_model.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
+import 'package:doon_walkers/features/registrations/domain/entities/trekking_streak.dart';
 import 'package:doon_walkers/features/registrations/domain/repositories/registration_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -186,5 +188,12 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
     return _supabase.storage
         .from(AppConstants.bucketPaymentProofs)
         .createSignedUrl(path, 600);
+  }
+
+  @override
+  Future<TrekkingStreak> fetchMyStreak() async {
+    final rows = await _supabase.rpc(AppConstants.rpcGetMyStreak) as List;
+    if (rows.isEmpty) return TrekkingStreak.zero;
+    return TrekkingStreakModel.fromJson(rows.first as Map<String, dynamic>);
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
+import 'package:doon_walkers/features/registrations/domain/entities/trekking_streak.dart';
 
 /// Abstract interface for reading and managing trek registrations.
 ///
@@ -108,4 +109,10 @@ abstract class RegistrationRepository {
   /// `storage.objects` still applies to who is even allowed to request a
   /// signed URL for this path in the first place (owner or admin).
   Future<String> getPaymentProofSignedUrl(String path);
+
+  /// The signed-in user's current/longest attendance streak — wraps
+  /// `get_my_streak()` (Version 2, Phase C3). No parameter: the
+  /// function reads auth.uid() internally, same security model as
+  /// ChallengeRepository.fetchMyProgress.
+  Future<TrekkingStreak> fetchMyStreak();
 }

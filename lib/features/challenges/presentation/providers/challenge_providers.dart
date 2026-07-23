@@ -1,8 +1,12 @@
 import 'dart:async';
 
+import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
 import 'package:doon_walkers/features/challenges/data/repositories/challenge_repository_impl.dart';
+import 'package:doon_walkers/features/challenges/data/services/challenge_celebration_tracker.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/challenge_tier_achievement.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/leaderboard_entry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// All challenges (active + draft) — admin management list only. There
@@ -15,6 +19,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final adminAllChallengesProvider = FutureProvider<List<Challenge>>(
   (ref) => ref.watch(challengeRepositoryProvider).fetchAllChallenges(),
   name: 'adminAllChallengesProvider',
+);
+
+/// Active challenges only — feeds the public Challenges tab
+/// (Version 2, Phase C2) for guests/members. Mirrors
+/// publishedTreksProvider/adminAllTreksProvider's split; ChallengesScreen
+/// picks between this and [adminAllChallengesProvider] purely on
+/// [isAdminProvider], same as TrekLibraryScreen.
+final activeChallengesProvider = FutureProvider<List<Challenge>>(
+  (ref) => ref.watch(challengeRepositoryProvider).fetchActiveChallenges(),
+  name: 'activeChallengesProvider',
 );
 
 /// A single challenge by id, for the admin edit form. `autoDispose`
@@ -33,6 +47,31 @@ final challengeByIdProvider = FutureProvider.autoDispose.family<Challenge?, Stri
 final myChallengeProgressProvider = FutureProvider<List<ChallengeProgress>>(
   (ref) => ref.watch(challengeRepositoryProvider).fetchMyProgress(),
   name: 'myChallengeProgressProvider',
+);
+
+/// The signed-in user's full tier-achievement history — feeds Personal
+/// Challenge History (Version 2, Phase C2) and, via
+/// ChallengeCelebrationTracker, the completion-animation "newly
+/// achieved" check. Empty (not an error) for a guest, same as
+/// [myChallengeProgressProvider] — the underlying RPC returns no rows
+/// rather than failing when auth.uid() is null.
+final myTierHistoryProvider = FutureProvider<List<ChallengeTierAchievement>>(
+  (ref) => ref.watch(challengeRepositoryProvider).fetchMyTierHistory(),
+  name: 'myTierHistoryProvider',
+);
+
+final challengeCelebrationTrackerProvider = Provider<ChallengeCelebrationTracker>(
+  (ref) => ChallengeCelebrationTracker(ref.watch(sharedPreferencesProvider)),
+  name: 'challengeCelebrationTrackerProvider',
+);
+
+/// One challenge's leaderboard (Version 2, Phase C3) — `autoDispose`
+/// since the leaderboard screen is visited transiently, same
+/// reasoning as [challengeByIdProvider]. Safe for a guest to watch —
+/// see ChallengeRepository.fetchLeaderboard's doc.
+final challengeLeaderboardProvider = FutureProvider.autoDispose.family<List<LeaderboardEntry>, String>(
+  (ref, challengeId) => ref.watch(challengeRepositoryProvider).fetchLeaderboard(challengeId),
+  name: 'challengeLeaderboardProvider',
 );
 
 /// Riverpod AsyncNotifier managing admin challenge mutations (create,

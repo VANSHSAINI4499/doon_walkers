@@ -72,6 +72,21 @@ final isAdminProvider = Provider<bool>(
   name: 'isAdminProvider',
 );
 
+/// Whether a session exists at all — guest vs. signed-in, regardless of
+/// role. Reads the raw session (not [currentUserProvider]'s `.value`)
+/// so it flips the instant sign-in/out happens rather than waiting on
+/// the `public.users` row stream to resolve — Version 2, Phase C2's
+/// Challenges tab needs this the moment a guest lands on it, not a
+/// beat later. Watches [authStateChangesProvider] purely to re-run on
+/// every auth transition; the actual read is always the live session.
+final isSignedInProvider = Provider<bool>(
+  (ref) {
+    ref.watch(authStateChangesProvider);
+    return Supabase.instance.client.auth.currentUser != null;
+  },
+  name: 'isSignedInProvider',
+);
+
 /// Example trivial provider — demonstrates the Riverpod pattern works.
 ///
 /// Replace with real app-version logic (e.g. from package_info_plus) in

@@ -5,6 +5,7 @@ import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/registrations/data/repositories/registration_repository_impl.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration_stats.dart';
+import 'package:doon_walkers/features/registrations/domain/entities/trekking_streak.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -74,6 +75,18 @@ final myRegistrationStatsProvider = FutureProvider<RegistrationStats>(
     return RegistrationStats.fromRegistrations(registrations);
   },
   name: 'myRegistrationStatsProvider',
+);
+
+/// The signed-in user's attendance streak (Version 2, Phase C3) — see
+/// TrekkingStreak's doc. Watches [authStateChangesProvider] the same
+/// way [myRegistrationsProvider] does, so a sign-in/out is reflected
+/// without a stale cached value lingering.
+final myStreakProvider = FutureProvider<TrekkingStreak>(
+  (ref) {
+    ref.watch(authStateChangesProvider);
+    return ref.watch(registrationRepositoryProvider).fetchMyStreak();
+  },
+  name: 'myStreakProvider',
 );
 
 /// A short-lived signed URL for a payment-proof screenshot at [path]

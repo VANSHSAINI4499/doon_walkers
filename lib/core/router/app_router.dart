@@ -6,7 +6,10 @@ import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:doon_walkers/features/challenges/presentation/screens/admin_challenge_form_screen.dart';
-import 'package:doon_walkers/features/challenges/presentation/screens/admin_challenges_screen.dart';
+import 'package:doon_walkers/features/challenges/presentation/screens/challenge_detail_screen.dart';
+import 'package:doon_walkers/features/challenges/presentation/screens/challenge_leaderboard_screen.dart';
+import 'package:doon_walkers/features/challenges/presentation/screens/challenges_screen.dart';
+import 'package:doon_walkers/features/challenges/presentation/screens/my_challenge_achievements_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
@@ -327,7 +330,82 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           ],
         ),
 
-        // Branch 2 — Profile (now a bottom-nav tab; previously drawer-only)
+        // Branch 2 — Challenges (Version 2, Phase C2). Public tab for
+        // every role, shared-base-nav position (Home, Treks, Challenges,
+        // Profile) — see AppShell's top doc. Mirrors Trek Library's
+        // shape: one screen (ChallengesScreen) serves guest/member/admin
+        // alike, with admin's create/edit forms as sibling routes here
+        // rather than a separate admin-only tab (C1 originally gave
+        // Challenges its own admin-only tab because there was no public
+        // screen yet for admin controls to live inline on — now that
+        // this branch exists, that reasoning no longer applies, and a
+        // second Challenges-labeled tab would blow past the "5 tabs
+        // total for admin" nav budget for no benefit).
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppConstants.routeChallenges,
+              name: 'challenges',
+              builder: (context, state) => const ChallengesScreen(),
+              routes: [
+                // /challenges/history — declared BEFORE ':id', same
+                // reasoning as every other literal-segment-before-:id
+                // ordering in this file: without it, "history" would be
+                // captured as a challenge id instead.
+                GoRoute(
+                  path: 'history',
+                  name: 'challenges-history',
+                  builder: (context, state) => const MyChallengeAchievementsScreen(),
+                ),
+                // /challenges/:id — challenge detail, public (RLS gates
+                // draft visibility server-side, same as trek-detail).
+                GoRoute(
+                  path: ':id',
+                  name: 'challenge-detail',
+                  builder: (context, state) => ChallengeDetailScreen(
+                    challengeId: state.pathParameters['id']!,
+                  ),
+                  routes: [
+                    // /challenges/:id/leaderboard — Version 2, Phase C3.
+                    // Nested here (not its own top-level route) since it
+                    // only ever makes sense reached from one specific
+                    // challenge's detail page — see
+                    // ChallengeLeaderboardScreen's doc.
+                    GoRoute(
+                      path: 'leaderboard',
+                      name: 'challenge-leaderboard',
+                      builder: (context, state) => ChallengeLeaderboardScreen(
+                        challengeId: state.pathParameters['id']!,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // Admin create/edit forms — full literal `/admin/challenges/...`
+            // paths carried over unchanged from C1 (AppConstants.
+            // routeAdminChallengesNew / adminChallengeEditLocation), as
+            // sibling top-level routes in THIS branch rather than nested
+            // under /challenges, so ChallengeAdminActions/the "Add
+            // Challenge" FAB (both already built in C1) needed zero
+            // changes. Still gated by the existing `_isAdminRoute`
+            // prefix check — no new guard function needed.
+            GoRoute(
+              path: AppConstants.routeAdminChallengesNew,
+              name: 'admin-challenges-new',
+              builder: (context, state) => const AdminChallengeFormScreen(),
+            ),
+            GoRoute(
+              path: '${AppConstants.routeAdminChallenges}/:id/edit',
+              name: 'admin-challenges-edit',
+              builder: (context, state) => AdminChallengeFormScreen(
+                challengeId: state.pathParameters['id']!,
+              ),
+            ),
+          ],
+        ),
+
+        // Branch 3 — Profile (now a bottom-nav tab; previously drawer-only)
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -338,7 +416,7 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           ],
         ),
 
-        // Branch 3 — Trek Registrations (admin-only bottom-nav TAB).
+        // Branch 4 — Trek Registrations (admin-only bottom-nav TAB).
         //
         // A standalone top-level branch — NOT nested under the Admin
         // Dashboard branch below — precisely because StatefulShellRoute
@@ -389,57 +467,6 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                       ),
                     ),
                   ],
-                ),
-              ],
-            ),
-          ],
-        ),
-
-        // Branch 4 — Challenges (admin-only bottom-nav TAB, Version 2
-        // Phase C1). Originally reached only via a "Manage Challenges"
-        // card on Profile; moved to its own tab per explicit request —
-        // same structural reasoning as Trek Registrations (branch 3)
-        // just above: a bottom-nav tab needs its own standalone
-        // StatefulShellBranch, since a route nested inside another
-        // branch's GoRoute tree can't be separately tab-selected.
-        //
-        // Admin-only for now because there is no public-facing content
-        // to show a non-admin here yet — the progress bars/badges/tab
-        // UI a regular member would actually want is explicitly C2
-        // scope, not built in C1. AppShell only lists this as a 5th
-        // destination when isAdminProvider is true, same conditional
-        // visibility as Trek Registrations; the branch itself always
-        // exists in the tree for every role. Path still starts with
-        // /admin/... so [_isAdminRoute]'s prefix check gates it exactly
-        // like every other admin surface — including a demotion mid-tab,
-        // backed up by AppShell's own explicit redirect-to-Home listener
-        // (see `_challengesBranchIndex`).
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: AppConstants.routeAdminChallenges,
-              name: 'admin-challenges',
-              builder: (context, state) => const AdminChallengesScreen(),
-              routes: [
-                // /admin/challenges/new — declared BEFORE ':id', same
-                // reasoning as /merchandise/new: GoRouter matches in
-                // order, so without this ordering "new" would be
-                // captured as a challenge id instead.
-                GoRoute(
-                  path: 'new',
-                  name: 'admin-challenges-new',
-                  builder: (context, state) => const AdminChallengeFormScreen(),
-                ),
-                // /admin/challenges/:id/edit — a single multi-segment
-                // relative path rather than a nested ':id' parent, since
-                // there is no bare /admin/challenges/:id screen to act
-                // as that parent.
-                GoRoute(
-                  path: ':id/edit',
-                  name: 'admin-challenges-edit',
-                  builder: (context, state) => AdminChallengeFormScreen(
-                    challengeId: state.pathParameters['id']!,
-                  ),
                 ),
               ],
             ),
@@ -553,8 +580,15 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    but redirecting is consistent with every other authenticated-
     //    only surface in this app rather than a special-cased silent
     //    empty state.
+    //    /challenges/history joins this list in Version 2, Phase C2 —
+    //    a full destination screen (Personal Challenge History) reached
+    //    by direct navigation, not one action inside an otherwise-public
+    //    screen, so it gets the same router-level treatment as /profile
+    //    rather than the client-side AuthGuard.requireAuth pattern
+    //    Register/Wishlist/Buy use for in-screen actions.
     final isProtectedRoute = location == AppConstants.routeProfile ||
         location == AppConstants.routeNotifications ||
+        location == AppConstants.routeChallengeHistory ||
         _isAdminRoute(location) ||
         _isTrekAdminRoute(location) ||
         _isMerchAdminRoute(location);

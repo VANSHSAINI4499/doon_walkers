@@ -31,6 +31,16 @@ enum ChallengeMetric {
     ChallengeMetric.trekCount => 'Trek Count',
   };
 
+  /// Plain-language "what counts" blurb for Challenge Detail — Version
+  /// 2, Phase C2. Deliberately generic wording ("your attended treks"),
+  /// not tied to any particular challenge, so a new metric added later
+  /// only needs a new switch arm here, never a per-challenge string.
+  String get explanation => switch (this) {
+    ChallengeMetric.totalDistanceKm =>
+      'Based on the total distance of every trek you\'ve attended.',
+    ChallengeMetric.trekCount => 'Based on the number of treks you\'ve attended.',
+  };
+
   /// How a raw numeric progress value should read for this metric —
   /// e.g. "3" for trek_count vs "42.5 km" for total_distance_km. Used
   /// by the admin form/list; a future C2 progress UI would use the
@@ -67,6 +77,18 @@ enum ChallengeTimeWindow {
     ChallengeTimeWindow.allTime => 'All Time',
     ChallengeTimeWindow.monthly => 'This Month',
     ChallengeTimeWindow.customRange => 'Custom Date Range',
+  };
+
+  /// Plain-language companion to [ChallengeMetric.explanation] for
+  /// Challenge Detail — describes WHICH attended treks count, not what
+  /// they're measured by. [Challenge.customRange] callers should still
+  /// show the actual start/end dates alongside this; this string alone
+  /// doesn't carry them.
+  String get explanation => switch (this) {
+    ChallengeTimeWindow.allTime => 'Counts every trek you\'ve ever attended.',
+    ChallengeTimeWindow.monthly => 'Only counts treks attended during the current calendar month.',
+    ChallengeTimeWindow.customRange =>
+      'Only counts treks attended within this challenge\'s date range.',
   };
 }
 

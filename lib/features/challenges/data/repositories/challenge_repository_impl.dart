@@ -2,8 +2,12 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/challenges/data/models/challenge_model.dart';
 import 'package:doon_walkers/features/challenges/data/models/challenge_progress_model.dart';
+import 'package:doon_walkers/features/challenges/data/models/challenge_tier_achievement_model.dart';
+import 'package:doon_walkers/features/challenges/data/models/leaderboard_entry_model.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/challenge_tier_achievement.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/leaderboard_entry.dart';
 import 'package:doon_walkers/features/challenges/domain/repositories/challenge_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -31,6 +35,16 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
     final rows = await _supabase
         .from(AppConstants.tableChallenges)
         .select(_fullChallengeSelect)
+        .order('created_at', ascending: false);
+    return rows.map(ChallengeModel.fromJson).toList();
+  }
+
+  @override
+  Future<List<Challenge>> fetchActiveChallenges() async {
+    final rows = await _supabase
+        .from(AppConstants.tableChallenges)
+        .select(_fullChallengeSelect)
+        .eq('is_active', true)
         .order('created_at', ascending: false);
     return rows.map(ChallengeModel.fromJson).toList();
   }
@@ -144,6 +158,25 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
     final rows = await _supabase.rpc(AppConstants.rpcGetMyChallengeProgress);
     return (rows as List)
         .map((row) => ChallengeProgressModel.fromJson(row as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<ChallengeTierAchievement>> fetchMyTierHistory() async {
+    final rows = await _supabase.rpc(AppConstants.rpcGetMyChallengeTierHistory);
+    return (rows as List)
+        .map((row) => ChallengeTierAchievementModel.fromJson(row as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<LeaderboardEntry>> fetchLeaderboard(String challengeId) async {
+    final rows = await _supabase.rpc(
+      AppConstants.rpcGetChallengeLeaderboard,
+      params: {'p_challenge_id': challengeId},
+    );
+    return (rows as List)
+        .map((row) => LeaderboardEntryModel.fromJson(row as Map<String, dynamic>))
         .toList();
   }
 

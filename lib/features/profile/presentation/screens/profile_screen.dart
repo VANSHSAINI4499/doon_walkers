@@ -5,8 +5,10 @@ import 'package:doon_walkers/features/merchandise/presentation/widgets/admin_mer
 import 'package:doon_walkers/features/merchandise/presentation/widgets/my_inquiries_section.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/my_wishlist_section.dart';
 import 'package:doon_walkers/features/notifications/presentation/widgets/admin_send_notification_card.dart';
+import 'package:doon_walkers/features/profile/presentation/widgets/leaderboard_visibility_toggle.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/loyalty_badge_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/profile_stats_section.dart';
+import 'package:doon_walkers/features/profile/presentation/widgets/streak_section.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/my_registrations_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -190,8 +192,20 @@ class ProfileScreen extends ConsumerWidget {
                     const AdminMerchInquiriesCard(),
                     const SizedBox(height: 28),
                     const LoyaltyBadgeSection(),
+                    const SizedBox(height: 12),
+                    // Attendance streak (Version 2, Phase C3) — grouped
+                    // with the loyalty badge right above it as the
+                    // "engagement at a glance" pair; renders nothing
+                    // until there's a real streak to show (see its own
+                    // doc), so it never leaves an empty gap here.
+                    const StreakSection(),
                     const SizedBox(height: 20),
                     const ProfileStatsSection(),
+                    const SizedBox(height: 20),
+                    // Leaderboard privacy preference (Version 2, Phase
+                    // C3) — placed right after the stats it controls
+                    // visibility for, ahead of the personal lists below.
+                    const LeaderboardVisibilityToggle(),
                     const SizedBox(height: 28),
                     // The member's own registered treks, with self-service
                     // cancellation. Scoped to this user by

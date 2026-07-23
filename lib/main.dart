@@ -1,4 +1,5 @@
 import 'package:doon_walkers/core/config/env_config.dart';
+import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
 import 'package:doon_walkers/core/router/app_router.dart';
 import 'package:doon_walkers/core/services/push_notification_service.dart';
 import 'package:doon_walkers/core/theme/app_theme.dart';
@@ -6,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -43,8 +45,14 @@ Future<void> main() async {
   //    Riverpod providers via ref, THEN initialise push notifications —
   //    it needs a ProviderContainer to read/invalidate providers
   //    (device token upserts, router navigation on tap), so it can't
-  //    run before runApp.
-  final container = ProviderContainer();
+  //    run before runApp. SharedPreferences is resolved the same way
+  //    (async, needed before any widget reads sharedPreferencesProvider)
+  //    and supplied as an override rather than lazily inside the
+  //    provider itself, since Provider bodies must be synchronous.
+  final prefs = await SharedPreferences.getInstance();
+  final container = ProviderContainer(
+    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+  );
   await container.read(pushNotificationServiceProvider).initialize();
 
   runApp(

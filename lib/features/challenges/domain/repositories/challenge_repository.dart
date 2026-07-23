@@ -1,5 +1,7 @@
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/challenge_tier_achievement.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/leaderboard_entry.dart';
 
 /// Abstract interface for reading and managing challenges.
 ///
@@ -17,7 +19,16 @@ abstract class ChallengeRepository {
   /// Challenges tab yet, that's C2).
   Future<List<Challenge>> fetchAllChallenges();
 
-  /// A single challenge by id, for the admin edit form to prefill.
+  /// Active challenges only — Version 2, Phase C2's public Challenges
+  /// tab for guests/members. Distinct from [fetchAllChallenges] rather
+  /// than filtering client-side so the query itself is the same shape
+  /// as [fetchAllChallenges] (`is_active = TRUE` added), matching the
+  /// published-vs-all split TrekRepository already has
+  /// (publishedTreks/adminAllTreks).
+  Future<List<Challenge>> fetchActiveChallenges();
+
+  /// A single challenge by id — used both by the admin edit form to
+  /// prefill and by Challenge Detail's public view.
   Future<Challenge?> fetchChallengeById(String id);
 
   /// Creates a challenge (starts inactive/draft — see the migration's
@@ -67,4 +78,22 @@ abstract class ChallengeRepository {
   /// yourself — see the migration's doc for why that's the entire
   /// security model here rather than an RLS policy.
   Future<List<ChallengeProgress>> fetchMyProgress();
+
+  /// Every (challenge, tier) the signed-in user has actually reached,
+  /// with the real date it was reached — wraps
+  /// `get_my_challenge_tier_history()`. Same no-parameter security
+  /// model as [fetchMyProgress]. Powers Personal Challenge History
+  /// (Version 2, Phase C2) and the completion-animation "newly
+  /// achieved" detection (see ChallengeCelebrationTracker) — the same
+  /// live-computed data serves both, no separate stored log.
+  Future<List<ChallengeTierAchievement>> fetchMyTierHistory();
+
+  /// Ranks every leaderboard-visible user by their progress on
+  /// [challengeId] — wraps `get_challenge_leaderboard()` (Version 2,
+  /// Phase C3). Safe to call as a guest (read-only browsing, same as
+  /// [fetchActiveChallenges]); the RPC itself never returns anything
+  /// beyond display name/rank/score for anyone, caller included — see
+  /// 0025_leaderboard.sql's doc for why that's enforced in the
+  /// function body, not just by what this method happens to select.
+  Future<List<LeaderboardEntry>> fetchLeaderboard(String challengeId);
 }

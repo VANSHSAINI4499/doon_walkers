@@ -12,26 +12,27 @@ import 'package:go_router/go_router.dart';
 /// [NavigationDrawer] persist across route transitions.
 ///
 /// Primary destinations (bottom nav):
-///   - Everyone: Home, Treks, Profile (3 tabs — identical for guest,
-///     regular user, and admin).
-///   - Admin additionally gets a 4th and 5th tab: Trek Registrations,
-///     then Challenges (Version 2, Phase C1 — moved here from a Profile
-///     card per explicit request; admin-only for now since there's no
-///     public-facing content yet, see app_router.dart's Branch 4 doc).
+///   - Everyone: Home, Treks, Challenges, Profile (4 tabs — identical
+///     for guest, regular user, and admin). Challenges (Version 2,
+///     Phase C2) joined the shared base here rather than staying
+///     admin-only (C1's original placement) now that it has real
+///     public-facing content — see ChallengesScreen's doc.
+///   - Admin additionally gets a 5th tab: Trek Registrations.
 ///
 /// Navigation Drawer: branding/version, plus a "Merchandise" entry
 /// (Version 2, Phase M1) — the drawer's former "Admin Dashboard" entry
 /// was removed along with the screen it opened (see app_router.dart's
 /// top doc), and Merchandise is what now occupies that otherwise-empty
 /// space. Every admin-only affordance is either inline (Trek Library,
-/// Trek Detail's comments/gallery), a bottom-nav tab (Trek
-/// Registrations, Challenges), or on Profile (Send Notification) — none
-/// of them need a drawer entry. Merchandise is different: it's a
-/// genuinely new top-level, PUBLICLY browsable surface (not admin-only)
-/// that isn't a bottom-nav tab (see MerchandiseCatalogScreen's doc for
-/// why not) — the drawer is the natural, always-reachable-from-anywhere
-/// home for it, reusing an affordance (the menu icon, visible on every
-/// branch) that would otherwise sit completely unused.
+/// Challenges, Trek Detail's comments/gallery), a bottom-nav tab (Trek
+/// Registrations), or on Profile (Send Notification, Merchandise
+/// Inquiries) — none of them need a drawer entry. Merchandise is
+/// different: it's a genuinely new top-level, PUBLICLY browsable
+/// surface (not admin-only) that isn't a bottom-nav tab (see
+/// MerchandiseCatalogScreen's doc for why not) — the drawer is the
+/// natural, always-reachable-from-anywhere home for it, reusing an
+/// affordance (the menu icon, visible on every branch) that would
+/// otherwise sit completely unused.
 ///
 /// The selected tab is derived from the current [GoRouterState] location
 /// so that deep-links automatically highlight the correct tab.
@@ -72,7 +73,7 @@ class _NavDestination {
 }
 
 // Order here MUST match the branch order in app_router.dart (branches
-// 0-4) — NavigationBar's selectedIndex is a raw branch index, and
+// 0-3) — NavigationBar's selectedIndex is a raw branch index, and
 // _AppShellState's clamp below assumes every branch index less than
 // the CURRENT role's destinations.length is one of these tabs, in this
 // order.
@@ -90,6 +91,12 @@ const _baseDestinations = [
     route: AppConstants.routeTrekLibrary,
   ),
   _NavDestination(
+    label: 'Challenges',
+    icon: Icons.emoji_events_outlined,
+    selectedIcon: Icons.emoji_events,
+    route: AppConstants.routeChallenges,
+  ),
+  _NavDestination(
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
@@ -102,13 +109,6 @@ const _adminDestination = _NavDestination(
   icon: Icons.groups_outlined,
   selectedIcon: Icons.groups,
   route: AppConstants.routeAdminTrekRegistrations,
-);
-
-const _challengesDestination = _NavDestination(
-  label: 'Challenges',
-  icon: Icons.emoji_events_outlined,
-  selectedIcon: Icons.emoji_events,
-  route: AppConstants.routeAdminChallenges,
 );
 
 /// Resolves what `NavigationBar.selectedIndex` should show, given:
@@ -129,9 +129,9 @@ const _challengesDestination = _NavDestination(
 /// `NavigationBar` and tripping its assertion, the crash history this
 /// project has already hit once — has direct unit coverage instead of
 /// only the manual device trace. Covers both directions: [currentIndex]
-/// pointing at the never-a-tab admin-only branch (4, no index screen of
+/// pointing at the never-a-tab admin-only branch (5, no index screen of
 /// its own — see app_router.dart), AND pointing at the admin-only Trek
-/// Registrations branch (3) right after a demotion shrinks
+/// Registrations branch (4) right after a demotion shrinks
 /// [destinationsLength] out from under it.
 @visibleForTesting
 (int selectedIndex, int nextLastPrimaryIndex) resolveSelectedTabIndex({
@@ -145,26 +145,30 @@ const _challengesDestination = _NavDestination(
   if (lastPrimaryIndex < destinationsLength) {
     return (lastPrimaryIndex, lastPrimaryIndex);
   }
-  // Even the fallback no longer exists for this role (e.g. it was 3 —
+  // Even the fallback no longer exists for this role (e.g. it was 4 —
   // Trek Registrations — from before a demotion). Home (index 0) always
   // exists for every role, so reset to it rather than carry a
   // permanently-stale lastPrimaryIndex forward.
   return (0, 0);
 }
 
-// Branch indices of the admin-only bottom-nav tabs — must match their
-// position in app_router.dart's branches list (0 Home, 1 Treks,
-// 2 Profile, 3 Trek Registrations, 4 Challenges, 5 admin-only standalone
-// screens).
-const _trekRegistrationsBranchIndex = 3;
-const _challengesBranchIndex = 4;
+// Branch index of the admin-only Trek Registrations tab — must match
+// its position in app_router.dart's branches list (0 Home, 1 Treks,
+// 2 Challenges, 3 Profile, 4 Trek Registrations, 5 admin-only standalone
+// screens). Challenges (branch 2) needs no equivalent entry here: it's
+// a fully public tab now (Version 2, Phase C2), not an admin-only one —
+// its admin-only leaf routes (challenge create/edit) carry the same
+// soft-UX-only risk on a stale demotion as Trek Library's/Merchandise's
+// own inline admin forms (RLS blocks the actual write regardless), not
+// the "stranded on an entire off-limits dashboard" risk this listener
+// exists for.
+const _trekRegistrationsBranchIndex = 4;
 
 class _AppShellState extends ConsumerState<AppShell> {
   // Tracks whichever primary tab was last actually valid to show
   // selected — see [resolveSelectedTabIndex] for the full reasoning and
   // the cases it now has to handle (the never-a-tab admin-only branch,
-  // and the admin-only Trek Registrations/Challenges tabs right after a
-  // demotion).
+  // and the admin-only Trek Registrations tab right after a demotion).
   int _lastPrimaryIndex = 0;
 
   void _onTabSelected(BuildContext context, int index) {
@@ -180,33 +184,29 @@ class _AppShellState extends ConsumerState<AppShell> {
     // against a demoted admin staying on an admin-only route, and it's
     // enough for most cases (verified live: it correctly bounces a
     // demoted user off admin-only paths). But it re-evaluates against the
-    // router's declarative top-level location, and both Trek
-    // Registrations' and Challenges' detail/edit routes are reached via
-    // push() *within* their own branch's Navigator — verified live that a
-    // demotion while several pushes deep on a branch does NOT reliably
-    // re-trigger `redirect` on its own. Rather than depend on that
-    // timing, this listener is a second, precisely-scoped line of
-    // defense: the transitions that can strand a viewer on now-forbidden
-    // content are admin-with-role becoming non-admin while sitting on
-    // branch 3 (Trek Registrations) or branch 4 (Challenges) specifically
-    // — not branch 5, whose screens are reached via push() from elsewhere
-    // (e.g. Profile's Send Notification card) and must NOT trigger this.
-    // When either exact transition happens, actively navigate to Home —
-    // a plain context.go call, which (unlike push) always resets to a
-    // clean top-level match, so it works regardless of how many pages
-    // were pushed within the branch.
+    // router's declarative top-level location, and Trek Registrations'
+    // detail routes are reached via push() *within* this branch's own
+    // Navigator — verified live that a demotion while several pushes
+    // deep on this branch does NOT reliably re-trigger `redirect` on its
+    // own. Rather than depend on that timing, this listener is a second,
+    // precisely-scoped line of defense: the ONE transition that can
+    // strand a viewer on now-forbidden content — an entire off-limits
+    // tab staying visible, not just a stale form — is admin-with-role
+    // becoming non-admin while sitting on branch 4 (Trek Registrations)
+    // specifically. When that exact transition happens, actively
+    // navigate to Home — a plain context.go call, which (unlike push)
+    // always resets to a clean top-level match, so it works regardless
+    // of how many pages were pushed within the branch.
     ref.listen<bool>(isAdminProvider, (previous, next) {
       if (previous == true &&
           next == false &&
-          (widget.navigationShell.currentIndex == _trekRegistrationsBranchIndex ||
-              widget.navigationShell.currentIndex == _challengesBranchIndex)) {
+          widget.navigationShell.currentIndex == _trekRegistrationsBranchIndex) {
         context.go(AppConstants.routeHome);
       }
     });
 
     final isAdmin = ref.watch(isAdminProvider);
-    final destinations =
-        isAdmin ? [..._baseDestinations, _adminDestination, _challengesDestination] : _baseDestinations;
+    final destinations = isAdmin ? [..._baseDestinations, _adminDestination] : _baseDestinations;
 
     final (selectedIndex, nextLastPrimaryIndex) = resolveSelectedTabIndex(
       currentIndex: widget.navigationShell.currentIndex,
