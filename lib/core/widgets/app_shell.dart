@@ -244,9 +244,14 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
 
     return Scaffold(
       appBar: AppBar(
+        // White, not onPrimary: after the Phase 1 palette flip the app
+        // bar background is near-black and onPrimary is the dark ink meant
+        // to sit ON the electric-green primary — using it here rendered
+        // the title dark-on-dark. Colour only; a fuller AppShell/chrome
+        // restyle is a later phase.
         title: Text(
           AppConstants.appName,
-          style: AppTextStyles.titleLarge.copyWith(color: AppColors.onPrimary),
+          style: AppTextStyles.titleLarge.copyWith(color: AppColors.white),
         ),
         actions: [
           // Notifications (Phase 8) — always shown regardless of role
@@ -255,14 +260,14 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
           // /notifications, not conditional visibility of the
           // affordance that opens it.
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: AppColors.onPrimary),
+            icon: const Icon(Icons.notifications_outlined, color: AppColors.white),
             tooltip: 'Notifications',
             onPressed: () => context.push(AppConstants.routeNotifications),
           ),
           // Opens the secondary NavigationDrawer
           Builder(
             builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.onPrimary),
+              icon: const Icon(Icons.menu, color: AppColors.white),
               tooltip: 'More',
               onPressed: () => Scaffold.of(ctx).openEndDrawer(),
             ),

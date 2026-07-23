@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/motion/app_transitions.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/widgets/app_shell.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
@@ -12,6 +13,7 @@ import 'package:doon_walkers/features/challenges/presentation/screens/challenges
 import 'package:doon_walkers/features/challenges/presentation/screens/my_challenge_achievements_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
+import 'package:doon_walkers/features/design_demo/presentation/screens/design_system_demo_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/admin_merch_inquiries_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/admin_product_form_screen.dart';
@@ -214,6 +216,19 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       path: AppConstants.routeNotifications,
       name: 'notifications',
       builder: (context, state) => const NotificationsScreen(),
+    ),
+    // /design-system — the Redesign Phase 1 component gallery. A
+    // developer/design review surface, not linked from any user-facing
+    // navigation and reads no data; kept in the tree so the foundation
+    // can be signed off before Phase 2 rebuilds real screens on it.
+    // Uses a fade-through page as a live demo of AppTransitions.
+    GoRoute(
+      path: DesignSystemDemoScreen.routeName,
+      name: 'design-system',
+      pageBuilder: (context, state) => AppTransitions.fadeThroughPage(
+        key: state.pageKey,
+        child: const DesignSystemDemoScreen(),
+      ),
     ),
     // /merchandise — deliberately top-level, same reasoning as
     // /notifications above: reached from the Navigation Drawer, which

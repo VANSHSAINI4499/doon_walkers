@@ -82,7 +82,13 @@ class DoonWalkersApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Doon Walkers',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      // Dark-only (Redesign Phase 1). Set as both light and dark slots
+      // with `themeMode: dark` so the OS light/dark setting can never
+      // pull the app into an unstyled light Material default — there is
+      // no light variant of this design system.
+      theme: AppTheme.dark,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       routerConfig: ref.watch(routerProvider),
     );
   }
