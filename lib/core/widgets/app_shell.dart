@@ -2,6 +2,7 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:doon_walkers/core/theme/app_text_styles.dart';
+import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -164,12 +165,38 @@ const _adminDestination = _NavDestination(
 // exists for.
 const _trekRegistrationsBranchIndex = 4;
 
-class _AppShellState extends ConsumerState<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver {
   // Tracks whichever primary tab was last actually valid to show
   // selected — see [resolveSelectedTabIndex] for the full reasoning and
   // the cases it now has to handle (the never-a-tab admin-only branch,
   // and the admin-only Trek Registrations tab right after a demotion).
   int _lastPrimaryIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // "Sync on app resume from background" (Version 2, Challenges
+    // Module pivot) — AppShell is the natural place for this: it's
+    // mounted for the app's entire lifetime once past sign-in/routing,
+    // same reason it already owns the admin-demotion lifecycle logic
+    // above. "Sync on launch" is a separate hook (activityLaunchSyncProvider,
+    // watched from DoonWalkersApp) since that's an auth-state concern,
+    // not an app-lifecycle one.
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(activitySyncControllerProvider.notifier).sync();
+    }
+  }
 
   void _onTabSelected(BuildContext context, int index) {
     widget.navigationShell.goBranch(

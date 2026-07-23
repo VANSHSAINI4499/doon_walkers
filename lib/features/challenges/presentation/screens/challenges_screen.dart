@@ -1,5 +1,7 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
+import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
+import 'package:doon_walkers/features/activity/presentation/widgets/activity_permission_banner.dart';
 import 'package:doon_walkers/features/challenges/data/services/challenge_celebration_tracker.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
@@ -72,7 +74,24 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
             )
           : null,
       body: SafeArea(
-        child: challengesAsync.when(
+        child: Column(
+          children: [
+            const ActivityPermissionBanner(),
+            Expanded(child: _buildChallengesList(theme, challengesAsync, challengesProvider, progressAsync, isAdmin)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChallengesList(
+    ThemeData theme,
+    AsyncValue<List<Challenge>> challengesAsync,
+    FutureProvider<List<Challenge>> challengesProvider,
+    AsyncValue<List<ChallengeProgress>> progressAsync,
+    bool isAdmin,
+  ) {
+    return challengesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) {
             debugPrint('ChallengesScreen: failed to load challenges: $error');
@@ -100,9 +119,15 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
             );
           },
           data: (challenges) {
+            // Pull-to-refresh doubles as one of the three sync triggers
+            // (launch/resume/manual) — chained so the refresh spinner
+            // stays up until fresh activity data has actually landed,
+            // not just the challenge list itself.
             Future<void> onRefresh() {
-              ref.invalidate(myChallengeProgressProvider);
-              return ref.refresh(challengesProvider.future);
+              return ref.read(activitySyncControllerProvider.notifier).sync().then((_) {
+                ref.invalidate(myChallengeProgressProvider);
+                return ref.refresh(challengesProvider.future);
+              });
             }
 
             if (challenges.isEmpty) {
@@ -138,9 +163,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
               ),
             );
           },
-        ),
-      ),
-    );
+        );
   }
 
   Future<void> _detectAndCelebrate(

@@ -15,6 +15,12 @@ abstract final class ChallengeIcon {
     'star': Icons.star_rounded,
     'flag': Icons.flag_rounded,
     'walk': Icons.directions_walk_rounded,
+    // Added for the Challenges Module fitness pivot (Version 2) —
+    // 'run'/'fire' fit steps/distance/calories/streak challenges better
+    // than the trek-oriented icons above, without removing any of them
+    // (existing challenges keep whatever icon they already picked).
+    'run': Icons.directions_run_rounded,
+    'fire': Icons.local_fire_department_rounded,
   };
 
   /// Falls back to a generic trophy outline for an unset or unknown

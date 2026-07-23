@@ -36,10 +36,17 @@ android {
         applicationId = "com.example.doon_walkers"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // 23, not flutter.minSdkVersion (21) — firebase_messaging's current
-        // Android implementation requires API 23+; building below that
-        // fails at compile time with a manifest merger/dependency error.
-        minSdk = maxOf(flutter.minSdkVersion, 23)
+        // 26, not flutter.minSdkVersion (21) — the `health` package
+        // (Health Connect integration, Version 2 Challenges Module
+        // pivot) declares minSdk 26 and the manifest merger fails
+        // below that; this also supersedes the earlier 23 floor that
+        // was here for firebase_messaging (23 <= 26, so no regression
+        // for that requirement). Health Connect itself only ever
+        // targets Android 9+ in practice anyway (see
+        // HealthConnectProvider's doc on availability), so this isn't
+        // narrowing real-world compatibility beyond what the feature
+        // already implied.
+        minSdk = maxOf(flutter.minSdkVersion, 26)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

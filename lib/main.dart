@@ -3,6 +3,7 @@ import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
 import 'package:doon_walkers/core/router/app_router.dart';
 import 'package:doon_walkers/core/services/push_notification_service.dart';
 import 'package:doon_walkers/core/theme/app_theme.dart';
+import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -73,6 +74,10 @@ class DoonWalkersApp extends ConsumerWidget {
     // `watch` (not `read`) so it's created here and Riverpod knows this
     // widget "owns" keeping it alive for as long as the app runs.
     ref.watch(pushTokenSyncProvider);
+    // Covers the "sync on app launch" requirement (Version 2, Challenges
+    // Module pivot) — "sync on resume" is a separate hook in AppShell,
+    // since that needs WidgetsBindingObserver, not just an auth listener.
+    ref.watch(activityLaunchSyncProvider);
 
     return MaterialApp.router(
       title: 'Doon Walkers',

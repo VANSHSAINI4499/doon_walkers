@@ -164,11 +164,12 @@ class _ChallengeDetailBody extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Text(challenge.metric.explanation, style: theme.textTheme.bodyMedium),
                     const SizedBox(height: 4),
-                    Text(_timeWindowExplanation(challenge), style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 4),
+                    if (challenge.metric != ChallengeMetric.activeStreakDays) ...[
+                      Text(_timeWindowExplanation(challenge), style: theme.textTheme.bodyMedium),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
-                      'A trek counts as attended once its date has passed and your '
-                      'registration wasn\'t cancelled.',
+                      challenge.metric.footnote,
                       style: theme.textTheme.bodySmall
                           ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),

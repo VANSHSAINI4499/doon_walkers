@@ -1,11 +1,34 @@
-/// Maps to the `challenge_metric` enum in Postgres (`total_distance_km`,
-/// `trek_count`) — see 0022_challenges.sql.
+/// Maps to the `challenge_metric` enum in Postgres — see
+/// 0022_challenges.sql (original trek-based metrics) and
+/// 0026_fitness_activity_schema.sql (Version 2, Challenges Module
+/// pivot: daily fitness activity, sourced from Health Connect via
+/// ActivityProvider → ActivitySyncService → `daily_activity_summary`).
 ///
-/// Elevation-gain challenges are explicitly deferred (Version 2, Phase
-/// C1 scope decision) — treks only track max altitude, not real
-/// elevation gain, which isn't the same thing. Only these two metrics
-/// exist; adding a third later is a schema/enum change, not something
-/// this app layer needs to special-case anywhere.
+/// [totalDistanceKm]/[trekCount] are KEPT (not removed — Postgres
+/// enum values can't be cheaply dropped, and no challenge currently
+/// uses them after the pivot's cleanup deleted the 4 trek-based
+/// challenges) but are no longer the primary direction; every new
+/// challenge should use one of the fitness metrics below.
+///
+/// [dailySteps]/[weeklySteps]/[monthlySteps] all sum the SAME
+/// `daily_activity_summary.steps` column — they exist as separate
+/// enum values (rather than one `steps` metric) purely as the
+/// vocabulary an admin picks from; which one actually applies is
+/// [Challenge.timeWindow], exactly like [totalDistanceKm]/[trekCount]
+/// were already orthogonal to their window. The admin form pairs each
+/// with its natural window (e.g. dailySteps ↔ daily) by convention,
+/// not a DB constraint — same "trust the admin form" pattern as tier
+/// thresholds needing to strictly increase.
+///
+/// [activeStreakDays] is fundamentally different from every other
+/// metric here: it is NOT a windowed sum. It's the user's current run
+/// of consecutive CALENDAR DAYS with at least one active day (any
+/// `daily_activity_summary` row with steps > 0) — see
+/// get_my_streak()'s doc (0024_streaks.sql) for the analogous
+/// month-granular version this generalizes from, and note this is
+/// entirely separate from that Profile-level trekking streak: this
+/// one is a per-challenge fitness metric, that one is attendance-based
+/// and untouched by this pivot.
 ///
 /// Unlike [ChallengeTier] this can NOT use `.name` to round-trip: Dart
 /// identifiers are lowerCamelCase while the Postgres labels are
@@ -13,56 +36,122 @@
 /// situation as `GenderType`, mapped explicitly in both directions.
 enum ChallengeMetric {
   totalDistanceKm,
-  trekCount;
+  trekCount,
+  dailySteps,
+  weeklySteps,
+  monthlySteps,
+  dailyDistanceKm,
+  caloriesBurned,
+  activeStreakDays;
 
   static ChallengeMetric fromString(String? value) => switch (value) {
     'total_distance_km' => ChallengeMetric.totalDistanceKm,
     'trek_count' => ChallengeMetric.trekCount,
-    _ => ChallengeMetric.trekCount, // column is NOT NULL; arbitrary safe fallback
+    'daily_steps' => ChallengeMetric.dailySteps,
+    'weekly_steps' => ChallengeMetric.weeklySteps,
+    'monthly_steps' => ChallengeMetric.monthlySteps,
+    'daily_distance_km' => ChallengeMetric.dailyDistanceKm,
+    'calories_burned' => ChallengeMetric.caloriesBurned,
+    'active_streak_days' => ChallengeMetric.activeStreakDays,
+    _ => ChallengeMetric.dailySteps, // column is NOT NULL; arbitrary safe fallback
   };
 
   String toDbString() => switch (this) {
     ChallengeMetric.totalDistanceKm => 'total_distance_km',
     ChallengeMetric.trekCount => 'trek_count',
+    ChallengeMetric.dailySteps => 'daily_steps',
+    ChallengeMetric.weeklySteps => 'weekly_steps',
+    ChallengeMetric.monthlySteps => 'monthly_steps',
+    ChallengeMetric.dailyDistanceKm => 'daily_distance_km',
+    ChallengeMetric.caloriesBurned => 'calories_burned',
+    ChallengeMetric.activeStreakDays => 'active_streak_days',
   };
 
   String get label => switch (this) {
-    ChallengeMetric.totalDistanceKm => 'Total Distance (km)',
+    ChallengeMetric.totalDistanceKm => 'Total Trek Distance (km)',
     ChallengeMetric.trekCount => 'Trek Count',
+    ChallengeMetric.dailySteps => 'Steps',
+    ChallengeMetric.weeklySteps => 'Steps',
+    ChallengeMetric.monthlySteps => 'Steps',
+    ChallengeMetric.dailyDistanceKm => 'Distance (km)',
+    ChallengeMetric.caloriesBurned => 'Calories Burned',
+    ChallengeMetric.activeStreakDays => 'Activity Streak (days)',
   };
 
   /// Plain-language "what counts" blurb for Challenge Detail — Version
-  /// 2, Phase C2. Deliberately generic wording ("your attended treks"),
-  /// not tied to any particular challenge, so a new metric added later
-  /// only needs a new switch arm here, never a per-challenge string.
+  /// 2, Phase C2 (extended for the fitness pivot). Deliberately
+  /// generic wording, not tied to any particular challenge, so a new
+  /// metric added later only needs a new switch arm here, never a
+  /// per-challenge string.
   String get explanation => switch (this) {
     ChallengeMetric.totalDistanceKm =>
       'Based on the total distance of every trek you\'ve attended.',
     ChallengeMetric.trekCount => 'Based on the number of treks you\'ve attended.',
+    ChallengeMetric.dailySteps ||
+    ChallengeMetric.weeklySteps ||
+    ChallengeMetric.monthlySteps =>
+      'Based on your step count, synced from Health Connect.',
+    ChallengeMetric.dailyDistanceKm =>
+      'Based on the distance you\'ve walked or run, synced from Health Connect.',
+    ChallengeMetric.caloriesBurned =>
+      'Based on calories burned, synced from Health Connect.',
+    ChallengeMetric.activeStreakDays =>
+      'Based on your current run of consecutive days with any recorded activity.',
+  };
+
+  /// A short footnote clarifying what "counts" at a more mechanical
+  /// level than [explanation] — the trek metrics' attendance rule vs.
+  /// the fitness metrics' sync source. Shown on Challenge Detail below
+  /// [explanation]/the time-window explanation.
+  String get footnote => switch (this) {
+    ChallengeMetric.totalDistanceKm || ChallengeMetric.trekCount =>
+      'A trek counts as attended once its date has passed and your '
+          'registration wasn\'t cancelled.',
+    ChallengeMetric.dailySteps ||
+    ChallengeMetric.weeklySteps ||
+    ChallengeMetric.monthlySteps ||
+    ChallengeMetric.dailyDistanceKm ||
+    ChallengeMetric.caloriesBurned ||
+    ChallengeMetric.activeStreakDays =>
+      'Synced from Health Connect on your device — grant permission and '
+          'sync from the Challenges tab if your progress looks out of date.',
   };
 
   /// How a raw numeric progress value should read for this metric —
   /// e.g. "3" for trek_count vs "42.5 km" for total_distance_km. Used
-  /// by the admin form/list; a future C2 progress UI would use the
-  /// same formatting.
+  /// by the admin form/list and the member-facing progress bar.
   String formatValue(double value) => switch (this) {
     ChallengeMetric.trekCount => value.toStringAsFixed(0),
-    ChallengeMetric.totalDistanceKm =>
+    ChallengeMetric.totalDistanceKm || ChallengeMetric.dailyDistanceKm =>
       '${value % 1 == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(2)} km',
+    ChallengeMetric.dailySteps || ChallengeMetric.weeklySteps || ChallengeMetric.monthlySteps =>
+      '${value.toStringAsFixed(0)} steps',
+    ChallengeMetric.caloriesBurned => '${value.toStringAsFixed(0)} kcal',
+    ChallengeMetric.activeStreakDays =>
+      '${value.toStringAsFixed(0)} day${value == 1 ? '' : 's'}',
   };
 }
 
-/// Maps to the `challenge_time_window` enum (`all_time`, `monthly`,
-/// `custom_range`) — see 0022_challenges.sql. Same snake_case-mismatch
-/// reasoning as [ChallengeMetric].
+/// Maps to the `challenge_time_window` enum in Postgres — see
+/// 0022_challenges.sql (`all_time`, `monthly`, `custom_range`) and
+/// 0026_fitness_activity_schema.sql (`daily`, `weekly` — added for
+/// the Challenges Module fitness pivot, needed for "steps today" /
+/// "steps this week" style challenges that didn't exist in the
+/// trek-only design). Same snake_case-mismatch reasoning as
+/// [ChallengeMetric]. Ignored entirely by [ChallengeMetric.activeStreakDays]
+/// — a streak is inherently "as of today," not a period sum.
 enum ChallengeTimeWindow {
   allTime,
   monthly,
+  weekly,
+  daily,
   customRange;
 
   static ChallengeTimeWindow fromString(String? value) => switch (value) {
     'all_time' => ChallengeTimeWindow.allTime,
     'monthly' => ChallengeTimeWindow.monthly,
+    'weekly' => ChallengeTimeWindow.weekly,
+    'daily' => ChallengeTimeWindow.daily,
     'custom_range' => ChallengeTimeWindow.customRange,
     _ => ChallengeTimeWindow.allTime, // matches the DB column default
   };
@@ -70,25 +159,31 @@ enum ChallengeTimeWindow {
   String toDbString() => switch (this) {
     ChallengeTimeWindow.allTime => 'all_time',
     ChallengeTimeWindow.monthly => 'monthly',
+    ChallengeTimeWindow.weekly => 'weekly',
+    ChallengeTimeWindow.daily => 'daily',
     ChallengeTimeWindow.customRange => 'custom_range',
   };
 
   String get label => switch (this) {
     ChallengeTimeWindow.allTime => 'All Time',
     ChallengeTimeWindow.monthly => 'This Month',
+    ChallengeTimeWindow.weekly => 'This Week',
+    ChallengeTimeWindow.daily => 'Today',
     ChallengeTimeWindow.customRange => 'Custom Date Range',
   };
 
   /// Plain-language companion to [ChallengeMetric.explanation] for
-  /// Challenge Detail — describes WHICH attended treks count, not what
-  /// they're measured by. [Challenge.customRange] callers should still
-  /// show the actual start/end dates alongside this; this string alone
-  /// doesn't carry them.
+  /// Challenge Detail — describes WHICH activity counts, not what it's
+  /// measured by. [Challenge.customRange] callers should still show the
+  /// actual start/end dates alongside this; this string alone doesn't
+  /// carry them.
   String get explanation => switch (this) {
-    ChallengeTimeWindow.allTime => 'Counts every trek you\'ve ever attended.',
-    ChallengeTimeWindow.monthly => 'Only counts treks attended during the current calendar month.',
+    ChallengeTimeWindow.allTime => 'Counts everything you\'ve ever recorded.',
+    ChallengeTimeWindow.monthly => 'Only counts activity from the current calendar month.',
+    ChallengeTimeWindow.weekly => 'Only counts activity from the current week (Monday to Sunday).',
+    ChallengeTimeWindow.daily => 'Only counts activity from today.',
     ChallengeTimeWindow.customRange =>
-      'Only counts treks attended within this challenge\'s date range.',
+      'Only counts activity within this challenge\'s date range.',
   };
 }
 

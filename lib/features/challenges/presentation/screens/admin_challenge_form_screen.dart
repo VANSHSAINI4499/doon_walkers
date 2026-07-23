@@ -5,6 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+/// Unit hint shown after each tier-threshold field — purely a UX aid,
+/// same information [ChallengeMetric.formatValue] encodes for display
+/// elsewhere; kept as a small separate switch here since a bare number
+/// field doesn't have anywhere else to show it inline.
+String? _thresholdSuffixFor(ChallengeMetric metric) => switch (metric) {
+  ChallengeMetric.totalDistanceKm || ChallengeMetric.dailyDistanceKm => 'km',
+  ChallengeMetric.dailySteps || ChallengeMetric.weeklySteps || ChallengeMetric.monthlySteps => 'steps',
+  ChallengeMetric.caloriesBurned => 'kcal',
+  ChallengeMetric.activeStreakDays => 'days',
+  ChallengeMetric.trekCount => null,
+};
+
 /// Shared Add/Edit challenge form — [challengeId] null means "Add
 /// Challenge" (empty form, calls createChallenge); non-null means
 /// "Edit Challenge" (pre-filled from [challengeByIdProvider], calls
@@ -380,7 +392,7 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
                           controller: _tierControllers[tier],
                           decoration: InputDecoration(
                             labelText: '${tier.label} threshold',
-                            suffixText: _metric == ChallengeMetric.totalDistanceKm ? 'km' : null,
+                            suffixText: _thresholdSuffixFor(_metric),
                           ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         ),

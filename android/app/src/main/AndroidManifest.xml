@@ -24,7 +24,27 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Fitness activity sync (health package / Health Connect) —
+                 shows the Health Connect permissions screen. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
+
+        <!-- Health Connect's permissions screen links back to this app's
+             privacy policy — routed through MainActivity, same as the
+             health package's own setup instructions recommend, since this
+             app has no dedicated privacy-policy screen of its own yet. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
         <!-- Phase 8 — FCM push notifications. Used when the app is
              backgrounded/terminated and Android displays the
              notification itself, straight from the FCM payload,
@@ -50,15 +70,35 @@
          can be shown — PushNotificationService.initialize() requests
          it via FirebaseMessaging.instance.requestPermission(). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Fitness activity sync (Version 2, Challenges pivot) — read-only:
+         DoonWalkers only ever READS steps/distance/calories from Health
+         Connect to compute challenge progress; it never writes health
+         data. ACTIVITY_RECOGNITION is required by Health Connect itself
+         to grant access to step data, not something this app uses
+         directly for its own sensor access — see HealthConnectProvider. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
+    <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin.
+
+         Also declares visibility of the Health Connect app itself (so
+         the health package can detect whether it's installed) and the
+         permissions-rationale intent it shows. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <package android:name="com.google.android.apps.healthdata" />
+        <intent>
+            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
         </intent>
     </queries>
 </manifest>

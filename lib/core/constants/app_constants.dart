@@ -248,6 +248,13 @@ class AppConstants {
   /// always all 4 tiers together; see the Challenge entity's doc.
   static const String tableChallengeTiers = 'challenge_tiers';
 
+  /// One row per (user, calendar date) of synced fitness activity
+  /// (0027_daily_activity_summary.sql) — Version 2, Challenges Module
+  /// pivot. Own-row only, no admin visibility; see that migration's
+  /// doc. This is what ActivitySyncService writes to and the challenge
+  /// RPCs read from — see ActivityProvider's doc for the full pipeline.
+  static const String tableDailyActivitySummary = 'daily_activity_summary';
+
   // ── Supabase RPC functions ───────────────────────────────────────
 
   /// Live-computes the SIGNED-IN caller's progress across every active
