@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/motion/app_transitions.dart';
+import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/widgets/app_shell.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
@@ -21,6 +22,7 @@ import 'package:doon_walkers/features/merchandise/presentation/screens/merchandi
 import 'package:doon_walkers/features/merchandise/presentation/screens/product_detail_screen.dart';
 import 'package:doon_walkers/features/notifications/presentation/screens/admin_send_notification_screen.dart';
 import 'package:doon_walkers/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:doon_walkers/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registration_detail_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registrations_screen.dart';
@@ -180,10 +182,27 @@ final routerProvider = Provider<GoRouter>(
 /// keeps gating them exactly as before. There is deliberately no route
 /// left for bare `/admin` — nothing in the UI links there anymore.
 GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRouter(
-  initialLocation: AppConstants.routeHome,
+  // Read once, synchronously, at router construction — SharedPreferences
+  // is already resolved before runApp() (see main.dart), same as
+  // Supabase's currentUser is already resolved by the time this runs.
+  // A device that has already seen onboarding boots straight to Home as
+  // always; a fresh install (or one where this flag was never set)
+  // lands on the carousel instead, which itself hands off to Sign In.
+  initialLocation: (ref.read(sharedPreferencesProvider).getBool(AppConstants.prefsHasSeenOnboarding) ??
+          false)
+      ? AppConstants.routeHome
+      : AppConstants.routeOnboarding,
   debugLogDiagnostics: kDebugMode,
   refreshListenable: refreshNotifier,
   routes: [
+    // First-launch intro carousel — top-level, outside the shell, no
+    // bottom nav/drawer. Matches none of `redirect`'s auth/admin checks
+    // below, so it needs no special-casing there.
+    GoRoute(
+      path: AppConstants.routeOnboarding,
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
     // Top-Level Auth Routes (Outside AppShell)
     GoRoute(
       path: AppConstants.routeSignIn,

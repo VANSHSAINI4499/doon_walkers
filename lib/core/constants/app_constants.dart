@@ -33,6 +33,14 @@ class AppConstants {
   static const String routeTrekLibrary = '/trek-library';
   static const String routeProfile = '/profile';
 
+  /// First-launch intro carousel — top-level, outside the shell, shown
+  /// at most once per device. See app_router.dart's `_buildRouter` for
+  /// the `initialLocation` check that gates this on
+  /// [prefsHasSeenOnboarding]; nothing in `redirect` references this
+  /// path, since it matches none of that function's existing auth/admin
+  /// checks and needs none.
+  static const String routeOnboarding = '/onboarding';
+
   /// No GoRoute matches this bare path anymore — the Admin Dashboard
   /// screen that used to live here (a static "access verified" banner
   /// plus a module-card grid) was removed once every card had an
@@ -300,4 +308,11 @@ class AppConstants {
   /// a reuse of trek-covers/trek-gallery; same public-read/admin-write
   /// shape as trek-covers.
   static const String bucketMerchImages = 'merch-images';
+
+  // ── SharedPreferences keys ───────────────────────────────────────
+
+  /// Device-level "has this install seen the onboarding carousel"
+  /// flag — deliberately not tied to any signed-in account (a guest
+  /// browsing without ever signing in should still only see it once).
+  static const String prefsHasSeenOnboarding = 'has_seen_onboarding';
 }

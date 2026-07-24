@@ -64,6 +64,14 @@ class MerchInquiryController extends AsyncNotifier<void> {
             phoneNumber: phoneNumber,
           );
     });
+    // These are one-shot FutureProviders (see their own docs), so
+    // without this, "My Inquiries" on Profile keeps showing its stale
+    // pre-submit snapshot until something else tears the provider tree
+    // down (e.g. sign-out/sign-in) — mirrors updateStatus below.
+    if (created != null) {
+      ref.invalidate(myMerchInquiriesProvider);
+      ref.invalidate(allMerchInquiriesProvider);
+    }
     return created;
   }
 
