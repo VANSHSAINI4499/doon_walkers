@@ -1,3 +1,5 @@
+import 'package:doon_walkers/core/design_system.dart';
+import 'package:doon_walkers/core/widgets/admin_form.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/challenge_icon.dart';
@@ -200,15 +202,13 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     ref.listen<AsyncValue<void>>(challengeAdminControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_cleanError(error)),
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: AppColors.danger,
             ),
           );
         },
@@ -220,7 +220,7 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
       return challengeAsync.when(
         loading: () => Scaffold(
           appBar: AppBar(title: const Text('Edit Challenge')),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const AdminFormLoadingSkeleton(),
         ),
         error: (error, stack) {
           debugPrint(
@@ -228,27 +228,9 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
           );
           return Scaffold(
             appBar: AppBar(title: const Text('Edit Challenge')),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Could not load this challenge.',
-                      style: theme.textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => ref.invalidate(challengeByIdProvider(widget.challengeId!)),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
+            body: AdminFormErrorState(
+              message: 'Could not load this challenge.',
+              onRetry: () => ref.invalidate(challengeByIdProvider(widget.challengeId!)),
             ),
           );
         },
@@ -269,14 +251,13 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
   }
 
   Widget _buildForm(BuildContext context, {required String title}) {
-    final theme = Theme.of(context);
     final isSaving = ref.watch(challengeAdminControllerProvider).isLoading;
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
@@ -285,133 +266,142 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(labelText: 'Title'),
-                      textInputAction: TextInputAction.next,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty) ? 'Please enter a title' : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(labelText: 'Description'),
-                      maxLines: 4,
-                      textInputAction: TextInputAction.newline,
-                    ),
-                    const SizedBox(height: 16),
-
-                    DropdownButtonFormField<ChallengeMetric>(
-                      value: _metric,
-                      decoration: const InputDecoration(labelText: 'Metric'),
-                      items: ChallengeMetric.values
-                          .map((m) => DropdownMenuItem(value: m, child: Text(m.label)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) setState(() => _metric = value);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    DropdownButtonFormField<ChallengeTimeWindow>(
-                      value: _timeWindow,
-                      decoration: const InputDecoration(labelText: 'Time Window'),
-                      items: ChallengeTimeWindow.values
-                          .map((w) => DropdownMenuItem(value: w, child: Text(w.label)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) setState(() => _timeWindow = value);
-                      },
-                    ),
-                    if (_timeWindow == ChallengeTimeWindow.customRange) ...[
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _pickDate(isStart: true),
-                              child: Text(
-                                _startDate == null ? 'Start date' : _formatDate(_startDate!),
+                    GlassCard(
+                      child: AbsorbPointer(
+                        absorbing: isSaving,
+                        child: Opacity(
+                          opacity: isSaving ? 0.5 : 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const AdminFormSectionLabel('Details'),
+                              const SizedBox(height: AppSpacing.md),
+                              TextFormField(
+                                controller: _titleController,
+                                decoration: const InputDecoration(labelText: 'Title'),
+                                textInputAction: TextInputAction.next,
+                                validator: (value) => (value == null || value.trim().isEmpty)
+                                    ? 'Please enter a title'
+                                    : null,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _pickDate(isStart: false),
-                              child: Text(
-                                _endDate == null ? 'End date' : _formatDate(_endDate!),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 16),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    DropdownButtonFormField<String>(
-                      value: _icon,
-                      decoration: const InputDecoration(labelText: 'Icon'),
-                      items: ChallengeIcon.keys
-                          .map(
-                            (key) => DropdownMenuItem(
-                              value: key,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(ChallengeIcon.forKey(key), size: 20),
-                                  const SizedBox(width: 10),
-                                  Text(ChallengeIcon.labelForKey(key)),
-                                ],
+                              TextFormField(
+                                controller: _descriptionController,
+                                decoration: const InputDecoration(labelText: 'Description'),
+                                maxLines: 4,
+                                textInputAction: TextInputAction.newline,
                               ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) setState(() => _icon = value);
-                      },
-                    ),
-                    const SizedBox(height: 24),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    Text(
-                      'Tier Thresholds',
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Each tier\'s threshold must be greater than the one before it.',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 12),
-                    for (final tier in ChallengeTier.values)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: TextFormField(
-                          controller: _tierControllers[tier],
-                          decoration: InputDecoration(
-                            labelText: '${tier.label} threshold',
-                            suffixText: _thresholdSuffixFor(_metric),
+                              DropdownButtonFormField<String>(
+                                value: _icon,
+                                decoration: const InputDecoration(labelText: 'Icon'),
+                                items: ChallengeIcon.keys
+                                    .map(
+                                      (key) => DropdownMenuItem(
+                                        value: key,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            AppIcon(ChallengeIcon.forKey(key), size: 20),
+                                            const SizedBox(width: AppSpacing.sm),
+                                            Text(ChallengeIcon.labelForKey(key)),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) setState(() => _icon = value);
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              const Divider(),
+                              const SizedBox(height: AppSpacing.xl),
+
+                              const AdminFormSectionLabel('Measurement'),
+                              const SizedBox(height: AppSpacing.md),
+                              DropdownButtonFormField<ChallengeMetric>(
+                                value: _metric,
+                                decoration: const InputDecoration(labelText: 'Metric'),
+                                items: ChallengeMetric.values
+                                    .map((m) => DropdownMenuItem(value: m, child: Text(m.label)))
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) setState(() => _metric = value);
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+
+                              DropdownButtonFormField<ChallengeTimeWindow>(
+                                value: _timeWindow,
+                                decoration: const InputDecoration(labelText: 'Time Window'),
+                                items: ChallengeTimeWindow.values
+                                    .map((w) => DropdownMenuItem(value: w, child: Text(w.label)))
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) setState(() => _timeWindow = value);
+                                },
+                              ),
+                              if (_timeWindow == ChallengeTimeWindow.customRange) ...[
+                                const SizedBox(height: AppSpacing.lg),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () => _pickDate(isStart: true),
+                                        child: Text(
+                                          _startDate == null ? 'Start date' : _formatDate(_startDate!),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.md),
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () => _pickDate(isStart: false),
+                                        child: Text(
+                                          _endDate == null ? 'End date' : _formatDate(_endDate!),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                              const SizedBox(height: AppSpacing.xl),
+                              const Divider(),
+                              const SizedBox(height: AppSpacing.xl),
+
+                              const AdminFormSectionLabel(
+                                'Tier Thresholds',
+                                subtitle: "Each tier's threshold must be greater than the one before it.",
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              for (final tier in ChallengeTier.values)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                                  child: TextFormField(
+                                    controller: _tierControllers[tier],
+                                    decoration: InputDecoration(
+                                      labelText: '${tier.label} threshold',
+                                      suffixText: _thresholdSuffixFor(_metric),
+                                    ),
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  ),
+                                ),
+                            ],
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         ),
                       ),
-                    const SizedBox(height: 8),
-
-                    FilledButton(
-                      onPressed: isSaving ? null : _submit,
-                      style:
-                          FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(widget.isEdit ? 'Save Changes' : 'Create Challenge'),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xxl),
+
+                    AdminFormActions(
+                      isSaving: isSaving,
+                      saveLabel: widget.isEdit ? 'Save Changes' : 'Create Challenge',
+                      onSave: _submit,
+                      onCancel: () => context.pop(),
+                    ),
                   ],
                 ),
               ),

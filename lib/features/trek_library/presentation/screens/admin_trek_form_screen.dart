@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:doon_walkers/core/design_system.dart';
+import 'package:doon_walkers/core/widgets/admin_form.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/cover_image_picker.dart';
@@ -190,15 +192,13 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     ref.listen<AsyncValue<void>>(trekAdminControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_cleanError(error)),
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: AppColors.danger,
             ),
           );
         },
@@ -210,33 +210,15 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
       return trekAsync.when(
         loading: () => Scaffold(
           appBar: AppBar(title: const Text('Edit Trek')),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const AdminFormLoadingSkeleton(showImage: true),
         ),
         error: (error, stack) {
           debugPrint('AdminTrekFormScreen: failed to load trek ${widget.trekId}: $error');
           return Scaffold(
             appBar: AppBar(title: const Text('Edit Trek')),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Could not load this trek.',
-                      style: theme.textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => ref.invalidate(trekByIdProvider(widget.trekId!)),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
+            body: AdminFormErrorState(
+              message: 'Could not load this trek.',
+              onRetry: () => ref.invalidate(trekByIdProvider(widget.trekId!)),
             ),
           );
         },
@@ -263,7 +245,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
       appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
@@ -272,193 +254,214 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    CoverImagePicker(
-                      initialImageUrl: _existingCoverImage,
-                      onImagePicked: (bytes, extension) {
-                        _pickedImageBytes = bytes;
-                        _pickedImageExtension = extension;
-                      },
-                    ),
-                    const SizedBox(height: 20),
+                    GlassCard(
+                      child: AbsorbPointer(
+                        absorbing: isSaving,
+                        child: Opacity(
+                          opacity: isSaving ? 0.5 : 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const AdminFormSectionLabel('Cover Image'),
+                              const SizedBox(height: AppSpacing.md),
+                              CoverImagePicker(
+                                initialImageUrl: _existingCoverImage,
+                                onImagePicked: (bytes, extension) {
+                                  _pickedImageBytes = bytes;
+                                  _pickedImageExtension = extension;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              const Divider(),
+                              const SizedBox(height: AppSpacing.xl),
 
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(labelText: 'Title'),
-                      textInputAction: TextInputAction.next,
-                      validator: (value) => (value == null || value.trim().isEmpty)
-                          ? 'Please enter a title'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
+                              const AdminFormSectionLabel('Details'),
+                              const SizedBox(height: AppSpacing.md),
+                              TextFormField(
+                                controller: _titleController,
+                                decoration: const InputDecoration(labelText: 'Title'),
+                                textInputAction: TextInputAction.next,
+                                validator: (value) => (value == null || value.trim().isEmpty)
+                                    ? 'Please enter a title'
+                                    : null,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(labelText: 'Description'),
-                      maxLines: 4,
-                      textInputAction: TextInputAction.newline,
-                      validator: (value) => (value == null || value.trim().isEmpty)
-                          ? 'Please enter a description'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _descriptionController,
+                                decoration: const InputDecoration(labelText: 'Description'),
+                                maxLines: 4,
+                                textInputAction: TextInputAction.newline,
+                                validator: (value) => (value == null || value.trim().isEmpty)
+                                    ? 'Please enter a description'
+                                    : null,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    DropdownButtonFormField<TrekDifficulty>(
-                      value: _difficulty,
-                      decoration: const InputDecoration(labelText: 'Difficulty'),
-                      items: TrekDifficulty.values
-                          .map((d) => DropdownMenuItem(value: d, child: Text(d.label)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) setState(() => _difficulty = value);
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                              DropdownButtonFormField<TrekDifficulty>(
+                                value: _difficulty,
+                                decoration: const InputDecoration(labelText: 'Difficulty'),
+                                items: TrekDifficulty.values
+                                    .map((d) => DropdownMenuItem(value: d, child: Text(d.label)))
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) setState(() => _difficulty = value);
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _distanceController,
-                            decoration: const InputDecoration(labelText: 'Distance (km)'),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: (value) => (value != null &&
-                                    value.trim().isNotEmpty &&
-                                    double.tryParse(value.trim()) == null)
-                                ? 'Invalid number'
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _durationController,
-                            decoration: const InputDecoration(labelText: 'Duration (days)'),
-                            keyboardType: TextInputType.number,
-                            validator: (value) => (value != null &&
-                                    value.trim().isNotEmpty &&
-                                    int.tryParse(value.trim()) == null)
-                                ? 'Invalid number'
-                                : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _distanceController,
+                                      decoration: const InputDecoration(labelText: 'Distance (km)'),
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      validator: (value) => (value != null &&
+                                              value.trim().isNotEmpty &&
+                                              double.tryParse(value.trim()) == null)
+                                          ? 'Invalid number'
+                                          : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _durationController,
+                                      decoration: const InputDecoration(labelText: 'Duration (days)'),
+                                      keyboardType: TextInputType.number,
+                                      validator: (value) => (value != null &&
+                                              value.trim().isNotEmpty &&
+                                              int.tryParse(value.trim()) == null)
+                                          ? 'Invalid number'
+                                          : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    InkWell(
-                      onTap: _pickTrekDate,
-                      borderRadius: BorderRadius.circular(4),
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: 'Trek date (optional)',
-                          suffixIcon: _trekDate == null
-                              ? const Icon(Icons.calendar_today_outlined)
-                              : IconButton(
-                                  icon: const Icon(Icons.clear_rounded),
-                                  tooltip: 'Clear date',
-                                  onPressed: () => setState(() => _trekDate = null),
+                              InkWell(
+                                onTap: _pickTrekDate,
+                                borderRadius: BorderRadius.circular(AppRadius.button),
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Trek date (optional)',
+                                    suffixIcon: _trekDate == null
+                                        ? const AppIcon(AppIcons.calendar, size: 20)
+                                        : IconButton(
+                                            icon: const AppIcon(AppIcons.close, size: 20),
+                                            tooltip: 'Clear date',
+                                            onPressed: () => setState(() => _trekDate = null),
+                                          ),
+                                  ),
+                                  child: Text(
+                                    _trekDate == null ? 'Not scheduled yet' : _formatDate(_trekDate!),
+                                    style: AppTextStyles.bodyLarge,
+                                  ),
                                 ),
-                        ),
-                        child: Text(
-                          _trekDate == null ? 'Not scheduled yet' : _formatDate(_trekDate!),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _altitudeController,
-                            decoration: const InputDecoration(labelText: 'Max altitude (m)'),
-                            keyboardType: TextInputType.number,
-                            validator: (value) => (value != null &&
-                                    value.trim().isNotEmpty &&
-                                    int.tryParse(value.trim()) == null)
-                                ? 'Invalid number'
-                                : null,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _altitudeController,
+                                      decoration: const InputDecoration(labelText: 'Max altitude (m)'),
+                                      keyboardType: TextInputType.number,
+                                      validator: (value) => (value != null &&
+                                              value.trim().isNotEmpty &&
+                                              int.tryParse(value.trim()) == null)
+                                          ? 'Invalid number'
+                                          : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _bestSeasonController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Best season',
+                                        hintText: 'e.g. Oct – Feb',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+
+                              TextFormField(
+                                controller: _thingsToCarryController,
+                                decoration: const InputDecoration(labelText: 'Things to carry'),
+                                maxLines: 3,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+
+                              TextFormField(
+                                controller: _googleMapController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Google Maps link',
+                                  hintText: 'https://maps.app.goo.gl/...',
+                                ),
+                                keyboardType: TextInputType.url,
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              const Divider(),
+                              const SizedBox(height: AppSpacing.xl),
+
+                              const AdminFormSectionLabel(
+                                'Registration',
+                                subtitle: 'Set a fee to require a payment QR code for members.',
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              TextFormField(
+                                controller: _feeController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Registration fee (₹)',
+                                  hintText: '0 = free, no payment step for members',
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                validator: (value) {
+                                  final text = value?.trim() ?? '';
+                                  if (text.isEmpty) return null; // treated as 0
+                                  final parsed = double.tryParse(text);
+                                  if (parsed == null) return 'Invalid number';
+                                  if (parsed < 0) return 'Fee can\'t be negative';
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setState(() => _registrationFee = double.tryParse(value.trim()) ?? 0);
+                                },
+                              ),
+
+                              // Only offered once a fee is actually set — a
+                              // free trek has no payment step, so there's
+                              // nothing for a QR code to be attached to.
+                              if (_registrationFee > 0) ...[
+                                const SizedBox(height: AppSpacing.lg),
+                                CoverImagePicker(
+                                  initialImageUrl: _existingQrCode,
+                                  hintText: 'Tap to add a payment QR code',
+                                  onImagePicked: (bytes, extension) {
+                                    _pickedQrBytes = bytes;
+                                    _pickedQrExtension = extension;
+                                  },
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _bestSeasonController,
-                            decoration: const InputDecoration(
-                              labelText: 'Best season',
-                              hintText: 'e.g. Oct – Feb',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller: _thingsToCarryController,
-                      decoration: const InputDecoration(labelText: 'Things to carry'),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller: _googleMapController,
-                      decoration: const InputDecoration(
-                        labelText: 'Google Maps link',
-                        hintText: 'https://maps.app.goo.gl/...',
                       ),
-                      keyboardType: TextInputType.url,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.xxl),
 
-                    TextFormField(
-                      controller: _feeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Registration fee (₹)',
-                        hintText: '0 = free, no payment step for members',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (value) {
-                        final text = value?.trim() ?? '';
-                        if (text.isEmpty) return null; // treated as 0
-                        final parsed = double.tryParse(text);
-                        if (parsed == null) return 'Invalid number';
-                        if (parsed < 0) return 'Fee can\'t be negative';
-                        return null;
-                      },
-                      onChanged: (value) {
-                        setState(() => _registrationFee = double.tryParse(value.trim()) ?? 0);
-                      },
+                    AdminFormActions(
+                      isSaving: isSaving,
+                      saveLabel: widget.isEdit ? 'Save Changes' : 'Create Trek',
+                      onSave: _submit,
+                      onCancel: () => context.pop(),
                     ),
-
-                    // Only offered once a fee is actually set — a free
-                    // trek has no payment step, so there's nothing for a
-                    // QR code to be attached to.
-                    if (_registrationFee > 0) ...[
-                      const SizedBox(height: 16),
-                      CoverImagePicker(
-                        initialImageUrl: _existingQrCode,
-                        hintText: 'Tap to add a payment QR code',
-                        onImagePicked: (bytes, extension) {
-                          _pickedQrBytes = bytes;
-                          _pickedQrExtension = extension;
-                        },
-                      ),
-                    ],
-                    const SizedBox(height: 28),
-
-                    FilledButton(
-                      onPressed: isSaving ? null : _submit,
-                      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(widget.isEdit ? 'Save Changes' : 'Create Trek'),
-                    ),
-                    const SizedBox(height: 24),
                   ],
                 ),
               ),

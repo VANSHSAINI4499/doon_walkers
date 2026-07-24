@@ -1,3 +1,5 @@
+import 'package:doon_walkers/core/design_system.dart';
+import 'package:doon_walkers/core/widgets/admin_form.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/product_providers.dart';
 import 'package:flutter/material.dart';
@@ -175,15 +177,13 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     ref.listen<AsyncValue<void>>(productAdminControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_cleanError(error)),
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: AppColors.danger,
             ),
           );
         },
@@ -195,33 +195,15 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
       return productAsync.when(
         loading: () => Scaffold(
           appBar: AppBar(title: const Text('Edit Product')),
-          body: const Center(child: CircularProgressIndicator()),
+          body: const AdminFormLoadingSkeleton(),
         ),
         error: (error, stack) {
           debugPrint('AdminProductFormScreen: failed to load product ${widget.productId}: $error');
           return Scaffold(
             appBar: AppBar(title: const Text('Edit Product')),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Could not load this product.',
-                      style: theme.textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => ref.invalidate(productByIdProvider(widget.productId!)),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
+            body: AdminFormErrorState(
+              message: 'Could not load this product.',
+              onRetry: () => ref.invalidate(productByIdProvider(widget.productId!)),
             ),
           );
         },
@@ -242,7 +224,6 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
   }
 
   Widget _buildForm(BuildContext context, {required String title}) {
-    final theme = Theme.of(context);
     final isSaving = ref.watch(productAdminControllerProvider).isLoading;
     final hasSizes = _variantRows.isNotEmpty;
 
@@ -250,7 +231,7 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
       appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
@@ -259,137 +240,149 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name'),
-                      textInputAction: TextInputAction.next,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty) ? 'Please enter a name' : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(labelText: 'Description'),
-                      maxLines: 4,
-                      textInputAction: TextInputAction.newline,
-                    ),
-                    const SizedBox(height: 16),
-
-                    DropdownButtonFormField<ProductCategory>(
-                      value: _category,
-                      decoration: const InputDecoration(labelText: 'Category'),
-                      items: ProductCategory.values
-                          .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) setState(() => _category = value);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller: _priceController,
-                      decoration: const InputDecoration(labelText: 'Price (₹)'),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (value) {
-                        final text = value?.trim() ?? '';
-                        if (text.isEmpty) return 'Please enter a price';
-                        final parsed = double.tryParse(text);
-                        if (parsed == null) return 'Invalid number';
-                        if (parsed < 0) return 'Price can\'t be negative';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Only shown/used when there are no size rows below
-                    // — once a product has sizes, stock is tracked per
-                    // size instead (see Product.isInStock's doc).
-                    if (!hasSizes) ...[
-                      TextFormField(
-                        controller: _stockController,
-                        decoration: const InputDecoration(
-                          labelText: 'Stock',
-                          hintText: 'Leave sizes empty below if this product has no sizes',
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          final text = value?.trim() ?? '';
-                          if (text.isEmpty) return null; // treated as 0
-                          if (int.tryParse(text) == null) return 'Invalid number';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    Row(
-                      children: [
-                        Text(
-                          'Sizes (optional)',
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: _addVariantRow,
-                          icon: const Icon(Icons.add_rounded, size: 18),
-                          label: const Text('Add Size'),
-                        ),
-                      ],
-                    ),
-                    if (hasSizes) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Stock is tracked per size below; the flat Stock field above is ignored.',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    for (var i = 0; i < _variantRows.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: TextFormField(
-                                controller: _variantRows[i].sizeController,
-                                decoration: const InputDecoration(labelText: 'Size'),
+                    GlassCard(
+                      child: AbsorbPointer(
+                        absorbing: isSaving,
+                        child: Opacity(
+                          opacity: isSaving ? 0.5 : 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const AdminFormSectionLabel('Details'),
+                              const SizedBox(height: AppSpacing.md),
+                              TextFormField(
+                                controller: _nameController,
+                                decoration: const InputDecoration(labelText: 'Name'),
+                                textInputAction: TextInputAction.next,
+                                validator: (value) => (value == null || value.trim().isEmpty)
+                                    ? 'Please enter a name'
+                                    : null,
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                controller: _variantRows[i].stockController,
-                                decoration: const InputDecoration(labelText: 'Stock'),
-                                keyboardType: TextInputType.number,
+                              const SizedBox(height: AppSpacing.lg),
+
+                              TextFormField(
+                                controller: _descriptionController,
+                                decoration: const InputDecoration(labelText: 'Description'),
+                                maxLines: 4,
+                                textInputAction: TextInputAction.newline,
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => _removeVariantRow(i),
-                              icon: const Icon(Icons.close_rounded),
-                              tooltip: 'Remove size',
-                            ),
-                          ],
+                              const SizedBox(height: AppSpacing.lg),
+
+                              DropdownButtonFormField<ProductCategory>(
+                                value: _category,
+                                decoration: const InputDecoration(labelText: 'Category'),
+                                items: ProductCategory.values
+                                    .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value != null) setState(() => _category = value);
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+
+                              TextFormField(
+                                controller: _priceController,
+                                decoration: const InputDecoration(labelText: 'Price (₹)'),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                validator: (value) {
+                                  final text = value?.trim() ?? '';
+                                  if (text.isEmpty) return 'Please enter a price';
+                                  final parsed = double.tryParse(text);
+                                  if (parsed == null) return 'Invalid number';
+                                  if (parsed < 0) return 'Price can\'t be negative';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              const Divider(),
+                              const SizedBox(height: AppSpacing.xl),
+
+                              // Only shown/used when there are no size rows
+                              // below — once a product has sizes, stock is
+                              // tracked per size instead (see
+                              // Product.isInStock's doc).
+                              if (!hasSizes) ...[
+                                const AdminFormSectionLabel('Stock'),
+                                const SizedBox(height: AppSpacing.md),
+                                TextFormField(
+                                  controller: _stockController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Stock',
+                                    hintText: 'Leave sizes empty below if this product has no sizes',
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) {
+                                    final text = value?.trim() ?? '';
+                                    if (text.isEmpty) return null; // treated as 0
+                                    if (int.tryParse(text) == null) return 'Invalid number';
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: AppSpacing.xl),
+                                const Divider(),
+                                const SizedBox(height: AppSpacing.xl),
+                              ],
+
+                              Row(
+                                children: [
+                                  const Expanded(child: AdminFormSectionLabel('Sizes (optional)')),
+                                  TextButton.icon(
+                                    onPressed: _addVariantRow,
+                                    icon: const AppIcon(AppIcons.add, size: 18),
+                                    label: const Text('Add Size'),
+                                  ),
+                                ],
+                              ),
+                              if (hasSizes) ...[
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
+                                  'Stock is tracked per size below; the flat Stock field above is ignored.',
+                                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                                ),
+                              ],
+                              const SizedBox(height: AppSpacing.md),
+                              for (var i = 0; i < _variantRows.length; i++)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: TextFormField(
+                                          controller: _variantRows[i].sizeController,
+                                          decoration: const InputDecoration(labelText: 'Size'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.md),
+                                      Expanded(
+                                        flex: 2,
+                                        child: TextFormField(
+                                          controller: _variantRows[i].stockController,
+                                          decoration: const InputDecoration(labelText: 'Stock'),
+                                          keyboardType: TextInputType.number,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () => _removeVariantRow(i),
+                                        icon: const AppIcon(AppIcons.close, size: 20),
+                                        tooltip: 'Remove size',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    const SizedBox(height: 16),
-
-                    FilledButton(
-                      onPressed: isSaving ? null : _submit,
-                      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(widget.isEdit ? 'Save Changes' : 'Create Product'),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xxl),
+
+                    AdminFormActions(
+                      isSaving: isSaving,
+                      saveLabel: widget.isEdit ? 'Save Changes' : 'Create Product',
+                      onSave: _submit,
+                      onCancel: () => context.pop(),
+                    ),
                   ],
                 ),
               ),

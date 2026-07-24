@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -68,24 +69,16 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return GestureDetector(
+    return GlassCard(
+      height: 180,
+      padding: EdgeInsets.zero,
+      blurEnabled: false,
       onTap: _pick,
-      child: Container(
-        height: 180,
-        width: double.infinity,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: theme.colorScheme.surfaceContainerHighest,
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: _buildContent(theme),
-      ),
+      child: _buildContent(),
     );
   }
 
-  Widget _buildContent(ThemeData theme) {
+  Widget _buildContent() {
     final initialImageUrl = widget.initialImageUrl;
 
     if (_pickedBytes != null) {
@@ -105,43 +98,40 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
           Image.network(
             initialImageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stack) => _placeholder(theme),
+            errorBuilder: (context, error, stack) => _placeholder(),
           ),
           _editBadge(),
         ],
       );
     }
 
-    return _placeholder(theme, showHint: true);
+    return _placeholder(showHint: true);
   }
 
   Widget _editBadge() {
     return Positioned(
-      right: 8,
-      bottom: 8,
+      right: AppSpacing.sm,
+      bottom: AppSpacing.sm,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
-          color: Colors.black.withAlpha(140),
-          borderRadius: BorderRadius.circular(8),
+          color: AppColors.background.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
-        child: const Icon(Icons.edit_rounded, size: 16, color: Colors.white),
+        child: const AppIcon(AppIcons.edit, size: 16, color: AppColors.white),
       ),
     );
   }
 
-  Widget _placeholder(ThemeData theme, {bool showHint = false}) {
+  Widget _placeholder({bool showHint = false}) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.add_photo_alternate_outlined, size: 36, color: theme.colorScheme.outline),
+          const AppIcon(AppIcons.addPhoto, size: 32, color: AppColors.textDisabled),
           if (showHint) ...[
-            const SizedBox(height: 8),
-            Text(
-              widget.hintText,
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(widget.hintText, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
           ],
         ],
       ),
