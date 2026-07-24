@@ -1,4 +1,5 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:doon_walkers/features/activity/presentation/widgets/activity_permission_banner.dart';
@@ -14,16 +15,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Challenges — one shared screen for every role (Version 2, Phase
-/// C2), mirroring TrekLibraryScreen exactly: guests/members see active
-/// challenges only, an admin sees the same screen plus inline
-/// management (drafts included and marked, a per-challenge actions
-/// menu, an "Add Challenge" FAB). This is what replaced C1's separate
-/// admin-only "Manage Challenges" tab — now that Challenges has a real
-/// public tab, a second dedicated admin tab would push the nav bar
-/// past the "5 tabs total for admin" ceiling for no reason, and the
-/// inline-admin-controls pattern is this project's own established
-/// convention anyway (Trek Library, Merchandise).
+/// Challenges — one shared screen for every role, mirroring
+/// TrekLibraryScreen: guests/members see active challenges only, an admin
+/// sees the same screen plus inline management (drafts included and
+/// marked, a per-challenge actions menu, an "Add Challenge" FAB).
+///
+/// Redesign Phase 4 rebuilds the presentation on the design system
+/// (skeleton loading, glass cards, gradient FAB). **The celebration
+/// detection — the `ref.listen` on live progress, the
+/// [isNewlyAchievedTier] diff against the persisted per-device baseline,
+/// and the queued overlay — is unchanged**, as are the role split and the
+/// pull-to-refresh sync chain.
 class ChallengesScreen extends ConsumerStatefulWidget {
   const ChallengesScreen({super.key});
 
@@ -36,17 +38,15 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isAdmin = ref.watch(isAdminProvider);
     final challengesProvider = isAdmin ? adminAllChallengesProvider : activeChallengesProvider;
     final challengesAsync = ref.watch(challengesProvider);
     final progressAsync = ref.watch(myChallengeProgressProvider);
 
-    // Fires only on a real data change (a FutureProvider's value
-    // actually changing), never on a plain rebuild — see
-    // ChallengeCelebrationTracker's doc for why that, combined with a
-    // persisted per-device baseline, is what keeps this from
-    // re-celebrating the same tier on every screen visit.
+    // Fires only on a real data change (a FutureProvider's value actually
+    // changing), never on a plain rebuild — see ChallengeCelebrationTracker
+    // for why that, combined with a persisted per-device baseline, keeps
+    // this from re-celebrating the same tier on every screen visit.
     ref.listen<AsyncValue<List<ChallengeProgress>>>(myChallengeProgressProvider, (previous, next) {
       final progressList = next.valueOrNull;
       if (progressList == null) return;
@@ -60,24 +60,20 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
         title: const Text('Challenges'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.emoji_events_outlined),
+            icon: const AppIcon(AppIcons.medal, color: AppColors.white),
             tooltip: 'My Achievements',
             onPressed: () => context.push(AppConstants.routeChallengeHistory),
           ),
         ],
       ),
       floatingActionButton: isAdmin
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push(AppConstants.routeAdminChallengesNew),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Challenge'),
-            )
+          ? _AddChallengeFab(onTap: () => context.push(AppConstants.routeAdminChallengesNew))
           : null,
       body: SafeArea(
         child: Column(
           children: [
             const ActivityPermissionBanner(),
-            Expanded(child: _buildChallengesList(theme, challengesAsync, challengesProvider, progressAsync, isAdmin)),
+            Expanded(child: _buildChallengesList(challengesAsync, challengesProvider, progressAsync, isAdmin)),
           ],
         ),
       ),
@@ -85,85 +81,71 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
   }
 
   Widget _buildChallengesList(
-    ThemeData theme,
     AsyncValue<List<Challenge>> challengesAsync,
     FutureProvider<List<Challenge>> challengesProvider,
     AsyncValue<List<ChallengeProgress>> progressAsync,
     bool isAdmin,
   ) {
     return challengesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) {
-            debugPrint('ChallengesScreen: failed to load challenges: $error');
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Could not load challenges.',
-                      style: theme.textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => ref.invalidate(challengesProvider),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-          data: (challenges) {
-            // Pull-to-refresh doubles as one of the three sync triggers
-            // (launch/resume/manual) — chained so the refresh spinner
-            // stays up until fresh activity data has actually landed,
-            // not just the challenge list itself.
-            Future<void> onRefresh() {
-              return ref.read(activitySyncControllerProvider.notifier).sync().then((_) {
-                ref.invalidate(myChallengeProgressProvider);
-                return ref.refresh(challengesProvider.future);
-              });
-            }
+      loading: () => const _ChallengeListSkeleton(),
+      error: (error, stack) {
+        debugPrint('ChallengesScreen: failed to load challenges: $error');
+        return _ChallengesError(onRetry: () => ref.invalidate(challengesProvider));
+      },
+      data: (challenges) {
+        // Pull-to-refresh doubles as one of the three sync triggers
+        // (launch/resume/manual) — chained so the refresh spinner stays up
+        // until fresh activity data has actually landed, not just the
+        // challenge list itself.
+        Future<void> onRefresh() {
+          return ref.read(activitySyncControllerProvider.notifier).sync().then((_) {
+            ref.invalidate(myChallengeProgressProvider);
+            return ref.refresh(challengesProvider.future);
+          });
+        }
 
-            if (challenges.isEmpty) {
-              return RefreshIndicator(
-                onRefresh: onRefresh,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [_EmptyChallenges(isAdmin: isAdmin)],
+        if (challenges.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [_EmptyChallenges(isAdmin: isAdmin)],
+            ),
+          );
+        }
+
+        final progressByChallenge = <String, ChallengeProgress>{
+          for (final p in progressAsync.valueOrNull ?? const <ChallengeProgress>[]) p.challengeId: p,
+        };
+
+        return RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              isAdmin ? 96 : AppSpacing.lg,
+            ),
+            itemCount: challenges.length,
+            separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+            itemBuilder: (context, index) {
+              final challenge = challenges[index];
+              return AppReveal(
+                index: index.clamp(0, 8),
+                child: ChallengeCard(
+                  challenge: challenge,
+                  progress: progressByChallenge[challenge.id],
+                  onTap: () => context.push(AppConstants.challengeDetailLocation(challenge.id)),
+                  adminActions: isAdmin ? ChallengeAdminActions(challenge: challenge) : null,
                 ),
               );
-            }
-
-            final progressByChallenge = <String, ChallengeProgress>{
-              for (final p in progressAsync.valueOrNull ?? const <ChallengeProgress>[]) p.challengeId: p,
-            };
-
-            return RefreshIndicator(
-              onRefresh: onRefresh,
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16, 16, 16, isAdmin ? 96 : 16),
-                itemCount: challenges.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final challenge = challenges[index];
-                  return ChallengeCard(
-                    challenge: challenge,
-                    progress: progressByChallenge[challenge.id],
-                    onTap: () => context.push(AppConstants.challengeDetailLocation(challenge.id)),
-                    adminActions: isAdmin ? ChallengeAdminActions(challenge: challenge) : null,
-                  );
-                },
-              ),
-            );
-          },
+            },
+          ),
         );
+      },
+    );
   }
 
   Future<void> _detectAndCelebrate(
@@ -206,6 +188,72 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
   }
 }
 
+/// Gradient "Add Challenge" button — the design system's extended FAB.
+/// Admin-only; the caller gates it (RLS gates the writes it leads to).
+class _AddChallengeFab extends StatelessWidget {
+  const _AddChallengeFab({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.button),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary,
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          boxShadow: AppShadows.button(AppColors.primary),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppIcon(AppIcons.add, size: 22, color: AppColors.onPrimary),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Add Challenge', style: AppTextStyles.tinted(AppTextStyles.labelLarge, AppColors.onPrimary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChallengesError extends StatelessWidget {
+  const _ChallengesError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+            const SizedBox(height: AppSpacing.md),
+            Text('Could not load challenges.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.xl),
+            PremiumButton(
+              label: 'Retry',
+              icon: AppIcons.refresh,
+              variant: PremiumButtonVariant.glass,
+              size: PremiumButtonSize.small,
+              onPressed: onRetry,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _EmptyChallenges extends StatelessWidget {
   const _EmptyChallenges({required this.isAdmin});
 
@@ -213,28 +261,85 @@ class _EmptyChallenges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.emoji_events_outlined, size: 56, color: theme.colorScheme.outline),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+            ),
+            child: const AppIcon(AppIcons.challenges, size: 48, color: AppColors.primary),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             isAdmin ? 'No challenges yet' : 'No challenges yet — check back soon',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: AppTextStyles.titleLarge,
             textAlign: TextAlign.center,
           ),
           if (isAdmin) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Tap "Add Challenge" to create the first one.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
               textAlign: TextAlign.center,
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Challenge-card-shaped placeholders while the list loads.
+class _ChallengeListSkeleton extends StatelessWidget {
+  const _ChallengeListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        itemCount: 4,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  SkeletonCircle(size: 44),
+                  SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 140, height: 16),
+                        SizedBox(height: AppSpacing.sm),
+                        SkeletonBox(width: 200, height: 10),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: AppSpacing.lg),
+              SkeletonBox(height: 8, borderRadius: AppRadius.pill),
+              SizedBox(height: AppSpacing.sm),
+              SkeletonBox(width: 160, height: 10),
+            ],
+          ),
+        ),
       ),
     );
   }

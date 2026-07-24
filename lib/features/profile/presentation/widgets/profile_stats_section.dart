@@ -1,32 +1,33 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration_stats.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Four Profile stat tiles sourced from [myRegistrationStatsProvider] —
-/// mirrors [CommunityStatsSection]'s tile styling on Home, laid out 2x2
-/// instead of in one row since the labels here run longer ("Total Treks
-/// Registered").
+/// Four Profile stat tiles sourced from [myRegistrationStatsProvider],
+/// laid out 2x2. Redesign Phase 5 restyles them as glass stat tiles with
+/// the bold stat numeral type, consistent with the Challenges tiles — the
+/// data (registered / attended / upcoming / cancelled) is unchanged.
 class ProfileStatsSection extends ConsumerWidget {
   const ProfileStatsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final statsAsync = ref.watch(myRegistrationStatsProvider);
 
     return statsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
+      loading: () => const Column(
+        children: [
+          SkeletonStatRow(count: 2),
+          SizedBox(height: AppSpacing.md),
+          SkeletonStatRow(count: 2),
+        ],
       ),
       error: (error, stack) {
         debugPrint('ProfileStatsSection: failed to load stats: $error');
         return Text(
           'Stats unavailable right now.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.secondary(AppTextStyles.bodySmall),
           textAlign: TextAlign.center,
         );
       },
@@ -44,44 +45,54 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _StatTile(
-                icon: Icons.confirmation_number_outlined,
-                value: stats.totalRegistered,
-                label: 'Total Treks Registered',
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _StatTile(
+                  icon: AppIcons.ticket,
+                  value: stats.totalRegistered,
+                  label: 'Total Treks Registered',
+                  accent: AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.hiking_rounded,
-                value: stats.totalAttended,
-                label: 'Total Treks Attended',
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _StatTile(
+                  icon: AppIcons.hiking,
+                  value: stats.totalAttended,
+                  label: 'Total Treks Attended',
+                  accent: AppColors.secondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _StatTile(
-                icon: Icons.event_available_outlined,
-                value: stats.upcoming,
-                label: 'Upcoming Treks',
+        const SizedBox(height: AppSpacing.md),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _StatTile(
+                  icon: AppIcons.eventAvailable,
+                  value: stats.upcoming,
+                  label: 'Upcoming Treks',
+                  accent: AppColors.accent,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.event_busy_outlined,
-                value: stats.cancelled,
-                label: 'Cancelled Registrations',
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _StatTile(
+                  icon: AppIcons.eventBusy,
+                  value: stats.cancelled,
+                  label: 'Cancelled Registrations',
+                  accent: AppColors.textSecondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -89,37 +100,33 @@ class _StatsGrid extends StatelessWidget {
 }
 
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.icon, required this.value, required this.label});
+  const _StatTile({required this.icon, required this.value, required this.label, required this.accent});
 
   final IconData icon;
   final int value;
   final String label;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-        child: Column(
-          children: [
-            Icon(icon, color: theme.colorScheme.primary, size: 26),
-            const SizedBox(height: 10),
-            Text(
-              '$value',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return GlassCard(
+      blurEnabled: false,
+      glowColor: accent,
+      glowOpacity: 0.12,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: AppSpacing.sm),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIcon(icon, color: accent, size: 24),
+          const SizedBox(height: AppSpacing.sm),
+          Text('$value', style: AppTextStyles.tinted(AppTextStyles.statMedium, accent)),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            label,
+            style: AppTextStyles.statLabel,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

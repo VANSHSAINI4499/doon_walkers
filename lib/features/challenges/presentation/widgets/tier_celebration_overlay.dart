@@ -1,23 +1,27 @@
 import 'dart:math';
 
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/tier_badge.dart';
 import 'package:flutter/material.dart';
 
 /// Shows the "new tier achieved" celebration for [challenge]/[tier] and
 /// resolves once it's dismissed (tap or auto-dismiss after ~2.5s) — a
-/// caller processing a queue of several simultaneous achievements
-/// should `await` this before showing the next one, keeping them from
+/// caller processing a queue of several simultaneous achievements should
+/// `await` this before showing the next one, keeping them from
 /// overlapping.
 ///
-/// Custom AnimationController-based effect rather than a confetti
-/// package: this project already avoids adding a dependency for a
-/// small one-off effect when Flutter's own animation primitives cover
-/// it (same call as skipping `intl` for a one-line date formatter
-/// elsewhere in this codebase) — a badge pop plus a small radial
-/// particle burst, both driven by one controller, is enough for
-/// "celebratory" without pulling in a whole physics-based confetti
-/// engine for something shown for ~2.5 seconds a few times a month.
+/// Redesign Phase 4 rebuilds the visual on the design system — a frosted
+/// [GlassCard] panel glowing in the tier's colour, a spring-scaled tier
+/// badge, and a radial particle burst — using the Phase 1 motion tokens.
+/// **This is presentation only.** The trigger (a genuine new-tier
+/// achievement, detected in ChallengesScreen via `isNewlyAchievedTier`
+/// against the persisted baseline) is untouched; this function is just how
+/// that already-decided celebration is drawn.
+///
+/// Still a custom AnimationController effect rather than a confetti
+/// package — Flutter's own primitives cover a badge pop plus an 18-particle
+/// burst for something shown ~2.5s a few times a month.
 Future<void> showTierCelebration(
   BuildContext context, {
   required Challenge challenge,
@@ -27,12 +31,19 @@ Future<void> showTierCelebration(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
-    barrierColor: Colors.black54,
-    transitionDuration: const Duration(milliseconds: 250),
+    barrierColor: AppColors.background.withValues(alpha: 0.72),
+    transitionDuration: AppMotion.medium,
     pageBuilder: (context, animation, secondaryAnimation) =>
         _TierCelebrationDialog(challenge: challenge, tier: tier),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(opacity: animation, child: child);
+      final curved = CurvedAnimation(parent: animation, curve: AppMotion.emphasized);
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.9, end: 1).animate(curved),
+          child: child,
+        ),
+      );
     },
   );
 }
@@ -58,7 +69,10 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
     super.initState();
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
       ..forward();
-    _badgeScale = CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.elasticOut));
+    _badgeScale = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0, 0.6, curve: Curves.elasticOut),
+    );
     _particles = _generateParticles(TierBadge.colorFor(widget.tier));
 
     Future.delayed(const Duration(milliseconds: 2500), () {
@@ -68,10 +82,10 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
 
   List<_Particle> _generateParticles(Color tierColor) {
     final random = Random();
-    final colors = [tierColor, Colors.white, tierColor.withValues(alpha: 0.7)];
+    final colors = [tierColor, AppColors.white, tierColor.withValues(alpha: 0.7)];
     return List.generate(18, (i) {
       final angle = (2 * pi / 18) * i + random.nextDouble() * 0.3;
-      final distance = 60 + random.nextDouble() * 40;
+      final distance = 66 + random.nextDouble() * 44;
       return _Particle(
         angle: angle,
         distance: distance,
@@ -89,54 +103,56 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tierColor = TierBadge.colorFor(widget.tier);
 
     return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: GestureDetector(
-          onTap: () => Navigator.of(context).maybePop(),
-          child: Container(
-            width: 280,
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 24, offset: Offset(0, 8))],
-            ),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).maybePop(),
+        child: SizedBox(
+          width: 300,
+          child: GlassCard(
+            glowColor: tierColor,
+            glowOpacity: 0.4,
+            borderColor: tierColor.withValues(alpha: 0.5),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxxl, horizontal: AppSpacing.xxl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Text(
+                  'NEW TIER ACHIEVED',
+                  style: AppTextStyles.tinted(AppTextStyles.overline, tierColor),
+                ),
+                const SizedBox(height: AppSpacing.xl),
                 SizedBox(
-                  width: 140,
-                  height: 140,
+                  width: 150,
+                  height: 150,
                   child: AnimatedBuilder(
                     animation: _controller,
-                    builder: (context, child) {
-                      return CustomPaint(
-                        painter: _ParticleBurstPainter(particles: _particles, progress: _controller.value),
-                        child: Center(
-                          child: Transform.scale(
-                            scale: _badgeScale.value,
-                            child: child,
-                          ),
-                        ),
-                      );
-                    },
-                    child: TierBadgeIcon(tier: widget.tier, size: 72),
+                    builder: (context, child) => CustomPaint(
+                      painter: _ParticleBurstPainter(particles: _particles, progress: _controller.value),
+                      child: Center(
+                        child: Transform.scale(scale: _badgeScale.value, child: child),
+                      ),
+                    ),
+                    child: TierBadgeIcon(tier: widget.tier, size: 80, glow: true),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.xl),
                 Text(
-                  'New Tier Achieved!',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  widget.tier.label,
+                  style: AppTextStyles.tinted(AppTextStyles.headlineSmall, tierColor),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '${widget.tier.label} — ${widget.challenge.title}',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  widget.challenge.title,
+                  style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'Tap to continue',
+                  style: AppTextStyles.disabled(AppTextStyles.labelSmall),
                 ),
               ],
             ),
@@ -161,9 +177,8 @@ class _Particle {
   final double radius;
 }
 
-/// Radial burst — each particle travels outward along its own [angle]
-/// and fades out, driven entirely by [progress] (0.0 to 1.0), no
-/// per-particle AnimationController.
+/// Radial burst — each particle travels outward along its own [angle] and
+/// fades out, driven entirely by [progress] (0.0 to 1.0).
 class _ParticleBurstPainter extends CustomPainter {
   _ParticleBurstPainter({required this.particles, required this.progress});
 

@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_tier_achievement.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
@@ -6,24 +7,19 @@ import 'package:doon_walkers/features/challenges/presentation/widgets/tier_badge
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Personal Challenge History (Version 2, Phase C2, item 5) — every
-/// tier the signed-in user has reached, across every challenge, most
-/// recent first, with the real date each was reached.
+/// Personal Challenge History — every tier the signed-in user has reached,
+/// across every challenge, most recent first, with the real date each was
+/// reached. Reached via the Challenges tab's app-bar trophy; router-level
+/// guarded so a guest never reaches it.
 ///
-/// Lives on its own route under the Challenges tab (reached via its
-/// AppBar trophy icon) rather than inline on Profile: Profile already
-/// carries five sections (loyalty badge, stats, registrations,
-/// wishlist, inquiries) plus two admin cards, and this is thematically
-/// a Challenges concern, not a Profile one — now that Challenges has
-/// its own tab with room to grow, that's the more natural home. Router-
-/// level guarded (see AppConstants.routeChallengeHistory's doc): a
-/// guest never reaches this screen at all.
+/// Redesign Phase 4 restyles it onto the design system (glass tiles, the
+/// new tier badges, a skeleton loader). The data source and ordering are
+/// unchanged.
 class MyChallengeAchievementsScreen extends ConsumerWidget {
   const MyChallengeAchievementsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final historyAsync = ref.watch(myTierHistoryProvider);
     final challengesAsync = ref.watch(activeChallengesProvider);
 
@@ -31,26 +27,25 @@ class MyChallengeAchievementsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('My Achievements')),
       body: SafeArea(
         child: historyAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const _AchievementsSkeleton(),
           error: (error, stack) {
             debugPrint('MyChallengeAchievementsScreen: failed to load history: $error');
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xxl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Could not load your achievements.',
-                      style: theme.textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
+                    const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+                    const SizedBox(height: AppSpacing.md),
+                    Text('Could not load your achievements.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.xl),
+                    PremiumButton(
+                      label: 'Retry',
+                      icon: AppIcons.refresh,
+                      variant: PremiumButtonVariant.glass,
+                      size: PremiumButtonSize.small,
                       onPressed: () => ref.invalidate(myTierHistoryProvider),
-                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -77,14 +72,17 @@ class MyChallengeAchievementsScreen extends ConsumerWidget {
 
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: sorted.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 final achievement = sorted[index];
-                return _AchievementTile(
-                  achievement: achievement,
-                  challenge: challengeFor(achievement.challengeId),
+                return AppReveal(
+                  index: index.clamp(0, 8),
+                  child: _AchievementTile(
+                    achievement: achievement,
+                    challenge: challengeFor(achievement.challengeId),
+                  ),
                 );
               },
             );
@@ -100,23 +98,26 @@ class _EmptyAchievements extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.military_tech_outlined, size: 56, color: theme.colorScheme.outline),
-          const SizedBox(height: 16),
-          Text(
-            'No tiers reached yet',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+            ),
+            child: const AppIcon(AppIcons.medal, size: 48, color: AppColors.gold),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.lg),
+          Text('No tiers reached yet', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Attend a trek and check back — your progress builds automatically.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
             textAlign: TextAlign.center,
           ),
         ],
@@ -133,37 +134,36 @@ class _AchievementTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            TierBadgeIcon(tier: achievement.tier, size: 40),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${achievement.tier.label} — ${challenge?.title ?? 'Challenge'}',
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Reached ${_formatDate(achievement.achievedAt)}',
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
+    return GlassCard(
+      blurEnabled: false,
+      glowColor: TierBadge.colorFor(achievement.tier),
+      glowOpacity: 0.12,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          TierBadgeIcon(tier: achievement.tier, size: 44),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${achievement.tier.label} — ${challenge?.title ?? 'Challenge'}',
+                  style: AppTextStyles.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Reached ${_formatDate(achievement.achievedAt)}',
+                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                ),
+              ],
             ),
-            if (challenge != null)
-              Icon(ChallengeIcon.forKey(challenge!.icon), color: theme.colorScheme.outline),
-          ],
-        ),
+          ),
+          if (challenge != null)
+            AppIcon(ChallengeIcon.forKey(challenge!.icon), color: AppColors.textSecondary),
+        ],
       ),
     );
   }
@@ -174,5 +174,45 @@ class _AchievementTile extends StatelessWidget {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+}
+
+class _AchievementsSkeleton extends StatelessWidget {
+  const _AchievementsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        itemCount: 5,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: const Row(
+            children: [
+              SkeletonCircle(size: 44),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 180, height: 14),
+                    SizedBox(height: AppSpacing.sm),
+                    SkeletonBox(width: 100, height: 10),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

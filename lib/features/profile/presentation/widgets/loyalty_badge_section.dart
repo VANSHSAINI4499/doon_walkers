@@ -1,17 +1,20 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/profile/domain/loyalty_badge.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The member's current loyalty badge plus a "X more treks to (next)"
-/// nudge, both derived from [myRegistrationStatsProvider]'s attended
-/// count via [loyaltyBadgeFor]/[nextLoyaltyBadgeAfter].
+/// nudge, both derived from [myRegistrationStatsProvider]'s attended count
+/// via [loyaltyBadgeFor]/[nextLoyaltyBadgeAfter].
+///
+/// Redesign Phase 5 restyles this onto a gold-glowing glass card. The
+/// computation (attendance-based, from `totalAttended`) is untouched.
 class LoyaltyBadgeSection extends ConsumerWidget {
   const LoyaltyBadgeSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final statsAsync = ref.watch(myRegistrationStatsProvider);
 
     return statsAsync.when(
@@ -22,33 +25,32 @@ class LoyaltyBadgeSection extends ConsumerWidget {
         final badge = loyaltyBadgeFor(attended);
         final next = nextLoyaltyBadgeAfter(attended);
 
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
+        return GlassCard(
+          blurEnabled: false,
+          glowColor: AppColors.gold,
+          glowOpacity: 0.16,
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
-              Icon(
-                Icons.military_tech_rounded,
-                color: theme.colorScheme.onPrimaryContainer,
-                size: 32,
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: AppGradients.gold,
+                  shape: BoxShape.circle,
+                  boxShadow: AppShadows.glow(AppColors.gold, opacity: 0.4, radius: 14),
+                ),
+                child: const AppIcon(AppIcons.medal, color: AppColors.background, size: 26),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      badge.name,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                    Text('LOYALTY BADGE', style: AppTextStyles.tinted(AppTextStyles.overline, AppColors.gold)),
+                    const SizedBox(height: 2),
+                    Text(badge.name, style: AppTextStyles.titleMedium),
                     const SizedBox(height: 2),
                     Text(
                       next == null
@@ -56,9 +58,7 @@ class LoyaltyBadgeSection extends ConsumerWidget {
                           : '${next.minAttended - attended} more trek'
                               '${next.minAttended - attended == 1 ? '' : 's'} '
                               'to ${next.name}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
+                      style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                     ),
                   ],
                 ),

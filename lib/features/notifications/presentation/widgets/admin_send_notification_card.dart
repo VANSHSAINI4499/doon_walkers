@@ -1,16 +1,18 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 /// Admin-only entry point to [AppConstants.routeAdminSendNotification],
-/// rendered directly on the Profile screen — the old standalone Admin
-/// Panel module grid it used to live on is gone, so this is now the
-/// only way in. Gated on [isAdminProvider], same convention as every
-/// other admin-only affordance (e.g. [TrekAdminActions],
-/// AppShell's drawer entry): renders nothing for a non-admin rather
-/// than a disabled/hidden-on-tap control.
+/// rendered on the Profile screen — the old standalone Admin Panel it used
+/// to live on is gone, so this is now the only way in.
+///
+/// Redesign Phase 5 restyles it as a [PremiumButton]. The gating is
+/// unchanged: it renders nothing for a non-admin (defence in depth — the
+/// Profile screen also gates the whole admin group), same
+/// [isAdminProvider] convention as every other admin-only affordance.
 class AdminSendNotificationCard extends ConsumerWidget {
   const AdminSendNotificationCard({super.key});
 
@@ -19,22 +21,12 @@ class AdminSendNotificationCard extends ConsumerWidget {
     final isAdmin = ref.watch(isAdminProvider);
     if (!isAdmin) return const SizedBox.shrink();
 
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: theme.colorScheme.primaryContainer,
-          child: Icon(Icons.campaign_rounded, color: theme.colorScheme.onPrimaryContainer),
-        ),
-        title: const Text('Send Notification', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: const Text('Broadcast an announcement to everyone'),
-        trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: () => context.push(AppConstants.routeAdminSendNotification),
-      ),
+    return PremiumButton(
+      label: 'Send Notification',
+      icon: AppIcons.announce,
+      variant: PremiumButtonVariant.accent,
+      fullWidth: true,
+      onPressed: () => context.push(AppConstants.routeAdminSendNotification),
     );
   }
 }

@@ -1,20 +1,19 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/domain/repositories/activity_provider.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Fitness-sync status banner shown at the top of the Challenges tab —
-/// the graceful-degradation surface the Challenges Module pivot brief
-/// explicitly asked for: a device without Health Connect should see a
-/// clear explanation and a path forward, never a broken feature or a
-/// crash.
+/// Fitness-sync status banner shown at the top of the Challenges tab — the
+/// graceful-degradation surface the Challenges Module pivot asked for: a
+/// device without Health Connect sees a clear explanation and a path
+/// forward, never a broken feature or a crash.
 ///
-/// Hidden entirely for guests (nothing to sync to) — [AuthGuard]-style
-/// sign-in prompts already cover that elsewhere on this screen
-/// (ChallengeCard's own per-card sign-in prompt); this banner is about
-/// the DEVICE's fitness-data source, a separate concern from being
-/// signed in at all.
+/// Hidden entirely for guests (nothing to sync to). Redesign Phase 4
+/// restyles it onto the design system (a glass banner with a gradient icon
+/// tile and a [PremiumButton] action) — every availability/permission/sync
+/// state and every action it fires is unchanged.
 class ActivityPermissionBanner extends ConsumerWidget {
   const ActivityPermissionBanner({super.key});
 
@@ -28,8 +27,8 @@ class ActivityPermissionBanner extends ConsumerWidget {
     final lastSyncedAsync = ref.watch(lastActivitySyncProvider);
     final syncState = ref.watch(activitySyncControllerProvider);
 
-    // Still resolving either check — render nothing rather than a
-    // flash of "unavailable" that immediately flips to something else.
+    // Still resolving either check — render nothing rather than a flash of
+    // "unavailable" that immediately flips to something else.
     if (availabilityAsync.isLoading || permissionAsync.isLoading) {
       return const SizedBox.shrink();
     }
@@ -39,7 +38,8 @@ class ActivityPermissionBanner extends ConsumerWidget {
 
     if (availability == ActivityAvailability.unavailable) {
       return _Banner(
-        icon: Icons.download_outlined,
+        icon: AppIcons.download,
+        accent: AppColors.accent,
         title: 'Health Connect required',
         message: 'Install or update Health Connect to track fitness challenges '
             '(steps, distance, calories).',
@@ -50,7 +50,8 @@ class ActivityPermissionBanner extends ConsumerWidget {
 
     if (!hasPermission) {
       return _Banner(
-        icon: Icons.health_and_safety_outlined,
+        icon: AppIcons.safety,
+        accent: AppColors.primary,
         title: 'Sync your activity',
         message: 'Grant read-only access to your steps, distance, and calories to '
             'track fitness challenges. Nothing is ever written back.',
@@ -68,7 +69,8 @@ class ActivityPermissionBanner extends ConsumerWidget {
 
     final lastSynced = lastSyncedAsync.valueOrNull;
     return _Banner(
-      icon: Icons.sync_rounded,
+      icon: AppIcons.sync,
+      accent: AppColors.secondary,
       title: 'Activity synced',
       message: lastSynced == null
           ? 'Tap Sync Now to pull in your latest activity.'
@@ -92,6 +94,7 @@ class ActivityPermissionBanner extends ConsumerWidget {
 class _Banner extends StatelessWidget {
   const _Banner({
     required this.icon,
+    required this.accent,
     required this.title,
     required this.message,
     required this.actionLabel,
@@ -101,71 +104,63 @@ class _Banner extends StatelessWidget {
   });
 
   final IconData icon;
+  final Color accent;
   final String title;
   final String message;
   final String actionLabel;
   final VoidCallback onAction;
   final bool isLoading;
 
-  /// The "already working fine, just showing status" state uses a
-  /// quieter container than the two states that need the user to
-  /// actually do something.
+  /// The "already working fine, just showing status" state glows quieter
+  /// than the two states that need the user to actually do something.
   final bool isSubtle;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final background =
-        isSubtle ? theme.colorScheme.surfaceContainerHighest : theme.colorScheme.primaryContainer;
-    final foreground =
-        isSubtle ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onPrimaryContainer;
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: foreground, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: foreground,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  message,
-                  style: theme.textTheme.bodySmall?.copyWith(color: foreground),
-                ),
-                const SizedBox(height: 8),
-                isLoading
-                    ? SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: foreground),
-                      )
-                    : TextButton(
-                        style: TextButton.styleFrom(
-                          foregroundColor: foreground,
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(0, 32),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: onAction,
-                        child: Text(actionLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-              ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+      child: GlassCard(
+        blurEnabled: false,
+        glowColor: isSubtle ? null : accent,
+        glowOpacity: 0.16,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: AppIcon(icon, color: accent, size: 22),
             ),
-          ),
-        ],
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTextStyles.titleSmall),
+                  const SizedBox(height: 2),
+                  Text(message, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                  const SizedBox(height: AppSpacing.md),
+                  isLoading
+                      ? SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+                        )
+                      : PremiumButton(
+                          label: actionLabel,
+                          variant: PremiumButtonVariant.glass,
+                          size: PremiumButtonSize.small,
+                          onPressed: onAction,
+                        ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
