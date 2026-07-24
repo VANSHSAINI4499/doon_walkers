@@ -1,3 +1,5 @@
+import 'package:doon_walkers/core/design_system.dart';
+import 'package:doon_walkers/core/widgets/glass_states.dart';
 import 'package:doon_walkers/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:doon_walkers/features/notifications/presentation/widgets/notification_tile.dart';
 import 'package:flutter/material.dart';
@@ -17,35 +19,37 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final notificationsAsync = ref.watch(notificationsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
       body: SafeArea(
         child: notificationsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const SkeletonTileList(),
           error: (error, stack) {
             debugPrint('NotificationsScreen: failed to load notifications: $error');
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Could not load notifications.',
-                      style: theme.textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => ref.invalidate(notificationsProvider),
-                      child: const Text('Retry'),
-                    ),
-                  ],
+                padding: const EdgeInsets.all(AppSpacing.xxl),
+                child: GlassCard(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const AppIcon(AppIcons.error, size: 40, color: AppColors.danger),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'Could not load notifications.',
+                        style: AppTextStyles.titleMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      PremiumButton(
+                        label: 'Retry',
+                        variant: PremiumButtonVariant.glass,
+                        onPressed: () => ref.invalidate(notificationsProvider),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -58,7 +62,13 @@ class NotificationsScreen extends ConsumerWidget {
                 onRefresh: onRefresh,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  children: const [_EmptyNotifications()],
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: const [
+                    GlassEmptyState(
+                      icon: AppIcons.notifications,
+                      message: 'No notifications yet — community announcements will show up here.',
+                    ),
+                  ],
                 ),
               );
             }
@@ -67,44 +77,14 @@ class NotificationsScreen extends ConsumerWidget {
               onRefresh: onRefresh,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 itemCount: notifications.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) => NotificationTile(notification: notifications[index]),
               ),
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _EmptyNotifications extends StatelessWidget {
-  const _EmptyNotifications();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.notifications_none_rounded, size: 56, color: theme.colorScheme.outline),
-          const SizedBox(height: 16),
-          Text(
-            'No notifications yet',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Community announcements will show up here.",
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

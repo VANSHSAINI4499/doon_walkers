@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/notifications/domain/entities/notification_item.dart';
 import 'package:flutter/material.dart';
 
@@ -19,37 +20,29 @@ class NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.campaign_outlined, color: theme.colorScheme.primary, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    notification.title,
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(notification.body, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
-            const SizedBox(height: 10),
-            Text(
-              _formatDate(notification.createdAt),
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
+    return GlassCard(
+      blurEnabled: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const AppIcon(AppIcons.announce, color: AppColors.primary, size: 20),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(notification.title, style: AppTextStyles.titleSmall),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(notification.body, style: AppTextStyles.bodyMedium),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            _formatDate(notification.createdAt),
+            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+          ),
+        ],
       ),
     );
   }
