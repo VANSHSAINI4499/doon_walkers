@@ -31,5 +31,6 @@ export 'package:doon_walkers/core/theme/app_theme.dart';
 export 'package:doon_walkers/core/widgets/app_splash_screen.dart';
 export 'package:doon_walkers/core/widgets/floating_nav_bar.dart';
 export 'package:doon_walkers/core/widgets/glass_card.dart';
+export 'package:doon_walkers/core/widgets/otp_input.dart';
 export 'package:doon_walkers/core/widgets/premium_button.dart';
 export 'package:doon_walkers/core/widgets/skeleton.dart';

@@ -1,18 +1,31 @@
+import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/auth/presentation/controllers/phone_verification_controller.dart';
 import 'package:doon_walkers/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+/// How many digits MSG91's OTP widget sends — confirmed via live testing
+/// (Version 2, Phase Auth Upgrade UX pass), not assumed.
+const _otpLength = 4;
 
 /// Phone/OTP verification (Version 2, Phase Auth Upgrade), built on
 /// MSG91's OTP Widget SDK — reached via [AuthGuard.requirePhoneVerified]
-/// the same way Sign In is reached via [AuthGuard.requireAuth]. No
-/// explicit navigation on success: once verify-phone-token flips
-/// `phone_verified` true, [currentUserProvider]'s live stream picks it
-/// up, which re-triggers app_router.dart's `redirect` and bounces back
-/// to [redirectTo] — exactly the same mechanism Sign In/Sign Up already
-/// use, not a parallel one.
+/// the same way Sign In is reached via [AuthGuard.requireAuth].
+///
+/// On success this navigates explicitly via [GoRouter.go] to
+/// [redirectTo] (or Home) rather than relying solely on the router's
+/// reactive `redirect` rule for /verify-phone (app_router.dart) — that
+/// rule is keyed off [currentUserProvider]'s realtime stream, which in
+/// practice isn't always fast/reliable enough to bounce the user away on
+/// its own; explicit `.go()` (not `.push()`) replaces this screen in the
+/// stack immediately, same "land back on the original action" outcome
+/// Sign In/Sign Up give via their own mechanism, just driven directly
+/// instead of purely reactively. The router rule stays in place as a
+/// defensive fallback (e.g. a stale bookmark landing here already
+/// verified).
 class PhoneVerificationScreen extends ConsumerStatefulWidget {
   final String? redirectTo;
 
@@ -24,15 +37,15 @@ class PhoneVerificationScreen extends ConsumerStatefulWidget {
 
 class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScreen> {
   final _phoneFormKey = GlobalKey<FormState>();
-  final _otpFormKey = GlobalKey<FormState>();
+  final _otpInputKey = GlobalKey<OTPInputState>();
   final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
   bool _prefilled = false;
+  String _otpCode = '';
+  String? _otpError;
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -41,7 +54,7 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
     final verified = await ref
         .read(phoneVerificationControllerProvider.notifier)
         .sendOtp(_phoneController.text.trim());
-    if (verified) _showVerifiedSnackBar();
+    if (verified) _completeVerification();
   }
 
   Future<void> _resend() async {
@@ -52,22 +65,28 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
   }
 
   Future<void> _verify() async {
-    if (!_otpFormKey.currentState!.validate()) return;
-    final verified =
-        await ref.read(phoneVerificationControllerProvider.notifier).verifyOtp(_otpController.text.trim());
-    if (verified) _showVerifiedSnackBar();
+    if (_otpCode.length != _otpLength) {
+      setState(() => _otpError = 'Enter the $_otpLength-digit code');
+      return;
+    }
+    final verified = await ref.read(phoneVerificationControllerProvider.notifier).verifyOtp(_otpCode);
+    if (verified) _completeVerification();
   }
 
-  void _showVerifiedSnackBar() {
+  void _completeVerification() {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone verified!')));
-    // No explicit navigation — see class doc. The router redirect
-    // handles the bounce-back once currentUserProvider reflects it.
+    // .go() replaces this screen rather than pushing on top of it — see
+    // class doc for why this doesn't just rely on the router's reactive
+    // redirect rule alone.
+    context.go(widget.redirectTo ?? AppConstants.routeHome);
   }
 
   void _changeNumber() {
-    _otpController.clear();
     ref.read(phoneVerificationControllerProvider.notifier).resetToPhoneStep();
+    setState(() {
+      _otpCode = '';
+      _otpError = null;
+    });
   }
 
   @override
@@ -88,6 +107,12 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
     ref.listen<AsyncValue<PhoneVerificationState>>(phoneVerificationControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, stackTrace) {
+          // A failed verify attempt shouldn't leave stale/wrong digits
+          // sitting in the boxes — no-ops harmlessly if we're still on
+          // the phone step (OTPInput isn't mounted, so the key's
+          // currentState is null).
+          _otpInputKey.currentState?.clear();
+          setState(() => _otpCode = '');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_cleanErrorMessage(error)),
@@ -182,36 +207,29 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
         ),
         const SizedBox(height: AppSpacing.xxl),
         GlassCard(
-          child: Form(
-            key: _otpFormKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AuthTextField(
-                  controller: _otpController,
-                  label: 'Verification Code',
-                  hint: 'Enter the code',
-                  prefixIcon: AppIcons.verified,
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _verify(),
-                  validator: (value) {
-                    final digits = (value ?? '').trim();
-                    if (digits.isEmpty) {
-                      return 'Enter the verification code';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                PremiumButton(
-                  label: 'Verify',
-                  fullWidth: true,
-                  isLoading: isLoading,
-                  onPressed: _verify,
-                ),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OTPInput(
+                key: _otpInputKey,
+                length: _otpLength,
+                enabled: !isLoading,
+                errorText: _otpError,
+                onChanged: (code) {
+                  _otpCode = code;
+                  if (_otpError != null) setState(() => _otpError = null);
+                },
+                onCompleted: (code) => _otpCode = code,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              PremiumButton(
+                label: 'Verify',
+                fullWidth: true,
+                isLoading: isLoading,
+                onPressed: _verify,
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
