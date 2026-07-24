@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:chewie/chewie.dart';
+import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:doon_walkers/core/utils/link_launcher.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -74,10 +75,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // The app's own near-black, matching PhotoViewerScreen's identical
+      // Phase 7 chrome-sweep token swap — the black lightbox treatment
+      // itself is unchanged.
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: AppColors.background,
+        iconTheme: const IconThemeData(color: AppColors.white),
       ),
       body: Center(child: _buildBody(context)),
     );

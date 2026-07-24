@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The design system's near-black background (AppColors.background,
+         #090909 — see lib/core/theme/app_colors.dart). Used as the native
+         launch screen's window background (Redesign Phase 7) so there is
+         no default white/theme-dependent flash before Flutter's first
+         frame paints — see AppSplashScreen's doc for the full boot
+         sequence this bridges into. -->
+    <color name="splash_background">#FF090909</color>
+</resources>

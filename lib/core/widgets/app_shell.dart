@@ -1,7 +1,12 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/icons/app_icons.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/theme/app_colors.dart';
+import 'package:doon_walkers/core/theme/app_dimens.dart';
+import 'package:doon_walkers/core/theme/app_gradients.dart';
+import 'package:doon_walkers/core/theme/app_shadows.dart';
 import 'package:doon_walkers/core/theme/app_text_styles.dart';
+import 'package:doon_walkers/core/widgets/floating_nav_bar.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,17 +64,21 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 /// Immutable descriptor for a primary nav tab destination.
+///
+/// A single [icon] rather than an icon/selectedIcon pair — Material
+/// Symbols' filled-vs-hollow distinction is a font axis, not a different
+/// glyph (see [AppIcon]'s doc), so selection state is communicated by
+/// [FloatingNavBar]'s own colour/scale/glow treatment instead of swapping
+/// glyphs.
 class _NavDestination {
   const _NavDestination({
     required this.label,
     required this.icon,
-    required this.selectedIcon,
     required this.route,
   });
 
   final String label;
   final IconData icon;
-  final IconData selectedIcon;
   final String route;
 }
 
@@ -81,34 +90,29 @@ class _NavDestination {
 const _baseDestinations = [
   _NavDestination(
     label: 'Home',
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home,
+    icon: AppIcons.home,
     route: AppConstants.routeHome,
   ),
   _NavDestination(
     label: 'Treks',
-    icon: Icons.terrain_outlined,
-    selectedIcon: Icons.terrain,
+    icon: AppIcons.treks,
     route: AppConstants.routeTrekLibrary,
   ),
   _NavDestination(
     label: 'Challenges',
-    icon: Icons.emoji_events_outlined,
-    selectedIcon: Icons.emoji_events,
+    icon: AppIcons.challenges,
     route: AppConstants.routeChallenges,
   ),
   _NavDestination(
     label: 'Profile',
-    icon: Icons.person_outline,
-    selectedIcon: Icons.person,
+    icon: AppIcons.profile,
     route: AppConstants.routeProfile,
   ),
 ];
 
 const _adminDestination = _NavDestination(
   label: 'Registrations',
-  icon: Icons.groups_outlined,
-  selectedIcon: Icons.groups,
+  icon: AppIcons.registrations,
   route: AppConstants.routeAdminTrekRegistrations,
 );
 
@@ -244,11 +248,10 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
 
     return Scaffold(
       appBar: AppBar(
-        // White, not onPrimary: after the Phase 1 palette flip the app
-        // bar background is near-black and onPrimary is the dark ink meant
-        // to sit ON the electric-green primary — using it here rendered
-        // the title dark-on-dark. Colour only; a fuller AppShell/chrome
-        // restyle is a later phase.
+        // White, not onPrimary: the app bar background is near-black and
+        // onPrimary is the dark ink meant to sit ON the electric-green
+        // primary — using it here would render the title dark-on-dark.
+        // Confirmed still correct in this Phase 7 chrome pass.
         title: Text(
           AppConstants.appName,
           style: AppTextStyles.titleLarge.copyWith(color: AppColors.white),
@@ -260,14 +263,14 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
           // /notifications, not conditional visibility of the
           // affordance that opens it.
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: AppColors.white),
+            icon: const AppIcon(AppIcons.notifications, color: AppColors.white),
             tooltip: 'Notifications',
             onPressed: () => context.push(AppConstants.routeNotifications),
           ),
           // Opens the secondary NavigationDrawer
           Builder(
             builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.white),
+              icon: const AppIcon(AppIcons.menu, color: AppColors.white),
               tooltip: 'More',
               onPressed: () => Scaffold.of(ctx).openEndDrawer(),
             ),
@@ -278,7 +281,12 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
       // ── Secondary navigation: Material 3 NavigationDrawer ────────
       // Branding/version plus "Merchandise" — see this class's top doc
       // for why Merchandise lives here rather than as a bottom-nav tab.
+      // Contents and gating are unchanged from before this pass: there
+      // are no admin-only entries here today (every admin affordance
+      // lives inline elsewhere or on Profile — see the top doc), so the
+      // restyle below applies identically regardless of role.
       endDrawer: NavigationDrawer(
+        backgroundColor: AppColors.surface,
         onDestinationSelected: (index) {
           Navigator.of(context).pop(); // close drawer
           // "Merchandise" is the only destination present, so any
@@ -287,45 +295,54 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
         },
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(28, 24, 16, 10),
-            child: Text(
-              AppConstants.appName,
-              style: AppTextStyles.titleMedium.copyWith(
-                color: AppColors.primary,
-              ),
+            padding: const EdgeInsets.fromLTRB(28, 24, 16, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.primary,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    boxShadow: AppShadows.glow(AppColors.primary, opacity: 0.3, radius: 12),
+                  ),
+                  child: const AppIcon(AppIcons.landscape, color: AppColors.onPrimary, size: 22),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    AppConstants.appName,
+                    style: AppTextStyles.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
-          const Divider(indent: 28, endIndent: 28),
+          const Divider(indent: 28, endIndent: 28, color: AppColors.glassBorder),
           const NavigationDrawerDestination(
-            icon: Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront),
+            icon: AppIcon(AppIcons.store, color: AppColors.textSecondary),
+            selectedIcon: AppIcon(AppIcons.store, color: AppColors.primary),
             label: Text('Merchandise'),
           ),
-          const Divider(indent: 28, endIndent: 28),
+          const Divider(indent: 28, endIndent: 28, color: AppColors.glassBorder),
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 8, 16, 0),
             child: Text(
               'v${AppConstants.appVersion}',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textDisabled,
-              ),
+              style: AppTextStyles.disabled(AppTextStyles.labelSmall),
             ),
           ),
         ],
       ),
 
-      // ── Primary navigation: Material 3 NavigationBar ─────────────
-      bottomNavigationBar: NavigationBar(
+      // ── Primary navigation: floating glass bar ───────────────────
+      bottomNavigationBar: FloatingNavBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (i) => _onTabSelected(context, i),
         destinations: destinations
-            .map(
-              (d) => NavigationDestination(
-                icon: Icon(d.icon),
-                selectedIcon: Icon(d.selectedIcon),
-                label: d.label,
-              ),
-            )
+            .map((d) => FloatingNavBarDestination(icon: d.icon, label: d.label))
             .toList(),
       ),
 

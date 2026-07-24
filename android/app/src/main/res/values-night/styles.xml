@@ -12,7 +12,10 @@
          running.
 
          This Theme is only used starting with V2 of Flutter's Android embedding. -->
+    <!-- Redesign Phase 7: same literal brand colour as values/styles.xml —
+         the app is dark-only regardless of the device's own light/dark
+         setting, so both variants must resolve to the identical colour. -->
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowBackground">?android:colorBackground</item>
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
 </resources>

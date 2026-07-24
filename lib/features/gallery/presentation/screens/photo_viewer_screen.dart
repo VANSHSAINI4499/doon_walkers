@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Full-screen photo view — pinch/drag to zoom via [InteractiveViewer].
@@ -14,10 +15,15 @@ class PhotoViewerScreen extends StatelessWidget {
     final hasCaption = (caption ?? '').trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      // The app's own near-black rather than pure black — a lightbox
+      // over a photo still deserves the brand's specific dark tone (see
+      // AppColors.background's doc on why #090909 over pure #000000),
+      // restyled here as part of the Phase 7 chrome sweep. The black
+      // lightbox TREATMENT itself is deliberate and unchanged.
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: AppColors.background,
+        iconTheme: const IconThemeData(color: AppColors.white),
       ),
       body: Stack(
         children: [

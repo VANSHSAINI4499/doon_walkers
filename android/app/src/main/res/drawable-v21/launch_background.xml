@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Same brand near-black as drawable/launch_background.xml — see that
+     file's doc. Kept as a literal colour reference rather than
+     `?android:colorBackground` so the launch screen is never at the
+     mercy of a device theme; the app is dark-only by design (Redesign
+     Phase 1), not theme-dependent. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+    <item android:drawable="@color/splash_background" />
 </layer-list>

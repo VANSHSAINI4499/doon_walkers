@@ -3,6 +3,7 @@ import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
 import 'package:doon_walkers/core/router/app_router.dart';
 import 'package:doon_walkers/core/services/push_notification_service.dart';
 import 'package:doon_walkers/core/theme/app_theme.dart';
+import 'package:doon_walkers/core/widgets/app_splash_screen.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -90,6 +91,13 @@ class DoonWalkersApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
       routerConfig: ref.watch(routerProvider),
+      // Redesign Phase 7 — bridges the native platform splash into the
+      // router's first screen with a brief branded moment instead of a
+      // jarring cut. `builder` wraps whatever GoRouter already resolved
+      // to, so the real content is fully built underneath the splash for
+      // its entire duration; see SplashGate's doc for why nothing here
+      // blocks on real async work.
+      builder: (context, child) => SplashGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }

@@ -31,6 +31,10 @@
 
   <title>doon_walkers</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Redesign Phase 7: matches the native Android/iOS launch screens'
+       brand near-black (AppColors.background, #090909) so the web target
+       doesn't show a white flash before Flutter attaches either. -->
+  <style>html, body { background: #090909; }</style>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
