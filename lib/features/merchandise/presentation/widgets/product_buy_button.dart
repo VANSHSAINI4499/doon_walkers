@@ -12,10 +12,10 @@ import 'package:flutter/material.dart';
 ///   - out of stock (or every size out of stock) → disabled.
 ///   - in stock → opens [showMerchInquiryFormSheet].
 ///
-/// A guest tapping this is handed to [AuthGuard.requireAuth], which bounces
-/// to sign-in and returns here with a `buy=1` flag so Product Detail
-/// reopens the form. Restyled onto [PremiumButton]; the stock gating and
-/// the guarded round-trip are unchanged.
+/// A guest (or a signed-in but phone-unverified user) tapping this is
+/// handed to [AuthGuard.requirePhoneVerified], which bounces to sign-in
+/// and/or phone verification and returns here with a `buy=1` flag so
+/// Product Detail reopens the form.
 class ProductBuyButton extends StatelessWidget {
   const ProductBuyButton({super.key, required this.product});
 
@@ -33,10 +33,10 @@ class ProductBuyButton extends StatelessWidget {
   }
 
   void _guardedOpen(BuildContext context) {
-    AuthGuard.requireAuth(
+    AuthGuard.requirePhoneVerified(
       context,
       returnPath: '${AppConstants.merchandiseDetailLocation(product.id)}?buy=1',
-      onAuthenticated: () => _openForm(context),
+      onVerified: () => _openForm(context),
     );
   }
 

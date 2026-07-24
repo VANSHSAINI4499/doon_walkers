@@ -4,20 +4,22 @@ import 'package:doon_walkers/features/home/presentation/widgets/home_about_secti
 import 'package:doon_walkers/features/home/presentation/widgets/home_hero_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_section_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/join_community_section.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/trek_section_placeholder.dart';
 import 'package:flutter/material.dart';
 
 /// The Home tab.
 ///
-/// Redesign Phase 2: rebuilt entirely on the Phase 1 design system. Every
-/// section keeps its exact prior data source and logic — this is a visual
-/// rebuild, not a feature change:
+/// Redesign Phase 2: rebuilt entirely on the Phase 1 design system.
+/// Content since then:
 ///   - Hero greeting: tagline from settings (unchanged).
-///   - Community stats: `get_community_stats()` (unchanged).
-///   - The three trek/memory blocks: still pure placeholders — no trek or
-///     gallery data is queried here; wiring that in is a separate future
-///     decision.
-///   - Join Community + About: unchanged member/settings logic.
+///   - Community stats: `get_community_stats()` (unchanged; the Home
+///     content pass removed the Signups tile and bucketed the member
+///     count — see CommunityStatsSection's own doc).
+///   - The "Upcoming Trek"/"Featured Trek"/"Recent Memories" placeholder
+///     blocks (never backed by real data) were removed outright in that
+///     same pass — upcoming treks already sort to the top of the Treks
+///     tab, and the other two weren't wanted at all.
+///   - Join Community: guest-only now (see its own doc) + About:
+///     unchanged settings logic.
 ///
 /// Assembly notes: the hero is full-bleed (outside the reading-width
 /// clamp); everything below sits in a 720dp-max column so the screen
@@ -69,43 +71,6 @@ class _HomeBody extends StatelessWidget {
           accent: AppColors.primary,
         ),
         child: CommunityStatsSection(),
-      ),
-      const _Section(
-        header: HomeSectionHeader(
-          title: 'Upcoming Trek',
-          icon: AppIcons.calendar,
-          accent: AppColors.primary,
-        ),
-        child: TrekSectionPlaceholder(
-          icon: AppIcons.hiking,
-          accent: AppColors.primary,
-          message: 'No upcoming treks scheduled yet — check back soon!',
-        ),
-      ),
-      const _Section(
-        header: HomeSectionHeader(
-          title: 'Featured Trek',
-          icon: AppIcons.star,
-          accent: AppColors.gold,
-        ),
-        child: TrekSectionPlaceholder(
-          icon: AppIcons.landscape,
-          accent: AppColors.gold,
-          message: 'Our trek library is being built — featured treks will appear here.',
-        ),
-      ),
-      const _Section(
-        header: HomeSectionHeader(
-          title: 'Recent Memories',
-          icon: AppIcons.photo,
-          accent: AppColors.secondary,
-        ),
-        child: TrekSectionPlaceholder(
-          icon: AppIcons.cameraBack,
-          accent: AppColors.secondary,
-          preview: PlaceholderPreview.photoGrid,
-          message: 'Trip photos and videos will show up here once the gallery goes live.',
-        ),
       ),
       const JoinCommunitySection(),
       const _AboutDivider(),

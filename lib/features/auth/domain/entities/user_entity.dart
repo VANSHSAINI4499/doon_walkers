@@ -47,6 +47,16 @@ class UserEntity {
   /// state.
   final bool showOnLeaderboard;
 
+  /// Whether [phone] has been confirmed via OTP (Version 2, Phase Auth
+  /// Upgrade). Set exclusively by the verify-otp Edge Function (or the
+  /// grandfather backfill) — see the `on_user_update_check_phone_verified`
+  /// DB trigger, which rejects any attempt to set this from a normal user
+  /// session. Reset to false automatically whenever [phone] changes.
+  final bool phoneVerified;
+
+  /// When [phoneVerified] became true. Null while unverified.
+  final DateTime? phoneVerifiedAt;
+
   const UserEntity({
     required this.id,
     required this.name,
@@ -56,6 +66,8 @@ class UserEntity {
     this.profileImage,
     required this.createdAt,
     this.showOnLeaderboard = true,
+    this.phoneVerified = false,
+    this.phoneVerifiedAt,
   });
 
   bool get isAdmin => role == UserRole.admin;

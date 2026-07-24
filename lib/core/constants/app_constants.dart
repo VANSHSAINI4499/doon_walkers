@@ -8,7 +8,7 @@ class AppConstants {
 
   // ── App identity ────────────────────────────────────────────────
   static const String appName = 'Doon Walkers';
-  static const String appTagline = 'Explore the Himalayas with us';
+  static const String appTagline = 'Explore Dehradun with us';
   static const String appVersion = '1.0.0';
 
   // ── Organisation ────────────────────────────────────────────────
@@ -52,6 +52,13 @@ class AppConstants {
   static const String routeSignIn = '/sign-in';
   static const String routeSignUp = '/sign-up';
   static const String routeForgotPassword = '/forgot-password';
+
+  /// Phone/OTP verification (Version 2, Phase Auth Upgrade) — reached via
+  /// [AuthGuard.requirePhoneVerified] the same way [routeSignIn] is
+  /// reached via [AuthGuard.requireAuth]: a `redirectTo` query param
+  /// carries the original page back to app_router.dart's `redirect`,
+  /// which bounces away automatically once phone_verified flips true.
+  static const String routePhoneVerification = '/verify-phone';
 
   // Nested routes (child GoRoutes under an existing top-level route —
   // see app_router.dart) — full locations for navigation call sites.

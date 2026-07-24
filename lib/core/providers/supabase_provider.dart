@@ -72,6 +72,20 @@ final isAdminProvider = Provider<bool>(
   name: 'isAdminProvider',
 );
 
+/// Derived boolean provider for the signed-in user's phone verification
+/// status (Version 2, Phase Auth Upgrade) — same `.value` (not
+/// `.when()`/pattern-matching) reasoning as [isAdminProvider], so a
+/// transient stream hiccup doesn't flip protected-action gating off. False
+/// for a guest (no [currentUserProvider] value at all), same as
+/// [isAdminProvider].
+final isPhoneVerifiedProvider = Provider<bool>(
+  (ref) {
+    final userAsync = ref.watch(currentUserProvider);
+    return userAsync.value?.phoneVerified ?? false;
+  },
+  name: 'isPhoneVerifiedProvider',
+);
+
 /// Whether a session exists at all — guest vs. signed-in, regardless of
 /// role. Reads the raw session (not [currentUserProvider]'s `.value`)
 /// so it flips the instant sign-in/out happens rather than waiting on

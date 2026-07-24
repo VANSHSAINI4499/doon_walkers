@@ -6,45 +6,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Call-to-action card at the bottom of Home.
+/// Guest-only join CTA at the bottom of Home.
 ///
-/// Logic is unchanged from before (and the same design choice, re-flagged
-/// per the original brief): a signed-in member sees "You're a Member!"
-/// with a button that routes to Profile rather than a static no-op label,
-/// so they get somewhere useful to go; a guest gets the join CTA. The
-/// same guard against flashing guest copy at a member whose `public.users`
-/// row hasn't resolved yet is preserved.
+/// The signed-in-member variant ("You're in the crew! -> Go to Profile")
+/// was removed outright — Profile is already a main bottom-nav tab, so a
+/// second, redundant path to the exact same place served no purpose.
+/// Renders nothing at all once there's an active session; only the guest
+/// half of this section survives, unchanged.
 ///
-/// Visually it's now a glowing [GlassCard] with a [PremiumButton] CTA.
+/// Watches [authStateChangesProvider] purely so this rebuilds the moment
+/// a guest signs in while Home is still mounted — same "reactivity only"
+/// reasoning [myWishlistProvider] etc. use for the same provider.
+///
+/// Visually it's a glowing [GlassCard] with a [PremiumButton] CTA.
 class JoinCommunitySection extends ConsumerWidget {
   const JoinCommunitySection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userAsync = ref.watch(currentUserProvider);
-    final hasSession = Supabase.instance.client.auth.currentUser != null;
-
-    // A signed-in user's public.users row hasn't resolved yet — avoid
-    // flashing "guest" CTA copy at someone who's actually a member.
-    if (hasSession && userAsync.isLoading && !userAsync.hasValue) {
-      return const GlassCard(
-        blurEnabled: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SkeletonCircle(size: 56),
-            SizedBox(height: AppSpacing.lg),
-            SkeletonBox(width: 180, height: 18),
-            SizedBox(height: AppSpacing.md),
-            SkeletonText(lines: 2, lineHeight: 11),
-            SizedBox(height: AppSpacing.xl),
-            SkeletonBox(height: 52, borderRadius: AppRadius.md),
-          ],
-        ),
-      );
+    ref.watch(authStateChangesProvider);
+    if (Supabase.instance.client.auth.currentUser != null) {
+      return const SizedBox.shrink();
     }
-
-    final isMember = userAsync.value != null;
 
     return GlassCard(
       blurEnabled: false,
@@ -60,34 +43,26 @@ class JoinCommunitySection extends ConsumerWidget {
               shape: BoxShape.circle,
               boxShadow: AppShadows.glow(AppColors.primary, opacity: 0.4),
             ),
-            child: AppIcon(
-              isMember ? AppIcons.wave : AppIcons.groupAdd,
-              size: 34,
-              color: AppColors.onPrimary,
-            ),
+            child: const AppIcon(AppIcons.groupAdd, size: 34, color: AppColors.onPrimary),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            isMember ? "You're in the crew! 🎉" : 'Join the community',
+            'Join the community',
             style: AppTextStyles.titleLarge,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            isMember
-                ? 'Manage your profile and keep an eye out for new treks.'
-                : 'Create a free account to register for treks, comment, and get community updates.',
+            'Create a free account to register for treks, comment, and get community updates.',
             style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),
           PremiumButton(
-            label: isMember ? 'Go to Profile' : 'Join Community',
-            icon: isMember ? AppIcons.person : AppIcons.groupAdd,
+            label: 'Join Community',
+            icon: AppIcons.groupAdd,
             fullWidth: true,
-            onPressed: () => isMember
-                ? context.go(AppConstants.routeProfile)
-                : context.push(AppConstants.routeSignUp),
+            onPressed: () => context.push(AppConstants.routeSignUp),
           ),
         ],
       ),

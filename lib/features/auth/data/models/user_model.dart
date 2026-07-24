@@ -12,6 +12,8 @@ class UserModel extends UserEntity {
     super.profileImage,
     required super.createdAt,
     super.showOnLeaderboard,
+    super.phoneVerified,
+    super.phoneVerifiedAt,
   });
 
   /// Creates a [UserModel] from a database row (JSON map).
@@ -29,6 +31,10 @@ class UserModel extends UserEntity {
       // Missing (older cached row shape) defaults true, matching the
       // DB column's own default — never silently opts someone out.
       showOnLeaderboard: json['show_on_leaderboard'] as bool? ?? true,
+      phoneVerified: json['phone_verified'] as bool? ?? false,
+      phoneVerifiedAt: json['phone_verified_at'] != null
+          ? DateTime.parse(json['phone_verified_at'] as String)
+          : null,
     );
   }
 

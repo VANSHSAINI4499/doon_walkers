@@ -24,6 +24,20 @@ dependencies:
   # Backend
   supabase_flutter: ^2.9.0
 
+  # Google Sign-In (native) — feeds Supabase's signInWithIdToken. Pinned to
+  # the 6.x line deliberately: 7.x replaced signIn()/.authentication with a
+  # different initialize()/authenticate() API that Supabase's own Dart docs
+  # for signInWithIdToken don't yet document against.
+  google_sign_in: ^6.2.1
+
+  # MSG91 OTP Widget SDK — official Dart client for MSG91's OTP Widget
+  # (headless: it calls MSG91 directly for send/retry/verify, this app
+  # still builds the UI around it). Very early package (0.0.x, verified
+  # publisher package.msg91.com) — pinned exactly rather than ^0.0.2
+  # since a package this immature could change its response shape
+  # between patch releases without much notice.
+  sendotp_flutter_sdk: 0.0.2
+
   # Environment / config
   flutter_dotenv: ^5.2.1
 

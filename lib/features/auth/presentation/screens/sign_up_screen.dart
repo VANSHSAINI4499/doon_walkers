@@ -53,6 +53,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     // same as SignInScreen, no explicit navigation needed here.
   }
 
+  Future<void> _submitGoogle() async {
+    await ref.read(authControllerProvider.notifier).signInWithGoogle();
+    // Same as email/password: router redirect handles navigation once a
+    // session exists, whether this account is new or returning.
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
@@ -172,6 +178,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ],
             ),
           ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Row(
+          children: [
+            const Expanded(child: Divider(color: AppColors.glassBorder)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Text('OR', style: AppTextStyles.secondary(AppTextStyles.labelMedium)),
+            ),
+            const Expanded(child: Divider(color: AppColors.glassBorder)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        PremiumButton(
+          label: 'Continue with Google',
+          variant: PremiumButtonVariant.glass,
+          fullWidth: true,
+          isLoading: authState.isLoading,
+          onPressed: _submitGoogle,
         ),
         const SizedBox(height: AppSpacing.xxl),
         Row(

@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sendotp_flutter_sdk/sendotp_flutter_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -26,6 +27,14 @@ Future<void> main() async {
       url: EnvConfig.supabaseUrl,
       publishableKey: EnvConfig.supabaseAnonKey,
     );
+  }
+
+  // 2b. Initialise the MSG91 OTP Widget SDK once, same "only if
+  //     configured" gating as Supabase above — phone verification is an
+  //     optional feature, not a startup prerequisite. See
+  //     PhoneVerificationRepositoryImpl for where these calls are used.
+  if (EnvConfig.isPhoneWidgetConfigured) {
+    OTPWidget.initializeWidget(EnvConfig.msg91WidgetId, EnvConfig.msg91WidgetTokenAuth);
   }
 
   // 3. Firebase must be initialised before any other Firebase plugin —

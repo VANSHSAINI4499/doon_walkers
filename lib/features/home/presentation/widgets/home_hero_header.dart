@@ -30,7 +30,10 @@ class HomeHeroHeader extends ConsumerWidget {
         : settings.orgTagline;
 
     return SizedBox(
-      height: 300,
+      // Trimmed from 300 — the greeting card is bottom-anchored, so a
+      // taller band just meant more empty painted sky above it before
+      // any real content appeared.
+      height: 232,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,

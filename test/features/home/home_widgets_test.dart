@@ -17,7 +17,6 @@ import 'package:doon_walkers/features/home/presentation/providers/community_stat
 import 'package:doon_walkers/features/home/presentation/widgets/about_text_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/community_stats_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_hero_header.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/trek_section_placeholder.dart';
 import 'package:doon_walkers/features/settings/domain/entities/app_settings.dart';
 import 'package:doon_walkers/features/settings/presentation/providers/settings_provider.dart';
 import 'package:flutter/material.dart';
@@ -77,7 +76,7 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
-    testWidgets('renders the real numbers on data', (tester) async {
+    testWidgets('renders the real trek count and a bucketed member count', (tester) async {
       await tester.pumpWidget(_host(
         const CommunityStatsSection(),
         overrides: [
@@ -93,9 +92,30 @@ void main() {
       // Let the count-up animation settle onto the exact values.
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
-      expect(find.text('42'), findsOneWidget);
+      // 42 members rounds DOWN to the 25+ milestone — never the exact count.
+      expect(find.text('25+'), findsOneWidget);
+      expect(find.text('42'), findsNothing);
       expect(find.text('7'), findsOneWidget);
-      expect(find.text('15'), findsOneWidget);
+      // Signups tile was removed outright — registrationCount isn't shown.
+      expect(find.text('15'), findsNothing);
+    });
+
+    testWidgets('shows the exact member count below the smallest milestone', (tester) async {
+      await tester.pumpWidget(_host(
+        const CommunityStatsSection(),
+        overrides: [
+          communityStatsProvider.overrideWith(
+            (ref) => const CommunityStats(
+              memberCount: 7,
+              publishedTrekCount: 3,
+              registrationCount: 4,
+            ),
+          ),
+        ],
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('7'), findsOneWidget);
     });
 
     testWidgets('softens a fetch failure to zeros + a notice', (tester) async {
@@ -108,24 +128,8 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Stats unavailable right now.'), findsOneWidget);
-      expect(find.text('0'), findsNWidgets(3));
-    });
-  });
-
-  group('TrekSectionPlaceholder', () {
-    testWidgets('renders its message and icon', (tester) async {
-      await tester.pumpWidget(_host(
-        const TrekSectionPlaceholder(
-          icon: AppIcons.hiking,
-          message: 'No upcoming treks scheduled yet — check back soon!',
-        ),
-      ));
-      await tester.pump();
-      expect(
-        find.text('No upcoming treks scheduled yet — check back soon!'),
-        findsOneWidget,
-      );
-      expect(find.byType(AppIcon), findsWidgets);
+      // Just Members + Treks now — the Signups tile is gone.
+      expect(find.text('0'), findsNWidgets(2));
     });
   });
 

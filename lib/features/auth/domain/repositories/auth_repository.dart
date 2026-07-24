@@ -29,6 +29,18 @@ abstract class AuthRepository {
     required String fullName,
   });
 
+  /// Signs in (or, on first use, signs up) with a native Google account
+  /// picker. Supabase verifies the returned ID token and creates the
+  /// `auth.users` row itself; `public.users` is populated by the same
+  /// `handle_new_user` trigger email/password sign-up uses, reading
+  /// `full_name`/`avatar_url` out of the token's claims instead of a
+  /// caller-supplied `data:` map.
+  ///
+  /// Returns normally (without throwing) if the user dismisses the
+  /// account picker — that's a deliberate cancel, not a failure, so it
+  /// shouldn't surface as an error to the caller.
+  Future<void> signInWithGoogle();
+
   /// Signs out the active user session.
   Future<void> signOut();
 

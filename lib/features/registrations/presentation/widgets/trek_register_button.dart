@@ -18,10 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///   - still loading → a disabled button, so a double-tap can't fire two
 ///     inserts and trip the UNIQUE constraint
 ///
-/// A guest tapping Register is handed to [AuthGuard.requireAuth], which
-/// bounces to sign-in and returns here afterwards — [returnPath] carries a
-/// `register=1` flag so Trek Detail can reopen the form automatically once
-/// they're back.
+/// A guest (or a signed-in but phone-unverified user) tapping Register is
+/// handed to [AuthGuard.requirePhoneVerified], which bounces to sign-in
+/// and/or phone verification and returns here afterwards — [returnPath]
+/// carries a `register=1` flag so Trek Detail can reopen the form
+/// automatically once they're back.
 ///
 /// Redesign Phase 3 restyles the button and status cards onto the design
 /// system. Every state and every gating condition below — the unpublished
@@ -96,12 +97,13 @@ class TrekRegisterButton extends ConsumerWidget {
   }
 
   void _guardedOpen(BuildContext context, WidgetRef ref) {
-    AuthGuard.requireAuth(
+    AuthGuard.requirePhoneVerified(
       context,
-      // Round-trips through sign-in and comes back here with the flag Trek
-      // Detail uses to reopen this form automatically.
+      // Round-trips through sign-in (and, if needed, phone verification)
+      // and comes back here with the flag Trek Detail uses to reopen
+      // this form automatically.
       returnPath: '${AppConstants.trekDetailLocation(trek.id)}?register=1',
-      onAuthenticated: () => _openForm(context),
+      onVerified: () => _openForm(context),
     );
   }
 }

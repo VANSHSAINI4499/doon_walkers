@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:doon_walkers/core/config/env_config.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/auth/domain/repositories/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Riverpod provider exposing the implementation of [AuthRepository].
@@ -33,7 +35,14 @@ const _retryDelay = Duration(milliseconds: 600);
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient _supabase;
 
-  const AuthRepositoryImpl(this._supabase);
+  /// One instance reused across sign-in/sign-out — [GoogleSignIn] caches
+  /// silent-sign-in state internally, and `serverClientId` only needs to
+  /// be passed once at construction.
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: EnvConfig.googleWebClientId,
+  );
+
+  AuthRepositoryImpl(this._supabase);
 
   @override
   Future<void> signInWithEmailPassword({
@@ -79,7 +88,43 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> signInWithGoogle() async {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) {
+      // User dismissed the account picker — not an error.
+      return;
+    }
+
+    final googleAuth = await googleUser.authentication;
+    final idToken = googleAuth.idToken;
+    if (idToken == null) {
+      throw Exception('Google sign-in did not return an ID token. Please try again.');
+    }
+
+    try {
+      await _withRetry(
+        () => _supabase.auth
+            .signInWithIdToken(
+              provider: OAuthProvider.google,
+              idToken: idToken,
+              accessToken: googleAuth.accessToken,
+            )
+            .timeout(_authCallTimeout),
+      );
+    } on TimeoutException {
+      throw Exception(_timeoutMessage);
+    }
+  }
+
+  @override
   Future<void> signOut() async {
+    // Best-effort: clears the cached Google account so the next sign-in
+    // shows the account picker again instead of silently reusing this
+    // one. Never worth failing sign-out over.
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
+
     try {
       await _withRetry(() => _supabase.auth.signOut().timeout(_authCallTimeout));
     } on TimeoutException {

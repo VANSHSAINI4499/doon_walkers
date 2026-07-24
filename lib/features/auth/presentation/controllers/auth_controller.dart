@@ -55,6 +55,17 @@ class AuthController extends AsyncNotifier<void> {
     return result;
   }
 
+  /// Signs in (or signs up, on first use) via the native Google account
+  /// picker. See [AuthRepository.signInWithGoogle] for the cancel/error
+  /// distinction — a dismissed picker leaves [state] as [AsyncData], not
+  /// [AsyncError].
+  Future<void> signInWithGoogle() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(authRepositoryProvider).signInWithGoogle(),
+    );
+  }
+
   /// Signs out the current user session.
   Future<void> signOut() async {
     state = const AsyncLoading();

@@ -12,8 +12,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Trek Detail's comment section — input box plus the thread below it.
 ///
 /// A guest sees a tappable "Sign in to comment" placeholder instead of a
-/// real input; tapping it goes through [AuthGuard.requireAuth], which
-/// bounces to sign-in and returns here with `?comment=1` — see
+/// real input; a signed-in but phone-unverified user sees an equivalent
+/// "Verify your phone to comment" placeholder. Either one goes through
+/// [AuthGuard.requirePhoneVerified] (which itself falls back to plain
+/// sign-in first when there's no session at all), bouncing to sign-in
+/// and/or phone verification and returning here with `?comment=1` — see
 /// [autoFocusInput], set from that flag by [TrekDetailScreen].
 ///
 /// Redesign Phase 3 restyles the input, the sign-in placeholder, and the
@@ -97,23 +100,24 @@ class _CommentThreadState extends ConsumerState<CommentThread> {
   }
 
   void _guardedFocus(BuildContext context) {
-    AuthGuard.requireAuth(
+    AuthGuard.requirePhoneVerified(
       context,
       returnPath: '${AppConstants.trekDetailLocation(widget.trekId)}?comment=1',
-      onAuthenticated: _focusNode.requestFocus,
+      onVerified: _focusNode.requestFocus,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final isSignedIn = ref.watch(supabaseClientProvider).auth.currentUser != null;
+    final isPhoneVerified = ref.watch(isPhoneVerifiedProvider);
     final isSaving = ref.watch(commentControllerProvider).isLoading;
     final commentsAsync = ref.watch(trekCommentsProvider(widget.trekId));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (isSignedIn)
+        if (isSignedIn && isPhoneVerified)
           _CommentInput(
             controller: _controller,
             focusNode: _focusNode,
@@ -124,6 +128,8 @@ class _CommentThreadState extends ConsumerState<CommentThread> {
             },
             onSubmit: _submit,
           )
+        else if (isSignedIn)
+          _VerifyPhoneToComment(onTap: () => _guardedFocus(context))
         else
           _SignInToComment(onTap: () => _guardedFocus(context)),
         const SizedBox(height: AppSpacing.lg),
@@ -245,6 +251,35 @@ class _SignInToComment extends StatelessWidget {
           Expanded(
             child: Text(
               'Sign in to leave a comment',
+              style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+            ),
+          ),
+          const AppIcon(AppIcons.chevronRight, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown instead of [_SignInToComment] once signed in but before
+/// `phone_verified` — mirrors it exactly, just a different prompt/icon.
+class _VerifyPhoneToComment extends StatelessWidget {
+  const _VerifyPhoneToComment({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      blurEnabled: false,
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          const AppIcon(AppIcons.phone, color: AppColors.textSecondary),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              'Verify your phone number to leave a comment',
               style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
             ),
           ),

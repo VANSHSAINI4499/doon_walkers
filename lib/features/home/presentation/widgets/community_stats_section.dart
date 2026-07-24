@@ -4,14 +4,24 @@ import 'package:doon_walkers/features/home/presentation/providers/community_stat
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Three aggregate stat tiles (members / treks / registrations) sourced
-/// from `get_community_stats()` via [communityStatsProvider].
+/// Two aggregate stat tiles (members / treks) sourced from
+/// `get_community_stats()` via [communityStatsProvider]. The
+/// registrations ("Signups") tile was removed outright — [CommunityStats]
+/// still fetches and carries `registrationCount`, this widget just no
+/// longer displays it.
 ///
-/// Data behaviour is unchanged from before: a fetch failure renders the
-/// same tiles zeroed-out with a small "unavailable" caption rather than a
-/// hard error box — this is decorative content on a public landing
-/// screen, and the real error still lives in the [AsyncValue] for anyone
-/// inspecting state, just softened visually.
+/// The member count is never shown exact — [_bucketedMemberCount] rounds
+/// it down to a "N+" milestone, since a precise headcount is more
+/// surveillance-y than useful on a small, growing community's public
+/// landing screen. Below the smallest milestone the raw count shows
+/// as-is; rounding a single-digit number down would read as a bug, not
+/// a feature.
+///
+/// Data behaviour is otherwise unchanged from before: a fetch failure
+/// renders the same tiles zeroed-out with a small "unavailable" caption
+/// rather than a hard error box — this is decorative content on a
+/// public landing screen, and the real error still lives in the
+/// [AsyncValue] for anyone inspecting state, just softened visually.
 ///
 /// Visually it now uses the Phase 1 system: glass tiles, the bold stat
 /// numeral type, per-tile brand glows, a count-up on the numbers, and a
@@ -34,6 +44,23 @@ class CommunityStatsSection extends ConsumerWidget {
   }
 }
 
+/// Milestones the member count rounds DOWN to, shown as "N+". Below
+/// [_memberMilestones.first], the exact count shows instead (no "+") —
+/// there's nothing to hide at single/low-double digits, and rounding
+/// there would just look wrong.
+const _memberMilestones = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
+
+/// Returns the display number and suffix for a member count — e.g. `137`
+/// becomes `(100, '+')`, `7` stays `(7, '')`.
+(int, String) _bucketedMemberCount(int count) {
+  if (count < _memberMilestones.first) return (count, '');
+  var milestone = _memberMilestones.first;
+  for (final m in _memberMilestones) {
+    if (count >= m) milestone = m;
+  }
+  return (milestone, '+');
+}
+
 class _StatsRow extends StatelessWidget {
   const _StatsRow({required this.stats, this.notice});
 
@@ -44,6 +71,7 @@ class _StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     // Zeroed error state shouldn't animate a count-up from 0 to 0.
     final animate = notice == null;
+    final (memberValue, memberSuffix) = _bucketedMemberCount(stats.memberCount);
 
     return Column(
       children: [
@@ -54,7 +82,8 @@ class _StatsRow extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   icon: AppIcons.group,
-                  value: stats.memberCount,
+                  value: memberValue,
+                  suffix: memberSuffix,
                   label: 'Members',
                   accent: AppColors.primary,
                   animate: animate,
@@ -67,16 +96,6 @@ class _StatsRow extends StatelessWidget {
                   value: stats.publishedTrekCount,
                   label: 'Treks',
                   accent: AppColors.secondary,
-                  animate: animate,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _StatTile(
-                  icon: AppIcons.ticket,
-                  value: stats.registrationCount,
-                  label: 'Signups',
-                  accent: AppColors.accent,
                   animate: animate,
                 ),
               ),
@@ -102,10 +121,12 @@ class _StatTile extends StatelessWidget {
     required this.label,
     required this.accent,
     required this.animate,
+    this.suffix = '',
   });
 
   final IconData icon;
   final int value;
+  final String suffix;
   final String label;
   final Color accent;
   final bool animate;
@@ -129,7 +150,7 @@ class _StatTile extends StatelessWidget {
         children: [
           AppIcon(icon, size: 26, color: accent),
           const SizedBox(height: AppSpacing.md),
-          _CountUp(value: value, animate: animate, color: accent),
+          _CountUp(value: value, suffix: suffix, animate: animate, color: accent),
           const SizedBox(height: AppSpacing.xs),
           Text(
             label.toUpperCase(),
@@ -146,14 +167,18 @@ class _StatTile extends StatelessWidget {
 
 /// Animates a stat from 0 up to [value] once on build, then holds. Purely
 /// presentational — the number shown always lands exactly on [value].
+/// [suffix] (e.g. `'+'` for a bucketed member count) is static chrome
+/// around the animated digits, not itself animated.
 class _CountUp extends StatelessWidget {
   const _CountUp({
     required this.value,
     required this.animate,
     required this.color,
+    this.suffix = '',
   });
 
   final int value;
+  final String suffix;
   final bool animate;
   final Color color;
 
@@ -161,13 +186,13 @@ class _CountUp extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = AppTextStyles.tinted(AppTextStyles.statMedium, color);
     if (!animate || value == 0) {
-      return Text('$value', style: style);
+      return Text('$value$suffix', style: style);
     }
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: value.toDouble()),
       duration: AppMotion.slow,
       curve: AppMotion.emphasized,
-      builder: (context, v, _) => Text('${v.round()}', style: style),
+      builder: (context, v, _) => Text('${v.round()}$suffix', style: style),
     );
   }
 }

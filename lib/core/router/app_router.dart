@@ -5,6 +5,7 @@ import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/widgets/app_shell.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:doon_walkers/features/auth/presentation/screens/phone_verification_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:doon_walkers/features/challenges/presentation/screens/admin_challenge_form_screen.dart';
@@ -222,6 +223,16 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       path: AppConstants.routeForgotPassword,
       name: 'forgot-password',
       builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    // /verify-phone — Version 2, Phase Auth Upgrade. Top-level like the
+    // other auth screens above, not nested under AppShell — reached via
+    // AuthGuard.requirePhoneVerified, same shape as /sign-in.
+    GoRoute(
+      path: AppConstants.routePhoneVerification,
+      name: 'verify-phone',
+      builder: (context, state) => PhoneVerificationScreen(
+        redirectTo: state.uri.queryParameters['redirectTo'],
+      ),
     ),
     // /notifications — deliberately top-level, not nested under any
     // StatefulShellRoute branch. See AppConstants.routeNotifications'
@@ -605,6 +616,22 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       return state.uri.queryParameters['redirectTo'] ?? AppConstants.routeHome;
     }
 
+    // 1b. Version 2, Phase Auth Upgrade — same shape as rule 1, but for
+    //     /verify-phone: once the signed-in user's phone_verified flips
+    //     true, bounce to destination or home. Driven by
+    //     currentUserProvider's live stream (via _RouterRefreshNotifier),
+    //     so this fires the instant verify-otp's write lands, not just
+    //     on the next raw auth event — no `hasValue` guard needed here
+    //     (unlike the admin check below) since the "still loading"
+    //     default is simply staying on the verification screen, which is
+    //     always safe, not a destructive kick like the admin case would be.
+    if (sessionUser != null && location == AppConstants.routePhoneVerification) {
+      final userAsync = ref.read(currentUserProvider);
+      if (userAsync.value?.phoneVerified == true) {
+        return state.uri.queryParameters['redirectTo'] ?? AppConstants.routeHome;
+      }
+    }
+
     // 2. If user is guest and trying to visit protected routes (/profile,
     //    /notifications, /admin + nested, or the inlined trek admin
     //    forms), redirect to Sign In. /notifications is protected for
@@ -620,9 +647,13 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    screen, so it gets the same router-level treatment as /profile
     //    rather than the client-side AuthGuard.requireAuth pattern
     //    Register/Wishlist/Buy use for in-screen actions.
+    //    /verify-phone joins this list too — it presupposes a signed-in
+    //    session (there's nothing to verify a phone number FOR
+    //    otherwise), same reasoning as /profile.
     final isProtectedRoute = location == AppConstants.routeProfile ||
         location == AppConstants.routeNotifications ||
         location == AppConstants.routeChallengeHistory ||
+        location == AppConstants.routePhoneVerification ||
         _isAdminRoute(location) ||
         _isTrekAdminRoute(location) ||
         _isMerchAdminRoute(location);
