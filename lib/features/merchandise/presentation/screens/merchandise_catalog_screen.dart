@@ -1,6 +1,6 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
-import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/product_providers.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/product_admin_actions.dart';
@@ -11,16 +11,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 
-/// Merchandise Catalog — one shared screen for every role, same shape
-/// as Trek Library: guests/members see active products only, an admin
-/// sees the same screen plus inline management (drafts included,
-/// marked as such, a per-product actions menu, and an "Add Product"
-/// button). No separate admin-only management screen, consistent with
-/// this project's inline-admin-controls convention.
+/// Merchandise Catalog — one shared screen for every role, same shape as
+/// Trek Library: guests/members see active products only, an admin sees the
+/// same screen plus inline management (drafts included and marked, a
+/// per-product actions menu, an "Add Product" button).
 ///
-/// A top-level route outside the bottom-nav shell (see
-/// AppConstants.routeMerchandise's doc) — reached via the Navigation
-/// Drawer, not a tab.
+/// A top-level route outside the bottom-nav shell — reached via the
+/// Navigation Drawer, not a tab. **Redesign Phase 6 keeps that placement
+/// unchanged** (nothing in the Profile/Home redesign changed the reasoning
+/// for it); it only restyles the screen onto the design system (skeleton
+/// loading, glass product cards, a gradient add-product button). The role
+/// split, the client-side search/category filter, and the masonry layout
+/// are all unchanged.
 class MerchandiseCatalogScreen extends ConsumerStatefulWidget {
   const MerchandiseCatalogScreen({super.key});
 
@@ -46,9 +48,7 @@ class _MerchandiseCatalogScreenState extends ConsumerState<MerchandiseCatalogScr
     setState(() => _searchText = '');
   }
 
-  /// Client-side search + category filter — see
-  /// ProductSearchFilterBar's doc for why this isn't a server-side
-  /// query at this project's catalog scale.
+  /// Client-side search + category filter — unchanged.
   List<Product> _filtered(List<Product> products) {
     final query = _searchText.trim().toLowerCase();
     return products.where((product) {
@@ -62,7 +62,6 @@ class _MerchandiseCatalogScreenState extends ConsumerState<MerchandiseCatalogScr
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isAdmin = ref.watch(isAdminProvider);
     final productsProvider = isAdmin ? adminAllProductsProvider : activeProductsProvider;
     final productsAsync = ref.watch(productsProvider);
@@ -70,39 +69,14 @@ class _MerchandiseCatalogScreenState extends ConsumerState<MerchandiseCatalogScr
     return Scaffold(
       appBar: AppBar(title: const Text('Merchandise')),
       floatingActionButton: isAdmin
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push(AppConstants.routeMerchandiseNew),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Product'),
-            )
+          ? _AddProductFab(onTap: () => context.push(AppConstants.routeMerchandiseNew))
           : null,
       body: SafeArea(
         child: productsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const _CatalogSkeleton(),
           error: (error, stack) {
             debugPrint('MerchandiseCatalogScreen: failed to load products: $error');
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Could not load merchandise.',
-                      style: theme.textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => ref.invalidate(productsProvider),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _CatalogError(onRetry: () => ref.invalidate(productsProvider));
           },
           data: (allProducts) {
             Future<void> onRefresh() => ref.refresh(productsProvider.future);
@@ -115,7 +89,7 @@ class _MerchandiseCatalogScreenState extends ConsumerState<MerchandiseCatalogScr
                 slivers: [
                   const SliverToBoxAdapter(child: _HeroBanner()),
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
                     sliver: SliverToBoxAdapter(
                       child: ProductSearchFilterBar(
                         searchController: _searchController,
@@ -141,29 +115,31 @@ class _MerchandiseCatalogScreenState extends ConsumerState<MerchandiseCatalogScr
                     SliverPadding(
                       // Extra bottom padding for admins so the FAB never
                       // covers the last row's action menu.
-                      padding: EdgeInsets.fromLTRB(16, 16, 16, isAdmin ? 96 : 16),
-                      // A true sliver masonry grid (not GridView wrapped
-                      // in shrinkWrap+NeverScrollableScrollPhysics) so it
-                      // shares this one CustomScrollView with the hero
-                      // banner and filter bar above, instead of nesting
-                      // a second scrollable inside the first. Masonry,
-                      // not a fixed-childAspectRatio grid — name/
-                      // description length varies product to product,
-                      // same reasoning (and same fix) as the Trek
-                      // Library grid's card-height lesson: a fixed cell
-                      // height either wastes space or clips content.
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        isAdmin ? 96 : AppSpacing.lg,
+                      ),
+                      // A true sliver masonry grid — name/description length
+                      // varies product to product, same card-height lesson
+                      // as the Trek Library grid: content-driven cell height,
+                      // not a fixed aspect ratio.
                       sliver: SliverMasonryGrid.extent(
                         maxCrossAxisExtent: 340,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
+                        mainAxisSpacing: AppSpacing.lg,
+                        crossAxisSpacing: AppSpacing.lg,
                         childCount: products.length,
                         itemBuilder: (context, index) {
                           final product = products[index];
-                          return ProductCard(
-                            product: product,
-                            onTap: () =>
-                                context.push(AppConstants.merchandiseDetailLocation(product.id)),
-                            adminActions: isAdmin ? ProductAdminActions(product: product) : null,
+                          return AppReveal(
+                            index: index.clamp(0, 8),
+                            child: ProductCard(
+                              product: product,
+                              onTap: () =>
+                                  context.push(AppConstants.merchandiseDetailLocation(product.id)),
+                              adminActions: isAdmin ? ProductAdminActions(product: product) : null,
+                            ),
                           );
                         },
                       ),
@@ -183,35 +159,101 @@ class _HeroBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xxl, AppSpacing.xl, AppSpacing.xxl),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryDark],
+          colors: [Color(0xFF15241B), AppColors.background],
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Doon Walkers Merchandise',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              gradient: AppGradients.primary,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: AppShadows.glow(AppColors.primary, opacity: 0.35, radius: 16),
             ),
+            child: const AppIcon(AppIcons.store, size: 28, color: AppColors.onPrimary),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Wear your trail pride.',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: Colors.white.withAlpha(210),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('WEAR YOUR TRAIL PRIDE', style: AppTextStyles.tinted(AppTextStyles.overline, AppColors.primaryLight)),
+                const SizedBox(height: AppSpacing.xs),
+                Text('Doon Walkers Merchandise', style: AppTextStyles.headlineSmall),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Gradient "Add Product" button — the design system's extended FAB.
+class _AddProductFab extends StatelessWidget {
+  const _AddProductFab({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.button),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary,
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          boxShadow: AppShadows.button(AppColors.primary),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppIcon(AppIcons.add, size: 22, color: AppColors.onPrimary),
+            const SizedBox(width: AppSpacing.sm),
+            Text('Add Product', style: AppTextStyles.tinted(AppTextStyles.labelLarge, AppColors.onPrimary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CatalogError extends StatelessWidget {
+  const _CatalogError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+            const SizedBox(height: AppSpacing.md),
+            Text('Could not load merchandise.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.xl),
+            PremiumButton(
+              label: 'Retry',
+              icon: AppIcons.refresh,
+              variant: PremiumButtonVariant.glass,
+              size: PremiumButtonSize.small,
+              onPressed: onRetry,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -222,15 +264,12 @@ class _EmptyCatalog extends StatelessWidget {
 
   final bool isAdmin;
 
-  /// True when there ARE products but none match the current
-  /// search/category filter — distinct copy from a genuinely empty
-  /// catalog so an admin/member isn't told "no products yet" when
-  /// really it's just their filter that's too narrow.
+  /// True when there ARE products but none match the current filter —
+  /// distinct copy from a genuinely empty catalog.
   final bool noMatch;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final title = noMatch
         ? 'No matching products'
         : (isAdmin ? 'No products yet' : 'No merchandise yet');
@@ -242,28 +281,82 @@ class _EmptyCatalog extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.xxxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              noMatch ? Icons.search_off_rounded : Icons.shopping_bag_outlined,
-              size: 56,
-              color: theme.colorScheme.outline,
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: AppIcon(noMatch ? AppIcons.searchOff : AppIcons.bag, size: 48, color: AppColors.primary),
             ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
+            Text(title, style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               message,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Product-card-shaped placeholders while the catalog loads.
+class _CatalogSkeleton extends StatelessWidget {
+  const _CatalogSkeleton();
+
+  static const _imageHeights = [170.0, 150.0, 150.0, 180.0, 160.0, 150.0];
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: MasonryGridView.count(
+        crossAxisCount: 2,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        mainAxisSpacing: AppSpacing.lg,
+        crossAxisSpacing: AppSpacing.lg,
+        itemCount: _imageHeights.length,
+        itemBuilder: (context, index) => Container(
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SkeletonBox(height: _imageHeights[index], borderRadius: 0),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SkeletonBox(width: 120, height: 16),
+                    const SizedBox(height: AppSpacing.sm),
+                    const SkeletonBox(width: 70, height: 22, borderRadius: AppRadius.pill),
+                    if (index.isEven) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      const SkeletonText(lines: 2, lineHeight: 10),
+                    ],
+                    const SizedBox(height: AppSpacing.sm),
+                    const SkeletonBox(width: 60, height: 16),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

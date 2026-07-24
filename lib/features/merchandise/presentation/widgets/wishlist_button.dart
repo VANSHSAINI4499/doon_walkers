@@ -1,4 +1,5 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/router/auth_guard.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/wishlist_providers.dart';
 import 'package:flutter/material.dart';
@@ -6,22 +7,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Heart-icon wishlist toggle on Product Detail.
 ///
-/// A guest tapping this goes through [AuthGuard.requireAuth], which
-/// bounces to sign-in and returns here with a `wishlist=1` flag —
-/// [autoAdd] (set from that flag by Product Detail) completes the
-/// original add-to-wishlist intent automatically once signed in,
-/// mirroring TrekRegisterButton's auto-reopened form / CommentThread's
-/// auto-focused input round trip.
+/// A guest tapping this goes through [AuthGuard.requireAuth], which bounces
+/// to sign-in and returns with a `wishlist=1` flag — [autoAdd] completes
+/// the original add intent once signed in.
+///
+/// Redesign Phase 6 restyles the heart (filled danger when wishlisted,
+/// outline otherwise — the same visual language as Profile's wishlist
+/// remove control). The toggle behaviour, the guarded round-trip, and the
+/// auto-add are unchanged.
 class WishlistButton extends ConsumerStatefulWidget {
   const WishlistButton({super.key, required this.productId, this.autoAdd = false});
 
   final String productId;
 
-  /// Set from the `?wishlist=1` query flag. Guarded against re-firing
-  /// on rebuild by [_ProductDetailBody]'s own "handled" flag — same
-  /// pattern as TrekDetailScreen's `_maybeAutoOpenRegistration`, since
-  /// this triggers a real mutation (unlike CommentThread's harmless
-  /// re-focus), so it must only ever fire once.
+  /// Set from the `?wishlist=1` query flag. Fires once (guarded by the
+  /// State lifetime) since it triggers a real mutation.
   final bool autoAdd;
 
   @override
@@ -80,23 +80,32 @@ class _WishlistButtonState extends ConsumerState<WishlistButton> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final wishlistedAsync = ref.watch(isProductWishlistedProvider(widget.productId));
     final isWishlisted = wishlistedAsync.valueOrNull ?? false;
 
     if (_isPending || wishlistedAsync.isLoading) {
       return const Padding(
-        padding: EdgeInsets.all(12),
-        child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.danger)),
       );
     }
 
-    return IconButton(
-      onPressed: () => _guardedToggle(context, isWishlisted),
-      tooltip: isWishlisted ? 'Remove from wishlist' : 'Add to wishlist',
-      icon: Icon(
-        isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-        color: isWishlisted ? theme.colorScheme.error : null,
+    return Container(
+      decoration: BoxDecoration(
+        color: isWishlisted ? AppColors.danger.withValues(alpha: 0.14) : AppColors.card,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isWishlisted ? AppColors.danger.withValues(alpha: 0.4) : AppColors.glassBorder,
+        ),
+      ),
+      child: IconButton(
+        onPressed: () => _guardedToggle(context, isWishlisted),
+        tooltip: isWishlisted ? 'Remove from wishlist' : 'Add to wishlist',
+        icon: AppIcon(
+          AppIcons.favorite,
+          fill: isWishlisted ? 1 : 0,
+          color: isWishlisted ? AppColors.danger : AppColors.textSecondary,
+        ),
       ),
     );
   }

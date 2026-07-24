@@ -1,24 +1,21 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/router/auth_guard.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/merch_inquiry_form_sheet.dart';
 import 'package:flutter/material.dart';
 
-/// "Buy Now" call-to-action on Product Detail. Replaces the M1
-/// disabled "Buy Now — Coming Soon" placeholder now that the inquiry
-/// flow exists.
+/// "Buy Now" call-to-action on Product Detail — an inquiry-to-admin flow,
+/// not real checkout.
 ///
-/// Two states:
-///   - out of stock (or, for a sized product, every size out of stock)
-///     → disabled, mirrors [Trek]'s "Publish this trek..."/registration-
-///     closed disabled-button treatment for an unavailable action.
-///   - in stock → enabled, opens [showMerchInquiryFormSheet].
+/// Two states, unchanged across the redesign:
+///   - out of stock (or every size out of stock) → disabled.
+///   - in stock → opens [showMerchInquiryFormSheet].
 ///
-/// A guest tapping this is handed to [AuthGuard.requireAuth], which
-/// bounces to sign-in and returns here afterwards — [returnPath]
-/// carries a `buy=1` flag so Product Detail can reopen the form
-/// automatically once they're back, mirroring
-/// TrekRegisterButton's `register=1` round trip exactly.
+/// A guest tapping this is handed to [AuthGuard.requireAuth], which bounces
+/// to sign-in and returns here with a `buy=1` flag so Product Detail
+/// reopens the form. Restyled onto [PremiumButton]; the stock gating and
+/// the guarded round-trip are unchanged.
 class ProductBuyButton extends StatelessWidget {
   const ProductBuyButton({super.key, required this.product});
 
@@ -46,19 +43,20 @@ class ProductBuyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!product.isInStock) {
-      return FilledButton.icon(
+      return const PremiumButton(
+        label: 'Out of Stock',
+        icon: AppIcons.cart,
         onPressed: null,
-        icon: const Icon(Icons.shopping_cart_outlined),
-        label: const Text('Out of Stock'),
-        style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+        fullWidth: true,
       );
     }
 
-    return FilledButton.icon(
+    return PremiumButton(
+      label: 'Buy Now',
+      icon: AppIcons.cart,
+      size: PremiumButtonSize.large,
+      fullWidth: true,
       onPressed: () => _guardedOpen(context),
-      icon: const Icon(Icons.shopping_cart_outlined),
-      label: const Text('Buy Now'),
-      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
     );
   }
 }

@@ -1,5 +1,6 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
-import 'package:doon_walkers/core/widgets/section_header.dart';
+import 'package:doon_walkers/core/widgets/section_title.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/product_providers.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/merch_inquiry_form_sheet.dart';
@@ -13,10 +14,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Full product view. `product == null` covers two cases RLS makes
-/// indistinguishable on purpose — the id doesn't exist, or it's a
-/// draft a non-admin isn't allowed to see — both render the same
-/// "not found" state rather than leaking which case it was. Mirrors
-/// TrekDetailScreen's identical `trek == null` handling.
+/// indistinguishable on purpose — the id doesn't exist, or it's a draft a
+/// non-admin isn't allowed to see — both render the same "not found" state.
+///
+/// Redesign Phase 6: rebuilt on the design system (hero cover with the
+/// shared card→detail flight, glass badges, skeleton loading). The
+/// auto-open-buy-form flow, the admin-only hiding of the wishlist/buy
+/// controls, and every other conditional are unchanged.
 class ProductDetailScreen extends ConsumerWidget {
   const ProductDetailScreen({
     super.key,
@@ -27,13 +31,10 @@ class ProductDetailScreen extends ConsumerWidget {
 
   final String productId;
 
-  /// Set from the `?buy=1` query flag [ProductBuyButton] attaches to
-  /// its sign-in return path — mirrors TrekRegisterButton/
-  /// TrekDetailScreen's `register=1` round trip.
+  /// Set from the `?buy=1` sign-in return flag.
   final bool openBuyForm;
 
-  /// Set from the `?wishlist=1` query flag [WishlistButton] attaches to
-  /// its sign-in return path.
+  /// Set from the `?wishlist=1` sign-in return flag.
   final bool openWishlist;
 
   @override
@@ -42,9 +43,9 @@ class ProductDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       body: productAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const _ProductDetailSkeleton(),
         error: (error, stack) => _DetailMessage(
-          icon: Icons.error_outline_rounded,
+          icon: AppIcons.error,
           title: 'Could not load this product.',
           actionLabel: 'Retry',
           onAction: () => ref.invalidate(productByIdProvider(productId)),
@@ -52,7 +53,7 @@ class ProductDetailScreen extends ConsumerWidget {
         data: (product) {
           if (product == null) {
             return const _DetailMessage(
-              icon: Icons.search_off_rounded,
+              icon: AppIcons.searchOff,
               title: 'Product not found.',
             );
           }
@@ -69,12 +70,7 @@ class ProductDetailScreen extends ConsumerWidget {
 }
 
 class _DetailMessage extends StatelessWidget {
-  const _DetailMessage({
-    required this.icon,
-    required this.title,
-    this.actionLabel,
-    this.onAction,
-  });
+  const _DetailMessage({required this.icon, required this.title, this.actionLabel, this.onAction});
 
   final IconData icon;
   final String title;
@@ -83,26 +79,32 @@ class _DetailMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return SafeArea(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 48, color: theme.colorScheme.outline),
-              const SizedBox(height: 16),
-              Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+              AppIcon(icon, size: 48, color: AppColors.textDisabled),
+              const SizedBox(height: AppSpacing.lg),
+              Text(title, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
               if (actionLabel != null && onAction != null) ...[
-                const SizedBox(height: 16),
-                FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+                const SizedBox(height: AppSpacing.lg),
+                PremiumButton(
+                  label: actionLabel!,
+                  icon: AppIcons.refresh,
+                  size: PremiumButtonSize.small,
+                  onPressed: onAction,
+                ),
               ],
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
+              const SizedBox(height: AppSpacing.md),
+              PremiumButton(
+                label: 'Back',
+                icon: AppIcons.back,
+                variant: PremiumButtonVariant.ghost,
+                size: PremiumButtonSize.small,
                 onPressed: () => Navigator.of(context).canPop() ? Navigator.of(context).pop() : null,
-                icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('Back'),
               ),
             ],
           ),
@@ -122,9 +124,7 @@ class _ProductDetailBody extends ConsumerStatefulWidget {
 
   final Product product;
 
-  /// Drives whether inline management controls render. Same shared
-  /// screen for every role — an admin just gets an extra actions menu
-  /// and a draft banner; guests and members see neither.
+  /// Drives whether inline management controls render.
   final bool isAdmin;
 
   final bool openBuyForm;
@@ -135,13 +135,9 @@ class _ProductDetailBody extends ConsumerStatefulWidget {
 }
 
 class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
-  /// Auto-opens the inquiry sheet once, from the `?buy=1` sign-in
-  /// return flag — no extra "handled" guard needed the way
-  /// TrekDetailScreen's `_maybeAutoOpenRegistration` requires one:
-  /// `product` is already resolved by the time this widget is built
-  /// (unlike TrekDetailScreen, which re-runs its own check on every
-  /// rebuild of the outer async-loading widget), so `initState`'s
-  /// once-per-State-lifetime guarantee is sufficient on its own.
+  /// Auto-opens the inquiry sheet once, from the `?buy=1` sign-in return
+  /// flag — initState's once-per-State-lifetime guarantee suffices since
+  /// `product` is already resolved by the time this widget is built.
   @override
   void initState() {
     super.initState();
@@ -162,7 +158,6 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final product = widget.product;
     final isAdmin = widget.isAdmin;
     final coverImage = product.coverImageUrl;
@@ -170,167 +165,131 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          expandedHeight: 260,
+          expandedHeight: 300,
           pinned: true,
+          backgroundColor: AppColors.background,
+          surfaceTintColor: Colors.transparent,
+          iconTheme: const IconThemeData(color: AppColors.white),
           actions: [
             if (isAdmin)
               ProductAdminActions(
                 product: product,
-                iconColor: Colors.white,
-                // The product this screen is showing no longer exists —
-                // pop rather than sit on a dangling detail view.
+                iconColor: AppColors.white,
                 onDeleted: () {
                   if (Navigator.of(context).canPop()) Navigator.of(context).pop();
                 },
               ),
           ],
           flexibleSpace: FlexibleSpaceBar(
-            background: (coverImage == null || coverImage.isEmpty)
-                ? Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.shopping_bag_outlined,
-                      size: 64,
-                      color: theme.colorScheme.outline,
-                    ),
-                  )
-                : Image.network(
-                    coverImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stack) => Container(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        size: 48,
-                        color: theme.colorScheme.outline,
-                      ),
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                AppHero(
+                  tag: AppHeroTags.productImage(product.id),
+                  fromRadius: 0,
+                  toRadius: 0,
+                  child: (coverImage == null || coverImage.isEmpty)
+                      ? const _CoverFallback(icon: AppIcons.bag)
+                      : Image.network(
+                          coverImage,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stack) =>
+                              const _CoverFallback(icon: AppIcons.imageBroken),
+                        ),
+                ),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x99000000), Color(0x00000000), Color(0xFF090909)],
+                      stops: [0, 0.4, 1],
                     ),
                   ),
+                ),
+              ],
+            ),
           ),
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Only an admin can reach an inactive product at all
-                    // (products_select gates it), so this banner doubles
-                    // as a reminder that members can't see this page yet.
+                    // Only an admin can reach an inactive product (RLS).
                     if (isAdmin && !product.isActive) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.tertiaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.edit_note_rounded,
-                              size: 18,
-                              color: theme.colorScheme.onTertiaryContainer,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Draft — not visible to members yet.',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      _DraftBanner(),
+                      const SizedBox(height: AppSpacing.lg),
                     ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
-                            product.name,
-                            style: theme.textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
+                          child: Text(product.name, style: AppTextStyles.headlineSmall),
                         ),
-                        // Admins manage the catalog, they don't wish-
-                        // list from it — same convention as the Buy Now
-                        // CTA below not rendering for them at all.
-                        if (!isAdmin)
+                        // Admins manage the catalog, they don't wishlist
+                        // from it — same convention as the Buy Now CTA.
+                        if (!isAdmin) ...[
+                          const SizedBox(width: AppSpacing.md),
                           WishlistButton(productId: product.id, autoAdd: widget.openWishlist),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
                       children: [
                         ProductCategoryBadge(category: product.category),
                         StockStatusBadge(isInStock: product.isInStock),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     Text(
                       _formatPrice(product.price),
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+                      style: AppTextStyles.tinted(AppTextStyles.headlineMedium, AppColors.primary),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xxl),
 
                     if (product.hasVariants) ...[
-                      const SectionHeader(title: 'Available Sizes', icon: Icons.straighten_rounded),
-                      const SizedBox(height: 12),
+                      const SectionTitle(title: 'Available Sizes', icon: AppIcons.distance),
+                      const SizedBox(height: AppSpacing.md),
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: product.variants
-                            .map((v) => _SizeChip(variant: v))
-                            .toList(),
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: product.variants.map((v) => _SizeChip(variant: v)).toList(),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.xxl),
                     ],
 
                     if (product.description.trim().isNotEmpty) ...[
-                      const SectionHeader(title: 'Description', icon: Icons.menu_book_outlined),
-                      const SizedBox(height: 12),
-                      Text(
-                        product.description,
-                        style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                      ),
-                      const SizedBox(height: 28),
+                      const SectionTitle(title: 'Description', icon: AppIcons.book, accent: AppColors.secondary),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(product.description, style: AppTextStyles.secondary(AppTextStyles.bodyLarge)),
+                      const SizedBox(height: AppSpacing.xxl),
                     ],
 
-                    // Buy Now (Version 2, Phase M2) — an inquiry-to-
-                    // admin flow, not real checkout; see
-                    // ProductBuyButton's doc. Admins manage the
-                    // catalog, they don't buy from it — same convention
-                    // as TrekRegisterButton not rendering a CTA for
-                    // them at all.
+                    // Buy Now — an inquiry-to-admin flow. Admins manage the
+                    // catalog, they don't buy from it.
                     if (!isAdmin) ...[
                       ProductBuyButton(product: product),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: AppSpacing.xxl),
                     ],
 
                     const Divider(),
-                    const SizedBox(height: 20),
-                    const SectionHeader(title: 'Photos', icon: Icons.photo_library_outlined),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.xl),
+                    const SectionTitle(title: 'Photos', icon: AppIcons.photo, accent: AppColors.accent),
+                    const SizedBox(height: AppSpacing.md),
                     ProductImagesSection(
                       productId: product.id,
                       productName: product.name,
                       images: product.images,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
               ),
@@ -345,6 +304,52 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
       '₹${price % 1 == 0 ? price.toStringAsFixed(0) : price.toStringAsFixed(2)}';
 }
 
+class _CoverFallback extends StatelessWidget {
+  const _CoverFallback({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A2A24), AppColors.background],
+        ),
+      ),
+      child: Center(child: AppIcon(AppIcons.bag, size: 64, color: AppColors.textDisabled)),
+    );
+  }
+}
+
+class _DraftBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      blurEnabled: false,
+      glowColor: AppColors.gold,
+      glowOpacity: 0.12,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      child: Row(
+        children: [
+          const AppIcon(AppIcons.editNote, size: 18, color: AppColors.gold),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'Draft — not visible to members yet.',
+              style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.gold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Informational size chip (not a selector — the size is chosen in the
+/// inquiry form). Out-of-stock sizes are struck through in danger.
 class _SizeChip extends StatelessWidget {
   const _SizeChip({required this.variant});
 
@@ -352,22 +357,64 @@ class _SizeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = variant.isInStock ? theme.colorScheme.outline : theme.colorScheme.error;
+    final inStock = variant.isInStock;
+    final color = inStock ? AppColors.glassBorder : AppColors.danger.withValues(alpha: 0.5);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(120)),
-        color: variant.isInStock ? null : theme.colorScheme.errorContainer.withAlpha(60),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: color),
+        color: inStock ? AppColors.card : AppColors.danger.withValues(alpha: 0.08),
       ),
       child: Text(
         variant.size,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: variant.isInStock ? theme.colorScheme.onSurface : theme.colorScheme.error,
-          decoration: variant.isInStock ? null : TextDecoration.lineThrough,
-        ),
+        style: AppTextStyles.tinted(
+          AppTextStyles.labelLarge,
+          inStock ? AppColors.textPrimary : AppColors.danger,
+        ).copyWith(decoration: inStock ? null : TextDecoration.lineThrough),
+      ),
+    );
+  }
+}
+
+/// Skeleton for the product detail while it loads.
+class _ProductDetailSkeleton extends StatelessWidget {
+  const _ProductDetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        children: const [
+          SkeletonBox(height: 300, borderRadius: 0),
+          Padding(
+            padding: EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBox(width: 220, height: 28),
+                SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    SkeletonBox(width: 80, height: 24, borderRadius: AppRadius.pill),
+                    SizedBox(width: AppSpacing.sm),
+                    SkeletonBox(width: 90, height: 24, borderRadius: AppRadius.pill),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.lg),
+                SkeletonBox(width: 100, height: 24),
+                SizedBox(height: AppSpacing.xxl),
+                SkeletonBox(width: 160, height: 20),
+                SizedBox(height: AppSpacing.md),
+                SkeletonText(lines: 3),
+                SizedBox(height: AppSpacing.xxl),
+                SkeletonBox(height: 56, borderRadius: AppRadius.md),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

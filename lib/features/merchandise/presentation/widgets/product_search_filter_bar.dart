@@ -1,18 +1,14 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:flutter/material.dart';
 
 /// Search field + category filter chips for the catalog screen.
 ///
-/// [searchController] is owned by the parent's State (not created here)
-/// — a TextField's controller must survive rebuilds, so a fresh one
-/// created inline on every build would fight the IME and reset the
-/// cursor/selection on every keystroke. Filtering itself happens in the
-/// parent from the controller's text; catalog sizes here (tens of
-/// products, same order of magnitude as the trek library) are small
-/// enough that client-side filtering over an already-fetched list is
-/// simpler than a server-side search endpoint, matching how
-/// [sortTreksForLibrary] already sorts client-side at this project's
-/// scale.
+/// [searchController] is owned by the parent's State (not created here) —
+/// a TextField's controller must survive rebuilds. Filtering itself
+/// happens in the parent from the controller's text (client-side, at this
+/// project's catalog scale). Redesign Phase 6 restyles the field and chips
+/// onto the design system; the filtering behaviour is unchanged.
 class ProductSearchFilterBar extends StatelessWidget {
   const ProductSearchFilterBar({
     super.key,
@@ -43,11 +39,11 @@ class ProductSearchFilterBar extends StatelessWidget {
             onChanged: onSearchChanged,
             decoration: InputDecoration(
               hintText: 'Search merchandise…',
-              prefixIcon: const Icon(Icons.search_rounded),
+              prefixIcon: const AppIcon(AppIcons.search, size: 20, color: AppColors.textSecondary),
               suffixIcon: searchController.text.isEmpty
                   ? null
                   : IconButton(
-                      icon: const Icon(Icons.clear_rounded),
+                      icon: const AppIcon(AppIcons.close, size: 18, color: AppColors.textSecondary),
                       tooltip: 'Clear search',
                       onPressed: onClearSearch,
                     ),
@@ -55,7 +51,7 @@ class ProductSearchFilterBar extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -66,7 +62,7 @@ class ProductSearchFilterBar extends StatelessWidget {
                 onSelected: () => onCategoryChanged(null),
               ),
               for (final category in ProductCategory.values) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 _CategoryChip(
                   label: category.label,
                   selected: selectedCategory == category,
@@ -90,10 +86,30 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onSelected(),
+    return Pressable(
+      onTap: onSelected,
+      borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        curve: AppMotion.standard,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+        decoration: BoxDecoration(
+          gradient: selected ? AppGradients.primary : null,
+          color: selected ? null : AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(
+            color: selected ? Colors.transparent : AppColors.glassBorder,
+          ),
+          boxShadow: selected ? AppShadows.glow(AppColors.primary, opacity: 0.3, radius: 10) : null,
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.tinted(
+            AppTextStyles.labelMedium,
+            selected ? AppColors.onPrimary : AppColors.textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }

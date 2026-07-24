@@ -1,16 +1,19 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/product_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Inline admin action menu for a single product — edit / active-toggle
-/// / delete — rendered directly on the catalog and detail screens when
-/// [isAdminProvider] is true. Mirrors TrekAdminActions exactly; RLS
-/// (`products_update_admin`/`products_delete_admin`) independently
-/// rejects the underlying writes for anyone else, so a mis-rendered
-/// menu is a cosmetic bug rather than a permission hole.
+/// Inline admin action menu for a single product — edit / active-toggle /
+/// delete — rendered directly on the catalog and detail screens when
+/// [isAdminProvider] is true. Mirrors TrekAdminActions; RLS
+/// (`products_update_admin`/`products_delete_admin`) independently rejects
+/// the underlying writes for anyone else.
+///
+/// Redesign Phase 6 restyles the trigger, menu items, and delete dialog.
+/// The gating, mutations, and list invalidation are unchanged.
 class ProductAdminActions extends ConsumerStatefulWidget {
   const ProductAdminActions({
     super.key,
@@ -21,12 +24,11 @@ class ProductAdminActions extends ConsumerStatefulWidget {
 
   final Product product;
 
-  /// Called after a successful delete — lets Product Detail pop itself,
-  /// while the catalog grid just stays put and refreshes.
+  /// Called after a successful delete — lets Product Detail pop itself.
   final VoidCallback? onDeleted;
 
   /// Overrides the menu glyph colour (Product Detail renders it over a
-  /// photo, where the default on-surface colour disappears).
+  /// photo).
   final Color? iconColor;
 
   @override
@@ -37,7 +39,6 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
   bool _isPending = false;
 
   Future<void> _confirmDelete() async {
-    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -47,14 +48,18 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
           'photos and sizes. This cannot be undone.',
         ),
         actions: [
-          TextButton(
+          PremiumButton(
+            label: 'Cancel',
+            variant: PremiumButtonVariant.glass,
+            size: PremiumButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error),
+          PremiumButton(
+            label: 'Delete',
+            icon: AppIcons.delete,
+            variant: PremiumButtonVariant.danger,
+            size: PremiumButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
           ),
         ],
       ),
@@ -71,9 +76,9 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not delete product. Please try again.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+        const SnackBar(
+          content: Text('Could not delete product. Please try again.'),
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -93,9 +98,9 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Could not update product. Please try again.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+        const SnackBar(
+          content: Text('Could not update product. Please try again.'),
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -112,18 +117,20 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     if (_isPending) {
       return const Padding(
-        padding: EdgeInsets.all(10),
-        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+        ),
       );
     }
 
     return PopupMenuButton<String>(
       tooltip: 'Admin actions',
-      icon: Icon(Icons.more_vert_rounded, color: widget.iconColor),
+      icon: AppIcon(AppIcons.more, color: widget.iconColor ?? AppColors.white),
       onSelected: (value) {
         switch (value) {
           case 'edit':
@@ -137,30 +144,39 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
       itemBuilder: (context) => [
         const PopupMenuItem(
           value: 'edit',
-          child: ListTile(
-            leading: Icon(Icons.edit_outlined),
-            title: Text('Edit'),
-            contentPadding: EdgeInsets.zero,
-          ),
+          child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
         ),
         PopupMenuItem(
           value: 'toggle',
-          child: ListTile(
-            leading: Icon(
-              widget.product.isActive ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            ),
-            title: Text(widget.product.isActive ? 'Deactivate' : 'Activate'),
-            contentPadding: EdgeInsets.zero,
+          child: _MenuRow(
+            icon: widget.product.isActive ? AppIcons.hidden : AppIcons.visible,
+            label: widget.product.isActive ? 'Deactivate' : 'Activate',
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'delete',
-          child: ListTile(
-            leading: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
-            title: Text('Delete', style: TextStyle(color: theme.colorScheme.error)),
-            contentPadding: EdgeInsets.zero,
-          ),
+          child: _MenuRow(icon: AppIcons.delete, label: 'Delete', color: AppColors.danger),
         ),
+      ],
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  const _MenuRow({required this.icon, required this.label, this.color});
+
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = color ?? AppColors.textPrimary;
+    return Row(
+      children: [
+        AppIcon(icon, size: 20, color: tint),
+        const SizedBox(width: AppSpacing.md),
+        Text(label, style: AppTextStyles.tinted(AppTextStyles.bodyMedium, tint)),
       ],
     );
   }

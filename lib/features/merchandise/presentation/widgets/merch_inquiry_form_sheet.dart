@@ -1,19 +1,20 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/product.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/merch_inquiry_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Opens the "Buy Now" inquiry form as a modal sheet over Product
-/// Detail. Mirrors [showRegistrationFormSheet]'s shape: the product is
-/// implicit (from the screen that launched this), the user is implicit
-/// (the live Supabase session), so the form only asks for what it
-/// can't infer — size (if the product has any), quantity, and an
-/// optional note.
+/// Opens the "Buy Now" inquiry form as a modal sheet over Product Detail.
 ///
-/// This is an inquiry, not checkout — submitting creates a row an
-/// admin follows up on manually. Returns true when an inquiry was
-/// created, so the caller can show a confirmation.
+/// This is an inquiry, not checkout — submitting creates a row an admin
+/// follows up on manually. Returns true when an inquiry was created.
+///
+/// Redesign Phase 6 restyles the sheet onto the design system. Every field
+/// and every behaviour is unchanged: the size dropdown (only for a product
+/// with variants; auto-selected when there's exactly one in-stock size),
+/// the phone-number pre-fill from the account (still editable), the
+/// quantity validator, the size-required guard, and the submit path.
 Future<bool?> showMerchInquiryFormSheet(BuildContext context, {required Product product}) {
   return showModalBottomSheet<bool>(
     context: context,
@@ -41,10 +42,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
 
   ProductVariant? _selectedVariant;
 
-  /// Set once, on submit — a missing size selection is only worth
-  /// complaining about after the member's actually tried to submit,
-  /// same "no live-validate-while-typing noise" convention the
-  /// registration form's gender dropdown uses.
+  /// Set once, on submit — no live-validate-while-typing noise.
   bool _showSizeRequiredError = false;
 
   List<ProductVariant> get _inStockVariants =>
@@ -56,9 +54,8 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
     final variants = _inStockVariants;
     if (variants.length == 1) _selectedVariant = variants.first;
 
-    // Pre-fill from the account's phone if set — still editable, since
-    // the member may want a different number reached for this specific
-    // order (see MerchInquiry.phoneNumber's doc).
+    // Pre-fill from the account's phone if set — still editable, since the
+    // member may want a different number reached for this specific order.
     _phoneController.text = ref.read(currentUserProvider).valueOrNull?.phone ?? '';
   }
 
@@ -98,7 +95,6 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isSaving = ref.watch(merchInquiryControllerProvider).isLoading;
 
     ref.listen<AsyncValue<void>>(merchInquiryControllerProvider, (previous, next) {
@@ -107,7 +103,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_errorMessage(error)),
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: AppColors.danger,
             ),
           );
         },
@@ -117,33 +113,49 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, AppSpacing.xxl),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Inquire about this product',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      gradient: AppGradients.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const AppIcon(AppIcons.bag, size: 20, color: AppColors.onPrimary),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Inquire about this product', style: AppTextStyles.titleLarge),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.product.name,
+                          style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                widget.product.name,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.md),
               Text(
                 "This sends your interest to our team — we'll reach out to arrange "
                 'payment and pickup/delivery. This is not a checkout.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.secondary(AppTextStyles.bodySmall),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
               if (widget.product.hasVariants) ...[
                 DropdownButtonFormField<ProductVariant>(
@@ -160,7 +172,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                     _showSizeRequiredError = false;
                   }),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
               ],
 
               TextFormField(
@@ -175,7 +187,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                     ? 'Please enter a phone number'
                     : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
 
               TextFormField(
                 controller: _quantityController,
@@ -189,7 +201,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
 
               TextFormField(
                 controller: _noteController,
@@ -199,18 +211,15 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                 ),
                 maxLines: 3,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
-              FilledButton(
+              PremiumButton(
+                label: 'Send Inquiry',
+                icon: AppIcons.send,
+                size: PremiumButtonSize.large,
+                fullWidth: true,
+                isLoading: isSaving,
                 onPressed: isSaving ? null : _submit,
-                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: isSaving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Send Inquiry'),
               ),
             ],
           ),
