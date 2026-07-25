@@ -108,10 +108,9 @@ class Registration {
 
   /// The joined trek's scheduled start date (0010_trek_scheduling.sql),
   /// or null for an unscheduled trek — see [Trek.isUpcoming] for what
-  /// "unscheduled" means. Drives [RegistrationStats]' automatic
-  /// "attended" approximation (Part D): a registration counts as
-  /// attended once this date has passed, per the user's explicit choice
-  /// of date-based approximation over admin-marked attendance.
+  /// "unscheduled" means. Feeds [RegistrationStats]' grandfathered
+  /// "attended" definition (Phase QR-3) alongside [checkedInAt] — see
+  /// that class's doc for the exact pre-/post-cutoff split.
   final DateTime? trekDate;
 
   /// Path of the uploaded payment-proof screenshot in the private
@@ -126,6 +125,14 @@ class Registration {
   /// a paid registration" signal used to decide whether to show
   /// payment-status UI at all.
   final String? paymentScreenshotUrl;
+
+  /// Set once the member's check-in QR scan is verified (Phase QR-2,
+  /// `verify_trek_checkin` RPC) — null means not checked in. This is
+  /// the ONLY code path that can ever set it: the
+  /// `prevent_checked_in_at_self_edit` trigger (0030_trek_checkin_
+  /// verify.sql) rejects any direct client write, even by the
+  /// registration's own owner. See [RegistrationRepository.verifyCheckin].
+  final DateTime? checkedInAt;
 
   const Registration({
     required this.id,
@@ -143,6 +150,7 @@ class Registration {
     required this.trekTitle,
     this.paymentScreenshotUrl,
     this.trekDate,
+    this.checkedInAt,
   });
 
   /// True when this registration required payment — derived from
@@ -208,4 +216,32 @@ class TrekRegistrationClosedException implements Exception {
 
   @override
   String toString() => 'Registration is closed — this trek has already taken place.';
+}
+
+/// Why `verify_trek_checkin` (Phase QR-2, 0030_trek_checkin_verify.sql)
+/// rejected a scan — mirrors the RPC's own check order exactly, so the
+/// UI can show a message specific to what actually failed rather than
+/// one generic error.
+enum TrekCheckinFailureReason {
+  notRegistered,
+  invalidToken,
+  notScheduled,
+  windowNotOpen,
+  windowClosed,
+  alreadyCheckedIn,
+}
+
+/// Thrown by [RegistrationRepository.verifyCheckin] when the RPC
+/// rejects a scan. Matched via a custom SQLSTATE per [reason] (DWC01–
+/// DWC06) — same pattern as [CommentBlocklistException] matching
+/// `DWB01`, see RegistrationRepositoryImpl.verifyCheckin's doc for the
+/// exact code table.
+class TrekCheckinException implements Exception {
+  const TrekCheckinException(this.reason, this._message);
+
+  final TrekCheckinFailureReason reason;
+  final String _message;
+
+  @override
+  String toString() => _message;
 }

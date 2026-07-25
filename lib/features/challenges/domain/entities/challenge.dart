@@ -104,9 +104,15 @@ enum ChallengeMetric {
   /// the fitness metrics' sync source. Shown on Challenge Detail below
   /// [explanation]/the time-window explanation.
   String get footnote => switch (this) {
+    // Phase QR-3 grandfathering: a trek scheduled before the check-in
+    // feature launched still uses the old date-based rule (no scan
+    // record could ever exist for it); a trek on/after that date only
+    // counts once you're actually checked in — see
+    // public.trek_registration_is_attended() for the exact rule.
     ChallengeMetric.totalDistanceKm || ChallengeMetric.trekCount =>
-      'A trek counts as attended once its date has passed and your '
-          'registration wasn\'t cancelled.',
+      'A trek counts as attended once you check in with its QR code — '
+          'or, for treks before check-in existed, once its date passed '
+          'with a registration that wasn\'t cancelled.',
     ChallengeMetric.dailySteps ||
     ChallengeMetric.weeklySteps ||
     ChallengeMetric.monthlySteps ||

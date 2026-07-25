@@ -48,6 +48,17 @@ final trekByIdProvider = FutureProvider.autoDispose.family<Trek?, String>(
   name: 'trekByIdProvider',
 );
 
+/// A trek's check-in token (Phase QR-1), for the admin "Display Check-in
+/// QR" screen. `autoDispose` — same reasoning as [trekByIdProvider], this
+/// is only ever watched while that one screen is open. Null both when
+/// the trek has no token row yet and when the caller isn't an admin
+/// (RLS makes those indistinguishable) — see
+/// [TrekRepository.fetchCheckinToken]'s doc.
+final trekCheckinTokenProvider = FutureProvider.autoDispose.family<String?, String>(
+  (ref, trekId) => ref.watch(trekRepositoryProvider).fetchCheckinToken(trekId),
+  name: 'trekCheckinTokenProvider',
+);
+
 /// Thrown when a trek row was created/updated successfully but its
 /// cover image or QR code image failed to upload — distinct from a
 /// full failure so the form can show a more specific message than a
@@ -89,6 +100,7 @@ class TrekAdminController extends AsyncNotifier<void> {
     String? thingsToCarry,
     String? googleMapLink,
     DateTime? trekDate,
+    TrekStartTime? trekStartTime,
     double registrationFee = 0,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
@@ -110,6 +122,7 @@ class TrekAdminController extends AsyncNotifier<void> {
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
         trekDate: trekDate,
+        trekStartTime: trekStartTime,
         registrationFee: registrationFee,
       );
       created = trek;
@@ -165,6 +178,7 @@ class TrekAdminController extends AsyncNotifier<void> {
     String? thingsToCarry,
     String? googleMapLink,
     DateTime? trekDate,
+    TrekStartTime? trekStartTime,
     double registrationFee = 0,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
@@ -189,6 +203,7 @@ class TrekAdminController extends AsyncNotifier<void> {
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
         trekDate: trekDate,
+        trekStartTime: trekStartTime,
         registrationFee: registrationFee,
       );
       success = true;

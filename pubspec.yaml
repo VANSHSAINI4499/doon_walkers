@@ -73,6 +73,18 @@ dependencies:
   permission_handler: ^12.0.3
   material_symbols_icons: ^4.2960.0
 
+  # Phase QR-1 — renders the trek check-in token as a scannable QR
+  # code on the admin "Display Check-in QR" screen. Pure rendering
+  # only (no camera/scanning) — that's Phase QR-2's concern, and would
+  # pull in a separate package (e.g. mobile_scanner) when it lands.
+  qr_flutter: ^4.1.0
+
+  # Phase QR-2 — the member-facing camera scanner that reads the QR
+  # QR-1's screen displays. Requests CAMERA permission itself and
+  # exposes a permission-denied state via its own errorBuilder, so no
+  # separate manual permission_handler flow is needed for it.
+  mobile_scanner: ^7.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -25,6 +25,14 @@ void main() {
       );
     });
 
+    test('matches the admin Check-in QR screen for any trek id (Phase QR-1)', () {
+      expect(isTrekAdminRoute('/trek-library/abc-123/checkin-qr'), isTrue);
+      expect(
+        isTrekAdminRoute('/trek-library/7f3c1e2a-0b5d-4a8e-9f21-3c5d7e9a1b4f/checkin-qr'),
+        isTrue,
+      );
+    });
+
     test('does NOT match the public library or a public trek detail page', () {
       expect(isTrekAdminRoute('/trek-library'), isFalse);
       expect(isTrekAdminRoute('/trek-library/abc-123'), isFalse);
@@ -41,6 +49,12 @@ void main() {
       // '/trek-library/edit' is a *detail* route for a trek with id
       // "edit" — only a '/edit' path segment should count.
       expect(isTrekAdminRoute('/trek-library/edit'), isFalse);
+    });
+
+    test('does not match a trek whose id merely equals checkin-qr', () {
+      // Same reasoning as the 'edit' case above — '/trek-library/
+      // checkin-qr' is a *detail* route for a trek with id "checkin-qr".
+      expect(isTrekAdminRoute('/trek-library/checkin-qr'), isFalse);
     });
   });
 }

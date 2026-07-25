@@ -2,11 +2,13 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/router/auth_guard.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
+import 'package:doon_walkers/features/registrations/domain/trek_checkin_window.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_form_sheet.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Registration call-to-action on Trek Detail.
 ///
@@ -88,7 +90,7 @@ class TrekRegisterButton extends ConsumerWidget {
         // that's the member's own history, not a new registration attempt,
         // so it stays visible after the trek's date passes.
         if (registration != null) {
-          return _AlreadyRegistered(registration: registration);
+          return _AlreadyRegistered(registration: registration, trek: trek);
         }
         if (trek.isCompleted) return const _RegistrationClosed();
         return _RegisterCta(onPressed: () => _guardedOpen(context, ref));
@@ -153,9 +155,14 @@ class _RegistrationClosed extends StatelessWidget {
 }
 
 class _AlreadyRegistered extends StatelessWidget {
-  const _AlreadyRegistered({required this.registration});
+  const _AlreadyRegistered({required this.registration, required this.trek});
 
   final Registration registration;
+
+  /// Needed for the Phase QR-2 "Check In" entry point below — its
+  /// window visibility depends on [Trek.trekDate]/[Trek.trekStartTime],
+  /// and the scanner screen needs [Trek.id] to navigate to.
+  final Trek trek;
 
   @override
   Widget build(BuildContext context) {
@@ -167,26 +174,57 @@ class _AlreadyRegistered extends StatelessWidget {
         ? 'Payment: ${registration.memberFacingStatusLabel} · Manage this from your Profile.'
         : 'Manage this from your Profile.';
 
+    // Phase QR-2 — only offered once already checked in isn't the case,
+    // and only near/within the active check-in window, so the button
+    // isn't sitting there confusingly at a random unrelated time.
+    final showCheckIn = registration.checkedInAt == null &&
+        shouldShowCheckinEntryPoint(
+          trekDate: trek.trekDate,
+          trekStartTime: trek.trekStartTime,
+          now: DateTime.now(),
+        );
+
     return GlassCard(
       blurEnabled: false,
       glowColor: AppColors.primary,
       glowOpacity: 0.18,
       padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppIcon(AppIcons.checkCircle, color: AppColors.primary),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("You're registered", style: AppTextStyles.titleSmall),
-                const SizedBox(height: 2),
-                Text(subtitle, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
-              ],
-            ),
+          Row(
+            children: [
+              AppIcon(
+                registration.checkedInAt != null ? AppIcons.verified : AppIcons.checkCircle,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      registration.checkedInAt != null ? "You're checked in" : "You're registered",
+                      style: AppTextStyles.titleSmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (showCheckIn) ...[
+            const SizedBox(height: AppSpacing.md),
+            PremiumButton(
+              label: 'Check In',
+              icon: AppIcons.qr,
+              variant: PremiumButtonVariant.glass,
+              fullWidth: true,
+              onPressed: () => context.push(AppConstants.trekCheckInLocation(trek.id)),
+            ),
+          ],
         ],
       ),
     );

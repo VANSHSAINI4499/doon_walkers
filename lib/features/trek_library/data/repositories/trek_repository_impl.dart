@@ -62,6 +62,7 @@ class TrekRepositoryImpl implements TrekRepository {
     String? thingsToCarry,
     String? googleMapLink,
     DateTime? trekDate,
+    TrekStartTime? trekStartTime,
     double registrationFee = 0,
   }) async {
     final row = await _supabase
@@ -77,6 +78,7 @@ class TrekRepositoryImpl implements TrekRepository {
           thingsToCarry: thingsToCarry,
           googleMapLink: googleMapLink,
           trekDate: trekDate,
+          trekStartTime: trekStartTime,
           registrationFee: registrationFee,
         ))
         .select()
@@ -100,6 +102,7 @@ class TrekRepositoryImpl implements TrekRepository {
     String? thingsToCarry,
     String? googleMapLink,
     DateTime? trekDate,
+    TrekStartTime? trekStartTime,
     double registrationFee = 0,
   }) async {
     await _supabase
@@ -115,6 +118,7 @@ class TrekRepositoryImpl implements TrekRepository {
           thingsToCarry: thingsToCarry,
           googleMapLink: googleMapLink,
           trekDate: trekDate,
+          trekStartTime: trekStartTime,
           registrationFee: registrationFee,
         ))
         .eq('id', id);
@@ -227,6 +231,16 @@ class TrekRepositoryImpl implements TrekRepository {
     return newUrl;
   }
 
+  @override
+  Future<String?> fetchCheckinToken(String trekId) async {
+    final row = await _supabase
+        .from(AppConstants.tableTrekCheckinTokens)
+        .select('token')
+        .eq('trek_id', trekId)
+        .maybeSingle();
+    return row?['token'] as String?;
+  }
+
   Map<String, dynamic> _writablePayload({
     required String title,
     required String description,
@@ -238,6 +252,7 @@ class TrekRepositoryImpl implements TrekRepository {
     String? thingsToCarry,
     String? googleMapLink,
     DateTime? trekDate,
+    TrekStartTime? trekStartTime,
     double registrationFee = 0,
   }) {
     return {
@@ -258,6 +273,9 @@ class TrekRepositoryImpl implements TrekRepository {
           : '${trekDate.year.toString().padLeft(4, '0')}-'
               '${trekDate.month.toString().padLeft(2, '0')}-'
               '${trekDate.day.toString().padLeft(2, '0')}',
+      // Postgres `time` accepts a plain "HH:mm:ss" string, same reasoning
+      // as trek_date above — no timezone to carry for a bare time of day.
+      'trek_start_time': trekStartTime?.toDbString(),
       'registration_fee': registrationFee,
     };
   }

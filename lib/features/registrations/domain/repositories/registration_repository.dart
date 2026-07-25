@@ -115,4 +115,19 @@ abstract class RegistrationRepository {
   /// function reads auth.uid() internally, same security model as
   /// ChallengeRepository.fetchMyProgress.
   Future<TrekkingStreak> fetchMyStreak();
+
+  /// Verifies a scanned check-in QR for [trekId] against [scannedToken]
+  /// via the `verify_trek_checkin` RPC (Phase QR-2) and, if every check
+  /// passes, records the attendance. Returns the moment it was recorded.
+  ///
+  /// This is the ONLY way `checked_in_at` can ever be set — see
+  /// [Registration.checkedInAt]'s doc. Throws [TrekCheckinException]
+  /// with a specific [TrekCheckinFailureReason] for each rejection
+  /// (not registered / wrong QR / window not open or closed / already
+  /// checked in), so the scanner screen can show exactly what went
+  /// wrong instead of a generic error.
+  Future<DateTime> verifyCheckin({
+    required String trekId,
+    required String scannedToken,
+  });
 }

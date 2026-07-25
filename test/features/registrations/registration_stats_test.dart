@@ -6,6 +6,7 @@ Registration _registration({
   required String id,
   PaymentStatus paymentStatus = PaymentStatus.paid,
   DateTime? trekDate,
+  DateTime? checkedInAt,
 }) {
   return Registration(
     id: id,
@@ -17,6 +18,7 @@ Registration _registration({
     userEmail: 'test@example.com',
     trekTitle: 'Test Trek',
     trekDate: trekDate,
+    checkedInAt: checkedInAt,
   );
 }
 
@@ -88,6 +90,66 @@ void main() {
       ]);
       expect(stats.totalAttended, 0);
       expect(stats.upcoming, 1);
+    });
+  });
+
+  // Phase QR-3 — grandfathering around trekCheckinFeatureCutoff
+  // (2026-07-25). Uses an injected `now` so these stay deterministic
+  // regardless of when the suite actually runs, rather than depending
+  // on the real clock being safely past the fixed cutoff.
+  group('RegistrationStats.fromRegistrations — grandfathered attendance', () {
+    final fixedNow = DateTime(2026, 8, 10);
+    final postCutoffPastDate = DateTime(2026, 8, 1); // after cutoff, before fixedNow
+    final preCutoffDate = DateTime(2026, 7, 1); // before cutoff, before fixedNow
+
+    test('pre-cutoff trek: date passed is enough, checkedInAt is irrelevant', () {
+      final stats = RegistrationStats.fromRegistrations(
+        [_registration(id: '1', trekDate: preCutoffDate)], // no checkedInAt
+        now: fixedNow,
+      );
+      expect(stats.totalAttended, 1);
+    });
+
+    test('post-cutoff trek with a genuine check-in counts as attended', () {
+      final stats = RegistrationStats.fromRegistrations(
+        [
+          _registration(
+            id: '1',
+            trekDate: postCutoffPastDate,
+            checkedInAt: postCutoffPastDate.add(const Duration(hours: 2)),
+          ),
+        ],
+        now: fixedNow,
+      );
+      expect(stats.totalAttended, 1);
+    });
+
+    test('post-cutoff trek with NO check-in does NOT count as attended, '
+        'even though its date passed', () {
+      final stats = RegistrationStats.fromRegistrations(
+        [_registration(id: '1', trekDate: postCutoffPastDate)], // no checkedInAt
+        now: fixedNow,
+      );
+      expect(stats.totalAttended, 0);
+      expect(stats.upcoming, 0); // falls into neither bucket, per the class's doc
+      expect(stats.totalRegistered, 1);
+    });
+
+    test('a cancelled registration never counts as attended, even with '
+        'checkedInAt set (post-cutoff)', () {
+      final stats = RegistrationStats.fromRegistrations(
+        [
+          _registration(
+            id: '1',
+            paymentStatus: PaymentStatus.cancelled,
+            trekDate: postCutoffPastDate,
+            checkedInAt: postCutoffPastDate.add(const Duration(hours: 2)),
+          ),
+        ],
+        now: fixedNow,
+      );
+      expect(stats.cancelled, 1);
+      expect(stats.totalAttended, 0);
     });
   });
 }

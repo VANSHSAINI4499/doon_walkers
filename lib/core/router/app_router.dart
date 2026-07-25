@@ -29,7 +29,9 @@ import 'package:doon_walkers/features/registrations/presentation/screens/admin_r
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registrations_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_trek_picker_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_trek_registrations_screen.dart';
+import 'package:doon_walkers/features/registrations/presentation/screens/trek_checkin_scan_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_form_screen.dart';
+import 'package:doon_walkers/features/trek_library/presentation/screens/trek_checkin_qr_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_detail_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_library_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -80,35 +82,55 @@ class _RouterRefreshNotifier extends ChangeNotifier {
 bool _isAdminRoute(String location) =>
     location == AppConstants.routeAdmin || location.startsWith('${AppConstants.routeAdmin}/');
 
-/// True for the admin-only trek create/edit forms that now live under the
-/// public `/trek-library` branch — `/trek-library/new` and
-/// `/trek-library/:id/edit`.
+/// True for the admin-only trek create/edit forms — plus, since Phase
+/// QR-1, the admin-only Check-in QR display — that now live under the
+/// public `/trek-library` branch: `/trek-library/new`,
+/// `/trek-library/:id/edit`, and `/trek-library/:id/checkin-qr`.
 ///
 /// Without this, inlining the admin controls would have quietly widened
 /// access: the forms used to sit behind `/admin/treks/...` and were
 /// covered by [_isAdminRoute], so a non-admin deep-linking to them got
-/// bounced. RLS (`treks_insert_admin` / `treks_update_admin`) always
-/// rejected the actual write either way, but showing a stranger a
-/// working-looking trek form that fails only on save is bad UX — this
-/// keeps the pre-restructure behaviour of redirecting instead.
+/// bounced. RLS (`treks_insert_admin` / `treks_update_admin` /
+/// `trek_checkin_tokens_select_admin`) always rejected the actual
+/// read/write either way, but showing a stranger a working-looking
+/// screen that fails only once it tries to load or save is bad UX —
+/// this keeps the pre-restructure behaviour of redirecting instead.
 /// Exposed for test: the matching is easy to get subtly wrong (matching
 /// the plain detail route would lock members out of trek pages entirely;
-/// failing to match `/edit` would leave the form open to them), and there
-/// is no deep-link scheme registered on Android to exercise it at runtime.
+/// failing to match `/edit` or `/checkin-qr` would leave those forms
+/// open to them), and there is no deep-link scheme registered on
+/// Android to exercise it at runtime.
 @visibleForTesting
 bool isTrekAdminRoute(String location) => _isTrekAdminRoute(location);
 
 bool _isTrekAdminRoute(String location) {
   if (location == AppConstants.routeTrekNew) return true;
 
-  // Match the exact `/trek-library/{id}/edit` shape by segment count
-  // rather than a suffix check: a plain `endsWith('/edit')` would also
-  // match `/trek-library/edit`, which is really the *detail* route for a
-  // trek whose id happens to be "edit".
+  // Match the exact `/trek-library/{id}/edit` or `/trek-library/{id}/
+  // checkin-qr` shape by segment count rather than a suffix check: a
+  // plain `endsWith('/edit')` would also match `/trek-library/edit`,
+  // which is really the *detail* route for a trek whose id happens to
+  // be "edit".
   final segments = Uri.parse(location).pathSegments;
   return segments.length == 3 &&
       '/${segments.first}' == AppConstants.routeTrekLibrary &&
-      segments.last == 'edit';
+      (segments.last == 'edit' || segments.last == 'checkin-qr');
+}
+
+/// True for `/trek-library/:id/check-in` — the member-facing check-in
+/// scanner (Phase QR-2). Deliberately separate from [_isTrekAdminRoute]:
+/// this needs sign-in, not admin — it's added to `isProtectedRoute`
+/// below, not to the admin-role check. Same segment-count matching
+/// reasoning as [_isTrekAdminRoute] (a trek literally id'd "check-in"
+/// must still resolve as the *detail* route).
+@visibleForTesting
+bool isTrekCheckinRoute(String location) => _isTrekCheckinRoute(location);
+
+bool _isTrekCheckinRoute(String location) {
+  final segments = Uri.parse(location).pathSegments;
+  return segments.length == 3 &&
+      '/${segments.first}' == AppConstants.routeTrekLibrary &&
+      segments.last == 'check-in';
 }
 
 /// True for the admin-only merchandise create/edit forms
@@ -365,6 +387,31 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                       path: 'edit',
                       name: 'trek-edit',
                       builder: (context, state) => AdminTrekFormScreen(
+                        trekId: state.pathParameters['id']!,
+                      ),
+                    ),
+                    // /trek-library/:id/checkin-qr — admin-only Display
+                    // Check-in QR screen (Phase QR-1). Same placement
+                    // reasoning as /edit above; trek_checkin_tokens_
+                    // select_admin RLS is the real gate on the token.
+                    GoRoute(
+                      path: 'checkin-qr',
+                      name: 'trek-checkin-qr',
+                      builder: (context, state) => TrekCheckinQrScreen(
+                        trekId: state.pathParameters['id']!,
+                      ),
+                    ),
+                    // /trek-library/:id/check-in — member-facing check-in
+                    // scanner (Phase QR-2). A DIFFERENT last segment from
+                    // /checkin-qr above on purpose (distinct screens, distinct
+                    // audiences) — auth-required (any signed-in member, not
+                    // admin-only), gated via isProtectedRoute below rather
+                    // than _isTrekAdminRoute. verify_trek_checkin RPC is the
+                    // real authorization boundary either way.
+                    GoRoute(
+                      path: 'check-in',
+                      name: 'trek-check-in',
+                      builder: (context, state) => TrekCheckinScanScreen(
                         trekId: state.pathParameters['id']!,
                       ),
                     ),
@@ -650,12 +697,16 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    /verify-phone joins this list too — it presupposes a signed-in
     //    session (there's nothing to verify a phone number FOR
     //    otherwise), same reasoning as /profile.
+    //    /trek-library/:id/check-in joins in Phase QR-2, same reasoning
+    //    as /challenges/history — a full destination screen (the
+    //    check-in scanner), not an in-screen action.
     final isProtectedRoute = location == AppConstants.routeProfile ||
         location == AppConstants.routeNotifications ||
         location == AppConstants.routeChallengeHistory ||
         location == AppConstants.routePhoneVerification ||
         _isAdminRoute(location) ||
         _isTrekAdminRoute(location) ||
+        _isTrekCheckinRoute(location) ||
         _isMerchAdminRoute(location);
     if (sessionUser == null && isProtectedRoute) {
       return '${AppConstants.routeSignIn}?redirectTo=${Uri.encodeComponent(state.uri.toString())}';

@@ -25,6 +25,45 @@ enum TrekDifficulty {
   };
 }
 
+/// A bare time-of-day (no calendar date attached), matching Postgres's
+/// `time` column type. Deliberately not Flutter's `TimeOfDay` — the
+/// domain layer stays presentation-agnostic; the admin form converts
+/// to/from `TimeOfDay` at the UI boundary (see AdminTrekFormScreen).
+class TrekStartTime {
+  final int hour;
+  final int minute;
+
+  const TrekStartTime(this.hour, this.minute);
+
+  /// Parses a Postgres `time` value as it comes back over PostgREST
+  /// ("HH:mm:ss", seconds included). Returns null on anything else
+  /// rather than throwing — a malformed value shouldn't crash the trek
+  /// detail screen.
+  static TrekStartTime? fromDbString(String? value) {
+    if (value == null) return null;
+    final parts = value.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    return TrekStartTime(hour, minute);
+  }
+
+  String toDbString() =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}:00';
+
+  /// Combines with a calendar date to produce the full local start
+  /// instant — e.g. for the Phase QR-1 check-in QR's open/closed window.
+  DateTime onDate(DateTime date) =>
+      DateTime(date.year, date.month, date.day, hour, minute);
+
+  String get label {
+    final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+    final period = hour < 12 ? 'AM' : 'PM';
+    return '$hour12:${minute.toString().padLeft(2, '0')} $period';
+  }
+}
+
 /// Core domain representation of a row in `public.treks`.
 class Trek {
   final String id;
@@ -59,6 +98,11 @@ class Trek {
   /// Registration.paymentScreenshotUrl). Null when [registrationFee] is 0.
   final String? paymentQrCode;
 
+  /// Scheduled start time of day, paired with [trekDate]
+  /// (0029_trek_checkin_qr.sql, Phase QR-1). Nullable — unset until an
+  /// admin sets it via the trek form, same contract as [trekDate].
+  final TrekStartTime? trekStartTime;
+
   const Trek({
     required this.id,
     required this.title,
@@ -76,6 +120,7 @@ class Trek {
     this.trekDate,
     this.registrationFee = 0,
     this.paymentQrCode,
+    this.trekStartTime,
   });
 
   /// True when registering for this trek requires payment.

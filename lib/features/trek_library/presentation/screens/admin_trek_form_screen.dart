@@ -38,6 +38,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
 
   TrekDifficulty _difficulty = TrekDifficulty.moderate;
   DateTime? _trekDate;
+  TrekStartTime? _trekStartTime;
   Uint8List? _pickedImageBytes;
   String? _pickedImageExtension;
   String? _existingCoverImage;
@@ -79,6 +80,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _feeController.text = _trimZero(trek.registrationFee);
     _difficulty = trek.difficulty;
     _trekDate = trek.trekDate;
+    _trekStartTime = trek.trekStartTime;
     _registrationFee = trek.registrationFee;
     _existingCoverImage = trek.coverImage;
     _existingQrCode = trek.paymentQrCode;
@@ -109,6 +111,16 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     if (picked != null) setState(() => _trekDate = picked);
   }
 
+  Future<void> _pickTrekStartTime() async {
+    final initial = _trekStartTime == null
+        ? const TimeOfDay(hour: 6, minute: 0)
+        : TimeOfDay(hour: _trekStartTime!.hour, minute: _trekStartTime!.minute);
+    final picked = await showTimePicker(context: context, initialTime: initial);
+    if (picked != null) {
+      setState(() => _trekStartTime = TrekStartTime(picked.hour, picked.minute));
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -135,6 +147,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
         trekDate: _trekDate,
+        trekStartTime: _trekStartTime,
         registrationFee: _registrationFee,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
@@ -165,6 +178,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         thingsToCarry: thingsToCarry,
         googleMapLink: googleMapLink,
         trekDate: _trekDate,
+        trekStartTime: _trekStartTime,
         registrationFee: _registrationFee,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
@@ -357,6 +371,31 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                                   ),
                                   child: Text(
                                     _trekDate == null ? 'Not scheduled yet' : _formatDate(_trekDate!),
+                                    style: AppTextStyles.bodyLarge,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+
+                              // Trek start time (Phase QR-1) — paired
+                              // with the date above to drive the
+                              // check-in QR's open/closed window.
+                              InkWell(
+                                onTap: _pickTrekStartTime,
+                                borderRadius: BorderRadius.circular(AppRadius.button),
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Trek start time (optional)',
+                                    suffixIcon: _trekStartTime == null
+                                        ? const AppIcon(AppIcons.schedule, size: 20)
+                                        : IconButton(
+                                            icon: const AppIcon(AppIcons.close, size: 20),
+                                            tooltip: 'Clear start time',
+                                            onPressed: () => setState(() => _trekStartTime = null),
+                                          ),
+                                  ),
+                                  child: Text(
+                                    _trekStartTime == null ? 'Not set' : _trekStartTime!.label,
                                     style: AppTextStyles.bodyLarge,
                                   ),
                                 ),

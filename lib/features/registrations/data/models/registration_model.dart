@@ -37,6 +37,9 @@ class RegistrationModel {
       trekDate: trek?['trek_date'] != null
           ? DateTime.parse(trek!['trek_date'] as String)
           : null,
+      checkedInAt: json['checked_in_at'] != null
+          ? DateTime.parse(json['checked_in_at'] as String)
+          : null,
     );
   }
 

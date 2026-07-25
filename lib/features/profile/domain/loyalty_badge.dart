@@ -12,9 +12,10 @@ class LoyaltyBadge {
 /// to the highest tier the member's attended count clears, so no other
 /// code needs to change.
 ///
-/// Thresholds count [RegistrationStats.totalAttended] (Part D's
-/// date-based "attended" approximation), not raw registrations — a badge
-/// is meant to reflect treks actually walked, not just signed up for.
+/// Thresholds count [RegistrationStats.totalAttended] (the grandfathered
+/// "attended" definition — see that class's doc), not raw
+/// registrations — a badge is meant to reflect treks actually walked,
+/// not just signed up for.
 const List<LoyaltyBadge> loyaltyBadgeLadder = [
   LoyaltyBadge(name: 'Beginner Explorer', minAttended: 0),
   LoyaltyBadge(name: 'Nature Enthusiast', minAttended: 3),

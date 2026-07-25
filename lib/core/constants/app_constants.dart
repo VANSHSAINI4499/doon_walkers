@@ -73,6 +73,13 @@ class AppConstants {
   static String trekDetailLocation(String id) => '$routeTrekLibrary/$id';
   static String trekEditLocation(String id) => '$routeTrekLibrary/$id/edit';
 
+  /// Admin "Display Check-in QR" screen (Phase QR-1) — nested under the
+  /// trek detail route it's reached from, same shape as
+  /// [trekEditLocation]. Gated by `_isTrekAdminRoute` in app_router.dart
+  /// alongside `/edit`; `trek_checkin_tokens_select_admin` RLS is the
+  /// real gate on the token itself either way.
+  static String trekCheckinQrLocation(String id) => '$routeTrekLibrary/$id/checkin-qr';
+
   /// Cross-trek registrations roster — kept as its own admin destination
   /// since it has no single-trek screen to inline into. No UI entry
   /// point links here since the Admin Dashboard grid was removed; still
@@ -209,6 +216,18 @@ class AppConstants {
   /// there's no standalone leaderboard tab.
   static String challengeLeaderboardLocation(String id) => '$routeChallenges/$id/leaderboard';
 
+  /// Member-facing check-in scan screen (Phase QR-2) — nested under the
+  /// trek detail route, same shape as [trekCheckinQrLocation] but a
+  /// DIFFERENT last segment ('check-in' vs 'checkin-qr') and a
+  /// different audience: any signed-in member, not admin-only. Router-
+  /// level auth-gated (see `isProtectedRoute` in app_router.dart) —
+  /// this is a full destination screen reached by direct navigation,
+  /// not an in-screen action, same category as [routeChallengeHistory]
+  /// per that constant's own doc. `verify_trek_checkin` RPC is the real
+  /// authorization boundary either way (a signed-in but unregistered
+  /// caller reaching this screen just gets DWC01 back on scan).
+  static String trekCheckInLocation(String id) => '$routeTrekLibrary/$id/check-in';
+
   /// Declared BEFORE `:id` in app_router.dart, same reasoning as every
   /// other `new`-before-`:id` ordering in this file — without it,
   /// "history" would be captured as a challenge id instead.
@@ -270,6 +289,12 @@ class AppConstants {
   /// RPCs read from — see ActivityProvider's doc for the full pipeline.
   static const String tableDailyActivitySummary = 'daily_activity_summary';
 
+  /// One row per trek, auto-created by a DB trigger on trek insert
+  /// (0029_trek_checkin_qr.sql) — Phase QR-1. Admin-only SELECT, no
+  /// client write policy at all; see that migration's doc for why the
+  /// token lives here rather than as a column on [tableTreks].
+  static const String tableTrekCheckinTokens = 'trek_checkin_tokens';
+
   // ── Supabase RPC functions ───────────────────────────────────────
 
   /// Live-computes the SIGNED-IN caller's progress across every active
@@ -283,6 +308,15 @@ class AppConstants {
   /// history.sql) — same no-parameter security model as
   /// [rpcGetMyChallengeProgress].
   static const String rpcGetMyChallengeTierHistory = 'get_my_challenge_tier_history';
+
+  /// Phase QR-2 (0030_trek_checkin_verify.sql) — validates a scanned
+  /// check-in QR and, if every check passes, records
+  /// `registrations.checked_in_at`. Takes `p_trek_id`/`p_token`; reads
+  /// auth.uid() internally, same no-user-id-param security model as
+  /// [rpcGetMyChallengeProgress]. Raises a specific custom SQLSTATE
+  /// (DWC01–DWC06) per failure reason — see
+  /// RegistrationRepositoryImpl.verifyCheckin's doc for the mapping.
+  static const String rpcVerifyTrekCheckin = 'verify_trek_checkin';
 
   /// Live-computes the SIGNED-IN caller's current/longest trekking
   /// streak in consecutive calendar months (0024_streaks.sql) —

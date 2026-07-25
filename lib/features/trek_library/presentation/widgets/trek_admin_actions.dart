@@ -160,6 +160,8 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
         switch (value) {
           case 'edit':
             context.push(AppConstants.trekEditLocation(widget.trek.id));
+          case 'checkin-qr':
+            context.push(AppConstants.trekCheckinQrLocation(widget.trek.id));
           case 'toggle':
             _togglePublished();
           case 'delete':
@@ -170,6 +172,11 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
         const PopupMenuItem(
           value: 'edit',
           child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
+        ),
+        // Phase QR-1 — admin-only Display Check-in QR screen.
+        const PopupMenuItem(
+          value: 'checkin-qr',
+          child: _MenuRow(icon: AppIcons.qr, label: 'Check-in QR'),
         ),
         PopupMenuItem(
           value: 'toggle',

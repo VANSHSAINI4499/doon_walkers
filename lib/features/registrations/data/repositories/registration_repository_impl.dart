@@ -29,6 +29,29 @@ const _selectWithJoins = '*, users(name, email, phone), treks(title, trek_date)'
 /// Postgres unique-violation SQLSTATE — raised by `UNIQUE(trek_id, user_id)`.
 const _uniqueViolation = '23505';
 
+/// Custom SQLSTATEs `verify_trek_checkin` (0030_trek_checkin_verify.sql)
+/// raises with explicitly, in the exact order the RPC checks them —
+/// same pattern as `_blocklistViolation`/`CommentBlocklistException` in
+/// comment_repository_impl.dart, matched here instead of on a bare-RAISE
+/// default `P0001` so each rejection reason stays distinguishable.
+const _checkinErrorReasons = {
+  'DWC01': TrekCheckinFailureReason.notRegistered,
+  'DWC02': TrekCheckinFailureReason.invalidToken,
+  'DWC03': TrekCheckinFailureReason.notScheduled,
+  'DWC04': TrekCheckinFailureReason.windowNotOpen,
+  'DWC05': TrekCheckinFailureReason.windowClosed,
+  'DWC06': TrekCheckinFailureReason.alreadyCheckedIn,
+};
+
+String _checkinFailureMessage(TrekCheckinFailureReason reason) => switch (reason) {
+      TrekCheckinFailureReason.notRegistered => "You're not registered for this trek.",
+      TrekCheckinFailureReason.invalidToken => "This QR code isn't valid for this trek.",
+      TrekCheckinFailureReason.notScheduled => 'Check-in is not available for this trek.',
+      TrekCheckinFailureReason.windowNotOpen => "Check-in hasn't opened yet.",
+      TrekCheckinFailureReason.windowClosed => 'Check-in window has closed.',
+      TrekCheckinFailureReason.alreadyCheckedIn => "You're already checked in.",
+    };
+
 /// Supabase implementation of [RegistrationRepository].
 class RegistrationRepositoryImpl implements RegistrationRepository {
   final SupabaseClient _supabase;
@@ -195,5 +218,28 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
     final rows = await _supabase.rpc(AppConstants.rpcGetMyStreak) as List;
     if (rows.isEmpty) return TrekkingStreak.zero;
     return TrekkingStreakModel.fromJson(rows.first as Map<String, dynamic>);
+  }
+
+  @override
+  Future<DateTime> verifyCheckin({
+    required String trekId,
+    required String scannedToken,
+  }) async {
+    try {
+      // A scalar-returning function (timestamptz), not RETURNS TABLE —
+      // PostgREST hands the raw value straight back, not wrapped in a
+      // List the way the TABLE-returning challenge RPCs are.
+      final result = await _supabase.rpc(
+        AppConstants.rpcVerifyTrekCheckin,
+        params: {'p_trek_id': trekId, 'p_token': scannedToken},
+      );
+      return DateTime.parse(result as String);
+    } on PostgrestException catch (error) {
+      final reason = _checkinErrorReasons[error.code];
+      if (reason != null) {
+        throw TrekCheckinException(reason, _checkinFailureMessage(reason));
+      }
+      rethrow;
+    }
   }
 }

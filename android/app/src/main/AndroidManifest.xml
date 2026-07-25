@@ -82,6 +82,13 @@
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
 
+    <!-- Phase QR-2 — the member-facing check-in QR scanner
+         (mobile_scanner). required="false": every real device this app
+         targets has a camera, but this avoids the Play Store filtering
+         out a hypothetical camera-less device unnecessarily. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.

@@ -237,4 +237,22 @@ class RegistrationController extends AsyncNotifier<void> {
     }
     return success;
   }
+
+  /// Verifies a scanned check-in QR (Phase QR-2) and, on success,
+  /// refreshes every view a registration change can appear on — same
+  /// invalidation as [register]/[cancel], since [Registration.checkedInAt]
+  /// is part of the same row. Returns the check-in moment, or null on
+  /// failure — in which case [state] carries a [TrekCheckinException]
+  /// with the specific reason, for the scanner screen to show.
+  Future<DateTime?> checkIn({required String trekId, required String scannedToken}) async {
+    state = const AsyncLoading();
+    DateTime? checkedInAt;
+    state = await AsyncValue.guard(() async {
+      checkedInAt = await ref
+          .read(registrationRepositoryProvider)
+          .verifyCheckin(trekId: trekId, scannedToken: scannedToken);
+    });
+    if (checkedInAt != null) _invalidateRegistrationViews(trekId);
+    return checkedInAt;
+  }
 }

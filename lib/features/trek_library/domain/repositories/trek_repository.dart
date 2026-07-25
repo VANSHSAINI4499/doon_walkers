@@ -43,6 +43,7 @@ abstract class TrekRepository {
     String? thingsToCarry,
     String? googleMapLink,
     DateTime? trekDate,
+    TrekStartTime? trekStartTime,
     double registrationFee = 0,
   });
 
@@ -58,6 +59,7 @@ abstract class TrekRepository {
     String? thingsToCarry,
     String? googleMapLink,
     DateTime? trekDate,
+    TrekStartTime? trekStartTime,
     double registrationFee = 0,
   });
 
@@ -92,4 +94,11 @@ abstract class TrekRepository {
     required String fileExtension,
     String? previousImageUrl,
   });
+
+  /// The trek's check-in token (Phase QR-1, 0029_trek_checkin_qr.sql),
+  /// for the admin "Display Check-in QR" screen. Returns null both when
+  /// the caller isn't an admin (RLS returns zero rows — indistinguishable
+  /// from "doesn't exist", same contract as [fetchTrekById]) and for the
+  /// rare case a trek's token row hasn't been created yet.
+  Future<String?> fetchCheckinToken(String trekId);
 }
