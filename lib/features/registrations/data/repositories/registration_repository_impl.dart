@@ -105,15 +105,33 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
   }
 
   @override
-  Future<List<Registration>> fetchMyRegistrations() async {
+  Future<List<Registration>> fetchMyRegistrations({int? limit}) async {
     // Filtered explicitly *as well as* by RLS. The policy is the real
     // boundary, but being explicit keeps this correct if an admin (who
     // can select every row) opens their own profile.
-    final rows = await _supabase
+    final query = _supabase
         .from(AppConstants.tableRegistrations)
         .select(_selectWithJoins)
         .eq('user_id', _currentUserId)
         .order('created_at', ascending: false);
+    final rows = limit != null ? await query.limit(limit) : await query;
+
+    return rows.map(RegistrationModel.fromJson).toList();
+  }
+
+  @override
+  Future<List<Registration>> fetchMyRegistrationsPage({
+    required int page,
+    required int pageSize,
+  }) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    final rows = await _supabase
+        .from(AppConstants.tableRegistrations)
+        .select(_selectWithJoins)
+        .eq('user_id', _currentUserId)
+        .order('created_at', ascending: false)
+        .range(from, to);
 
     return rows.map(RegistrationModel.fromJson).toList();
   }

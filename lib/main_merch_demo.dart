@@ -137,15 +137,27 @@ class _FakeWishlistRepository implements WishlistRepository {
   Future<bool> isWishlisted(String productId) async => _wishlist.contains(productId);
 
   @override
-  Future<List<WishlistItem>> fetchMyWishlist() async => _wishlist
-      .map((id) => WishlistItem(
-            id: 'w-$id',
-            userId: 'u1',
-            productId: id,
-            createdAt: DateTime.now(),
-            product: _byId[id]!,
-          ))
-      .toList();
+  Future<List<WishlistItem>> fetchMyWishlist({int? limit}) async {
+    final items = _wishlist
+        .map((id) => WishlistItem(
+              id: 'w-$id',
+              userId: 'u1',
+              productId: id,
+              createdAt: DateTime.now(),
+              product: _byId[id]!,
+            ))
+        .toList();
+    return limit != null ? items.take(limit).toList() : items;
+  }
+
+  @override
+  Future<List<WishlistItem>> fetchMyWishlistPage({
+    required int page,
+    required int pageSize,
+  }) async {
+    final items = await fetchMyWishlist();
+    return items.skip(page * pageSize).take(pageSize).toList();
+  }
 }
 
 class _FakeMerchInquiryRepository implements MerchInquiryRepository {
@@ -182,7 +194,18 @@ class _FakeMerchInquiryRepository implements MerchInquiryRepository {
   Future<List<MerchInquiry>> fetchAllInquiries() async => List.of(_inquiries);
 
   @override
-  Future<List<MerchInquiry>> fetchMyInquiries() async => List.of(_inquiries);
+  Future<List<MerchInquiry>> fetchMyInquiries({int? limit}) async {
+    final items = List.of(_inquiries);
+    return limit != null ? items.take(limit).toList() : items;
+  }
+
+  @override
+  Future<List<MerchInquiry>> fetchMyInquiriesPage({
+    required int page,
+    required int pageSize,
+  }) async {
+    return _inquiries.skip(page * pageSize).take(pageSize).toList();
+  }
 
   @override
   Future<void> updateStatus(String id, MerchInquiryStatus status) async {}

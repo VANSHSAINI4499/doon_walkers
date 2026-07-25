@@ -38,12 +38,29 @@ class WishlistRepositoryImpl implements WishlistRepository {
   }
 
   @override
-  Future<List<WishlistItem>> fetchMyWishlist() async {
-    final rows = await _supabase
+  Future<List<WishlistItem>> fetchMyWishlist({int? limit}) async {
+    final query = _supabase
         .from(AppConstants.tableUserWishlist)
         .select(_selectWithProduct)
         .eq('user_id', _currentUserId)
         .order('created_at', ascending: false);
+    final rows = limit != null ? await query.limit(limit) : await query;
+    return rows.map(WishlistItemModel.fromJson).toList();
+  }
+
+  @override
+  Future<List<WishlistItem>> fetchMyWishlistPage({
+    required int page,
+    required int pageSize,
+  }) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    final rows = await _supabase
+        .from(AppConstants.tableUserWishlist)
+        .select(_selectWithProduct)
+        .eq('user_id', _currentUserId)
+        .order('created_at', ascending: false)
+        .range(from, to);
     return rows.map(WishlistItemModel.fromJson).toList();
   }
 

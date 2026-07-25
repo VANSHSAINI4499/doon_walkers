@@ -7,9 +7,18 @@ import 'package:doon_walkers/features/merchandise/domain/entities/wishlist_item.
 /// `user_wishlist`'s RLS (own-row only, no `is_admin()` override at
 /// all — see 0019_user_wishlist.sql's doc for why).
 abstract class WishlistRepository {
-  /// The signed-in user's full wishlist, newest first — "My Wishlist"
-  /// on Profile.
-  Future<List<WishlistItem>> fetchMyWishlist();
+  /// The signed-in user's wishlist, newest first — "My Wishlist" on
+  /// Profile. [limit] caps the fetch (the dashboard preview only ever
+  /// needs the first few, not the whole list); omit for the full list.
+  Future<List<WishlistItem>> fetchMyWishlist({int? limit});
+
+  /// One page of the signed-in user's wishlist, newest first — backs
+  /// [WishlistScreen]'s infinite-scroll list. `page` is zero-based;
+  /// `.range()`-based under the hood.
+  Future<List<WishlistItem>> fetchMyWishlistPage({
+    required int page,
+    required int pageSize,
+  });
 
   /// Whether [productId] is on the signed-in user's wishlist — backs
   /// the toggle button's initial state on Product Detail. A dedicated

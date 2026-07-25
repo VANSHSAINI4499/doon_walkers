@@ -1,7 +1,6 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
-import 'package:doon_walkers/core/widgets/glass_states.dart';
-import 'package:doon_walkers/core/widgets/section_title.dart';
+import 'package:doon_walkers/core/widgets/preview_section.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_status_chip.dart';
@@ -9,76 +8,51 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// "My Registrations" on Profile — the signed-in user's own registered
-/// treks, with self-service cancellation.
+/// "My Registrations" on Profile — a dashboard preview of the
+/// signed-in user's 2 most recent trek registrations, with
+/// self-service cancellation and a "View All" link to
+/// [MyRegistrationsScreen] once there are more than 2.
 ///
-/// Redesign Phase 5 restyles this onto the design system. **The behaviour
-/// is unchanged:** scoped by [myRegistrationsProvider] (+ `registrations_
-/// select` RLS), and cancelling still DELETEs the row (the admin-only
-/// `payment_status` column and its `prevent_payment_status_self_edit`
-/// trigger are untouched), behind the same confirmation dialog.
+/// **The behaviour is unchanged:** scoped by [myRegistrationsPreviewProvider]
+/// (+ `registrations_select` RLS), and cancelling still DELETEs the row
+/// (the admin-only `payment_status` column and its
+/// `prevent_payment_status_self_edit` trigger are untouched), behind
+/// the same confirmation dialog.
 class MyRegistrationsSection extends ConsumerWidget {
   const MyRegistrationsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final registrationsAsync = ref.watch(myRegistrationsProvider);
+    final registrationsAsync = ref.watch(myRegistrationsPreviewProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionTitle(title: 'My Registrations', icon: AppIcons.ticket),
-        const SizedBox(height: AppSpacing.md),
-        registrationsAsync.when(
-          loading: () => const SkeletonList(count: 2, showImages: false, padding: EdgeInsets.zero),
-          error: (error, stack) {
-            debugPrint('MyRegistrationsSection: failed to load registrations: $error');
-            return GlassSectionError(
-              message: 'Could not load your registrations.',
-              onRetry: () => ref.invalidate(myRegistrationsProvider),
-            );
-          },
-          data: (registrations) {
-            if (registrations.isEmpty) return const _EmptyMyRegistrations();
-            return Column(
-              children: [
-                for (final registration in registrations) ...[
-                  _MyRegistrationTile(registration: registration),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-              ],
-            );
-          },
-        ),
-      ],
+    return PreviewSection<Registration>(
+      title: 'My Registrations',
+      icon: AppIcons.ticket,
+      asyncItems: registrationsAsync,
+      itemBuilder: (registration) => MyRegistrationTile(registration: registration),
+      onViewAll: () => context.push(AppConstants.routeMyRegistrations),
+      onRetry: () => ref.invalidate(myRegistrationsPreviewProvider),
+      errorMessage: 'Could not load your registrations.',
+      emptyIcon: AppIcons.hiking,
+      emptyMessage: "You haven't registered for any treks yet.",
+      emptyActionLabel: 'Browse Treks',
+      onEmptyAction: () => context.go(AppConstants.routeTrekLibrary),
     );
   }
 }
 
-class _EmptyMyRegistrations extends StatelessWidget {
-  const _EmptyMyRegistrations();
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassEmptyState(
-      icon: AppIcons.hiking,
-      message: "You haven't registered for any treks yet.",
-      actionLabel: 'Browse Treks',
-      onAction: () => context.go(AppConstants.routeTrekLibrary),
-    );
-  }
-}
-
-class _MyRegistrationTile extends ConsumerStatefulWidget {
-  const _MyRegistrationTile({required this.registration});
+/// One registration row — shared by [MyRegistrationsSection]'s preview
+/// and [MyRegistrationsScreen]'s full list.
+class MyRegistrationTile extends ConsumerStatefulWidget {
+  const MyRegistrationTile({super.key, required this.registration});
 
   final Registration registration;
 
   @override
-  ConsumerState<_MyRegistrationTile> createState() => _MyRegistrationTileState();
+  ConsumerState<MyRegistrationTile> createState() => _MyRegistrationTileState();
 }
 
-class _MyRegistrationTileState extends ConsumerState<_MyRegistrationTile> {
+class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
   bool _isPending = false;
 
   Future<void> _confirmCancel() async {
@@ -189,4 +163,3 @@ class _MyRegistrationTileState extends ConsumerState<_MyRegistrationTile> {
     );
   }
 }
-

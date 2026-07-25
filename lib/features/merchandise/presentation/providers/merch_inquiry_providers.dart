@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/merchandise/data/repositories/merch_inquiry_repository_impl.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/merch_inquiry.dart';
+import 'package:doon_walkers/features/merchandise/presentation/providers/merch_inquiry_pagination_provider.dart';
 import 'package:doon_walkers/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,19 +19,21 @@ final allMerchInquiriesProvider = FutureProvider<List<MerchInquiry>>(
   name: 'allMerchInquiriesProvider',
 );
 
-/// The signed-in user's own inquiries — "My Inquiries" on Profile
-/// (Version 2, Phase M2 fix).
+/// The signed-in user's 3 newest inquiries — backs the "My Inquiries"
+/// dashboard preview on Profile ([MyInquiriesSection]) (Version 2,
+/// Phase M2 fix). Fetching 3 rather than exactly the 2 displayed is
+/// how [PreviewSection] decides whether to show "View All" without a
+/// separate COUNT query — see that widget's doc.
 ///
 /// Watches [authStateChangesProvider] so signing out (or switching
 /// accounts) refetches rather than leaving the previous user's list
-/// cached on screen — mirrors [myRegistrationsProvider]/
-/// [myWishlistProvider] exactly.
-final myMerchInquiriesProvider = FutureProvider<List<MerchInquiry>>(
+/// cached on screen — mirrors [myRegistrationsProvider] exactly.
+final myMerchInquiriesPreviewProvider = FutureProvider.autoDispose<List<MerchInquiry>>(
   (ref) {
     ref.watch(authStateChangesProvider);
-    return ref.watch(merchInquiryRepositoryProvider).fetchMyInquiries();
+    return ref.watch(merchInquiryRepositoryProvider).fetchMyInquiries(limit: 3);
   },
-  name: 'myMerchInquiriesProvider',
+  name: 'myMerchInquiriesPreviewProvider',
 );
 
 /// Riverpod AsyncNotifier managing inquiry mutations (submit, admin
@@ -69,7 +72,8 @@ class MerchInquiryController extends AsyncNotifier<void> {
     // pre-submit snapshot until something else tears the provider tree
     // down (e.g. sign-out/sign-in) — mirrors updateStatus below.
     if (created != null) {
-      ref.invalidate(myMerchInquiriesProvider);
+      ref.invalidate(myMerchInquiriesPreviewProvider);
+      ref.invalidate(myInquiriesPaginationProvider);
       ref.invalidate(allMerchInquiriesProvider);
     }
     return created;
@@ -99,7 +103,8 @@ class MerchInquiryController extends AsyncNotifier<void> {
 
     if (success) {
       ref.invalidate(allMerchInquiriesProvider);
-      ref.invalidate(myMerchInquiriesProvider);
+      ref.invalidate(myMerchInquiriesPreviewProvider);
+      ref.invalidate(myInquiriesPaginationProvider);
       try {
         await ref.read(notificationRepositoryProvider).createNotification(
               title: 'Inquiry Update',

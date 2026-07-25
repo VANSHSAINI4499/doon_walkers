@@ -16,7 +16,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ///
 /// Watches [authStateChangesProvider] purely so this rebuilds the moment
 /// a guest signs in while Home is still mounted — same "reactivity only"
-/// reasoning [myWishlistProvider] etc. use for the same provider.
+/// reasoning `myRegistrationsProvider` etc. use for the same provider.
 ///
 /// Visually it's a glowing [GlassCard] with a [PremiumButton] CTA.
 class JoinCommunitySection extends ConsumerWidget {

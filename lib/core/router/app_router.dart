@@ -21,7 +21,9 @@ import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart
 import 'package:doon_walkers/features/merchandise/presentation/screens/admin_merch_inquiries_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/admin_product_form_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/merchandise_catalog_screen.dart';
+import 'package:doon_walkers/features/merchandise/presentation/screens/my_enquiries_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/product_detail_screen.dart';
+import 'package:doon_walkers/features/merchandise/presentation/screens/wishlist_screen.dart';
 import 'package:doon_walkers/features/notifications/presentation/screens/admin_send_notification_screen.dart';
 import 'package:doon_walkers/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:doon_walkers/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -30,6 +32,7 @@ import 'package:doon_walkers/features/registrations/presentation/screens/admin_r
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registrations_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_trek_picker_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_trek_registrations_screen.dart';
+import 'package:doon_walkers/features/registrations/presentation/screens/my_registrations_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/trek_checkin_scan_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_form_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_checkin_qr_screen.dart';
@@ -522,6 +525,37 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
               path: AppConstants.routeProfile,
               name: 'profile',
               builder: (context, state) => const ProfileScreen(),
+              routes: [
+                // Profile dashboard redesign — the 3 "View All"
+                // destinations each preview section's link opens.
+                // pageBuilder (not builder) so these get the shared-axis
+                // drill-in transition, the established idiom for
+                // list/detail navigation in this design system.
+                GoRoute(
+                  path: 'wishlist',
+                  name: 'my-wishlist',
+                  pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
+                    key: state.pageKey,
+                    child: const WishlistScreen(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'enquiries',
+                  name: 'my-enquiries',
+                  pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
+                    key: state.pageKey,
+                    child: const MyEnquiriesScreen(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'registrations',
+                  name: 'my-registrations',
+                  pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
+                    key: state.pageKey,
+                    child: const MyRegistrationsScreen(),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -718,7 +752,16 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    /trek-library/:id/check-in joins in Phase QR-2, same reasoning
     //    as /challenges/history — a full destination screen (the
     //    check-in scanner), not an in-screen action.
+    //    /profile/wishlist, /profile/enquiries, /profile/registrations
+    //    join for the Profile dashboard redesign — same reasoning as
+    //    /challenges/history again: each is a full destination screen
+    //    reached from a "View All" link, presupposing a signed-in
+    //    session the same way the /profile page they're nested under
+    //    already does.
     final isProtectedRoute = location == AppConstants.routeProfile ||
+        location == AppConstants.routeMyWishlist ||
+        location == AppConstants.routeMyEnquiries ||
+        location == AppConstants.routeMyRegistrations ||
         location == AppConstants.routeNotifications ||
         location == AppConstants.routeChallengeHistory ||
         location == AppConstants.routePhoneVerification ||

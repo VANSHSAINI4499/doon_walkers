@@ -3,19 +3,24 @@ import 'dart:async';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/merchandise/data/repositories/wishlist_repository_impl.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/wishlist_item.dart';
+import 'package:doon_walkers/features/merchandise/presentation/providers/wishlist_pagination_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The signed-in user's own wishlist — "My Wishlist" on Profile.
+/// The signed-in user's 3 newest wishlist items — backs the "My
+/// Wishlist" dashboard preview on Profile ([MyWishlistSection]).
+/// Fetching 3 rather than exactly the 2 displayed is how
+/// [PreviewSection] decides whether to show "View All" without a
+/// separate COUNT query — see that widget's doc.
 ///
 /// Watches [authStateChangesProvider] so signing out (or switching
 /// accounts) refetches rather than leaving the previous user's list
 /// cached on screen — mirrors [myRegistrationsProvider] exactly.
-final myWishlistProvider = FutureProvider<List<WishlistItem>>(
+final myWishlistPreviewProvider = FutureProvider.autoDispose<List<WishlistItem>>(
   (ref) {
     ref.watch(authStateChangesProvider);
-    return ref.watch(wishlistRepositoryProvider).fetchMyWishlist();
+    return ref.watch(wishlistRepositoryProvider).fetchMyWishlist(limit: 3);
   },
-  name: 'myWishlistProvider',
+  name: 'myWishlistPreviewProvider',
 );
 
 /// Whether the signed-in user has [productId] wishlisted — drives the
@@ -45,7 +50,8 @@ class WishlistController extends AsyncNotifier<void> {
   FutureOr<void> build() {}
 
   void _invalidateWishlistViews(String productId) {
-    ref.invalidate(myWishlistProvider);
+    ref.invalidate(myWishlistPreviewProvider);
+    ref.invalidate(myWishlistPaginationProvider);
     ref.invalidate(isProductWishlistedProvider(productId));
   }
 

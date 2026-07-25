@@ -41,8 +41,17 @@ abstract class RegistrationRepository {
   ///
   /// Relies on `registrations_select` to scope the result rather than
   /// filtering client-side, so a policy change can't silently widen what
-  /// this returns.
-  Future<List<Registration>> fetchMyRegistrations();
+  /// this returns. [limit] caps the fetch for the dashboard preview;
+  /// omit for the full list.
+  Future<List<Registration>> fetchMyRegistrations({int? limit});
+
+  /// One page of the signed-in user's own registrations, newest first
+  /// — backs [MyRegistrationsScreen]'s infinite-scroll list. `page` is
+  /// zero-based; `.range()`-based under the hood.
+  Future<List<Registration>> fetchMyRegistrationsPage({
+    required int page,
+    required int pageSize,
+  });
 
   /// The signed-in user's registration for [trekId], or null if they
   /// haven't registered. Drives the Trek Detail button state so an

@@ -33,7 +33,17 @@ abstract class MerchInquiryRepository {
   /// explicit keeps this correct if an admin (who can select every
   /// row) opens their own profile, mirroring
   /// `RegistrationRepository.fetchMyRegistrations`' identical reasoning.
-  Future<List<MerchInquiry>> fetchMyInquiries();
+  /// [limit] caps the fetch for the dashboard preview; omit for the
+  /// full list.
+  Future<List<MerchInquiry>> fetchMyInquiries({int? limit});
+
+  /// One page of the signed-in user's own inquiries, newest first —
+  /// backs [MyEnquiriesScreen]'s infinite-scroll list. `page` is
+  /// zero-based; `.range()`-based under the hood.
+  Future<List<MerchInquiry>> fetchMyInquiriesPage({
+    required int page,
+    required int pageSize,
+  });
 
   /// Admin-only status change — updates this table only.
   /// `merch_inquiries_update_admin` RLS rejects this for any non-admin

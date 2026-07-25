@@ -33,6 +33,17 @@ class AppConstants {
   static const String routeTrekLibrary = '/trek-library';
   static const String routeProfile = '/profile';
 
+  /// Profile dashboard redesign — the member-facing "View All" screens
+  /// for the three preview sections on Profile. Nested under
+  /// [routeProfile] (registered in app_router.dart), each its own
+  /// standalone destination — deliberately distinct paths/names from
+  /// the ADMIN rosters ([routeAdminRegistrations]/
+  /// [routeAdminTrekRegistrations]), which these do not replace or
+  /// affect.
+  static const String routeMyWishlist = '$routeProfile/wishlist';
+  static const String routeMyEnquiries = '$routeProfile/enquiries';
+  static const String routeMyRegistrations = '$routeProfile/registrations';
+
   /// First-launch intro carousel — top-level, outside the shell, shown
   /// at most once per device. See app_router.dart's `_buildRouter` for
   /// the `initialLocation` check that gates this on

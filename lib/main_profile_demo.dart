@@ -110,10 +110,11 @@ List<Override> _overrides(bool admin) => [
   isAdminProvider.overrideWith((ref) => ref.watch(_demoIsAdmin)),
   currentUserProvider.overrideWith((ref) => Stream.value(_user(ref.watch(_demoIsAdmin)))),
   myRegistrationsProvider.overrideWith((ref) async => _registrations),
+  myRegistrationsPreviewProvider.overrideWith((ref) async => _registrations),
   myRegistrationStatsProvider.overrideWith((ref) async => _stats),
   myStreakProvider.overrideWith((ref) async => _streak),
-  myWishlistProvider.overrideWith((ref) async => _wishlist),
-  myMerchInquiriesProvider.overrideWith((ref) async => _inquiries),
+  myWishlistPreviewProvider.overrideWith((ref) async => _wishlist),
+  myMerchInquiriesPreviewProvider.overrideWith((ref) async => _inquiries),
 ];
 
 class _ProfileDemoApp extends ConsumerWidget {

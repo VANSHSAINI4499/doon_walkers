@@ -6,6 +6,7 @@ import 'package:doon_walkers/features/registrations/data/repositories/registrati
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration_stats.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/trekking_streak.dart';
+import 'package:doon_walkers/features/registrations/presentation/providers/registration_pagination_provider.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,6 +48,22 @@ final myRegistrationsProvider = FutureProvider<List<Registration>>(
     return ref.watch(registrationRepositoryProvider).fetchMyRegistrations();
   },
   name: 'myRegistrationsProvider',
+);
+
+/// The signed-in user's 3 newest registrations — backs the "My
+/// Registrations" dashboard preview on Profile
+/// ([MyRegistrationsSection]). A separate, `autoDispose`, `limit: 3`
+/// fetch rather than reusing [myRegistrationsProvider] — that provider
+/// stays unlimited because [myRegistrationStatsProvider] needs the
+/// user's FULL history to compute accurate stats. Fetching 3 rather
+/// than exactly the 2 displayed is how [PreviewSection] decides
+/// whether to show "View All" without a separate COUNT query.
+final myRegistrationsPreviewProvider = FutureProvider.autoDispose<List<Registration>>(
+  (ref) {
+    ref.watch(authStateChangesProvider);
+    return ref.watch(registrationRepositoryProvider).fetchMyRegistrations(limit: 3);
+  },
+  name: 'myRegistrationsPreviewProvider',
 );
 
 /// The signed-in user's registration for a given trek, or null.
@@ -118,6 +135,8 @@ class RegistrationController extends AsyncNotifier<void> {
   /// These are one-shot FutureProviders, so nothing updates without it.
   void _invalidateRegistrationViews(String trekId) {
     ref.invalidate(myRegistrationsProvider);
+    ref.invalidate(myRegistrationsPreviewProvider);
+    ref.invalidate(myRegistrationsPaginationProvider);
     ref.invalidate(myRegistrationForTrekProvider(trekId));
     ref.invalidate(allRegistrationsProvider);
     ref.invalidate(registrationsForTrekProvider(trekId));

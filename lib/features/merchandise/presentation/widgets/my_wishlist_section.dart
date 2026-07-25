@@ -1,80 +1,56 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
-import 'package:doon_walkers/core/widgets/glass_states.dart';
-import 'package:doon_walkers/core/widgets/section_title.dart';
+import 'package:doon_walkers/core/widgets/preview_section.dart';
 import 'package:doon_walkers/features/merchandise/domain/entities/wishlist_item.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/wishlist_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// "My Wishlist" on Profile — the signed-in user's own wishlisted
-/// products, with a self-service remove action.
+/// "My Wishlist" on Profile — a dashboard preview of the signed-in
+/// user's 2 most recently wishlisted products, with self-service
+/// remove and a "View All" link to [WishlistScreen] once there are
+/// more than 2.
 ///
-/// Redesign Phase 5 restyles this onto the design system. The add/remove
-/// behaviour, the navigate-to-detail tap, and the scoping are unchanged.
+/// The full-list behaviour (add/remove, navigate-to-detail tap,
+/// scoping) is unchanged from the previous full-list version — only
+/// how much of it Profile shows inline has changed.
 class MyWishlistSection extends ConsumerWidget {
   const MyWishlistSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final wishlistAsync = ref.watch(myWishlistProvider);
+    final wishlistAsync = ref.watch(myWishlistPreviewProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionTitle(title: 'My Wishlist', icon: AppIcons.favorite, accent: AppColors.danger),
-        const SizedBox(height: AppSpacing.md),
-        wishlistAsync.when(
-          loading: () => const SkeletonList(count: 2, showImages: false, padding: EdgeInsets.zero),
-          error: (error, stack) {
-            debugPrint('MyWishlistSection: failed to load wishlist: $error');
-            return GlassSectionError(
-              message: 'Could not load your wishlist.',
-              onRetry: () => ref.invalidate(myWishlistProvider),
-            );
-          },
-          data: (items) {
-            if (items.isEmpty) return const _EmptyWishlist();
-            return Column(
-              children: [
-                for (final item in items) ...[
-                  _WishlistTile(item: item),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _EmptyWishlist extends StatelessWidget {
-  const _EmptyWishlist();
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassEmptyState(
+    return PreviewSection<WishlistItem>(
+      title: 'My Wishlist',
       icon: AppIcons.favorite,
-      message: "You haven't wishlisted anything yet.",
-      actionLabel: 'Browse Merchandise',
-      onAction: () => context.push(AppConstants.routeMerchandise),
+      accent: AppColors.danger,
+      asyncItems: wishlistAsync,
+      itemBuilder: (item) => WishlistTile(item: item),
+      onViewAll: () => context.push(AppConstants.routeMyWishlist),
+      onRetry: () => ref.invalidate(myWishlistPreviewProvider),
+      errorMessage: 'Could not load your wishlist.',
+      emptyIcon: AppIcons.favorite,
+      emptyMessage: "You haven't wishlisted anything yet.",
+      emptyActionLabel: 'Browse Merchandise',
+      onEmptyAction: () => context.push(AppConstants.routeMerchandise),
     );
   }
 }
 
-class _WishlistTile extends ConsumerStatefulWidget {
-  const _WishlistTile({required this.item});
+/// One wishlist row — shared by [MyWishlistSection]'s preview and
+/// [WishlistScreen]'s full list.
+class WishlistTile extends ConsumerStatefulWidget {
+  const WishlistTile({super.key, required this.item});
 
   final WishlistItem item;
 
   @override
-  ConsumerState<_WishlistTile> createState() => _WishlistTileState();
+  ConsumerState<WishlistTile> createState() => _WishlistTileState();
 }
 
-class _WishlistTileState extends ConsumerState<_WishlistTile> {
+class _WishlistTileState extends ConsumerState<WishlistTile> {
   bool _isPending = false;
 
   Future<void> _remove() async {

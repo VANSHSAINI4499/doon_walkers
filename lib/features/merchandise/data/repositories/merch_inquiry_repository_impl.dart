@@ -71,12 +71,29 @@ class MerchInquiryRepositoryImpl implements MerchInquiryRepository {
   }
 
   @override
-  Future<List<MerchInquiry>> fetchMyInquiries() async {
-    final rows = await _supabase
+  Future<List<MerchInquiry>> fetchMyInquiries({int? limit}) async {
+    final query = _supabase
         .from(AppConstants.tableMerchInquiries)
         .select(_selectWithJoins)
         .eq('user_id', _currentUserId)
         .order('created_at', ascending: false);
+    final rows = limit != null ? await query.limit(limit) : await query;
+    return rows.map(MerchInquiryModel.fromJson).toList();
+  }
+
+  @override
+  Future<List<MerchInquiry>> fetchMyInquiriesPage({
+    required int page,
+    required int pageSize,
+  }) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    final rows = await _supabase
+        .from(AppConstants.tableMerchInquiries)
+        .select(_selectWithJoins)
+        .eq('user_id', _currentUserId)
+        .order('created_at', ascending: false)
+        .range(from, to);
     return rows.map(MerchInquiryModel.fromJson).toList();
   }
 
