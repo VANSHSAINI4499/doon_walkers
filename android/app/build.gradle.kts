@@ -11,7 +11,11 @@ plugins {
 
 android {
     namespace = "com.example.doon_walkers"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned to 36 (not flutter.compileSdkVersion, which currently
+    // resolves to 35) — mobile_scanner's camera dependencies
+    // (androidx.camera:camera-* 1.6.1) require compiling against
+    // SDK 36 and AGP 8.9.1+.
+    compileSdk = 36
     // Pinned to NDK 27 — required by supabase_flutter's transitive plugins
     // (app_links, path_provider_android, shared_preferences_android, url_launcher_android).
     // NDK versions are backward-compatible; this is safe to raise.

@@ -85,6 +85,35 @@ dependencies:
   # separate manual permission_handler flow is needed for it.
   mobile_scanner: ^7.4.0
 
+  # Trek Media Gallery rebuild — production-grade image disk caching
+  # (grid tiles + fullscreen viewer), replacing bare Image.network.
+  cached_network_image: ^3.4.1
+
+  # Comes along transitively via cached_network_image, but declared
+  # directly here too — MediaCacheManager imports it straight to reuse
+  # the SAME CacheManager instance for video file caching, not just
+  # the images cached_network_image itself wires up.
+  flutter_cache_manager: ^3.4.1
+
+  # Pinch/double-tap zoom + pan for the fullscreen image viewer pages.
+  photo_view: ^0.15.0
+
+  # Generates a JPEG frame from a video, client-side, at upload time —
+  # used both as the gallery's video thumbnail and to derive that
+  # video's masonry-tile aspect ratio (Android/iOS only; no web/desktop
+  # implementation, consistent with video_player's own platform support
+  # documented in video_player_screen.dart).
+  video_thumbnail: ^0.5.3
+
+  # Downsizes/compresses picked photos before upload.
+  flutter_image_compress: ^2.3.0
+
+  # Byte-level upload progress + CancelToken for the multi-file upload
+  # sheet — supabase_flutter's storage client has no progress callback,
+  # so SupabaseStorageUploader PUTs directly to the Storage REST
+  # endpoint via Dio instead.
+  dio: ^5.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

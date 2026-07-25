@@ -1,12 +1,12 @@
 import 'package:doon_walkers/features/gallery/domain/entities/gallery_media.dart';
 import 'package:doon_walkers/features/gallery/presentation/providers/gallery_providers.dart';
-import 'package:doon_walkers/features/gallery/presentation/widgets/media_thumbnail.dart';
+import 'package:doon_walkers/features/gallery/presentation/widgets/gallery_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// A [MediaThumbnail] with an inline admin delete affordance layered on
-/// top, for use directly on the public Gallery screen and a trek's
-/// gallery section.
+/// A [GalleryTile] with an inline admin delete affordance layered on
+/// top, for use directly on a trek's gallery preview and its full
+/// masonry screen.
 ///
 /// Replaces the former standalone admin gallery-management screen: the
 /// same grid every member sees gains a small delete button when the
@@ -18,6 +18,7 @@ class MediaAdminOverlay extends ConsumerStatefulWidget {
     super.key,
     required this.media,
     required this.trekTitle,
+    required this.onTap,
   });
 
   final GalleryMedia media;
@@ -25,6 +26,12 @@ class MediaAdminOverlay extends ConsumerStatefulWidget {
   /// Shown in the confirmation dialog so an admin deleting from the
   /// all-treks grid can tell which trek's media they're removing.
   final String trekTitle;
+
+  /// Forwarded straight to the wrapped [GalleryTile] — this widget has
+  /// no navigation opinion of its own, the caller decides what tapping
+  /// a tile opens (the fullscreen carousel, with the right item list
+  /// and start index for wherever this tile lives).
+  final VoidCallback onTap;
 
   @override
   ConsumerState<MediaAdminOverlay> createState() => _MediaAdminOverlayState();
@@ -84,14 +91,15 @@ class _MediaAdminOverlayState extends ConsumerState<MediaAdminOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    // GalleryTile is deliberately the one non-Positioned child here —
+    // its own AspectRatio is what gives this cell its intrinsic height
+    // inside the masonry grid (a Positioned.fill would need Stack to
+    // already know a bounded height, which a masonry delegate doesn't
+    // hand down). Stack sizes itself around that child, and the delete
+    // button floats on top via Positioned as before.
     return Stack(
       children: [
-        Positioned.fill(
-          child: MediaThumbnail(
-            media: widget.media,
-            onTap: () => openGalleryMedia(context, widget.media),
-          ),
-        ),
+        GalleryTile(media: widget.media, onTap: widget.onTap),
         Positioned(
           top: 4,
           right: 4,

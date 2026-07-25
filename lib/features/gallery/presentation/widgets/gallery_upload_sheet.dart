@@ -1,15 +1,23 @@
-import 'dart:typed_data';
+import 'dart:async';
+import 'dart:io';
 
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/gallery/domain/entities/gallery_media.dart';
+import 'package:doon_walkers/features/gallery/domain/entities/media_upload_task.dart';
 import 'package:doon_walkers/features/gallery/presentation/providers/gallery_providers.dart';
+import 'package:doon_walkers/features/gallery/presentation/providers/media_upload_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Opens the admin media-upload flow as a modal sheet over a trek's
-/// gallery section — the only place this launches from now that the
-/// standalone cross-trek Gallery screen is gone, so [trekId] is always
-/// known and required rather than an optional lock.
+/// gallery section.
+///
+/// Multi-file: picks any mix of photos and videos in one go
+/// ([ImagePicker.pickMultipleMedia]) and shows one row per file with
+/// its own live progress, cancel (while uploading), and retry (on
+/// failure) — driven by [mediaUploadControllerProvider], which keeps
+/// running uploads even if this sheet is dismissed early.
 Future<void> showGalleryUploadSheet(
   BuildContext context, {
   required String trekId,
@@ -34,10 +42,9 @@ class _GalleryUploadSheet extends ConsumerStatefulWidget {
 
 class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
   final _captionController = TextEditingController();
-
-  XFile? _pickedFile;
-  Uint8List? _pickedBytes;
-  MediaType? _pickedMediaType;
+  List<XFile> _picked = [];
+  bool _isPicking = false;
+  bool _isStarting = false;
 
   @override
   void dispose() {
@@ -45,219 +52,331 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
     super.dispose();
   }
 
+  Future<void> _pickFiles() async {
+    setState(() => _isPicking = true);
+    try {
+      final files = await ImagePicker().pickMultipleMedia();
+      if (!mounted) return;
+      // Silently drop anything not photo/video-shaped — pickMultipleMedia
+      // itself already filters to the OS media picker, this only guards
+      // against an extension this bucket doesn't accept.
+      final valid = files.where((f) => MediaType.fromExtension(_extensionOf(f.name)) != null);
+      setState(() => _picked = [..._picked, ...valid]);
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
+    }
+  }
+
+  void _removePicked(XFile file) {
+    setState(() => _picked = _picked.where((f) => f.path != file.path).toList());
+  }
+
   String _extensionOf(String filename) {
     final parts = filename.split('.');
     return parts.length > 1 ? parts.last.toLowerCase() : '';
   }
 
-  Future<void> _pickFile() async {
-    final xfile = await ImagePicker().pickMedia();
-    if (xfile == null) return;
-
-    final extension = _extensionOf(xfile.name);
-    final mediaType = MediaType.fromExtension(extension);
-    if (mediaType == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Unsupported file type. Please choose a JPG, PNG, WEBP, MP4, MOV, or WEBM file.',
-            ),
-          ),
-        );
-      }
-      return;
-    }
-
-    final bytes = await xfile.readAsBytes();
-    if (!mounted) return;
-    setState(() {
-      _pickedFile = xfile;
-      _pickedBytes = bytes;
-      _pickedMediaType = mediaType;
-    });
-  }
-
-  String _cleanError(Object error) {
-    debugPrint('GalleryUploadSheet: upload failed: $error');
-    return 'Something went wrong. Please try again.';
-  }
-
-  Future<void> _upload() async {
-    final bytes = _pickedBytes;
-    final mediaType = _pickedMediaType;
-    final file = _pickedFile;
-
-    if (bytes == null || mediaType == null || file == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose a photo or video.')),
-      );
-      return;
-    }
-
+  Future<void> _startUpload() async {
+    if (_picked.isEmpty) return;
     final caption = _captionController.text.trim();
-    final uploaded = await ref.read(galleryAdminControllerProvider.notifier).uploadMedia(
-          trekId: widget.trekId,
-          bytes: bytes,
-          fileExtension: _extensionOf(file.name),
-          mediaType: mediaType,
-          caption: caption.isEmpty ? null : caption,
-        );
+    final files = _picked;
 
-    if (!mounted || uploaded == null) return;
+    setState(() {
+      _isStarting = true;
+      _picked = [];
+      _captionController.clear();
+    });
 
-    // One-shot fetch (not a live stream) — refetch so the new item shows
-    // up on the trek's own gallery section.
-    ref.invalidate(trekGalleryProvider(widget.trekId));
-
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Uploaded.')),
+    // Deliberately not awaited by the UI beyond kicking it off — the
+    // controller keeps the batch running (and this sheet's task list
+    // updating) even after the sheet closes.
+    unawaited(
+      ref.read(mediaUploadControllerProvider.notifier).startBatch(
+            widget.trekId,
+            files,
+            caption: caption.isEmpty ? null : caption,
+          ),
     );
+
+    if (mounted) setState(() => _isStarting = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isSaving = ref.watch(galleryAdminControllerProvider).isLoading;
+    final tasks = ref.watch(
+      mediaUploadControllerProvider.select(
+        (state) => state.where((t) => t.trekId == widget.trekId).toList().reversed.toList(),
+      ),
+    );
 
-    ref.listen<AsyncValue<void>>(galleryAdminControllerProvider, (previous, next) {
-      next.whenOrNull(
-        error: (error, stack) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_cleanError(error)),
-              backgroundColor: theme.colorScheme.error,
-            ),
-          );
-        },
-      );
+    // A settled batch (every task terminal) means the trek's own
+    // gallery preview/count are stale — refetch once, right when the
+    // last task in flight lands.
+    ref.listen(mediaUploadControllerProvider, (previous, next) {
+      final wasActive = (previous ?? []).any((t) => t.trekId == widget.trekId && t.isActive);
+      final stillActive = next.any((t) => t.trekId == widget.trekId && t.isActive);
+      if (wasActive && !stillActive) {
+        ref.invalidate(trekGalleryProvider(widget.trekId));
+        ref.invalidate(trekGalleryCountProvider(widget.trekId));
+      }
     });
 
     return Padding(
       // Keeps the form above the keyboard when the caption field focuses.
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Add Photo or Video',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Add Photos & Videos',
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: AppSpacing.lg),
 
-            _MediaPickerArea(
-              pickedBytes: _pickedBytes,
-              pickedMediaType: _pickedMediaType,
-              fileName: _pickedFile?.name,
-              onTap: _pickFile,
-            ),
-            const SizedBox(height: 20),
+              if (tasks.isNotEmpty) ...[
+                Text('Uploading', style: AppTextStyles.secondary(AppTextStyles.labelMedium)),
+                const SizedBox(height: AppSpacing.sm),
+                ...tasks.map((task) => _UploadTaskRow(task: task)),
+                const SizedBox(height: AppSpacing.lg),
+              ],
 
-            TextFormField(
-              controller: _captionController,
-              decoration: const InputDecoration(labelText: 'Caption (optional)'),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
+              _PickedFilesGrid(files: _picked, onRemove: _removePicked, onAddMore: _pickFiles),
+              const SizedBox(height: AppSpacing.lg),
 
-            FilledButton(
-              onPressed: isSaving ? null : _upload,
-              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: isSaving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Upload'),
-            ),
-          ],
+              TextFormField(
+                controller: _captionController,
+                decoration: const InputDecoration(labelText: 'Caption for this batch (optional)'),
+                maxLines: 2,
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              FilledButton(
+                onPressed: (_picked.isEmpty || _isPicking || _isStarting) ? null : _startUpload,
+                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                child: Text(
+                  _picked.isEmpty
+                      ? 'Choose Photos or Videos'
+                      : 'Upload ${_picked.length} item${_picked.length == 1 ? '' : 's'}',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _MediaPickerArea extends StatelessWidget {
-  const _MediaPickerArea({
-    required this.pickedBytes,
-    required this.pickedMediaType,
-    required this.fileName,
-    required this.onTap,
-  });
+class _PickedFilesGrid extends StatelessWidget {
+  const _PickedFilesGrid({required this.files, required this.onRemove, required this.onAddMore});
 
-  final Uint8List? pickedBytes;
-  final MediaType? pickedMediaType;
-  final String? fileName;
-  final VoidCallback onTap;
+  final List<XFile> files;
+  final void Function(XFile) onRemove;
+  final VoidCallback onAddMore;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 180,
-        width: double.infinity,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: theme.colorScheme.surfaceContainerHighest,
-          border: Border.all(color: theme.colorScheme.outlineVariant),
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final file in files)
+          _PickedFileChip(file: file, onRemove: () => onRemove(file)),
+        GestureDetector(
+          onTap: onAddMore,
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: theme.colorScheme.surfaceContainerHighest,
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Icon(
+              files.isEmpty ? Icons.add_photo_alternate_outlined : Icons.add_rounded,
+              color: theme.colorScheme.outline,
+            ),
+          ),
         ),
-        child: _buildContent(theme),
+      ],
+    );
+  }
+}
+
+class _PickedFileChip extends StatelessWidget {
+  const _PickedFileChip({required this.file, required this.onRemove});
+
+  final XFile file;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final extension = file.name.contains('.') ? file.name.split('.').last.toLowerCase() : '';
+    final isVideo = MediaType.fromExtension(extension) == MediaType.video;
+
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: Container(
+            width: 72,
+            height: 72,
+            color: AppColors.cardHigh,
+            alignment: Alignment.center,
+            child: isVideo
+                ? const AppIcon(AppIcons.video, color: AppColors.textSecondary)
+                : Image.file(File(file.path), fit: BoxFit.cover, width: 72, height: 72),
+          ),
+        ),
+        Positioned(
+          top: -6,
+          right: -6,
+          child: Material(
+            color: Colors.black87,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: onRemove,
+              customBorder: const CircleBorder(),
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.close_rounded, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _UploadTaskRow extends ConsumerWidget {
+  const _UploadTaskRow({required this.task});
+
+  final MediaUploadTask task;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: task.mediaType == MediaType.photo
+                  ? Image.file(
+                      File(task.file.path),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, _, __) => Container(color: AppColors.cardHigh),
+                    )
+                  : Container(
+                      color: AppColors.cardHigh,
+                      alignment: Alignment.center,
+                      child: const AppIcon(AppIcons.video, size: 18),
+                    ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  task.file.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall,
+                ),
+                const SizedBox(height: 4),
+                _StatusLine(task: task),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          _TrailingAction(task: task),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildContent(ThemeData theme) {
-    final bytes = pickedBytes;
-    if (bytes == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.add_photo_alternate_outlined, size: 36, color: theme.colorScheme.outline),
-            const SizedBox(height: 8),
-            Text(
-              'Tap to choose a photo or video',
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
-          ],
-        ),
+class _StatusLine extends StatelessWidget {
+  const _StatusLine({required this.task});
+
+  final MediaUploadTask task;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (task.status) {
+      case MediaUploadStatus.queued:
+        return Text('Queued…', style: AppTextStyles.secondary(AppTextStyles.labelSmall));
+      case MediaUploadStatus.compressing:
+        return Text('Preparing…', style: AppTextStyles.secondary(AppTextStyles.labelSmall));
+      case MediaUploadStatus.uploading:
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: LinearProgressIndicator(
+            value: task.progress.clamp(0, 1).toDouble(),
+            minHeight: 4,
+            backgroundColor: AppColors.cardHigh,
+          ),
+        );
+      case MediaUploadStatus.success:
+        return Text(
+          'Uploaded',
+          style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.primary),
+        );
+      case MediaUploadStatus.failed:
+        return Text(
+          task.errorMessage ?? 'Failed',
+          style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.danger),
+        );
+      case MediaUploadStatus.cancelled:
+        return Text('Cancelled', style: AppTextStyles.secondary(AppTextStyles.labelSmall));
+    }
+  }
+}
+
+class _TrailingAction extends ConsumerWidget {
+  const _TrailingAction({required this.task});
+
+  final MediaUploadTask task;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (task.isActive) {
+      return IconButton(
+        icon: const AppIcon(AppIcons.close, size: 18),
+        tooltip: 'Cancel',
+        onPressed: () => ref.read(mediaUploadControllerProvider.notifier).cancel(task.id),
       );
     }
-
-    if (pickedMediaType == MediaType.photo) {
-      return Image.memory(bytes, fit: BoxFit.cover, width: double.infinity);
+    if (task.status == MediaUploadStatus.failed) {
+      return IconButton(
+        icon: const AppIcon(AppIcons.refresh, size: 18),
+        tooltip: 'Retry',
+        onPressed: () => ref.read(mediaUploadControllerProvider.notifier).retry(task.id),
+      );
     }
-
-    // Video bytes aren't previewed inline — that would need a second
-    // VideoPlayerController just for this form. Confirming the filename
-    // is enough for the upload flow to be usable.
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.videocam_rounded, size: 36, color: theme.colorScheme.primary),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              fileName ?? 'Video selected',
-              style: theme.textTheme.bodySmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
+    if (task.status == MediaUploadStatus.success) {
+      return const AppIcon(AppIcons.checkCircle, size: 18, color: AppColors.primary);
+    }
+    // Queued or cancelled — dismissible.
+    return IconButton(
+      icon: const AppIcon(AppIcons.close, size: 18),
+      tooltip: 'Remove',
+      onPressed: () => ref.read(mediaUploadControllerProvider.notifier).dismiss(task.id),
     );
   }
 }

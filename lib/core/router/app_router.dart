@@ -16,6 +16,7 @@ import 'package:doon_walkers/features/challenges/presentation/screens/my_challen
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
 import 'package:doon_walkers/features/design_demo/presentation/screens/design_system_demo_screen.dart';
+import 'package:doon_walkers/features/gallery/presentation/screens/trek_gallery_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/admin_merch_inquiries_screen.dart';
 import 'package:doon_walkers/features/merchandise/presentation/screens/admin_product_form_screen.dart';
@@ -408,6 +409,23 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                     // admin-only), gated via isProtectedRoute below rather
                     // than _isTrekAdminRoute. verify_trek_checkin RPC is the
                     // real authorization boundary either way.
+                    // /trek-library/:id/gallery — Trek Media Gallery
+                    // rebuild's full paginated masonry screen, reached
+                    // from TrekGalleryPreview's "+N · View All" tile.
+                    // Public like the detail route itself; `title` is
+                    // passed as a query param (the call site already
+                    // has the trek's title loaded — same convention as
+                    // `redirectTo`/`register=1` elsewhere in this file
+                    // — rather than this screen re-fetching the trek
+                    // just for its name).
+                    GoRoute(
+                      path: 'gallery',
+                      name: 'trek-gallery',
+                      builder: (context, state) => TrekGalleryScreen(
+                        trekId: state.pathParameters['id']!,
+                        trekTitle: state.uri.queryParameters['title'] ?? '',
+                      ),
+                    ),
                     GoRoute(
                       path: 'check-in',
                       name: 'trek-check-in',

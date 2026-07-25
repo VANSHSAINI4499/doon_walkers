@@ -18,7 +18,9 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.7.0" apply false
+    // 8.9.1 minimum — required by mobile_scanner's camera dependencies
+    // (androidx.camera:camera-* 1.6.1), which also require compileSdk 36.
+    id("com.android.application") version "8.9.1" apply false
     id("org.jetbrains.kotlin.android") version "2.2.0" apply false
     // Phase 8 (FCM push notifications) — reads android/app/google-services.json
     // and generates the resources firebase_core needs at build time.

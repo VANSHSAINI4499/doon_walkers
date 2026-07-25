@@ -80,6 +80,16 @@ class AppConstants {
   /// real gate on the token itself either way.
   static String trekCheckinQrLocation(String id) => '$routeTrekLibrary/$id/checkin-qr';
 
+  /// Trek Media Gallery rebuild — the full paginated masonry gallery
+  /// for one trek, reached from [TrekGalleryPreview]'s "+N · View All"
+  /// tile once a trek has more than 5 items. Nested under the trek
+  /// detail route it's reached from, same shape as
+  /// [trekCheckinQrLocation]. Publicly browsable (no admin gate) —
+  /// same audience as the embedded preview it expands from; the admin
+  /// upload/delete affordances are conditionally rendered inline, not
+  /// route-gated.
+  static String trekGalleryLocation(String id) => '$routeTrekLibrary/$id/gallery';
+
   /// Cross-trek registrations roster — kept as its own admin destination
   /// since it has no single-trek screen to inline into. No UI entry
   /// point links here since the Admin Dashboard grid was removed; still

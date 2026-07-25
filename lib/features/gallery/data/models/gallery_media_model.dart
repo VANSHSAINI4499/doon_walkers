@@ -11,6 +11,9 @@ class GalleryMediaModel extends GalleryMedia {
     required super.mediaType,
     super.caption,
     required super.uploadedAt,
+    super.thumbnailUrl,
+    super.width,
+    super.height,
   });
 
   factory GalleryMediaModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +26,9 @@ class GalleryMediaModel extends GalleryMedia {
       uploadedAt: json['uploaded_at'] != null
           ? DateTime.parse(json['uploaded_at'] as String)
           : DateTime.now(),
+      thumbnailUrl: json['thumbnail_url'] as String?,
+      width: json['width'] as int?,
+      height: json['height'] as int?,
     );
   }
 }
