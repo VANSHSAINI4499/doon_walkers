@@ -84,9 +84,9 @@ class _HomeDemoApp extends StatelessWidget {
     return MaterialApp(
       title: 'DoonWalkers · Home',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.system,
       home: const _AppShellFrame(child: HomeScreen()),
     );
   }

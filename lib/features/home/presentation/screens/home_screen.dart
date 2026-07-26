@@ -1,6 +1,5 @@
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/community_stats_section.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/home_about_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_hero_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_section_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/join_community_section.dart';
@@ -73,10 +72,11 @@ class _HomeBody extends StatelessWidget {
         child: CommunityStatsSection(),
       ),
       const JoinCommunitySection(),
-      const _AboutDivider(),
-      // About content — folded in here now that the standalone About
-      // screen/tab is gone (Part B of the navigation restructure).
-      const HomeAboutSection(),
+      // About content used to be appended here (Part B folded it in when
+      // the standalone About screen was removed). Redesign 2.0 Phase 10
+      // gave About its own drawer destination and moved the content
+      // there **wholly**, rather than duplicating it — see AboutScreen's
+      // doc. Home is back to one purpose: what's happening right now.
     ];
 
     return Column(
@@ -117,14 +117,3 @@ class _Section extends StatelessWidget {
   }
 }
 
-class _AboutDivider extends StatelessWidget {
-  const _AboutDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: AppSpacing.huge),
-      child: Divider(),
-    );
-  }
-}

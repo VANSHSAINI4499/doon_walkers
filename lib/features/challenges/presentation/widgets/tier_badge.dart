@@ -8,28 +8,35 @@ import 'package:flutter/material.dart';
 /// everywhere this is used, so new challenges from the backend need zero
 /// code changes.
 ///
-/// ## Redesign Phase 4 tier colour mapping (flagged per the brief)
+/// ## Tier colour mapping
 ///
-/// The tiers keep recognisable medal *ordering* (so bronze < silver <
-/// gold < platinum still reads at a glance) but are pulled onto the
-/// Phase 1 palette, with the top two tiers tied to brand tokens:
+/// All four tiers now come straight off the design system's achievement
+/// metal ramp — the one place the calm direction sanctions metallics at
+/// all ("Bronze/Silver/Gold only for achievement badges/medals, never as
+/// general card gradients"). Tier badges are exactly that case.
 ///
-///  - **Bronze** → warm copper `#C87941`
-///  - **Silver** → cool silver `#B8C2CC`
-///  - **Gold** → [AppColors.gold] (`#FFD54F`) — the app's own gold
-///  - **Platinum** → [AppColors.secondary] (Sky Blue `#38BDF8`) — a cool,
-///    premium top tier that glows differently from gold so "maxed out"
-///    reads instantly
+///  - **Bronze** → [AppColors.bronze]
+///  - **Silver** → [AppColors.silver]
+///  - **Gold** → [AppColors.gold]
+///  - **Platinum** → [AppColors.platinum]
 ///
-/// This replaces the pre-redesign values (bronze `#B08D57`, silver
-/// `#9AA6B2`, gold `#E9A84C`, platinum `#7C93AC`). The *which tier* logic
-/// is untouched — only the colours changed.
+/// This replaces a half-migrated mapping where gold and platinum pointed
+/// at brand tokens (the app's gold and Sky Blue) while bronze and silver
+/// were hardcoded hexes — so retuning the palette moved two tiers and
+/// left the other two behind. The ordering still reads at a glance
+/// (bronze < silver < gold < platinum) and the *which tier* logic is
+/// untouched.
+///
+/// These are still the theme-agnostic constants rather than
+/// `AppPalette.of(context).bronze`; switching to the context-resolved
+/// metals is Challenges-phase work, along with this widget's remaining
+/// glow and gradient treatment.
 abstract final class TierBadge {
   static Color colorFor(ChallengeTier tier) => switch (tier) {
-    ChallengeTier.bronze => const Color(0xFFC87941),
-    ChallengeTier.silver => const Color(0xFFB8C2CC),
+    ChallengeTier.bronze => AppColors.bronze,
+    ChallengeTier.silver => AppColors.silver,
     ChallengeTier.gold => AppColors.gold,
-    ChallengeTier.platinum => AppColors.secondary,
+    ChallengeTier.platinum => AppColors.platinum,
   };
 
   /// A top-left→bottom-right gradient in the tier's colour, for filled

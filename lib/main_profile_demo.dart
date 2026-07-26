@@ -126,9 +126,9 @@ class _ProfileDemoApp extends ConsumerWidget {
     return MaterialApp(
       title: 'DoonWalkers · Profile',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.system,
       // Re-scope on toggle so every overridden provider re-reads the role.
       home: ProviderScope(
         key: ValueKey(admin),

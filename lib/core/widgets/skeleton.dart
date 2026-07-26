@@ -4,19 +4,21 @@
 /// A spinner tells the user "something is happening". A skeleton tells
 /// them *what* is about to appear and roughly how much of it, so the real
 /// content lands into a shape they have already read. It also removes the
-/// layout jump a spinner always causes, because the placeholder occupies
-/// the same space the content will.
+/// layout jump a spinner always causes.
 ///
-/// Rule for later phases: **screens load into skeletons, not spinners.**
-/// A spinner is still correct in exactly two places — inside a button
-/// that is working (see `PremiumButton.isLoading`) and on pull-to-refresh,
-/// where the content is already on screen and only being replaced.
+/// Rule: **screens load into skeletons, not spinners.** A spinner is
+/// still correct in exactly two places — inside a button that is working
+/// (see `AppButton.isLoading`) and on pull-to-refresh, where the content
+/// is already on screen and only being replaced.
 ///
 /// The pieces:
 ///  - [Shimmer] — the animated sweep. Wrap any subtree.
 ///  - [SkeletonBox], [SkeletonCircle], [SkeletonText] — the shapes.
 ///  - [SkeletonList], [SkeletonCardPlaceholder], [SkeletonStatRow] —
-///    ready-made layouts for the patterns this app actually repeats.
+///    ready-made layouts for the patterns this app repeats.
+///
+/// Every shape resolves its colour from `AppPalette`, so the whole family
+/// is light/dark aware with no call-site change.
 ///
 /// ```dart
 /// asyncValue.when(
@@ -28,8 +30,8 @@
 library;
 
 import 'package:doon_walkers/core/motion/app_motion.dart';
-import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:doon_walkers/core/theme/app_dimens.dart';
+import 'package:doon_walkers/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 /// Paints a moving highlight band across everything inside it.
@@ -39,15 +41,15 @@ import 'package:flutter/material.dart';
 /// of skeleton shapes shimmers as one coherent surface rather than each
 /// shape animating on its own schedule.
 ///
-/// The band runs at a diagonal, and one pass takes [AppMotion.shimmer].
-/// Slow on purpose: a fast shimmer reads as a rendering glitch.
+/// One pass takes [AppMotion.shimmer]. Slow on purpose: a fast shimmer
+/// reads as a rendering glitch.
 class Shimmer extends StatefulWidget {
   const Shimmer({
     super.key,
     required this.child,
     this.enabled = true,
-    this.baseColor = AppColors.cardHigh,
-    this.highlightColor = const Color(0xFF3A3A3A),
+    this.baseColor,
+    this.highlightColor,
     this.duration = AppMotion.shimmer,
   });
 
@@ -57,12 +59,14 @@ class Shimmer extends StatefulWidget {
   /// the skeleton is still crossfading out.
   final bool enabled;
 
-  /// The resting colour of skeleton shapes.
-  final Color baseColor;
+  /// Resting colour of skeleton shapes. Defaults to the palette's
+  /// [AppPalette.skeletonBase].
+  final Color? baseColor;
 
-  /// The colour of the travelling band. Should be a small step up from
-  /// [baseColor]; a big contrast makes the sweep read as a flash.
-  final Color highlightColor;
+  /// Colour of the travelling band. Defaults to the palette's
+  /// [AppPalette.skeletonHighlight] — a small step from the base, because
+  /// a big contrast makes the sweep read as a flash.
+  final Color? highlightColor;
 
   final Duration duration;
 
@@ -105,6 +109,10 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
 
+    final palette = AppPalette.of(context);
+    final base = widget.baseColor ?? palette.skeletonBase;
+    final highlight = widget.highlightColor ?? palette.skeletonHighlight;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) => ShaderMask(
@@ -116,11 +124,7 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
           return LinearGradient(
             begin: Alignment(slide - 0.5, -0.4),
             end: Alignment(slide + 0.5, 0.4),
-            colors: [
-              widget.baseColor,
-              widget.highlightColor,
-              widget.baseColor,
-            ],
+            colors: [base, highlight, base],
             stops: const [0.2, 0.5, 0.8],
           ).createShader(bounds);
         },
@@ -133,8 +137,8 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
 /// A rounded rectangle placeholder.
 ///
-/// On its own it is a static grey block — put it under a [Shimmer] (or
-/// use one of the composite skeletons below, which bring their own).
+/// On its own it is a static block — put it under a [Shimmer] (or use one
+/// of the composite skeletons below, which bring their own).
 class SkeletonBox extends StatelessWidget {
   const SkeletonBox({
     super.key,
@@ -156,7 +160,7 @@ class SkeletonBox extends StatelessWidget {
     height: height,
     margin: margin,
     decoration: BoxDecoration(
-      color: AppColors.cardHigh,
+      color: AppPalette.of(context).skeletonBase,
       borderRadius: BorderRadius.circular(borderRadius),
     ),
   );
@@ -172,8 +176,8 @@ class SkeletonCircle extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: size,
     height: size,
-    decoration: const BoxDecoration(
-      color: AppColors.cardHigh,
+    decoration: BoxDecoration(
+      color: AppPalette.of(context).skeletonBase,
       shape: BoxShape.circle,
     ),
   );
@@ -182,8 +186,7 @@ class SkeletonCircle extends StatelessWidget {
 /// A stack of lines standing in for a paragraph.
 ///
 /// The last line is deliberately short ([lastLineFraction]) — that ragged
-/// edge is what makes a block of bars read as *text* rather than as a
-/// table.
+/// edge is what makes a block of bars read as *text* rather than a table.
 class SkeletonText extends StatelessWidget {
   const SkeletonText({
     super.key,
@@ -206,7 +209,9 @@ class SkeletonText extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final fullWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 200.0;
+      final fullWidth = constraints.maxWidth.isFinite
+          ? constraints.maxWidth
+          : 200.0;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -237,8 +242,8 @@ class SkeletonCardPlaceholder extends StatelessWidget {
     super.key,
     this.showImage = true,
     this.imageHeight = 150,
-    this.padding = const EdgeInsets.all(AppSpacing.lg),
-    this.borderRadius = AppRadius.lg,
+    this.padding = const EdgeInsets.all(AppSpacing.xl),
+    this.borderRadius = AppRadius.card,
   });
 
   final bool showImage;
@@ -248,48 +253,18 @@ class SkeletonCardPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Shimmer(
-    child: Container(
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: AppColors.glassBorder),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showImage) SkeletonBox(height: imageHeight, borderRadius: 0),
-          Padding(
-            padding: padding,
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SkeletonBox(width: 180, height: 20, borderRadius: AppRadius.xs),
-                SizedBox(height: AppSpacing.md),
-                SkeletonText(lines: 2, lineHeight: 11),
-                SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    SkeletonBox(width: 64, height: 26, borderRadius: AppRadius.pill),
-                    SizedBox(width: AppSpacing.sm),
-                    SkeletonBox(width: 84, height: 26, borderRadius: AppRadius.pill),
-                    SizedBox(width: AppSpacing.sm),
-                    SkeletonBox(width: 56, height: 26, borderRadius: AppRadius.pill),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    child: _SkeletonCardBody(
+      showImage: showImage,
+      imageHeight: imageHeight,
+      padding: padding,
+      borderRadius: borderRadius,
+      showChips: true,
     ),
   );
 }
 
-/// A vertical run of [SkeletonCardPlaceholder]s — the standard loading
-/// state for any list screen (Trek Library, Challenges, Merchandise).
+/// A vertical run of card placeholders — the standard loading state for
+/// any list screen (Trek Library, Challenges, Merchandise).
 ///
 /// Wrapped in a single [Shimmer] so the sweep crosses the whole list as
 /// one wave instead of every card blinking independently.
@@ -317,8 +292,8 @@ class SkeletonList extends StatelessWidget {
           for (var i = 0; i < count; i++)
             Padding(
               padding: EdgeInsets.only(bottom: i == count - 1 ? 0 : gap),
-              // The children bring their own Shimmer, which would nest a
-              // second ShaderMask; use the raw shapes here instead.
+              // The public placeholder brings its own Shimmer, which
+              // would nest a second ShaderMask; use the raw body here.
               child: _SkeletonCardBody(showImage: showImages),
             ),
         ],
@@ -327,41 +302,78 @@ class SkeletonList extends StatelessWidget {
   );
 }
 
-/// [SkeletonCardPlaceholder]'s body without its own [Shimmer] wrapper, so
-/// composites can supply one sweep for the whole group.
+/// The card placeholder's body without a [Shimmer] wrapper, so composites
+/// can supply one sweep for the whole group.
 class _SkeletonCardBody extends StatelessWidget {
-  const _SkeletonCardBody({required this.showImage});
+  const _SkeletonCardBody({
+    required this.showImage,
+    this.imageHeight = 150,
+    this.padding = const EdgeInsets.all(AppSpacing.xl),
+    this.borderRadius = AppRadius.card,
+    this.showChips = false,
+  });
 
   final bool showImage;
+  final double imageHeight;
+  final EdgeInsetsGeometry padding;
+  final double borderRadius;
+  final bool showChips;
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: AppColors.card,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: AppColors.glassBorder),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showImage) const SkeletonBox(height: 150, borderRadius: 0),
-        const Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SkeletonBox(width: 180, height: 20),
-              SizedBox(height: AppSpacing.md),
-              SkeletonText(lines: 2, lineHeight: 11),
-            ],
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: palette.card,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: palette.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showImage) SkeletonBox(height: imageHeight, borderRadius: 0),
+          Padding(
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SkeletonBox(width: 180, height: 20),
+                const SizedBox(height: AppSpacing.md),
+                const SkeletonText(lines: 2, lineHeight: 11),
+                if (showChips) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  const Row(
+                    children: [
+                      SkeletonBox(
+                        width: 64,
+                        height: 26,
+                        borderRadius: AppRadius.pill,
+                      ),
+                      SizedBox(width: AppSpacing.sm),
+                      SkeletonBox(
+                        width: 84,
+                        height: 26,
+                        borderRadius: AppRadius.pill,
+                      ),
+                      SizedBox(width: AppSpacing.sm),
+                      SkeletonBox(
+                        width: 56,
+                        height: 26,
+                        borderRadius: AppRadius.pill,
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 /// Avatar + two lines — the loading state for comment threads,

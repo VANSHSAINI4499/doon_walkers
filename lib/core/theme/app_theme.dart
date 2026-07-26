@@ -1,75 +1,97 @@
-import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:doon_walkers/core/theme/app_dimens.dart';
+import 'package:doon_walkers/core/theme/app_palette.dart';
+import 'package:doon_walkers/core/theme/app_shadows.dart';
 import 'package:doon_walkers/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// DoonWalkers Material 3 theme — **dark only**.
+/// DoonWalkers Material 3 theme — **light and dark**.
 ///
-/// The redesign ships one theme. There is no light variant and no
-/// [ThemeMode] toggle: the palette, the glass surfaces, the glows and the
-/// contrast ratios in this design system are all built for a near-black
-/// background, and a light mirror of them would be a different design,
-/// not a setting.
+/// Both themes are generated from one builder fed a different
+/// [AppPalette], so they cannot drift apart: a widget styled here is
+/// styled identically in both, only the colours differ. The palette is
+/// also registered as a [ThemeExtension], which is how components reach
+/// semantic colours that Material's own [ColorScheme] has no slot for
+/// (achievement metals, trek difficulty, skeleton shimmer).
 ///
-/// Wire it up as *both* `theme` and `darkTheme` with
-/// `themeMode: ThemeMode.dark` so the OS-level light/dark setting can't
-/// pull the app into an unstyled light Material default.
+/// Wire it up as:
 ///
-/// ## What this theme is and isn't responsible for
+/// ```dart
+/// MaterialApp(
+///   theme: AppTheme.light,
+///   darkTheme: AppTheme.dark,
+///   themeMode: ref.watch(themeModeProvider),
+/// )
+/// ```
 ///
-/// It styles the **Material widgets the app already uses** — app bars,
-/// nav bars, inputs, dialogs, snackbars — so pre-redesign screens land
-/// somewhere coherent the moment the theme flips, rather than staying
-/// light-on-light. It is *not* where the redesign's own components live:
-/// `GlassCard`, `PremiumButton` and the skeleton family are explicit
-/// widgets, because their look (backdrop blur, gradient fill, coloured
-/// glow) is not expressible as [ThemeData].
+/// ## What this theme is responsible for
+///
+/// Everything Material draws: app bars, nav bars, inputs, cards, chips,
+/// dialogs, sheets, snackbars. Because feature screens lean heavily on
+/// stock Material widgets plus the shared components, styling it properly
+/// here is what makes the majority of each screen theme-aware without
+/// opening the screen.
+///
+/// The shared components (`AppCard`/`GlassCard`, `PremiumButton`, the
+/// stat displays, the skeleton family) read [AppPalette] directly rather
+/// than being expressible as [ThemeData].
 abstract final class AppTheme {
   AppTheme._();
 
-  /// The app's only theme.
-  static ThemeData get dark {
-    final colorScheme = _colorScheme;
+  /// The light theme — airy, near-white, generous.
+  static ThemeData get light => _build(AppPalette.light);
+
+  /// The dark theme — dark surfaces, never pure black.
+  static ThemeData get dark => _build(AppPalette.dark);
+
+  static ThemeData _build(AppPalette p) {
+    final isDark = p.brightness == Brightness.dark;
+    final textTheme = AppTextStyles.textTheme(
+      ink: p.textPrimary,
+      dimInk: p.textSecondary,
+    );
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: colorScheme,
-      textTheme: AppTextStyles.textTheme,
-      scaffoldBackgroundColor: AppColors.background,
-      canvasColor: AppColors.background,
+      brightness: p.brightness,
+      colorScheme: _scheme(p),
+      extensions: [p],
+      textTheme: textTheme,
+      scaffoldBackgroundColor: p.background,
+      canvasColor: p.background,
+      shadowColor: p.shadowColor,
+      dividerColor: p.border,
 
-      // Ink splashes on top of blurred glass smear the blur, and the
-      // redesign uses scale (see `Pressable`) as its press affordance
-      // instead. Killing the default splash app-wide keeps stock
-      // Material widgets consistent with the custom ones.
+      // The calm system's press affordance is a small scale (see
+      // `Pressable`), not an ink ripple. Killing the default splash keeps
+      // stock Material widgets consistent with the custom ones.
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
 
       // ── App bar ────────────────────────────────────────────────────
-      // Flat and background-coloured: on a dark theme, an app bar that
-      // matches the page reads as no chrome at all, which is what lets
-      // content start at the top of the screen.
+      // Flat and page-coloured, so content starts at the top of the
+      // screen with no visible chrome band.
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: p.background,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: AppColors.white,
+        foregroundColor: p.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTextStyles.titleLarge,
-        iconTheme: const IconThemeData(color: AppColors.white),
-        actionsIconTheme: const IconThemeData(color: AppColors.white),
-        systemOverlayStyle: SystemUiOverlayStyle.light,
+        titleTextStyle: textTheme.titleLarge,
+        iconTheme: IconThemeData(color: p.textPrimary),
+        actionsIconTheme: IconThemeData(color: p.textPrimary),
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
 
       // ── Bottom navigation ──────────────────────────────────────────
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.16),
+        indicatorColor: p.primarySubtle,
         indicatorShape: const StadiumBorder(),
         elevation: 0,
         height: 72,
@@ -77,35 +99,34 @@ abstract final class AppTheme {
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? AppColors.primary
-                : AppColors.textSecondary,
+                ? p.primary
+                : p.textSecondary,
             size: 24,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => AppTextStyles.labelSmall.copyWith(
             color: states.contains(WidgetState.selected)
-                ? AppColors.primary
-                : AppColors.textSecondary,
+                ? p.primary
+                : p.textSecondary,
           ),
         ),
       ),
 
       navigationDrawerTheme: NavigationDrawerThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: AppColors.primary.withValues(alpha: 0.16),
+        indicatorColor: p.primarySubtle,
         elevation: 0,
-        labelTextStyle: WidgetStateProperty.all(AppTextStyles.titleSmall),
+        labelTextStyle: WidgetStateProperty.all(textTheme.titleSmall),
       ),
 
       // ── Cards ──────────────────────────────────────────────────────
-      // Stock [Card] is the fallback for screens not yet migrated to
-      // `GlassCard`; matching its radius and border to the glass surface
-      // keeps the two from looking like different systems in the
-      // meantime.
+      // Flat fill, hairline border, no shadow at rest. Stock [Card] is
+      // the fallback for screens not yet migrated to `AppCard`; matching
+      // the two keeps them from reading as different systems.
       cardTheme: CardThemeData(
-        color: AppColors.card,
+        color: p.card,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: const EdgeInsets.symmetric(
@@ -114,23 +135,21 @@ abstract final class AppTheme {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
-          side: const BorderSide(color: AppColors.glassBorder),
+          side: BorderSide(color: p.border),
         ),
       ),
 
       // ── Buttons ────────────────────────────────────────────────────
-      // `PremiumButton` is the redesign's button; these keep stock
-      // Material buttons on-brand until every screen has migrated.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
-          disabledBackgroundColor: AppColors.cardHigh,
-          disabledForegroundColor: AppColors.textDisabled,
+          backgroundColor: p.primary,
+          foregroundColor: p.onPrimary,
+          disabledBackgroundColor: p.cardHigh,
+          disabledForegroundColor: p.textDisabled,
           minimumSize: const Size(double.infinity, 52),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           textStyle: AppTextStyles.labelLarge,
         ),
@@ -138,13 +157,13 @@ abstract final class AppTheme {
 
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
-          disabledBackgroundColor: AppColors.cardHigh,
-          disabledForegroundColor: AppColors.textDisabled,
+          backgroundColor: p.primary,
+          foregroundColor: p.onPrimary,
+          disabledBackgroundColor: p.cardHigh,
+          disabledForegroundColor: p.textDisabled,
           minimumSize: const Size(0, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           textStyle: AppTextStyles.labelLarge,
         ),
@@ -152,11 +171,11 @@ abstract final class AppTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: p.primary,
           minimumSize: const Size(0, 52),
-          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.45)),
+          side: BorderSide(color: p.borderStrong),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.button),
           ),
           textStyle: AppTextStyles.labelLarge,
         ),
@@ -164,69 +183,73 @@ abstract final class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: p.primary,
           textStyle: AppTextStyles.labelLarge,
         ),
       ),
 
       iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(foregroundColor: AppColors.white),
+        style: IconButton.styleFrom(foregroundColor: p.textPrimary),
       ),
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.onPrimary,
+        backgroundColor: p.primary,
+        foregroundColor: p.onPrimary,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
+          borderRadius: BorderRadius.circular(AppRadius.button),
         ),
       ),
 
       // ── Inputs ─────────────────────────────────────────────────────
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.card,
+        // A hair off the card colour so a field reads as an inset well
+        // rather than as another card.
+        fillColor: isDark ? p.cardHigh : p.backgroundAlt,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.lg,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: const BorderSide(color: AppColors.glassBorder),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: p.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: const BorderSide(color: AppColors.glassBorder),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: p.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: p.primary, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: const BorderSide(color: AppColors.danger),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: p.danger),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.6),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: BorderSide(color: p.danger, width: 1.6),
         ),
-        labelStyle: AppTextStyles.secondary(AppTextStyles.bodyMedium),
-        hintStyle: AppTextStyles.disabled(AppTextStyles.bodyMedium),
+        labelStyle: AppTextStyles.bodyMedium.copyWith(color: p.textSecondary),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(color: p.textDisabled),
         floatingLabelStyle: AppTextStyles.labelMedium.copyWith(
-          color: AppColors.primary,
+          color: p.primary,
         ),
-        prefixIconColor: AppColors.textSecondary,
-        suffixIconColor: AppColors.textSecondary,
+        prefixIconColor: p.textSecondary,
+        suffixIconColor: p.textSecondary,
       ),
 
       // ── Chips ──────────────────────────────────────────────────────
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.card,
-        selectedColor: AppColors.primary.withValues(alpha: 0.18),
-        disabledColor: AppColors.surface,
-        labelStyle: AppTextStyles.labelMedium,
-        secondaryLabelStyle: AppTextStyles.labelMedium,
-        side: const BorderSide(color: AppColors.glassBorder),
+        backgroundColor: isDark ? p.cardHigh : p.backgroundAlt,
+        selectedColor: p.primaryContainer,
+        disabledColor: p.backgroundAlt,
+        labelStyle: AppTextStyles.labelMedium.copyWith(color: p.textPrimary),
+        secondaryLabelStyle: AppTextStyles.labelMedium.copyWith(
+          color: p.onPrimaryContainer,
+        ),
+        side: BorderSide(color: p.border),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,
@@ -236,79 +259,78 @@ abstract final class AppTheme {
 
       // ── Surfaces & overlays ────────────────────────────────────────
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: const BorderSide(color: AppColors.glassBorder),
+          side: BorderSide(color: p.border),
         ),
-        titleTextStyle: AppTextStyles.titleLarge,
-        contentTextStyle: AppTextStyles.bodyMedium,
+        titleTextStyle: textTheme.titleLarge,
+        contentTextStyle: textTheme.bodyMedium,
       ),
 
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.top(AppRadius.xl),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.top(AppRadius.xl)),
         showDragHandle: true,
-        dragHandleColor: AppColors.textDisabled,
+        dragHandleColor: p.borderStrong,
       ),
 
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.cardHigh,
-        contentTextStyle: AppTextStyles.bodyMedium,
-        actionTextColor: AppColors.primary,
+        // Inverse surface: a snackbar is a temporary intrusion and should
+        // read as *not* part of the page.
+        backgroundColor: p.textPrimary,
+        contentTextStyle: AppTextStyles.bodyMedium.copyWith(
+          color: p.textInverse,
+        ),
+        actionTextColor: p.primary,
         elevation: 0,
         insetPadding: const EdgeInsets.all(AppSpacing.lg),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          side: const BorderSide(color: AppColors.glassBorder),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
 
       popupMenuTheme: PopupMenuThemeData(
-        color: AppColors.cardHigh,
+        color: p.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        textStyle: AppTextStyles.bodyMedium,
+        textStyle: textTheme.bodyMedium,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          side: const BorderSide(color: AppColors.glassBorder),
+          side: BorderSide(color: p.border),
         ),
       ),
 
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: AppColors.cardHigh,
+          color: p.textPrimary,
           borderRadius: BorderRadius.circular(AppRadius.xs),
-          border: Border.all(color: AppColors.glassBorder),
         ),
-        textStyle: AppTextStyles.labelSmall,
+        textStyle: AppTextStyles.labelSmall.copyWith(color: p.textInverse),
       ),
 
       // ── Misc ───────────────────────────────────────────────────────
-      dividerTheme: const DividerThemeData(
-        color: AppColors.glassBorder,
-        thickness: 1,
-        space: 1,
-      ),
+      dividerTheme: DividerThemeData(color: p.border, thickness: 1, space: 1),
 
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
-        linearTrackColor: AppColors.cardHigh,
-        circularTrackColor: AppColors.cardHigh,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: p.primary,
+        linearTrackColor: p.cardHigh,
+        circularTrackColor: p.cardHigh,
+        linearMinHeight: 6,
       ),
 
       listTileTheme: ListTileThemeData(
-        iconColor: AppColors.textSecondary,
-        textColor: AppColors.textPrimary,
-        titleTextStyle: AppTextStyles.titleSmall,
-        subtitleTextStyle: AppTextStyles.secondary(AppTextStyles.bodySmall),
+        iconColor: p.textSecondary,
+        textColor: p.textPrimary,
+        titleTextStyle: textTheme.titleSmall,
+        subtitleTextStyle: AppTextStyles.bodySmall.copyWith(
+          color: p.textSecondary,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
@@ -317,96 +339,103 @@ abstract final class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? AppColors.onPrimary
-              : AppColors.textSecondary,
+              ? p.onPrimary
+              : p.textSecondary,
         ),
         trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : AppColors.cardHigh,
+          (states) =>
+              states.contains(WidgetState.selected) ? p.primary : p.cardHigh,
         ),
-        trackOutlineColor: WidgetStateProperty.all(AppColors.glassBorder),
+        trackOutlineColor: WidgetStateProperty.all(p.border),
       ),
 
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
+              ? p.primary
               : Colors.transparent,
         ),
-        checkColor: WidgetStateProperty.all(AppColors.onPrimary),
-        side: const BorderSide(color: AppColors.textDisabled, width: 1.5),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-        ),
+        checkColor: WidgetStateProperty.all(p.onPrimary),
+        side: BorderSide(color: p.borderStrong, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
 
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? AppColors.primary
-              : AppColors.textDisabled,
+              ? p.primary
+              : p.borderStrong,
         ),
       ),
 
       tabBarTheme: TabBarThemeData(
-        labelColor: AppColors.primary,
-        unselectedLabelColor: AppColors.textSecondary,
+        labelColor: p.primary,
+        unselectedLabelColor: p.textSecondary,
         labelStyle: AppTextStyles.labelLarge,
         unselectedLabelStyle: AppTextStyles.labelLarge,
-        indicatorColor: AppColors.primary,
-        dividerColor: AppColors.glassBorder,
+        indicatorColor: p.primary,
+        dividerColor: p.border,
       ),
     );
   }
 
-  /// The Material 3 colour scheme behind [dark].
+  /// The Material 3 colour scheme for [p].
   ///
   /// Written out explicitly rather than derived with
-  /// [ColorScheme.fromSeed]: the palette is fixed by the design spec, and
-  /// a seed algorithm would quietly re-derive every container and
-  /// "on-" colour into something adjacent-but-different.
-  static ColorScheme get _colorScheme => const ColorScheme(
-    brightness: Brightness.dark,
+  /// [ColorScheme.fromSeed]: the palette is fixed by the design
+  /// direction, and a seed algorithm would quietly re-derive every
+  /// container and "on-" colour into something adjacent-but-different.
+  static ColorScheme _scheme(AppPalette p) => ColorScheme(
+    brightness: p.brightness,
 
-    primary: AppColors.primary,
-    onPrimary: AppColors.onPrimary,
-    primaryContainer: AppColors.primaryContainer,
-    onPrimaryContainer: AppColors.primaryLight,
+    primary: p.primary,
+    onPrimary: p.onPrimary,
+    primaryContainer: p.primaryContainer,
+    onPrimaryContainer: p.onPrimaryContainer,
 
-    secondary: AppColors.secondary,
-    onSecondary: AppColors.onSecondary,
-    secondaryContainer: AppColors.secondaryContainer,
-    onSecondaryContainer: AppColors.secondaryLight,
+    secondary: p.secondary,
+    onSecondary: p.onSecondary,
+    secondaryContainer: p.secondaryContainer,
+    onSecondaryContainer: p.textPrimary,
 
-    tertiary: AppColors.accent,
-    onTertiary: AppColors.onAccent,
-    tertiaryContainer: AppColors.accentDark,
-    onTertiaryContainer: AppColors.accentLight,
+    tertiary: p.accent,
+    onTertiary: p.onAccent,
+    tertiaryContainer: p.accentContainer,
+    onTertiaryContainer: p.textPrimary,
 
-    error: AppColors.danger,
-    onError: AppColors.onDanger,
-    errorContainer: Color(0xFF7F1D1D),
-    onErrorContainer: Color(0xFFFCA5A5),
+    error: p.danger,
+    onError: p.onDanger,
+    errorContainer: p.dangerContainer,
+    onErrorContainer: p.textPrimary,
 
-    surface: AppColors.surface,
-    onSurface: AppColors.textPrimary,
-    onSurfaceVariant: AppColors.textSecondary,
+    surface: p.surface,
+    onSurface: p.textPrimary,
+    onSurfaceVariant: p.textSecondary,
 
-    surfaceContainerLowest: AppColors.background,
-    surfaceContainerLow: AppColors.backgroundAlt,
-    surfaceContainer: AppColors.surface,
-    surfaceContainerHigh: AppColors.card,
-    surfaceContainerHighest: AppColors.cardHigh,
+    surfaceContainerLowest: p.background,
+    surfaceContainerLow: p.backgroundAlt,
+    surfaceContainer: p.surface,
+    surfaceContainerHigh: p.card,
+    surfaceContainerHighest: p.cardHigh,
 
-    outline: AppColors.glassBorder,
-    outlineVariant: AppColors.glassBorder,
+    outline: p.borderStrong,
+    outlineVariant: p.border,
 
-    inverseSurface: AppColors.white,
-    onInverseSurface: AppColors.background,
-    inversePrimary: AppColors.primaryDark,
+    inverseSurface: p.textPrimary,
+    onInverseSurface: p.textInverse,
+    inversePrimary: p.primaryContainer,
 
-    shadow: Color(0xFF000000),
-    scrim: Color(0xFF000000),
+    shadow: p.shadowColor,
+    scrim: p.scrim,
   );
+}
+
+/// Convenience accessors used by the shared components.
+extension AppThemeContext on BuildContext {
+  /// The active semantic palette.
+  AppPalette get palette => AppPalette.of(this);
+
+  /// Elevation shadows tuned for the active theme.
+  List<BoxShadow> elevation([int level = 1]) =>
+      AppShadows.of(AppPalette.of(this), level: level);
 }

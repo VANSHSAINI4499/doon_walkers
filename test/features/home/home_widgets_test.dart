@@ -9,12 +9,10 @@
 import 'dart:async';
 
 import 'package:doon_walkers/core/constants/app_constants.dart';
-import 'package:doon_walkers/core/icons/app_icons.dart';
 import 'package:doon_walkers/core/theme/app_theme.dart';
 import 'package:doon_walkers/core/widgets/skeleton.dart';
 import 'package:doon_walkers/features/home/domain/entities/community_stats.dart';
 import 'package:doon_walkers/features/home/presentation/providers/community_stats_provider.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/about_text_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/community_stats_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_hero_header.dart';
 import 'package:doon_walkers/features/settings/domain/entities/app_settings.dart';
@@ -133,29 +131,7 @@ void main() {
     });
   });
 
-  group('AboutTextSection', () {
-    testWidgets('renders nothing when the body is empty', (tester) async {
-      await tester.pumpWidget(_host(
-        const AboutTextSection(title: 'Our Story', icon: AppIcons.book, body: '   '),
-      ));
-      await tester.pump();
-      expect(find.text('Our Story'), findsNothing);
-    });
-
-    testWidgets('renders the block when the body has content', (tester) async {
-      await tester.pumpWidget(_host(
-        const AboutTextSection(
-          title: 'Our Story',
-          icon: AppIcons.book,
-          body: 'We started with five friends and a shared trailhead.',
-        ),
-      ));
-      await tester.pump();
-      expect(find.text('Our Story'), findsOneWidget);
-      expect(
-        find.text('We started with five friends and a shared trailhead.'),
-        findsOneWidget,
-      );
-    });
-  });
+  // AboutTextSection's tests moved to test/features/about/ along with the
+  // widget itself, when Phase 10 pulled About out of Home into its own
+  // drawer destination.
 }

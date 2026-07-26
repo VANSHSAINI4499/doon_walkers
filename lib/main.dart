@@ -3,6 +3,7 @@ import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
 import 'package:doon_walkers/core/router/app_router.dart';
 import 'package:doon_walkers/core/services/push_notification_service.dart';
 import 'package:doon_walkers/core/theme/app_theme.dart';
+import 'package:doon_walkers/core/theme/theme_mode_provider.dart';
 import 'package:doon_walkers/core/widgets/app_splash_screen.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -92,13 +93,12 @@ class DoonWalkersApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Doon Walkers',
       debugShowCheckedModeBanner: false,
-      // Dark-only (Redesign Phase 1). Set as both light and dark slots
-      // with `themeMode: dark` so the OS light/dark setting can never
-      // pull the app into an unstyled light Material default — there is
-      // no light variant of this design system.
-      theme: AppTheme.dark,
+      // Both themes ship. `themeMode` defaults to ThemeMode.system, so a
+      // fresh install follows the OS setting; the user can override it in
+      // Profile → Appearance and that choice is persisted.
+      theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
       // Redesign Phase 7 — bridges the native platform splash into the
       // router's first screen with a brief branded moment instead of a

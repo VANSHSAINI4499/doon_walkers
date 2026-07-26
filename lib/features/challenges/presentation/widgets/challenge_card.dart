@@ -130,7 +130,7 @@ class _ChallengeAvatar extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: const BoxDecoration(
-        gradient: AppGradients.primary,
+        color: AppColors.primary,
         shape: BoxShape.circle,
       ),
       child: AppIcon(ChallengeIcon.forKey(iconKey), color: AppColors.onPrimary, size: 22),

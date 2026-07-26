@@ -120,7 +120,7 @@ class _ChallengeDetailBody extends ConsumerWidget {
                       width: 56,
                       height: 56,
                       decoration: const BoxDecoration(
-                        gradient: AppGradients.primary,
+                        color: AppColors.primary,
                         shape: BoxShape.circle,
                       ),
                       child: AppIcon(ChallengeIcon.forKey(challenge.icon), size: 28, color: AppColors.onPrimary),

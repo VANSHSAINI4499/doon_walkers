@@ -27,9 +27,9 @@ class _DesignDemoApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'DoonWalkers · Design System',
     debugShowCheckedModeBanner: false,
-    theme: AppTheme.dark,
+    theme: AppTheme.light,
     darkTheme: AppTheme.dark,
-    themeMode: ThemeMode.dark,
+    themeMode: ThemeMode.system,
     home: const DesignSystemDemoScreen(),
   );
 }

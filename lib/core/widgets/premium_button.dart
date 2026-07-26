@@ -1,94 +1,88 @@
 import 'package:doon_walkers/core/icons/app_icons.dart';
 import 'package:doon_walkers/core/motion/app_motion.dart';
 import 'package:doon_walkers/core/motion/pressable.dart';
-import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:doon_walkers/core/theme/app_dimens.dart';
-import 'package:doon_walkers/core/theme/app_gradients.dart';
-import 'package:doon_walkers/core/theme/app_shadows.dart';
+import 'package:doon_walkers/core/theme/app_palette.dart';
 import 'package:doon_walkers/core/theme/app_text_styles.dart';
 import 'package:flutter/material.dart';
 
-/// Which meaning — and therefore which gradient — a [PremiumButton] carries.
-enum PremiumButtonVariant {
-  /// Electric green. The one thing you most want the user to do on this
-  /// screen. At most one per screen.
+/// Which meaning — and therefore which treatment — an [AppButton] carries.
+enum AppButtonVariant {
+  /// Filled Nature Green. The one thing you most want the user to do on
+  /// this screen. **At most one per screen** — that rule is what makes a
+  /// single accent colour work as a wayfinding device.
   primary,
 
-  /// Sky blue. A real but secondary action.
+  /// Filled, muted slate. A real but secondary action.
   secondary,
 
-  /// Orange. Accent actions — "continue streak", "join challenge".
+  /// Filled, muted terracotta. Accent actions.
   accent,
 
-  /// Red. Destructive and irreversible.
+  /// Filled red. Destructive and irreversible.
   danger,
 
-  /// Gold. Achievement-flavoured actions.
+  /// Filled achievement gold. Reserved for achievement-flavoured actions
+  /// — claiming a badge, sharing a medal. Not a general highlight.
   gold,
 
-  /// Translucent glass with a hairline border. The quiet option, for
-  /// actions sitting next to a filled one.
+  /// Outlined, transparent fill. The quiet option, sitting next to a
+  /// filled one. (Was the translucent "glass" variant.)
   glass,
 
-  /// Text and icon only. Tertiary actions, inline links.
+  /// Text and icon only, no border. Tertiary actions, inline links.
   ghost,
 }
 
 /// Height/typography preset.
-enum PremiumButtonSize { small, medium, large }
+enum AppButtonSize { small, medium, large }
 
-/// The app's button.
+/// The app's button — **flat fill, soft corners, scale on press**.
 ///
-/// A gradient-filled, generously rounded control that physically
-/// responds to touch:
-///
-///  - **Gradient fill**, lit from the top-left like every other surface
-///    in the system (see [AppGradients]).
-///  - **18dp+ corners** — [AppRadius.md] (20) by default, never below
-///    [AppRadius.button] (18).
-///  - **Scale on press** — shrinks to [AppMotion.pressScale] while held
-///    and springs back, via [Pressable].
-///  - **Coloured glow** beneath it, so it reads as emitting light.
-///  - **Icon + text**, on either side of the label.
-///  - **A real loading state** — the label crossfades out and a spinner
+///  - **Flat fill.** The old button carried a gradient and a coloured
+///    glow beneath it; both are gone. A solid accent block on a calm
+///    page is already the loudest thing on screen.
+///  - **16dp corners** ([AppRadius.button]).
+///  - **Scale on press** via [Pressable] — the one motion the direction
+///    explicitly keeps.
+///  - **A real loading state.** The label crossfades out and a spinner
 ///    crossfades in *without the button changing size*, so a row of
-///    buttons doesn't reflow when one starts working. Taps are ignored
-///    while loading, which also makes it the app's double-submit guard.
-///
-/// The variants ([PremiumButtonVariant]) exist so meaning drives colour
-/// rather than each screen picking a gradient. Use [PremiumButton.icon]
-/// for a square icon-only button.
+///    buttons doesn't reflow. Taps are ignored while loading, which also
+///    makes it the app's double-submit guard.
 ///
 /// ```dart
-/// PremiumButton(
+/// AppButton(
 ///   label: 'Register for this trek',
 ///   icon: AppIcons.hiking,
 ///   isLoading: controller.isSubmitting,
 ///   onPressed: _submit,
 /// )
 /// ```
-class PremiumButton extends StatelessWidget {
-  const PremiumButton({
+///
+/// [PremiumButton] is a typedef onto this class, so the ~47 files still
+/// constructing it need no edit.
+class AppButton extends StatelessWidget {
+  const AppButton({
     super.key,
     required this.label,
     this.onPressed,
-    this.variant = PremiumButtonVariant.primary,
-    this.size = PremiumButtonSize.medium,
+    this.variant = AppButtonVariant.primary,
+    this.size = AppButtonSize.medium,
     this.icon,
     this.trailingIcon,
     this.isLoading = false,
     this.fullWidth = false,
-    this.borderRadius = AppRadius.md,
+    this.borderRadius = AppRadius.button,
     this.haptic = true,
   }) : _iconOnly = false;
 
   /// A square, icon-only button — toolbar actions, floating controls.
-  const PremiumButton.icon({
+  const AppButton.icon({
     super.key,
     required IconData this.icon,
     this.onPressed,
-    this.variant = PremiumButtonVariant.glass,
-    this.size = PremiumButtonSize.medium,
+    this.variant = AppButtonVariant.glass,
+    this.size = AppButtonSize.medium,
     this.isLoading = false,
     this.borderRadius = AppRadius.button,
     this.haptic = true,
@@ -103,10 +97,10 @@ class PremiumButton extends StatelessWidget {
   /// Null disables the button. So does [isLoading].
   final VoidCallback? onPressed;
 
-  final PremiumButtonVariant variant;
-  final PremiumButtonSize size;
+  final AppButtonVariant variant;
+  final AppButtonSize size;
 
-  /// Leading icon — an [AppIcons] constant. Rendered filled via [AppIcon].
+  /// Leading icon — an [AppIcons] constant.
   final IconData? icon;
 
   /// Trailing icon, for "next"-style affordances.
@@ -126,93 +120,79 @@ class PremiumButton extends StatelessWidget {
   bool get _enabled => onPressed != null && !isLoading;
 
   double get _height => switch (size) {
-    PremiumButtonSize.small => 40,
-    PremiumButtonSize.medium => 52,
-    PremiumButtonSize.large => 60,
+    AppButtonSize.small => 40,
+    AppButtonSize.medium => 52,
+    AppButtonSize.large => 56,
   };
 
   double get _iconSize => switch (size) {
-    PremiumButtonSize.small => 18,
-    PremiumButtonSize.medium => 20,
-    PremiumButtonSize.large => 24,
+    AppButtonSize.small => 18,
+    AppButtonSize.medium => 20,
+    AppButtonSize.large => 22,
   };
 
   double get _horizontalPadding => switch (size) {
-    PremiumButtonSize.small => AppSpacing.lg,
-    PremiumButtonSize.medium => AppSpacing.xxl,
-    PremiumButtonSize.large => AppSpacing.xxxl,
+    AppButtonSize.small => AppSpacing.lg,
+    AppButtonSize.medium => AppSpacing.xl,
+    AppButtonSize.large => AppSpacing.xxl,
   };
 
   TextStyle get _labelStyle => switch (size) {
-    PremiumButtonSize.small => AppTextStyles.labelMedium,
-    PremiumButtonSize.medium => AppTextStyles.labelLarge,
-    PremiumButtonSize.large => AppTextStyles.titleMedium,
+    AppButtonSize.small => AppTextStyles.labelMedium,
+    AppButtonSize.medium => AppTextStyles.labelLarge,
+    AppButtonSize.large => AppTextStyles.titleMedium,
   };
 
-  /// The gradient behind the button, or null for the unfilled variants.
-  Gradient? get _gradient => switch (variant) {
-    PremiumButtonVariant.primary => AppGradients.primary,
-    PremiumButtonVariant.secondary => AppGradients.secondary,
-    PremiumButtonVariant.accent => AppGradients.accent,
-    PremiumButtonVariant.danger => AppGradients.danger,
-    PremiumButtonVariant.gold => AppGradients.gold,
-    PremiumButtonVariant.glass => AppGradients.glassSheen,
-    PremiumButtonVariant.ghost => null,
+  /// The flat fill, or null for the unfilled variants.
+  Color? _fill(AppPalette p) => switch (variant) {
+    AppButtonVariant.primary => p.primary,
+    AppButtonVariant.secondary => p.secondary,
+    AppButtonVariant.accent => p.accent,
+    AppButtonVariant.danger => p.danger,
+    AppButtonVariant.gold => p.gold,
+    AppButtonVariant.glass => null,
+    AppButtonVariant.ghost => null,
   };
 
-  /// Label/icon colour. Filled variants use dark ink, because every fill
-  /// gradient in the palette is light — white text on Electric Green is
-  /// unreadable, which is the whole reason [AppColors.onPrimary] is a
-  /// near-black.
-  Color get _foreground => switch (variant) {
-    PremiumButtonVariant.primary => AppColors.onPrimary,
-    PremiumButtonVariant.secondary => AppColors.onSecondary,
-    PremiumButtonVariant.accent => AppColors.onAccent,
-    PremiumButtonVariant.danger => AppColors.onDanger,
-    PremiumButtonVariant.gold => AppColors.onGold,
-    PremiumButtonVariant.glass => AppColors.white,
-    PremiumButtonVariant.ghost => AppColors.primary,
-  };
-
-  /// The hue of the glow cast beneath the button.
-  Color? get _glowColor => switch (variant) {
-    PremiumButtonVariant.primary => AppColors.primary,
-    PremiumButtonVariant.secondary => AppColors.secondary,
-    PremiumButtonVariant.accent => AppColors.accent,
-    PremiumButtonVariant.danger => AppColors.danger,
-    PremiumButtonVariant.gold => AppColors.gold,
-    PremiumButtonVariant.glass => null,
-    PremiumButtonVariant.ghost => null,
+  /// Label/icon colour.
+  Color _foreground(AppPalette p) => switch (variant) {
+    AppButtonVariant.primary => p.onPrimary,
+    AppButtonVariant.secondary => p.onSecondary,
+    AppButtonVariant.accent => p.onAccent,
+    AppButtonVariant.danger => p.onDanger,
+    AppButtonVariant.gold => p.onGold,
+    // The unfilled variants sit on the page, so they take page ink:
+    // outlined stays neutral, ghost carries the accent because it has no
+    // border to signal tappability with.
+    AppButtonVariant.glass => p.textPrimary,
+    AppButtonVariant.ghost => p.primary,
   };
 
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
     final enabled = _enabled;
-    final foreground = enabled ? _foreground : AppColors.textDisabled;
-    final glow = _glowColor;
+    final foreground = enabled ? _foreground(p) : p.textDisabled;
+    final fill = _fill(p);
 
     final decoration = BoxDecoration(
       borderRadius: BorderRadius.circular(borderRadius),
-      gradient: enabled ? _gradient : (variant == PremiumButtonVariant.ghost ? null : AppGradients.disabled),
+      color: enabled ? fill : (fill == null ? null : p.cardHigh),
       border: switch (variant) {
-        PremiumButtonVariant.glass => Border.all(color: AppColors.glassBorder),
-        PremiumButtonVariant.ghost => Border.all(
-          color: enabled
-              ? AppColors.primary.withValues(alpha: 0.45)
-              : AppColors.glassBorder,
+        AppButtonVariant.glass => Border.all(
+          color: enabled ? p.borderStrong : p.border,
         ),
+        AppButtonVariant.ghost => null,
         _ => null,
       },
-      // Disabled and unfilled buttons cast no light.
-      boxShadow: enabled && glow != null ? AppShadows.button(glow) : null,
     );
 
     final content = AnimatedOpacity(
-      // Fades the whole content block, not the button, so the surface
-      // keeps its shape while the label swaps for the spinner.
+      // Fades the content block, not the button, so the surface keeps its
+      // shape while the label swaps for the spinner.
       opacity: enabled || isLoading ? 1 : 0.7,
       duration: AppMotion.fast,
-      child: _PremiumButtonContent(
+      child: _AppButtonContent(
         label: label,
         icon: icon,
         trailingIcon: trailingIcon,
@@ -233,7 +213,15 @@ class PremiumButton extends StatelessWidget {
           ? EdgeInsets.zero
           : EdgeInsets.symmetric(horizontal: _horizontalPadding),
       decoration: decoration,
-      alignment: Alignment.center,
+      // Only pin an alignment when the button's width is being imposed
+      // from outside. A Container *with* an alignment expands to fill any
+      // bounded constraint, which makes every button in a Wrap or a Row
+      // stretch to the full line width instead of sizing to its label.
+      // Without it the box sizes to the content Row (which is already
+      // mainAxisSize.min and centre-aligned), and a stretched button —
+      // fullWidth, or a `crossAxisAlignment: stretch` Column — still
+      // centres its label correctly.
+      alignment: fullWidth || _iconOnly ? Alignment.center : null,
       child: content,
     );
 
@@ -255,13 +243,23 @@ class PremiumButton extends StatelessWidget {
   }
 }
 
+/// The previous name for [AppButton]. Kept as a typedef so existing call
+/// sites need no edit; new code should use [AppButton].
+typedef PremiumButton = AppButton;
+
+/// The previous name for [AppButtonVariant].
+typedef PremiumButtonVariant = AppButtonVariant;
+
+/// The previous name for [AppButtonSize].
+typedef PremiumButtonSize = AppButtonSize;
+
 /// The label/icon/spinner stack.
 ///
 /// Both states are always laid out; the loading state crossfades on top
 /// of the label rather than replacing it, which is what keeps the
 /// button's intrinsic width constant while it works.
-class _PremiumButtonContent extends StatelessWidget {
-  const _PremiumButtonContent({
+class _AppButtonContent extends StatelessWidget {
+  const _AppButtonContent({
     required this.label,
     required this.icon,
     required this.trailingIcon,
@@ -297,7 +295,12 @@ class _PremiumButtonContent extends StatelessWidget {
         duration: AppMotion.fast,
         child: isLoading
             ? spinner
-            : AppIcon(icon!, size: iconSize, color: foreground, key: const ValueKey('icon')),
+            : AppIcon(
+                icon!,
+                size: iconSize,
+                color: foreground,
+                key: const ValueKey('icon'),
+              ),
       );
     }
 
@@ -307,7 +310,7 @@ class _PremiumButtonContent extends StatelessWidget {
       children: [
         if (icon != null) ...[
           AppIcon(icon!, size: iconSize, color: foreground),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: AppSpacing.sm),
         ],
         Flexible(
           child: Text(
@@ -318,7 +321,7 @@ class _PremiumButtonContent extends StatelessWidget {
           ),
         ),
         if (trailingIcon != null) ...[
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: AppSpacing.sm),
           AppIcon(trailingIcon!, size: iconSize, color: foreground),
         ],
       ],
@@ -332,8 +335,7 @@ class _PremiumButtonContent extends StatelessWidget {
           duration: AppMotion.fast,
           child: row,
         ),
-        // Ignored for hit-testing and sizing when idle so it never
-        // widens the button.
+        // Only mounted while loading so it never widens the button.
         if (isLoading) spinner,
       ],
     );

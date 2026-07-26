@@ -1,58 +1,36 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
-import 'package:doon_walkers/core/icons/app_icons.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
-import 'package:doon_walkers/core/theme/app_colors.dart';
-import 'package:doon_walkers/core/theme/app_dimens.dart';
-import 'package:doon_walkers/core/theme/app_gradients.dart';
-import 'package:doon_walkers/core/theme/app_shadows.dart';
-import 'package:doon_walkers/core/theme/app_text_styles.dart';
-import 'package:doon_walkers/core/widgets/floating_nav_bar.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Persistent navigation shell for the app.
+/// Persistent navigation shell — bottom nav, app bar chrome and drawer,
+/// wrapped around GoRouter's [StatefulShellRoute] so all three persist
+/// across route transitions.
 ///
-/// Wraps GoRouter's [ShellRoute] so the [NavigationBar] and
-/// [NavigationDrawer] persist across route transitions.
+/// ## Navigation structure (Redesign 2.0, Phase 10)
 ///
-/// Primary destinations (bottom nav):
-///   - Everyone: Home, Treks, Challenges, Profile (4 tabs — identical
-///     for guest, regular user, and admin). Challenges (Version 2,
-///     Phase C2) joined the shared base here rather than staying
-///     admin-only (C1's original placement) now that it has real
-///     public-facing content — see ChallengesScreen's doc.
-///   - Admin additionally gets a 5th tab: Trek Registrations.
+/// **Five bottom tabs, identical for every role**: Home, Activity, Treks,
+/// Challenges, Profile. Admin no longer gets an extra tab — Trek
+/// Registrations moved to the drawer's admin section.
 ///
-/// Navigation Drawer: branding/version, plus a "Merchandise" entry
-/// (Version 2, Phase M1) — the drawer's former "Admin Dashboard" entry
-/// was removed along with the screen it opened (see app_router.dart's
-/// top doc), and Merchandise is what now occupies that otherwise-empty
-/// space. Every admin-only affordance is either inline (Trek Library,
-/// Challenges, Trek Detail's comments/gallery), a bottom-nav tab (Trek
-/// Registrations), or on Profile (Send Notification, Merchandise
-/// Inquiries) — none of them need a drawer entry. Merchandise is
-/// different: it's a genuinely new top-level, PUBLICLY browsable
-/// surface (not admin-only) that isn't a bottom-nav tab (see
-/// MerchandiseCatalogScreen's doc for why not) — the drawer is the
-/// natural, always-reachable-from-anywhere home for it, reusing an
-/// affordance (the menu icon, visible on every branch) that would
-/// otherwise sit completely unused.
+/// That single decision is what makes this file dramatically simpler than
+/// its two predecessors. The tab set is now a `const` list. There is no
+/// role-conditional destinations list, no tab count that changes under a
+/// live role flip, and therefore none of the "selectedIndex points past
+/// the end of a shrunk list" crash class that this shell has hit before.
+/// [resolveSelectedTabIndex] survives, but only to handle the one
+/// remaining case: branch 5 is admin-only standalone screens and is
+/// *never* a tab, so a router index of 5 has no tab to highlight.
 ///
-/// The selected tab is derived from the current [GoRouterState] location
-/// so that deep-links automatically highlight the correct tab.
+/// **Drawer**: Merchandise, About, Support, Settings, Contact — plus an
+/// Admin section, rendered only for an admin, containing Registrations
+/// (the relocated tab), Merchandise Inquiries and Send Notification.
 ///
-/// History: Gallery used to be a standalone tab for everyone; it was
-/// removed entirely (gallery MANAGEMENT still lives inline on each Trek
-/// Detail page's TrekGallerySection, untouched) in favour of giving
-/// admin a genuinely useful 4th tab instead. Because tab COUNT is now
-/// role-dependent for the first time — previously every role saw the
-/// exact same fixed tab set, with Admin as the only non-tabbed,
-/// drawer-only branch — [_AppShellState] must handle a role flipping
-/// while the app is open, in both directions, without the bottom nav's
-/// `selectedIndex` ever pointing past the end of a shrunk destinations
-/// list. See [_AppShellState.build] for how.
+/// The selected tab is derived from the current branch index, so
+/// deep-links highlight the correct tab automatically.
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
@@ -67,9 +45,9 @@ class AppShell extends ConsumerStatefulWidget {
 ///
 /// A single [icon] rather than an icon/selectedIcon pair — Material
 /// Symbols' filled-vs-hollow distinction is a font axis, not a different
-/// glyph (see [AppIcon]'s doc), so selection state is communicated by
-/// [FloatingNavBar]'s own colour/scale/glow treatment instead of swapping
-/// glyphs.
+/// glyph (see [AppIcon]'s doc), so selection is communicated by
+/// [FloatingNavBar]'s own colour and indicator treatment instead of
+/// swapping glyphs.
 class _NavDestination {
   const _NavDestination({
     required this.label,
@@ -82,16 +60,21 @@ class _NavDestination {
   final String route;
 }
 
-// Order here MUST match the branch order in app_router.dart (branches
-// 0-3) — NavigationBar's selectedIndex is a raw branch index, and
-// _AppShellState's clamp below assumes every branch index less than
-// the CURRENT role's destinations.length is one of these tabs, in this
-// order.
-const _baseDestinations = [
+/// The bottom tabs — **every role sees exactly these, in this order**.
+///
+/// Order here MUST match branches 0-4 in app_router.dart, because
+/// `goBranch(index)` takes a raw branch index. Branch 5 (admin-only
+/// standalone screens) intentionally has no entry: it is not a tab.
+const _destinations = [
   _NavDestination(
     label: 'Home',
     icon: AppIcons.home,
     route: AppConstants.routeHome,
+  ),
+  _NavDestination(
+    label: 'Activity',
+    icon: AppIcons.steps,
+    route: AppConstants.routeActivity,
   ),
   _NavDestination(
     label: 'Treks',
@@ -110,82 +93,78 @@ const _baseDestinations = [
   ),
 ];
 
-const _adminDestination = _NavDestination(
-  label: 'Registrations',
-  icon: AppIcons.registrations,
-  route: AppConstants.routeAdminTrekRegistrations,
-);
+/// How many branches are tabs. Branches `0 .. _tabCount-1` are the bottom
+/// nav; anything at or above it is a non-tab branch.
+///
+/// A literal rather than `_destinations.length` because it is a default
+/// parameter value on [resolveSelectedTabIndex] and therefore has to be a
+/// compile-time constant, which a list's `.length` is not. [_AppShellState.build]
+/// asserts the two agree, so they cannot drift apart unnoticed.
+const int _tabCount = 5;
 
-/// Resolves what `NavigationBar.selectedIndex` should show, given:
-///   - [currentIndex]: the router's actual branch index right now (0-4,
-///     regardless of role — every branch always exists in the route
-///     tree; see app_router.dart's branch layout doc).
-///   - [destinationsLength]: how many bottom tabs THIS role currently
-///     gets (3 for guest/member, 4 for admin).
-///   - [lastPrimaryIndex]: the last tab index that WAS valid to show
-///     selected, from a previous call.
+/// Resolves what the bottom nav's `selectedIndex` should show, given:
+///   - [currentIndex]: the router's actual branch index right now (0-5).
+///   - [lastPrimaryIndex]: the last index that WAS a real tab, from a
+///     previous call.
 ///
-/// Returns `(selectedIndex, nextLastPrimaryIndex)` — the second value is
-/// what the caller should store and pass back in as [lastPrimaryIndex]
-/// on the next call, mirroring `_AppShellState._lastPrimaryIndex`.
+/// Returns `(selectedIndex, nextLastPrimaryIndex)`; the caller stores the
+/// second value and passes it back next time, mirroring
+/// `_AppShellState._lastPrimaryIndex`.
 ///
-/// Pulled out of [_AppShellState] as a pure function so the exact bug
-/// class this guards against — an out-of-range `selectedIndex` reaching
-/// `NavigationBar` and tripping its assertion, the crash history this
-/// project has already hit once — has direct unit coverage instead of
-/// only the manual device trace. Covers both directions: [currentIndex]
-/// pointing at the never-a-tab admin-only branch (5, no index screen of
-/// its own — see app_router.dart), AND pointing at the admin-only Trek
-/// Registrations branch (4) right after a demotion shrinks
-/// [destinationsLength] out from under it.
+/// ## What this guards, and why it is now purely defensive
+///
+/// This shell's crash history is about an out-of-range `selectedIndex`
+/// reaching the nav bar and tripping its assertion. Two things could
+/// cause it before:
+///
+///  1. The router sitting on a branch that is not a tab at all.
+///  2. The tab list *shrinking* under the current selection, when an
+///     admin was demoted while on their extra tab.
+///
+/// **Both are now structurally impossible.** Case 2 went away when every
+/// role got the same five tabs, making [_tabCount] a compile-time
+/// constant that never changes at runtime. Case 1 went away when the
+/// admin-only screens moved out of the shell to top-level routes, which
+/// left every remaining branch a tab.
+///
+/// This function is therefore expected never to take a fallback branch
+/// today. It is kept — rather than deleted or collapsed to a one-liner —
+/// because the invariant it encodes ("the nav bar is never handed an
+/// index it cannot render") is the one this project has broken twice,
+/// and the next person to add a non-tab branch should find a tested
+/// guard already in place rather than rediscover the incident. Its tests
+/// sweep indices no real router currently produces, on purpose.
 @visibleForTesting
 (int selectedIndex, int nextLastPrimaryIndex) resolveSelectedTabIndex({
   required int currentIndex,
-  required int destinationsLength,
   required int lastPrimaryIndex,
+  int tabCount = _tabCount,
 }) {
-  if (currentIndex < destinationsLength) {
+  if (currentIndex >= 0 && currentIndex < tabCount) {
     return (currentIndex, currentIndex);
   }
-  if (lastPrimaryIndex < destinationsLength) {
+  if (lastPrimaryIndex >= 0 && lastPrimaryIndex < tabCount) {
     return (lastPrimaryIndex, lastPrimaryIndex);
   }
-  // Even the fallback no longer exists for this role (e.g. it was 4 —
-  // Trek Registrations — from before a demotion). Home (index 0) always
-  // exists for every role, so reset to it rather than carry a
-  // permanently-stale lastPrimaryIndex forward.
+  // Home (index 0) exists for every role, always.
   return (0, 0);
 }
 
-// Branch index of the admin-only Trek Registrations tab — must match
-// its position in app_router.dart's branches list (0 Home, 1 Treks,
-// 2 Challenges, 3 Profile, 4 Trek Registrations, 5 admin-only standalone
-// screens). Challenges (branch 2) needs no equivalent entry here: it's
-// a fully public tab now (Version 2, Phase C2), not an admin-only one —
-// its admin-only leaf routes (challenge create/edit) carry the same
-// soft-UX-only risk on a stale demotion as Trek Library's/Merchandise's
-// own inline admin forms (RLS blocks the actual write regardless), not
-// the "stranded on an entire off-limits dashboard" risk this listener
-// exists for.
-const _trekRegistrationsBranchIndex = 4;
-
-class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver {
-  // Tracks whichever primary tab was last actually valid to show
-  // selected — see [resolveSelectedTabIndex] for the full reasoning and
-  // the cases it now has to handle (the never-a-tab admin-only branch,
-  // and the admin-only Trek Registrations tab right after a demotion).
+class _AppShellState extends ConsumerState<AppShell>
+    with WidgetsBindingObserver {
+  // Whichever primary tab was last actually valid to show selected — see
+  // [resolveSelectedTabIndex].
   int _lastPrimaryIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    // "Sync on app resume from background" (Version 2, Challenges
-    // Module pivot) — AppShell is the natural place for this: it's
-    // mounted for the app's entire lifetime once past sign-in/routing,
-    // same reason it already owns the admin-demotion lifecycle logic
-    // above. "Sync on launch" is a separate hook (activityLaunchSyncProvider,
-    // watched from DoonWalkersApp) since that's an auth-state concern,
-    // not an app-lifecycle one.
+    // "Sync on app resume from background" (Version 2, Challenges Module
+    // pivot) — AppShell is the natural place for this: it's mounted for
+    // the app's entire lifetime once past sign-in/routing. "Sync on
+    // launch" is a separate hook (activityLaunchSyncProvider, watched
+    // from DoonWalkersApp) since that's an auth-state concern, not an
+    // app-lifecycle one.
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -202,75 +181,68 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
     }
   }
 
-  void _onTabSelected(BuildContext context, int index) {
+  void _onTabSelected(int index) {
     widget.navigationShell.goBranch(
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 
+  void _openDrawerRoute(BuildContext context, String route) {
+    Navigator.of(context).pop(); // close the drawer first
+    context.push(route);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // GoRouter's own `redirect` (app_router.dart) is the primary guard
-    // against a demoted admin staying on an admin-only route, and it's
-    // enough for most cases (verified live: it correctly bounces a
-    // demoted user off admin-only paths). But it re-evaluates against the
-    // router's declarative top-level location, and Trek Registrations'
-    // detail routes are reached via push() *within* this branch's own
-    // Navigator — verified live that a demotion while several pushes
-    // deep on this branch does NOT reliably re-trigger `redirect` on its
-    // own. Rather than depend on that timing, this listener is a second,
-    // precisely-scoped line of defense: the ONE transition that can
-    // strand a viewer on now-forbidden content — an entire off-limits
-    // tab staying visible, not just a stale form — is admin-with-role
-    // becoming non-admin while sitting on branch 4 (Trek Registrations)
-    // specifically. When that exact transition happens, actively
-    // navigate to Home — a plain context.go call, which (unlike push)
-    // always resets to a clean top-level match, so it works regardless
-    // of how many pages were pushed within the branch.
-    ref.listen<bool>(isAdminProvider, (previous, next) {
-      if (previous == true &&
-          next == false &&
-          widget.navigationShell.currentIndex == _trekRegistrationsBranchIndex) {
-        context.go(AppConstants.routeHome);
-      }
-    });
+    assert(
+      _destinations.length == _tabCount,
+      '_tabCount ($_tabCount) must match the number of bottom-nav '
+      'destinations (${_destinations.length}). Adding or removing a tab '
+      'means updating both, plus the branch order in app_router.dart.',
+    );
 
+    // No bespoke demotion listener here any more.
+    //
+    // There used to be one: when the admin-only screens lived inside this
+    // shell as a branch, GoRouter's `redirect` could not be relied on to
+    // fire for them, because they were reached by push() *within* a
+    // branch's own Navigator rather than by a top-level location change.
+    // Phase 10 moved every admin screen out to a top-level route (see
+    // app_router.dart), so a demoted admin sitting on one is now bounced
+    // by `redirect` itself — the same mechanism that already protects
+    // every other /admin path — and the listener became unreachable code
+    // pretending to be a safety net.
+    //
+    // `isAdminProvider` is still watched, but only to decide whether the
+    // drawer shows its Admin section.
     final isAdmin = ref.watch(isAdminProvider);
-    final destinations = isAdmin ? [..._baseDestinations, _adminDestination] : _baseDestinations;
 
     final (selectedIndex, nextLastPrimaryIndex) = resolveSelectedTabIndex(
       currentIndex: widget.navigationShell.currentIndex,
-      destinationsLength: destinations.length,
       lastPrimaryIndex: _lastPrimaryIndex,
     );
     _lastPrimaryIndex = nextLastPrimaryIndex;
 
     return Scaffold(
       appBar: AppBar(
-        // White, not onPrimary: the app bar background is near-black and
-        // onPrimary is the dark ink meant to sit ON the electric-green
-        // primary — using it here would render the title dark-on-dark.
-        // Confirmed still correct in this Phase 7 chrome pass.
-        title: Text(
-          AppConstants.appName,
-          style: AppTextStyles.titleLarge.copyWith(color: AppColors.white),
-        ),
+        // Title, bell and menu all inherit their colour from the app bar
+        // theme, which resolves per-theme — no hardcoded ink here, which
+        // is what makes the chrome correct in light and dark alike.
+        title: const Text(AppConstants.appName),
         actions: [
-          // Notifications (Phase 8) — always shown regardless of role
-          // or sign-in state, same convention as the Profile tab: the
-          // router's own guest-redirect guard is what protects
-          // /notifications, not conditional visibility of the
-          // affordance that opens it.
+          // Notifications — always shown regardless of role or sign-in
+          // state, same convention as the Profile tab: the router's own
+          // guest-redirect guard is what protects /notifications, not
+          // conditional visibility of the affordance that opens it.
           IconButton(
-            icon: const AppIcon(AppIcons.notifications, color: AppColors.white),
+            icon: const AppIcon(AppIcons.notifications),
             tooltip: 'Notifications',
             onPressed: () => context.push(AppConstants.routeNotifications),
           ),
-          // Opens the secondary NavigationDrawer
           Builder(
             builder: (ctx) => IconButton(
-              icon: const AppIcon(AppIcons.menu, color: AppColors.white),
+              icon: const AppIcon(AppIcons.menu),
               tooltip: 'More',
               onPressed: () => Scaffold.of(ctx).openEndDrawer(),
             ),
@@ -278,41 +250,259 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
         ],
       ),
 
-      // ── Secondary navigation: Material 3 NavigationDrawer ────────
-      // Branding/version plus "Merchandise" — see this class's top doc
-      // for why Merchandise lives here rather than as a bottom-nav tab.
-      // Contents and gating are unchanged from before this pass: there
-      // are no admin-only entries here today (every admin affordance
-      // lives inline elsewhere or on Profile — see the top doc), so the
-      // restyle below applies identically regardless of role.
-      endDrawer: NavigationDrawer(
-        backgroundColor: AppColors.surface,
-        onDestinationSelected: (index) {
-          Navigator.of(context).pop(); // close drawer
-          // "Merchandise" is the only destination present, so any
-          // selection here — index is always 0 — means it.
-          context.push(AppConstants.routeMerchandise);
-        },
+      endDrawer: _AppDrawer(
+        isAdmin: isAdmin,
+        onSelect: (route) => _openDrawerRoute(context, route),
+      ),
+
+      bottomNavigationBar: FloatingNavBar(
+        selectedIndex: selectedIndex,
+        onDestinationSelected: _onTabSelected,
+        destinations: _destinations
+            .map((d) => FloatingNavBarDestination(icon: d.icon, label: d.label))
+            .toList(),
+      ),
+
+      body: widget.navigationShell,
+    );
+  }
+}
+
+/// The secondary navigation drawer.
+///
+/// A plain [Drawer] with hand-rolled rows rather than Material's
+/// [NavigationDrawer]: that widget models a flat list of mutually
+/// exclusive destinations with a selection state, which is wrong twice
+/// over here — these entries `push` onto the current branch rather than
+/// selecting a persistent destination, and the admin group needs a
+/// labelled section break that [NavigationDrawer] has no room for.
+class _AppDrawer extends StatelessWidget {
+  const _AppDrawer({required this.isAdmin, required this.onSelect});
+
+  final bool isAdmin;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+
+    return Drawer(
+      backgroundColor: palette.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(
+          left: Radius.circular(AppRadius.xl),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _DrawerHeader(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                children: [
+                  _DrawerItem(
+                    icon: AppIcons.store,
+                    label: 'Merchandise',
+                    onTap: () => onSelect(AppConstants.routeMerchandise),
+                  ),
+                  _DrawerItem(
+                    icon: AppIcons.info,
+                    label: 'About',
+                    onTap: () => onSelect(AppConstants.routeAbout),
+                  ),
+                  _DrawerItem(
+                    icon: AppIcons.support,
+                    label: 'Support',
+                    onTap: () => onSelect(AppConstants.routeSupport),
+                  ),
+                  _DrawerItem(
+                    icon: AppIcons.settings,
+                    label: 'Settings',
+                    onTap: () => onSelect(AppConstants.routeSettings),
+                  ),
+                  _DrawerItem(
+                    icon: AppIcons.connect,
+                    label: 'Contact',
+                    onTap: () => onSelect(AppConstants.routeContact),
+                  ),
+
+                  // ── Admin ───────────────────────────────────────────
+                  // Rendered only for an admin. Gating the *affordance*
+                  // here is presentation only — every one of these paths
+                  // starts with /admin and is independently gated by the
+                  // router's own admin redirect and by RLS, so hiding
+                  // them is a courtesy, not the security boundary.
+                  if (isAdmin) ...[
+                    const _DrawerSectionBreak(label: 'Admin'),
+                    _DrawerItem(
+                      icon: AppIcons.registrations,
+                      label: 'Registrations',
+                      onTap: () =>
+                          onSelect(AppConstants.routeAdminTrekRegistrations),
+                    ),
+                    _DrawerItem(
+                      icon: AppIcons.store,
+                      label: 'Merchandise Inquiries',
+                      onTap: () =>
+                          onSelect(AppConstants.routeAdminMerchInquiries),
+                    ),
+                    _DrawerItem(
+                      icon: AppIcons.announce,
+                      label: 'Send Notification',
+                      onTap: () =>
+                          onSelect(AppConstants.routeAdminSendNotification),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.sm,
+                AppSpacing.xl,
+                AppSpacing.md,
+              ),
+              child: Text(
+                'v${AppConstants.appVersion}',
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: palette.textDisabled,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 24, 16, 16),
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: palette.primary,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: AppIcon(
+              AppIcons.landscape,
+              color: palette.onPrimary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              AppConstants.appName,
+              style: AppTextStyles.titleMedium.copyWith(
+                color: palette.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A labelled break between drawer groups — a hairline plus a quiet
+/// overline, which is enough to separate without adding a heavy header.
+class _DrawerSectionBreak extends StatelessWidget {
+  const _DrawerSectionBreak({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Divider(color: palette.border, height: 1),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            label.toUpperCase(),
+            style: AppTextStyles.overline.copyWith(
+              color: palette.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 2,
+      ),
+      child: Semantics(
+        button: true,
+        label: label,
+        child: Pressable(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.md,
+            ),
             child: Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    gradient: AppGradients.primary,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    boxShadow: AppShadows.glow(AppColors.primary, opacity: 0.3, radius: 12),
-                  ),
-                  child: const AppIcon(AppIcons.landscape, color: AppColors.onPrimary, size: 22),
-                ),
-                const SizedBox(width: AppSpacing.md),
+                AppIcon(icon, size: 22, color: palette.textSecondary),
+                const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Text(
-                    AppConstants.appName,
-                    style: AppTextStyles.titleMedium,
+                    label,
+                    style: AppTextStyles.titleSmall.copyWith(
+                      color: palette.textPrimary,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -320,34 +510,8 @@ class _AppShellState extends ConsumerState<AppShell> with WidgetsBindingObserver
               ],
             ),
           ),
-          const Divider(indent: 28, endIndent: 28, color: AppColors.glassBorder),
-          const NavigationDrawerDestination(
-            icon: AppIcon(AppIcons.store, color: AppColors.textSecondary),
-            selectedIcon: AppIcon(AppIcons.store, color: AppColors.primary),
-            label: Text('Merchandise'),
-          ),
-          const Divider(indent: 28, endIndent: 28, color: AppColors.glassBorder),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 8, 16, 0),
-            child: Text(
-              'v${AppConstants.appVersion}',
-              style: AppTextStyles.disabled(AppTextStyles.labelSmall),
-            ),
-          ),
-        ],
+        ),
       ),
-
-      // ── Primary navigation: floating glass bar ───────────────────
-      bottomNavigationBar: FloatingNavBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (i) => _onTabSelected(context, i),
-        destinations: destinations
-            .map((d) => FloatingNavBarDestination(icon: d.icon, label: d.label))
-            .toList(),
-      ),
-
-      // ── Shell body ───────────────────────────────────────────────
-      body: widget.navigationShell,
     );
   }
 }

@@ -1,84 +1,64 @@
 import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:flutter/widgets.dart';
 
-/// Gradient tokens.
+/// Gradient tokens — **almost none left, on purpose**.
 ///
-/// Flat fills are the exception in this design system, not the rule:
-/// buttons, badges and glass surfaces all carry a subtle top-left →
-/// bottom-right gradient so they catch light like a physical object.
+/// The old system used a lit top-left → bottom-right gradient on every
+/// button, badge and card so surfaces "caught light like a physical
+/// object". Applied everywhere, that reads as decoration rather than
+/// design, and it is most of what made the app look generated.
 ///
-/// All directional gradients run [Alignment.topLeft] →
-/// [Alignment.bottomRight] so multiple elements on one screen appear lit
-/// from the same direction.
+/// The calm system uses flat fills. These tokens survive because ~20
+/// files reference them, but the colour gradients are now **flat** —
+/// both stops are the same colour — so a call site that paints
+/// `AppGradients.primary` gets a clean solid primary fill and needs no
+/// edit. Only [imageScrim] remains a real gradient, because legibility
+/// of text over a photograph genuinely requires one.
+///
+/// New code should not reach for this class at all. Use a solid colour
+/// from `AppPalette`.
 abstract final class AppGradients {
-  static const Alignment _from = Alignment.topLeft;
-  static const Alignment _to = Alignment.bottomRight;
+  /// A gradient between one colour and itself — i.e. a flat fill wearing
+  /// a [Gradient]'s clothes, so existing `gradient:` parameters keep
+  /// working without becoming `color:` edits.
+  static LinearGradient _flat(Color color) =>
+      LinearGradient(colors: [color, color]);
 
-  /// Electric green — the primary call to action.
-  static const LinearGradient primary = LinearGradient(
-    begin: _from,
-    end: _to,
-    colors: [AppColors.primaryLight, AppColors.primaryDark],
-  );
+  /// Nature Green. Flat.
+  static LinearGradient get primary => _flat(AppColors.primary);
 
-  /// Sky blue — secondary actions.
-  static const LinearGradient secondary = LinearGradient(
-    begin: _from,
-    end: _to,
-    colors: [AppColors.secondaryLight, AppColors.secondaryDark],
-  );
+  /// Muted slate blue. Flat.
+  static LinearGradient get secondary => _flat(AppColors.secondary);
 
-  /// Orange — accent actions, "in progress"/streak surfaces.
-  static const LinearGradient accent = LinearGradient(
-    begin: _from,
-    end: _to,
-    colors: [AppColors.accentLight, AppColors.accentDark],
-  );
+  /// Muted terracotta. Flat.
+  static LinearGradient get accent => _flat(AppColors.accent);
 
-  /// Red — destructive actions.
-  static const LinearGradient danger = LinearGradient(
-    begin: _from,
-    end: _to,
-    colors: [Color(0xFFF87171), Color(0xFFDC2626)],
-  );
+  /// Destructive red. Flat.
+  static LinearGradient get danger => _flat(AppColors.danger);
 
-  /// Gold — achievements, badges, top-of-leaderboard surfaces.
-  static const LinearGradient gold = LinearGradient(
-    begin: _from,
-    end: _to,
-    colors: [Color(0xFFFFE082), Color(0xFFF0B429)],
-  );
+  /// Achievement gold. Flat — and reserved for badges and medals, never
+  /// a general card fill.
+  static LinearGradient get gold => _flat(AppColors.gold);
 
-  /// The sheen that sits *inside* a glass surface: brighter at the top
-  /// edge, fading to near-nothing at the bottom. This is what stops a
-  /// translucent panel from reading as a flat grey rectangle.
-  static const LinearGradient glassSheen = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [AppColors.glassStrong, AppColors.glass],
-  );
+  /// Was the translucent sheen inside a glass pane. Now a flat card fill.
+  static LinearGradient get glassSheen => _flat(AppColors.card);
 
-  /// A neutral raised-card fill for opaque (non-blurred) cards.
-  static const LinearGradient cardFill = LinearGradient(
-    begin: _from,
-    end: _to,
-    colors: [AppColors.cardHigh, AppColors.card],
-  );
+  /// A flat card fill.
+  static LinearGradient get cardFill => _flat(AppColors.card);
 
-  /// Bottom-up scrim for text laid over a photograph. Trek cover images
-  /// are the main consumer; kept here so every image overlay in the app
-  /// uses the same falloff.
+  /// A dead, hueless surface for disabled controls.
+  static LinearGradient get disabled => _flat(AppColors.cardHigh);
+
+  /// Bottom-up scrim for text laid over a photograph.
+  ///
+  /// **The one real gradient in the system.** Trek and product cover
+  /// images are the consumers; keeping it here means every image overlay
+  /// in the app shares one falloff. Tuned to the new dark background so
+  /// the fade bottoms out into the page rather than into pure black.
   static const LinearGradient imageScrim = LinearGradient(
     begin: Alignment.bottomCenter,
     end: Alignment.topCenter,
-    colors: [Color(0xE6090909), Color(0x99090909), Color(0x00090909)],
+    colors: [Color(0xE6121513), Color(0x99121513), Color(0x00121513)],
     stops: [0, 0.45, 1],
-  );
-
-  /// A disabled control: no hue, no light direction, just dead surface.
-  static const LinearGradient disabled = LinearGradient(
-    begin: _from,
-    end: _to,
-    colors: [AppColors.cardHigh, AppColors.card],
   );
 }

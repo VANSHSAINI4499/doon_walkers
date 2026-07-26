@@ -33,9 +33,9 @@ class _SplashDemoAppState extends State<_SplashDemoApp> {
     return MaterialApp(
       title: 'DoonWalkers · Splash',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.system,
       home: SplashGate(
         key: ValueKey(_replayCount),
         child: _LandedScreen(onReplay: () => setState(() => _replayCount++)),

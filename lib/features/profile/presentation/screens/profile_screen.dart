@@ -92,6 +92,11 @@ class ProfileScreen extends ConsumerWidget {
             // a real streak to show, so it never leaves an empty gap.
             const StreakSection(),
             const ProfileStatsSection(),
+            // Leaderboard visibility stays here: it writes a column on
+            // the user's row, so it is an *account* setting. Appearance
+            // moved to the drawer's Settings destination in Phase 10 —
+            // it is device-local, and duplicating it in two places would
+            // mean two controls over one preference.
             const LeaderboardVisibilityToggle(),
             const MyRegistrationsSection(),
             const MyWishlistSection(),

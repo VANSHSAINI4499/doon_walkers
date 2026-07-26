@@ -5,6 +5,7 @@
 // through the card's rendered text.
 
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
+import 'package:doon_walkers/core/theme/app_colors.dart';
 import 'package:doon_walkers/core/theme/app_theme.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
@@ -99,10 +100,16 @@ void main() {
     });
   });
 
-  group('TierBadge palette (Phase 4 mapping)', () {
-    test('gold maps to the brand gold and platinum to sky blue', () {
-      expect(TierBadge.colorFor(ChallengeTier.gold), const Color(0xFFFFD54F));
-      expect(TierBadge.colorFor(ChallengeTier.platinum), const Color(0xFF38BDF8));
+  group('TierBadge palette', () {
+    test('every tier maps onto the achievement metal ramp', () {
+      // Asserted against the tokens, not hex literals: the previous
+      // version pinned two tiers to raw hexes, so retuning the palette
+      // silently moved half the ladder and broke this test instead of
+      // the mapping staying correct by construction.
+      expect(TierBadge.colorFor(ChallengeTier.bronze), AppColors.bronze);
+      expect(TierBadge.colorFor(ChallengeTier.silver), AppColors.silver);
+      expect(TierBadge.colorFor(ChallengeTier.gold), AppColors.gold);
+      expect(TierBadge.colorFor(ChallengeTier.platinum), AppColors.platinum);
     });
 
     test('all four tiers have distinct colours', () {

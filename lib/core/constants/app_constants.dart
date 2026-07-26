@@ -33,6 +33,46 @@ class AppConstants {
   static const String routeTrekLibrary = '/trek-library';
   static const String routeProfile = '/profile';
 
+  /// Activity — the personal movement dashboard (Redesign 2.0, Phase 10
+  /// creates the tab + route; Phase 11 fills in the real Day/Week/Month
+  /// content). A shared bottom-nav tab for every role, sitting between
+  /// Home and Treks.
+  ///
+  /// Protected like [routeProfile]: everything this tab will ever show is
+  /// the signed-in user's own activity, so a guest tapping it is bounced
+  /// to Sign In rather than shown an empty shell. Wiring that now — while
+  /// the screen is still a placeholder — means Phase 11 inherits the
+  /// guard instead of having to remember to add it.
+  static const String routeActivity = '/activity';
+
+  // ── Drawer destinations (Redesign 2.0, Phase 10) ──────────────────
+  // Thin screens over data the app already has: [routeAbout],
+  // [routeContact] and [routeSupport] all read `public.settings` via
+  // settingsProvider and add no backend. [routeSettings] is device-local
+  // preferences only.
+  //
+  // All four are top-level, OUTSIDE the StatefulShellRoute — same
+  // reasoning as [routeNotifications] and [routeMerchandise]: they are
+  // opened from the drawer, which is visible on every branch, so nesting
+  // one under a single branch would silently switch tabs depending on
+  // which was current when it was opened.
+
+  /// Org identity, story, vision/mission, community rules. Moved out of
+  /// Home entirely in Phase 10 — see AboutScreen's doc for why it is no
+  /// longer duplicated there.
+  static const String routeAbout = '/about';
+
+  /// Contact channels (Instagram, WhatsApp, email, phone).
+  static const String routeContact = '/contact';
+
+  /// Getting help — the subset of contact channels that actually reach a
+  /// human, plus the community rules.
+  static const String routeSupport = '/support';
+
+  /// Device-local preferences. Currently appearance (light/dark/system)
+  /// only.
+  static const String routeSettings = '/settings';
+
   /// Profile dashboard redesign — the member-facing "View All" screens
   /// for the three preview sections on Profile. Nested under
   /// [routeProfile] (registered in app_router.dart), each its own
@@ -120,10 +160,14 @@ class AppConstants {
   /// roster is recency-triage across every trek, this is a single
   /// trek's full attendee list.
   ///
-  /// Promoted to its own bottom-nav TAB (branch) for admins in the final
-  /// nav restructure, unlike [routeAdminRegistrations] which has no UI
-  /// entry point at all now — important enough to an admin's day-to-day
-  /// use to deserve one tap from anywhere, not two.
+  /// **No longer a bottom-nav tab.** Redesign 2.0 Phase 10 moved this to
+  /// the drawer's admin section: the bottom nav is now five shared tabs
+  /// for every role, so admin no longer gets an extra one. The screen
+  /// itself is untouched — only its entry point moved.
+  ///
+  /// The practical cost: an admin's most-used roster went from one tap
+  /// anywhere to two (menu → Registrations). Flagged, and accepted as
+  /// part of making the tab bar role-independent.
   static const String routeAdminTrekRegistrations = '/admin/trek-registrations';
 
   /// The roster for one trek, nested under [routeAdminTrekRegistrations]
@@ -132,12 +176,16 @@ class AppConstants {
       '$routeAdminTrekRegistrations/$trekId';
 
   /// A registration's detail view, reached from the per-trek roster.
-  /// Deliberately NOT [adminRegistrationDetailLocation] (the flat
-  /// roster's path under the /admin branch) — that belongs to a
-  /// different StatefulShellRoute branch than this tab, and pushing
-  /// across branches would switch tabs and put "back" on the Admin
-  /// Dashboard instead of this trek's roster. Same screen, a path
-  /// nested under this branch instead.
+  ///
+  /// Still deliberately NOT [adminRegistrationDetailLocation], though the
+  /// original reason has lapsed: the two used to live in different
+  /// StatefulShellRoute branches, so pushing across them switched tabs
+  /// and put "back" on the wrong screen. Since Phase 10 folded Trek
+  /// Registrations into the single admin branch, both paths now share a
+  /// navigator and either would work. Keeping the nested path anyway —
+  /// it keeps this roster's back stack self-describing, and re-pointing
+  /// live call sites for no behavioural gain is exactly the kind of
+  /// churn that caused this file's earlier navigation incidents.
   static String adminTrekRegistrationsDetailLocation(String trekId, String registrationId) =>
       '${adminTrekRegistrationsLocation(trekId)}/$registrationId';
 

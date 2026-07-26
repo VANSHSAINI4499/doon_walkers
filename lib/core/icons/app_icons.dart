@@ -152,6 +152,15 @@ abstract final class AppIcons {
   static const IconData book = Symbols.menu_book_rounded;
   static const IconData desktop = Symbols.desktop_windows_rounded;
 
+  // ── Drawer destinations ───────────────────────────────────────────
+  static const IconData settings = Symbols.settings_rounded;
+  static const IconData support = Symbols.help_rounded;
+
+  // ── Appearance ────────────────────────────────────────────────────
+  static const IconData themeSystem = Symbols.brightness_auto_rounded;
+  static const IconData themeLight = Symbols.light_mode_rounded;
+  static const IconData themeDark = Symbols.dark_mode_rounded;
+
   /// Every icon in the vocabulary, for the "rounded family" invariant
   /// test and for the design-system demo screen's icon grid.
   static const Map<String, IconData> all = {
@@ -260,6 +269,11 @@ abstract final class AppIcons {
     'hidden': hidden,
     'book': book,
     'desktop': desktop,
+    'settings': settings,
+    'support': support,
+    'themeSystem': themeSystem,
+    'themeLight': themeLight,
+    'themeDark': themeDark,
   };
 
   /// The font family every [AppIcons] entry must resolve to.

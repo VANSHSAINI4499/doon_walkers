@@ -1,127 +1,148 @@
 import 'package:flutter/material.dart';
 
-/// DoonWalkers colour palette — **dark-mode-first** (Redesign Phase 1).
+/// Static colour constants — the **compatibility layer** for the calm
+/// redesign.
 ///
-/// The app ships a single dark theme. Every value here is fixed by the
-/// Phase 1 design spec; do not invent new raw [Color] literals in feature
-/// code — add a token here instead so the palette stays re-themeable.
+/// ## Read this before using it
 ///
-/// ## Layering model
+/// New code should use `AppPalette.of(context)` instead. This class only
+/// still exists because ~650 call sites across the feature screens
+/// reference it, 80-odd of them from inside `const` expressions that
+/// cannot become context-dependent without editing every line. Deleting
+/// it would mean a single 650-site rewrite; retuning it means each screen
+/// converts during its own redesign phase.
 ///
-/// Depth is expressed by *surface elevation*, not by drop shadows:
+/// ## What the values mean now
 ///
-/// ```
-///   background   #090909   the page itself, behind everything
-///   backgroundAlt#111111   secondary/banded background regions
-///   surface      #181818   sheets, bars, non-floating containers
-///   card         #202020   opaque cards and raised content
-///   glass        5% white  translucent, blurred "floating" surfaces
-/// ```
+/// Every name from the glass/glow system survives, so nothing stops
+/// compiling — but the values have been retuned to the calm system:
 ///
-/// ## Legacy names
-///
-/// The pre-redesign light palette used names like [neutral100] and
-/// [textPrimary]. Those names are all still here, remapped to their dark
-/// equivalents, so the ~50 existing usages across the app keep compiling
-/// and degrade gracefully while screens are migrated phase by phase. The
-/// neutral ramp is **inverted by role, not by number**: `neutral100`/
-/// `neutral200` remain the *fill* colours (now dark) and `neutral800`/
-/// `neutral900` remain the *strong text* colours (now light), so existing
-/// "neutral100 background + neutral900 text" pairings stay legible instead
-/// of collapsing into dark-on-dark.
+///  - **Surfaces and ink** ([background], [card], [textPrimary], …) carry
+///    the **dark** palette's values, because that is what the app shipped
+///    and what an unmigrated screen is laid out against. Such a screen
+///    stays coherent in dark mode and will show dark-tinted details in
+///    light mode until its phase converts it. That is the known cost of
+///    migrating incrementally.
+///  - **Semantic hues** ([primary], [danger], [gold], [secondary],
+///    [accent]) are deliberately picked as *mid* tones that stay legible
+///    on both a white card and a dark one. These are the tokens that show
+///    up on icons, badges and chips — the details most likely to be left
+///    behind on an unmigrated screen — so making them theme-agnostic buys
+///    a lot of grace for one decision.
+///  - **Glass tokens** ([glass], [glassStrong], [glassBorder]) are now
+///    plain opaque surface and border colours. The frosted look is gone;
+///    the names remain so the ~44 `glassBorder` call sites keep working
+///    and quietly render a normal hairline.
+/// Not marked `@Deprecated`: the annotation is correct in spirit but
+/// would emit 650+ analyzer warnings on day one and bury real findings
+/// for the entire migration. The doc above is the deprecation notice.
 abstract final class AppColors {
-  // ── Core surfaces ─────────────────────────────────────────────────
-  /// The page background — the darkest surface in the system.
-  static const Color background = Color(0xFF090909);
+  // ── Core surfaces (dark-palette values) ───────────────────────────
+  /// The page background.
+  static const Color background = Color(0xFF121513);
 
-  /// Secondary background, for banded sections that must read as
-  /// *slightly* lifted off [background] without becoming a card.
-  static const Color backgroundAlt = Color(0xFF111111);
+  /// Banded sections lifted slightly off [background].
+  static const Color backgroundAlt = Color(0xFF171A18);
 
-  /// Sheets, app bars, nav bars, and other non-floating containers.
-  static const Color surface = Color(0xFF181818);
+  /// Sheets, app bars, nav bars.
+  static const Color surface = Color(0xFF1C201E);
 
-  /// Opaque cards and raised content blocks.
-  static const Color card = Color(0xFF202020);
+  /// The default content card.
+  static const Color card = Color(0xFF222724);
 
-  /// One step above [card] — hover/pressed fills, nested chips on cards.
-  static const Color cardHigh = Color(0xFF262626);
+  /// One step forward of [card] — pressed fills, nested chips.
+  static const Color cardHigh = Color(0xFF2B312D);
 
-  // ── Glass ─────────────────────────────────────────────────────────
-  /// Fill for translucent, blurred "floating" surfaces (see `GlassCard`).
-  /// 5% white over whatever is behind it.
-  static const Color glass = Color(0x0DFFFFFF);
+  // ── Former glass tokens ───────────────────────────────────────────
+  // The blur and the translucent sheen are gone. These now resolve to
+  // ordinary opaque surfaces and an ordinary hairline, so existing call
+  // sites degrade into the calm system rather than breaking.
 
-  /// A slightly stronger glass fill, for the top edge of a glass gradient
-  /// or for pressed states on glass.
-  static const Color glassStrong = Color(0x1AFFFFFF);
+  /// Was a 5% white translucent fill. Now the plain card surface.
+  static const Color glass = card;
 
-  /// The thin hairline border that gives glass surfaces their edge.
-  /// Also the app-wide divider colour. 8% white.
-  static const Color glassBorder = Color(0x14FFFFFF);
+  /// Was a stronger translucent fill. Now the raised card surface.
+  static const Color glassStrong = cardHigh;
 
-  // ── Primary — Electric Green ──────────────────────────────────────
-  static const Color primary = Color(0xFF4ADE80);
-  static const Color primaryLight = Color(0xFF86EFAC);
-  static const Color primaryDark = Color(0xFF22C55E);
+  /// Was the lit edge of a glass pane. Now the app's standard hairline
+  /// border and divider colour.
+  static const Color glassBorder = Color(0xFF333A36);
 
-  /// Content drawn *on top of* [primary]. Electric green is a light
-  /// colour — content on it must be near-black ink, never white.
-  static const Color onPrimary = Color(0xFF052E16);
+  // ── Primary — Nature Green ────────────────────────────────────────
+  /// A mid nature green, chosen to stay legible on both light and dark
+  /// surfaces. The theme-correct greens live on `AppPalette`.
+  static const Color primary = Color(0xFF3E9E6C);
+  static const Color primaryLight = Color(0xFF6BC28D);
+  static const Color primaryDark = Color(0xFF2E7D55);
 
-  /// A dim, desaturated green for filled chips/containers that carry
-  /// primary meaning without shouting.
-  static const Color primaryContainer = Color(0xFF14532D);
+  /// Ink on top of [primary]. White — this green is dark enough to carry
+  /// it, which is a reversal from the old electric green.
+  static const Color onPrimary = Color(0xFFFFFFFF);
 
-  // ── Secondary — Sky Blue ──────────────────────────────────────────
-  static const Color secondary = Color(0xFF38BDF8);
-  static const Color secondaryLight = Color(0xFF7DD3FC);
-  static const Color secondaryDark = Color(0xFF0284C7);
-  static const Color onSecondary = Color(0xFF042F3F);
-  static const Color secondaryContainer = Color(0xFF075985);
+  static const Color primaryContainer = Color(0xFF1F4634);
 
-  // ── Accent — Orange ───────────────────────────────────────────────
-  static const Color accent = Color(0xFFFB923C);
-  static const Color accentLight = Color(0xFFFDBA74);
-  static const Color accentDark = Color(0xFFEA7317);
-  static const Color onAccent = Color(0xFF3A1A05);
+  // ── Secondary — muted slate blue ──────────────────────────────────
+  // Desaturated on purpose: the spec calls for one dominant accent, so
+  // the supporting hues carry meaning rather than brand.
+  static const Color secondary = Color(0xFF5C8AA0);
+  static const Color secondaryLight = Color(0xFF8FB6C9);
+  static const Color secondaryDark = Color(0xFF41697F);
+  static const Color onSecondary = Color(0xFFFFFFFF);
+  static const Color secondaryContainer = Color(0xFF264553);
+
+  // ── Accent — muted terracotta ─────────────────────────────────────
+  static const Color accent = Color(0xFFC4804A);
+  static const Color accentLight = Color(0xFFD79A6B);
+  static const Color accentDark = Color(0xFFB1682F);
+  static const Color onAccent = Color(0xFFFFFFFF);
 
   // ── Danger ────────────────────────────────────────────────────────
-  static const Color danger = Color(0xFFEF4444);
+  static const Color danger = Color(0xFFC4443C);
   static const Color onDanger = Color(0xFFFFFFFF);
 
-  // ── Gold — achievements, badges, ratings ──────────────────────────
-  static const Color gold = Color(0xFFFFD54F);
-  static const Color onGold = Color(0xFF3A2C00);
+  // ── Achievement metals ────────────────────────────────────────────
+  // Badges, medals and tier indicators only — never a card gradient.
+  static const Color bronze = Color(0xFFB08B54);
+  static const Color silver = Color(0xFF9CA5AC);
+  static const Color gold = Color(0xFFC9A63C);
+  static const Color onGold = Color(0xFF33280A);
+  static const Color platinum = Color(0xFF77A0AB);
 
-  // ── Neutral text ramp ─────────────────────────────────────────────
-  /// The app's brightest ink. Deliberately #FAFAFA rather than pure
-  /// white — pure white on a near-black background haloes on OLED.
-  static const Color white = Color(0xFFFAFAFA);
+  // ── Neutral ink ───────────────────────────────────────────────────
+  /// The brightest ink on a dark surface. **Dark-palette value** — this
+  /// one genuinely cannot be dual-safe, so an unmigrated screen using it
+  /// will render near-invisible text on a light card until its phase
+  /// converts it. 34 call sites; they are tracked by the migration.
+  static const Color white = Color(0xFFE8EBE9);
 
-  /// Primary body/heading text.
+  /// Dark-palette value. See the caveat on [white].
   static const Color textPrimary = white;
 
-  /// Supporting text, captions, metadata. ~7:1 on [background].
-  static const Color textSecondary = Color(0xFFA1A1A1);
+  /// Supporting text. Deliberately a **mid** grey rather than the dark
+  /// theme's light grey: it clears 4.2:1 on the dark background and
+  /// 4.5:1 on white, so it stays legible in both themes. Since this
+  /// backs [AppTextStyles.secondary] (88 call sites) and `bodySmall`,
+  /// one dual-safe choice here keeps most supporting copy readable
+  /// everywhere during the migration.
+  static const Color textSecondary = Color(0xFF6E766F);
 
-  /// Disabled/placeholder text. ~3.4:1 on [background] — legible enough
-  /// to read, dim enough to read as unavailable.
-  static const Color textDisabled = Color(0xFF6E6E6E);
+  /// Disabled/placeholder ink. Dual-safe on the same reasoning as
+  /// [textSecondary], one step dimmer.
+  static const Color textDisabled = Color(0xFF8E948F);
 
-  // ── Trek difficulty scale ─────────────────────────────────────────
-  // Mapped onto the redesign palette rather than kept as bespoke hues,
-  // so difficulty badges sit inside the same colour system as everything
-  // else: green → gold → orange → red is already the accent progression.
+  /// True charcoal — the light theme's ink. Here for the handful of
+  /// places that draw dark-on-light regardless of theme (a badge on a
+  /// white chip, ink on top of [gold]).
+  static const Color charcoal = Color(0xFF1A1C1A);
+
+  // ── Trek difficulty ───────────────────────────────────────────────
   static const Color difficultyEasy = primary;
   static const Color difficultyModerate = gold;
   static const Color difficultyHard = accent;
   static const Color difficultyExtreme = danger;
 
   // ── Legacy aliases ────────────────────────────────────────────────
-  // Kept so pre-redesign screens keep compiling and stay readable until
-  // their own phase migrates them. Prefer the semantic names above in
-  // all new code.
+  // Pre-redesign names, kept pointing at their current equivalents.
 
   /// Legacy alias — prefer [card].
   static const Color surfaceVariant = card;
@@ -141,7 +162,11 @@ abstract final class AppColors {
   /// Legacy alias — prefer [glassBorder].
   static const Color divider = glassBorder;
 
-  // Inverted-by-role neutral ramp (see this class's doc).
+  // The neutral ramp is inverted by *role*, not by number: `neutral100`
+  // stays the fill colour (dark here) and `neutral900` stays the strong
+  // ink (light here), so existing "neutral100 background + neutral900
+  // text" pairings stay legible instead of collapsing.
+
   /// Legacy fill — prefer [surface].
   static const Color neutral100 = surface;
 
@@ -155,7 +180,7 @@ abstract final class AppColors {
   static const Color neutral600 = textSecondary;
 
   /// Legacy strong text — prefer [textPrimary].
-  static const Color neutral800 = Color(0xFFD4D4D4);
+  static const Color neutral800 = Color(0xFFCED4D0);
 
   /// Legacy strongest text — prefer [textPrimary].
   static const Color neutral900 = white;

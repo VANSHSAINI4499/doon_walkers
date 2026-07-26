@@ -1,73 +1,64 @@
 import 'package:doon_walkers/core/theme/app_colors.dart';
+import 'package:doon_walkers/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// DoonWalkers typography — **Plus Jakarta Sans**, one family, everything.
 ///
-/// ## Why Plus Jakarta Sans over Outfit
+/// ## Apple-style hierarchy
 ///
-/// Both were on the table for Redesign Phase 1 and both are good display
-/// faces. Plus Jakarta Sans won on three counts that matter for *this*
-/// app:
+/// The direction asks for large hero numbers as the focal point, medium-
+/// weight titles and short descriptions — "Today / 8,432 / steps" rather
+/// than a sentence. The scale is built for exactly that shape:
 ///
-///  1. **It survives small sizes.** DoonWalkers is not a dashboard of big
-///     numbers — it's dense content: trek descriptions, things-to-carry
-///     lists, registration forms, comment threads. Outfit is a wide,
-///     geometric face with relatively closed apertures; at 11–13sp it
-///     goes airy and loses word shape. Plus Jakarta Sans has a taller
-///     x-height and open apertures and stays comfortable down to 11sp.
-///  2. **One family instead of two.** The pre-redesign system paired
-///     Outfit (headings) with Inter (body), which is a safe pairing but a
-///     visibly borrowed one. Plus Jakarta Sans carries both roles, so the
-///     whole scale shares one skeleton and the system reads as designed
-///     rather than assembled.
-///  3. **It still has a voice at display sizes.** The angled terminals
-///     and slightly squared bowls at ExtraBold read modern and sporty at
-///     40–64sp — which is exactly where the stat numerals live — without
-///     the corporate neutrality of Inter or the novelty of a pure
-///     geometric.
+///  - **Stat numerals** ([statXLarge] … [statSmall]) are the focal point.
+///    Tight line height, tight tracking, so the number sits right on top
+///    of its caption and reads as one object.
+///  - **[statLabel]** is the caption under it: small, wide-tracked, dim.
+///    The number carries the meaning; the label only names it.
+///  - **Titles** are medium weight (w600), not bold. The old scale ran
+///    w700–w800 across headings and titles, which is loud; pulling titles
+///    back to w600 is most of what makes a screen read as calm.
+///  - **Body** stays w400 at a 1.5 line height, because trek descriptions
+///    and rules run long.
 ///
-/// Outfit remains the fallback pick if the brand ever wants a harder,
-/// more geometric display voice; swapping is a one-line change to
-/// [_font].
+/// ## Colour: styles no longer carry ink
 ///
-/// ## Weight ladder
+/// Every base style below is defined with `color: null`, so text
+/// **inherits** its colour from the enclosing [DefaultTextStyle] — which
+/// is to say, from the active theme. That is what lets an unmigrated
+/// screen's `Text(style: AppTextStyles.titleMedium)` come out charcoal in
+/// light mode and near-white in dark mode with no edit.
 ///
-/// - Display / stat numerals: w800 (ExtraBold)
-/// - Headings: w700 (Bold)
-/// - Titles / buttons: w600 (SemiBold)
-/// - Body: w400, secondary body: w400 at [AppColors.textSecondary]
+/// The three deliberately-dim styles ([bodySmall], [statLabel],
+/// [overline]) are the exception: dimness is part of their meaning, so
+/// they carry [AppColors.textSecondary], which is a mid grey chosen to
+/// stay legible against both themes.
 ///
-/// Headings are bold on purpose and set tight (negative tracking); body
-/// copy is set loose (positive tracking, 1.5 line height) so long trek
-/// descriptions stay comfortable. That contrast — tight-and-loud versus
-/// loose-and-calm — is most of the personality of this scale.
-///
-/// ## Colour
-///
-/// Styles here carry [AppColors.textPrimary] by default so a bare
-/// `Text(...)` on a dark surface is legible even outside a themed
-/// context. Use [secondary]/[disabled]/[tinted] to shift a style rather
-/// than hand-rolling `copyWith(color:)` everywhere.
+/// Use [secondary]/[disabled]/[tinted] to shift a style rather than
+/// hand-rolling `copyWith(color:)`. Pass a [BuildContext] to those and
+/// they resolve exact palette ink for the current theme; omit it and they
+/// fall back to the dual-safe constants.
 ///
 /// ## google_fonts note
 ///
 /// Fonts are fetched from Google's CDN on first use and cached. Offline
 /// (and in CI/widget tests) they fall back to the system font silently —
-/// layout stays valid, only the face differs. To pin the face, bundle the
-/// Plus Jakarta Sans .ttf files and swap [_font] for a plain
-/// `TextStyle(fontFamily: ...)`.
+/// layout stays valid, only the face differs.
 abstract final class AppTextStyles {
   AppTextStyles._();
 
   /// The single type family for the whole app. Swap this one function to
   /// change the entire system's face.
+  ///
+  /// [color] defaults to null so text inherits theme ink — see the class
+  /// doc. Only the intentionally-dim styles pass a value.
   static TextStyle _font({
     required double fontSize,
     required FontWeight fontWeight,
     required double letterSpacing,
     double? height,
-    Color color = AppColors.textPrimary,
+    Color? color,
   }) => GoogleFonts.plusJakartaSans(
     fontSize: fontSize,
     fontWeight: fontWeight,
@@ -76,48 +67,178 @@ abstract final class AppTextStyles {
     color: color,
   );
 
-  // ── Display — hero headlines and big stat numerals ────────────────
-  // Set at w800 with negative tracking: at these sizes default tracking
-  // reads as gappy, and the whole point of a display size is density of
-  // impact.
+  // ── Display — hero headlines ──────────────────────────────────────
+  // Pulled back from w800 to w700: at display sizes w800 in this face
+  // reads as shouting, and the calm direction wants the *number* to be
+  // the loudest thing on screen, not the headline.
 
-  static TextStyle get displayLarge =>
-      _font(fontSize: 57, fontWeight: FontWeight.w800, letterSpacing: -1.5, height: 1.05);
+  static TextStyle get displayLarge => _font(
+    fontSize: 52,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -1.4,
+    height: 1.08,
+  );
 
-  static TextStyle get displayMedium =>
-      _font(fontSize: 45, fontWeight: FontWeight.w800, letterSpacing: -1.2, height: 1.08);
+  static TextStyle get displayMedium => _font(
+    fontSize: 42,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -1.1,
+    height: 1.1,
+  );
 
-  static TextStyle get displaySmall =>
-      _font(fontSize: 36, fontWeight: FontWeight.w800, letterSpacing: -0.9, height: 1.1);
+  static TextStyle get displaySmall => _font(
+    fontSize: 34,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.8,
+    height: 1.12,
+  );
 
-  // ── Stat numerals ─────────────────────────────────────────────────
-  // Purpose-built for the "big number + small caption" pattern that runs
-  // through Challenges, Profile streaks and Home community stats. These
-  // are separate from the display scale because they need a *tight* line
-  // height (the number should sit right on top of its caption) and
-  // because a stat is a number, not a headline — pairing them by name
-  // keeps later phases from reaching for displayLarge and getting a
-  // 1.05 line box they then have to fight.
+  // ── Stat numerals — the focal point ───────────────────────────────
+  // These stay heavy (w700) while everything around them lightened. That
+  // widening gap is what makes the hero number pop without needing a
+  // colour, a glow or a container to do it.
 
   /// The hero number on a stat card — 64sp.
-  static TextStyle get statXLarge =>
-      _font(fontSize: 64, fontWeight: FontWeight.w800, letterSpacing: -2, height: 1);
+  static TextStyle get statXLarge => _font(
+    fontSize: 64,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -2,
+    height: 1,
+  );
 
   /// A primary stat — 40sp.
-  static TextStyle get statLarge =>
-      _font(fontSize: 40, fontWeight: FontWeight.w800, letterSpacing: -1.4, height: 1);
+  static TextStyle get statLarge => _font(
+    fontSize: 40,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -1.2,
+    height: 1,
+  );
 
   /// A secondary stat in a row of several — 28sp.
-  static TextStyle get statMedium =>
-      _font(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.8, height: 1);
+  static TextStyle get statMedium => _font(
+    fontSize: 28,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.7,
+    height: 1,
+  );
 
   /// An inline stat inside a card or list row — 20sp.
-  static TextStyle get statSmall =>
-      _font(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.4, height: 1);
+  static TextStyle get statSmall => _font(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.3,
+    height: 1,
+  );
 
-  /// The small caption under a stat number. Uppercase, wide-tracked and
-  /// dim — the number shouts, the label whispers.
+  /// The small caption under a stat number. The number shouts, the label
+  /// whispers — so this one keeps its dim ink.
   static TextStyle get statLabel => _font(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.8,
+    height: 1.2,
+    color: AppColors.textSecondary,
+  );
+
+  // ── Headline — section headings ───────────────────────────────────
+
+  static TextStyle get headlineLarge => _font(
+    fontSize: 30,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.6,
+    height: 1.2,
+  );
+
+  static TextStyle get headlineMedium => _font(
+    fontSize: 26,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.4,
+    height: 1.22,
+  );
+
+  static TextStyle get headlineSmall => _font(
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.2,
+    height: 1.25,
+  );
+
+  // ── Title — card headings, list tiles, app bar ────────────────────
+  // Medium weight, per the direction. This is the single biggest change
+  // in the scale.
+
+  static TextStyle get titleLarge => _font(
+    fontSize: 21,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.2,
+    height: 1.28,
+  );
+
+  static TextStyle get titleMedium => _font(
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0,
+    height: 1.32,
+  );
+
+  static TextStyle get titleSmall => _font(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0,
+    height: 1.35,
+  );
+
+  // ── Body — readable copy ──────────────────────────────────────────
+
+  static TextStyle get bodyLarge => _font(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.1,
+    height: 1.55,
+  );
+
+  static TextStyle get bodyMedium => _font(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.1,
+    height: 1.5,
+  );
+
+  /// Supporting body copy. Dim by definition — see the class doc.
+  static TextStyle get bodySmall => _font(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.15,
+    height: 1.45,
+    color: AppColors.textSecondary,
+  );
+
+  // ── Label — buttons, chips, overlines ─────────────────────────────
+
+  static TextStyle get labelLarge => _font(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.1,
+    height: 1.2,
+  );
+
+  static TextStyle get labelMedium => _font(
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.15,
+    height: 1.2,
+  );
+
+  static TextStyle get labelSmall => _font(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.3,
+    height: 1.2,
+  );
+
+  /// A wide-tracked uppercase eyebrow ("UPCOMING", "YOUR STREAK").
+  /// Dim by definition.
+  static TextStyle get overline => _font(
     fontSize: 11,
     fontWeight: FontWeight.w700,
     letterSpacing: 1.2,
@@ -125,96 +246,62 @@ abstract final class AppTextStyles {
     color: AppColors.textSecondary,
   );
 
-  // ── Headline — section headings ───────────────────────────────────
-
-  static TextStyle get headlineLarge =>
-      _font(fontSize: 32, fontWeight: FontWeight.w700, letterSpacing: -0.8, height: 1.15);
-
-  static TextStyle get headlineMedium =>
-      _font(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.6, height: 1.18);
-
-  static TextStyle get headlineSmall =>
-      _font(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.4, height: 1.2);
-
-  // ── Title — card headings, list tiles, app bar ────────────────────
-
-  static TextStyle get titleLarge =>
-      _font(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.3, height: 1.25);
-
-  static TextStyle get titleMedium =>
-      _font(fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: -0.1, height: 1.3);
-
-  static TextStyle get titleSmall =>
-      _font(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0, height: 1.35);
-
-  // ── Body — readable copy ──────────────────────────────────────────
-  // 1.5 line height and mildly positive tracking: these run long.
-
-  static TextStyle get bodyLarge =>
-      _font(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.1, height: 1.55);
-
-  static TextStyle get bodyMedium =>
-      _font(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.15, height: 1.5);
-
-  static TextStyle get bodySmall => _font(
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.2,
-    height: 1.45,
-    color: AppColors.textSecondary,
-  );
-
-  // ── Label — buttons, chips, overlines ─────────────────────────────
-
-  static TextStyle get labelLarge =>
-      _font(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.1, height: 1.2);
-
-  static TextStyle get labelMedium =>
-      _font(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.2, height: 1.2);
-
-  static TextStyle get labelSmall =>
-      _font(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.4, height: 1.2);
-
-  /// A wide-tracked uppercase overline for section eyebrows
-  /// ("UPCOMING", "YOUR STREAK").
-  static TextStyle get overline => _font(
-    fontSize: 11,
-    fontWeight: FontWeight.w800,
-    letterSpacing: 1.6,
-    height: 1.2,
-    color: AppColors.textSecondary,
-  );
-
   // ── Modifiers ─────────────────────────────────────────────────────
+  // Each takes an optional context. With one, you get the exact ink for
+  // the active theme; without one, the dual-safe constant. The optional
+  // parameter is what let all ~150 existing call sites keep working
+  // unchanged while migrated screens opt into precision.
 
-  /// Recolour to the supporting-text grey.
-  static TextStyle secondary(TextStyle style) =>
-      style.copyWith(color: AppColors.textSecondary);
+  /// Recolour to the supporting-text ink.
+  static TextStyle secondary(TextStyle style, [BuildContext? context]) =>
+      style.copyWith(
+        color: context == null
+            ? AppColors.textSecondary
+            : AppPalette.of(context).textSecondary,
+      );
 
-  /// Recolour to the disabled/placeholder grey.
-  static TextStyle disabled(TextStyle style) =>
-      style.copyWith(color: AppColors.textDisabled);
+  /// Recolour to the disabled/placeholder ink.
+  static TextStyle disabled(TextStyle style, [BuildContext? context]) =>
+      style.copyWith(
+        color: context == null
+            ? AppColors.textDisabled
+            : AppPalette.of(context).textDisabled,
+      );
 
-  /// Recolour to an arbitrary brand hue (e.g. a stat in Electric Green).
+  /// Recolour to an arbitrary hue (e.g. a stat in Nature Green).
   static TextStyle tinted(TextStyle style, Color color) =>
       style.copyWith(color: color);
 
+  /// Force the primary ink for [context]'s theme. Use when a style must
+  /// be opaque about its colour rather than inheriting — e.g. inside a
+  /// widget that sets its own [DefaultTextStyle].
+  static TextStyle primary(TextStyle style, BuildContext context) =>
+      style.copyWith(color: AppPalette.of(context).textPrimary);
+
   /// A complete Material 3 [TextTheme] built from the scale above.
-  static TextTheme get textTheme => TextTheme(
-    displayLarge: displayLarge,
-    displayMedium: displayMedium,
-    displaySmall: displaySmall,
-    headlineLarge: headlineLarge,
-    headlineMedium: headlineMedium,
-    headlineSmall: headlineSmall,
-    titleLarge: titleLarge,
-    titleMedium: titleMedium,
-    titleSmall: titleSmall,
-    bodyLarge: bodyLarge,
-    bodyMedium: bodyMedium,
-    bodySmall: bodySmall,
-    labelLarge: labelLarge,
-    labelMedium: labelMedium,
-    labelSmall: labelSmall,
-  );
+  ///
+  /// [ink] colours the styles that inherit; the intentionally-dim ones
+  /// keep their own colour. `AppTheme` passes each palette's
+  /// `textPrimary`, which is what makes bare `Text` widgets theme-aware.
+  static TextTheme textTheme({Color? ink, Color? dimInk}) {
+    TextStyle c(TextStyle s) => ink == null ? s : s.copyWith(color: ink);
+    TextStyle d(TextStyle s) => dimInk == null ? s : s.copyWith(color: dimInk);
+    return TextTheme(
+      displayLarge: c(displayLarge),
+      displayMedium: c(displayMedium),
+      displaySmall: c(displaySmall),
+      headlineLarge: c(headlineLarge),
+      headlineMedium: c(headlineMedium),
+      headlineSmall: c(headlineSmall),
+      titleLarge: c(titleLarge),
+      titleMedium: c(titleMedium),
+      titleSmall: c(titleSmall),
+      bodyLarge: c(bodyLarge),
+      bodyMedium: c(bodyMedium),
+      bodySmall: d(bodySmall),
+      labelLarge: c(labelLarge),
+      labelMedium: c(labelMedium),
+      labelSmall: c(labelSmall),
+    );
+  }
 }

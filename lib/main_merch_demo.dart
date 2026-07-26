@@ -241,9 +241,9 @@ class _MerchDemoApp extends StatelessWidget {
     return MaterialApp(
       title: 'DoonWalkers · Merch',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.system,
       home: const _DemoHub(),
     );
   }
