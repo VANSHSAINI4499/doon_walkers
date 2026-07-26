@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_status_chip.dart';
 import 'package:flutter/material.dart';
@@ -24,67 +25,61 @@ class RegistrationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final r = registration;
 
-    return Card(
-      elevation: 1,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      r.userName,
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  RegistrationStatusChip(status: r.paymentStatus),
-                ],
+              Expanded(
+                child: Text(
+                  r.userName,
+                  style: AppTextStyles.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const SizedBox(height: 10),
-              if (showTrekTitle) ...[
-                _DetailRow(icon: Icons.terrain_rounded, text: r.trekTitle),
-                const SizedBox(height: 6),
-              ],
-              _DetailRow(icon: Icons.email_outlined, text: r.userEmail),
-              const SizedBox(height: 6),
-              // Phone is nullable in the schema — say so plainly rather than
-              // rendering an empty row that looks like a rendering bug.
-              _DetailRow(
-                icon: Icons.phone_outlined,
-                text: r.userPhone ?? 'No phone on file',
-                muted: r.userPhone == null,
+              const SizedBox(width: AppSpacing.sm),
+              RegistrationStatusChip(status: r.paymentStatus),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (showTrekTitle) ...[
+            _DetailRow(icon: AppIcons.treks, text: r.trekTitle),
+            const SizedBox(height: AppSpacing.xs),
+          ],
+          _DetailRow(icon: AppIcons.email, text: r.userEmail),
+          const SizedBox(height: AppSpacing.xs),
+          // Phone is nullable in the schema — say so plainly rather than
+          // rendering an empty row that looks like a rendering bug.
+          _DetailRow(
+            icon: AppIcons.call,
+            text: r.userPhone ?? 'No phone on file',
+            muted: r.userPhone == null,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              Expanded(
+                child: _DetailRow(
+                  icon: AppIcons.calendar,
+                  text: 'Registered ${formatRegistrationDate(r.createdAt)}',
+                ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: _DetailRow(
-                      icon: Icons.event_outlined,
-                      text: 'Registered ${formatRegistrationDate(r.createdAt)}',
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
+              AppIcon(
+                AppIcons.chevronRight,
+                size: 20,
+                color: palette.textSecondary,
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -99,17 +94,15 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = theme.colorScheme.onSurfaceVariant;
+    final palette = AppPalette.of(context);
     return Row(
       children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 8),
+        AppIcon(icon, size: 16, color: palette.textSecondary),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             text,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: color,
+            style: AppTextStyles.secondary(AppTextStyles.bodySmall).copyWith(
               fontStyle: muted ? FontStyle.italic : FontStyle.normal,
             ),
             maxLines: 1,

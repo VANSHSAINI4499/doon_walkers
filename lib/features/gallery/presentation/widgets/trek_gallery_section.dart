@@ -32,8 +32,9 @@ class TrekGallerySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isAdmin = ref.watch(isAdminProvider);
+    final palette = AppPalette.of(context);
     final mediaAsync = ref.watch(trekGalleryProvider(trekId));
+    final isAdmin = ref.watch(isAdminProvider);
     final countAsync = ref.watch(trekGalleryCountProvider(trekId));
 
     return mediaAsync.when(
@@ -47,7 +48,7 @@ class TrekGallerySection extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Could not load the gallery for this trek.',
-                  style: AppTextStyles.tinted(AppTextStyles.bodySmall, AppColors.danger),
+                  style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger),
                 ),
               ),
               PremiumButton(
@@ -78,12 +79,11 @@ class TrekGallerySection extends ConsumerWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GlassCard(
-                blurEnabled: false,
+              AppCard(
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Row(
                   children: [
-                    const AppIcon(AppIcons.photo, size: 22, color: AppColors.textSecondary),
+                    AppIcon(AppIcons.photo, size: 22, color: palette.textSecondary),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(

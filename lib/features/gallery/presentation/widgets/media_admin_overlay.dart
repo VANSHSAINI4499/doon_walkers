@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/gallery/domain/entities/gallery_media.dart';
 import 'package:doon_walkers/features/gallery/presentation/providers/gallery_providers.dart';
 import 'package:doon_walkers/features/gallery/presentation/widgets/gallery_tile.dart';
@@ -41,7 +42,6 @@ class _MediaAdminOverlayState extends ConsumerState<MediaAdminOverlay> {
   bool _isPending = false;
 
   Future<void> _confirmDelete() async {
-    final theme = Theme.of(context);
     final isVideo = widget.media.mediaType == MediaType.video;
 
     final confirmed = await showDialog<bool>(
@@ -54,14 +54,18 @@ class _MediaAdminOverlayState extends ConsumerState<MediaAdminOverlay> {
           'This cannot be undone.',
         ),
         actions: [
-          TextButton(
+          PremiumButton(
+            label: 'Cancel',
+            variant: PremiumButtonVariant.glass,
+            size: PremiumButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error),
+          PremiumButton(
+            label: 'Delete',
+            icon: AppIcons.delete,
+            variant: PremiumButtonVariant.danger,
+            size: PremiumButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
           ),
         ],
       ),
@@ -79,7 +83,7 @@ class _MediaAdminOverlayState extends ConsumerState<MediaAdminOverlay> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Could not delete media. Please try again.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: AppPalette.of(context).danger,
         ),
       );
       return;
@@ -91,12 +95,7 @@ class _MediaAdminOverlayState extends ConsumerState<MediaAdminOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    // GalleryTile is deliberately the one non-Positioned child here —
-    // its own AspectRatio is what gives this cell its intrinsic height
-    // inside the masonry grid (a Positioned.fill would need Stack to
-    // already know a bounded height, which a masonry delegate doesn't
-    // hand down). Stack sizes itself around that child, and the delete
-    // button floats on top via Positioned as before.
+    final palette = AppPalette.of(context);
     return Stack(
       children: [
         GalleryTile(media: widget.media, onTap: widget.onTap),
@@ -107,24 +106,24 @@ class _MediaAdminOverlayState extends ConsumerState<MediaAdminOverlay> {
               ? Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(140),
+                    color: palette.scrim,
                     shape: BoxShape.circle,
                   ),
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: palette.textPrimary),
                   ),
                 )
               : Material(
-                  color: Colors.black.withAlpha(140),
+                  color: palette.scrim,
                   shape: const CircleBorder(),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: _confirmDelete,
-                    child: const Padding(
-                      padding: EdgeInsets.all(6),
-                      child: Icon(Icons.delete_outline_rounded, size: 18, color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: AppIcon(AppIcons.delete, size: 18, color: palette.textPrimary),
                     ),
                   ),
                 ),

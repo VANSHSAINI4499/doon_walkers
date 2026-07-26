@@ -240,13 +240,13 @@ class _SignInToComment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
+    final palette = AppPalette.of(context);
+    return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          const AppIcon(AppIcons.forum, color: AppColors.textSecondary),
+          AppIcon(AppIcons.forum, color: palette.textSecondary),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
@@ -254,7 +254,7 @@ class _SignInToComment extends StatelessWidget {
               style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
             ),
           ),
-          const AppIcon(AppIcons.chevronRight, color: AppColors.textSecondary),
+          AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
         ],
       ),
     );
@@ -269,21 +269,21 @@ class _VerifyPhoneToComment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
+    final palette = AppPalette.of(context);
+    return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          const AppIcon(AppIcons.phone, color: AppColors.textSecondary),
+          AppIcon(AppIcons.phone, color: palette.textSecondary),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
-              'Verify your phone number to leave a comment',
+              'Verify your phone to leave a comment',
               style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
             ),
           ),
-          const AppIcon(AppIcons.chevronRight, color: AppColors.textSecondary),
+          AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
         ],
       ),
     );

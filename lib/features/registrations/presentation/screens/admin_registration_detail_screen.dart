@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_status_chip.dart';
@@ -21,33 +22,36 @@ class AdminRegistrationDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final registrationAsync = ref.watch(registrationByIdProvider(registrationId));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Registration')),
       body: SafeArea(
         child: registrationAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const _DetailSkeleton(),
           error: (error, stack) {
             debugPrint('AdminRegistrationDetailScreen: failed to load $registrationId: $error');
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xxl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
+                    AppIcon(AppIcons.error, size: 40, color: palette.danger),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'Could not load this registration.',
-                      style: theme.textTheme.titleMedium,
+                      style: AppTextStyles.titleMedium,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
-                    FilledButton(
+                    const SizedBox(height: AppSpacing.lg),
+                    PremiumButton(
+                      label: 'Retry',
+                      icon: AppIcons.refresh,
+                      variant: PremiumButtonVariant.glass,
+                      size: PremiumButtonSize.small,
                       onPressed: () => ref.invalidate(registrationByIdProvider(registrationId)),
-                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -58,10 +62,10 @@ class AdminRegistrationDetailScreen extends ConsumerWidget {
             if (registration == null) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppSpacing.xxl),
                   child: Text(
                     'Registration not found.',
-                    style: theme.textTheme.titleMedium,
+                    style: AppTextStyles.titleMedium,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -91,6 +95,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     final r = widget.registration;
     if (status == r.paymentStatus) return;
 
+    final palette = AppPalette.of(context);
     setState(() => _isSaving = true);
     final success = await ref.read(registrationControllerProvider.notifier).setPaymentStatus(
           id: r.id,
@@ -101,10 +106,6 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     setState(() => _isSaving = false);
 
     if (!success) {
-      // The prevent_payment_status_self_edit trigger raises for any
-      // non-admin caller, so a failure here most likely means the
-      // session isn't actually an admin — say something useful rather
-      // than a bare retry prompt.
       final error = ref.read(registrationControllerProvider).error;
       debugPrint('AdminRegistrationDetail: payment_status update failed: $error');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,7 +113,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
           content: const Text(
             'Could not update payment status. Only administrators can change this.',
           ),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: palette.danger,
         ),
       );
       return;
@@ -125,11 +126,10 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final r = widget.registration;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
@@ -137,145 +137,130 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Who / which trek ────────────────────────────────
-              Card(
-                elevation: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              r.userName,
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            r.userName,
+                            style: AppTextStyles.titleMedium,
                           ),
-                          const SizedBox(width: 8),
-                          RegistrationStatusChip(status: r.paymentStatus),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _Field(icon: Icons.terrain_rounded, label: 'Trek', value: r.trekTitle),
-                      _Field(icon: Icons.email_outlined, label: 'Email', value: r.userEmail),
-                      _Field(
-                        icon: Icons.phone_outlined,
-                        label: 'Phone',
-                        value: r.userPhone,
-                        emptyText: 'No phone on file',
-                      ),
-                      _Field(
-                        icon: Icons.event_outlined,
-                        label: 'Registered',
-                        value: formatRegistrationDate(r.createdAt),
-                      ),
-                    ],
-                  ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        RegistrationStatusChip(status: r.paymentStatus),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _Field(icon: AppIcons.treks, label: 'Trek', value: r.trekTitle),
+                    _Field(icon: AppIcons.email, label: 'Email', value: r.userEmail),
+                    _Field(
+                      icon: AppIcons.call,
+                      label: 'Phone',
+                      value: r.userPhone,
+                      emptyText: 'No phone on file',
+                    ),
+                    _Field(
+                      icon: AppIcons.calendar,
+                      label: 'Registered',
+                      value: formatRegistrationDate(r.createdAt),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
               // ── Sensitive registrant detail ─────────────────────
               Text(
                 'Registrant Details',
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: AppTextStyles.titleSmall,
               ),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _Field(
-                        icon: Icons.cake_outlined,
-                        label: 'Age',
-                        value: r.age?.toString(),
-                        emptyText: 'Not provided',
-                      ),
-                      _Field(
-                        icon: Icons.person_outline,
-                        label: 'Gender',
-                        value: r.gender?.label,
-                        emptyText: 'Not provided',
-                      ),
-                      _Field(
-                        icon: Icons.contact_emergency_outlined,
-                        label: 'Emergency contact',
-                        value: r.emergencyContact,
-                        emptyText: 'Not provided',
-                      ),
-                      _Field(
-                        icon: Icons.medical_information_outlined,
-                        label: 'Medical notes',
-                        value: r.medicalNotes,
-                        emptyText: 'None reported',
-                      ),
-                    ],
-                  ),
+              const SizedBox(height: AppSpacing.sm),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Field(
+                      icon: AppIcons.birthday,
+                      label: 'Age',
+                      value: r.age?.toString(),
+                      emptyText: 'Not provided',
+                    ),
+                    _Field(
+                      icon: AppIcons.profile,
+                      label: 'Gender',
+                      value: r.gender?.label,
+                      emptyText: 'Not provided',
+                    ),
+                    _Field(
+                      icon: AppIcons.emergencyContact,
+                      label: 'Emergency contact',
+                      value: r.emergencyContact,
+                      emptyText: 'Not provided',
+                    ),
+                    _Field(
+                      icon: AppIcons.medical,
+                      label: 'Medical notes',
+                      value: r.medicalNotes,
+                      emptyText: 'None reported',
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.xl),
 
               // ── Payment proof (only for paid-trek registrations) ─
               if (r.paymentScreenshotUrl != null) ...[
                 Text(
                   'Payment Proof',
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: AppTextStyles.titleSmall,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 _PaymentProofCard(path: r.paymentScreenshotUrl!),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
               ],
 
               // ── Admin-only payment control ──────────────────────
               Text(
                 'Payment Status',
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: AppTextStyles.titleSmall,
               ),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      DropdownButtonFormField<PaymentStatus>(
-                        value: r.paymentStatus,
-                        decoration: const InputDecoration(labelText: 'Payment status'),
-                        items: PaymentStatus.values
-                            .map((s) => DropdownMenuItem(value: s, child: Text(s.label)))
-                            .toList(),
-                        onChanged: _isSaving
-                            ? null
-                            : (value) {
-                                if (value != null) _updateStatus(value);
-                              },
+              const SizedBox(height: AppSpacing.sm),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DropdownButtonFormField<PaymentStatus>(
+                      value: r.paymentStatus,
+                      decoration: const InputDecoration(labelText: 'Payment status'),
+                      items: PaymentStatus.values
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s.label)))
+                          .toList(),
+                      onChanged: _isSaving
+                          ? null
+                          : (value) {
+                              if (value != null) _updateStatus(value);
+                            },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    if (_isSaving)
+                      const Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.xs),
+                        child: LinearProgressIndicator(),
+                      )
+                    else
+                      Text(
+                        'Payments are recorded manually for now — set this once you '
+                        'have confirmation from the member.',
+                        style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                       ),
-                      const SizedBox(height: 10),
-                      if (_isSaving)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 4),
-                          child: LinearProgressIndicator(),
-                        )
-                      else
-                        Text(
-                          'Payments are recorded manually for now — set this once you '
-                          'have confirmation from the member.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl),
             ],
           ),
         ),
@@ -286,10 +271,6 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
 
 /// Displays the member's uploaded payment screenshot for admin review
 /// before they mark the registration paid.
-///
-/// [path] is a storage object path, not a URL — `payment-proofs` is a
-/// private bucket, so every view needs a fresh signed URL rather than a
-/// stored public one (see [paymentProofSignedUrlProvider]).
 class _PaymentProofCard extends ConsumerWidget {
   const _PaymentProofCard({required this.path});
 
@@ -297,34 +278,36 @@ class _PaymentProofCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final signedUrlAsync = ref.watch(paymentProofSignedUrlProvider(path));
 
-    return Card(
-      elevation: 1,
-      clipBehavior: Clip.antiAlias,
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: signedUrlAsync.when(
         loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 32),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
           child: Center(child: CircularProgressIndicator()),
         ),
         error: (error, stack) {
           debugPrint('_PaymentProofCard: failed to sign $path: $error');
           return Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
               children: [
-                Icon(Icons.error_outline_rounded, color: theme.colorScheme.error),
-                const SizedBox(width: 12),
+                AppIcon(AppIcons.error, color: palette.danger),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
                     'Could not load the payment screenshot.',
-                    style: theme.textTheme.bodyMedium,
+                    style: AppTextStyles.bodyMedium,
                   ),
                 ),
-                TextButton(
+                PremiumButton(
+                  label: 'Retry',
+                  icon: AppIcons.refresh,
+                  variant: PremiumButtonVariant.ghost,
+                  size: PremiumButtonSize.small,
                   onPressed: () => ref.invalidate(paymentProofSignedUrlProvider(path)),
-                  child: const Text('Retry'),
                 ),
               ],
             ),
@@ -335,11 +318,11 @@ class _PaymentProofCard extends ConsumerWidget {
             signedUrl,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stack) => Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 children: [
-                  Icon(Icons.broken_image_outlined, color: theme.colorScheme.error),
-                  const SizedBox(width: 12),
+                  AppIcon(AppIcons.imageBroken, color: palette.danger),
+                  const SizedBox(width: AppSpacing.md),
                   const Expanded(child: Text('Could not display the screenshot.')),
                 ],
               ),
@@ -352,8 +335,7 @@ class _PaymentProofCard extends ConsumerWidget {
 }
 
 /// One labelled field. Renders [emptyText] in muted italics when [value]
-/// is null, so a blank never looks like a rendering fault — several of
-/// these columns are genuinely nullable.
+/// is null, so a blank never looks like a rendering fault.
 class _Field extends StatelessWidget {
   const _Field({
     required this.icon,
@@ -369,39 +351,79 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final isEmpty = value == null || value!.trim().isEmpty;
     final display = isEmpty ? (emptyText ?? '—') : value!;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: 10),
+          AppIcon(icon, size: 18, color: palette.textSecondary),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.secondary(AppTextStyles.labelSmall),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   display,
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: AppTextStyles.bodyMedium.copyWith(
                     fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
-                    color: isEmpty ? theme.colorScheme.onSurfaceVariant : null,
+                    color: isEmpty ? palette.textDisabled : palette.textPrimary,
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DetailSkeleton extends StatelessWidget {
+  const _DetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Shimmer(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: palette.card,
+                    borderRadius: BorderRadius.circular(AppRadius.card),
+                    border: Border.all(color: palette.border),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBox(width: 180, height: 20),
+                      SizedBox(height: AppSpacing.md),
+                      SkeletonBox(width: 240, height: 14),
+                      SizedBox(height: AppSpacing.sm),
+                      SkeletonBox(width: 200, height: 14),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

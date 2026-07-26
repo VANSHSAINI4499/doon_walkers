@@ -1,4 +1,4 @@
-import 'package:doon_walkers/core/theme/app_text_styles.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Small heading used above a content section (Home's stat/trek blocks,
@@ -12,18 +12,17 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     return Row(
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 20, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
+          AppIcon(icon!, size: 20, color: palette.primary),
+          const SizedBox(width: AppSpacing.sm),
         ],
         Text(
           title,
           style: AppTextStyles.titleLarge.copyWith(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
+            color: palette.textPrimary,
           ),
         ),
       ],

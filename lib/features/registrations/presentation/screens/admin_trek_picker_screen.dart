@@ -1,4 +1,5 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/difficulty_badge.dart';
@@ -18,33 +19,36 @@ class AdminTrekPickerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final treksAsync = ref.watch(adminAllTreksProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Trek Registrations')),
       body: SafeArea(
         child: treksAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const _TrekPickerSkeleton(),
           error: (error, stack) {
             debugPrint('AdminTrekPickerScreen: failed to load treks: $error');
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xxl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
+                    AppIcon(AppIcons.error, size: 40, color: palette.danger),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'Could not load treks.',
-                      style: theme.textTheme.titleMedium,
+                      style: AppTextStyles.titleMedium,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
-                    FilledButton(
+                    const SizedBox(height: AppSpacing.lg),
+                    PremiumButton(
+                      label: 'Retry',
+                      icon: AppIcons.refresh,
+                      variant: PremiumButtonVariant.glass,
+                      size: PremiumButtonSize.small,
                       onPressed: () => ref.invalidate(adminAllTreksProvider),
-                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -55,15 +59,18 @@ class AdminTrekPickerScreen extends ConsumerWidget {
             if (treks.isEmpty) return const _EmptyTrekPicker();
 
             return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
               itemCount: treks.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 final trek = treks[index];
-                return _TrekPickerTile(
-                  trek: trek,
-                  onTap: () => context.push(
-                    AppConstants.adminTrekRegistrationsLocation(trek.id),
+                return AppReveal(
+                  index: index.clamp(0, 8),
+                  child: _TrekPickerTile(
+                    trek: trek,
+                    onTap: () => context.push(
+                      AppConstants.adminTrekRegistrationsLocation(trek.id),
+                    ),
                   ),
                 );
               },
@@ -80,24 +87,32 @@ class _EmptyTrekPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.xxxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.terrain_rounded, size: 56, color: theme.colorScheme.outline),
-            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              decoration: BoxDecoration(
+                color: palette.primarySubtle,
+                shape: BoxShape.circle,
+                border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
+              ),
+              child: AppIcon(AppIcons.treks, size: 48, color: palette.primary),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               'No treks yet',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: AppTextStyles.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'Add a trek from the Treks tab to see its registrations here.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
               textAlign: TextAlign.center,
             ),
           ],
@@ -123,50 +138,83 @@ class _TrekPickerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final trekDate = trek.trekDate;
 
-    return Card(
-      elevation: 1,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        trek.title,
+                        style: AppTextStyles.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    DifficultyBadge(difficulty: trek.difficulty, dense: true),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  trekDate != null ? _formatDate(trekDate) : 'No date set',
+                  style: AppTextStyles.secondary(AppTextStyles.bodySmall).copyWith(
+                    fontStyle: trekDate == null ? FontStyle.italic : FontStyle.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrekPickerSkeleton extends StatelessWidget {
+  const _TrekPickerSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Shimmer(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        itemCount: 4,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: palette.card,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: palette.border),
+          ),
+          child: const Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            trek.title,
-                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        DifficultyBadge(difficulty: trek.difficulty, dense: true),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      trekDate != null ? _formatDate(trekDate) : 'No date set',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontStyle: trekDate == null ? FontStyle.italic : FontStyle.normal,
-                      ),
-                    ),
+                    SkeletonBox(width: 180, height: 16),
+                    SizedBox(height: AppSpacing.sm),
+                    SkeletonBox(width: 100, height: 12),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: theme.colorScheme.onSurfaceVariant),
+              SkeletonBox(width: 24, height: 24, borderRadius: AppRadius.xs),
             ],
           ),
         ),

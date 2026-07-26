@@ -212,7 +212,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_cleanError(error)),
-              backgroundColor: AppColors.danger,
+              backgroundColor: AppPalette.of(context).danger,
             ),
           );
         },
@@ -268,7 +268,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    GlassCard(
+                    AppCard(
                       child: AbsorbPointer(
                         absorbing: isSaving,
                         child: Opacity(

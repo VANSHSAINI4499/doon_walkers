@@ -29,21 +29,19 @@ class JoinCommunitySection extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: AppColors.primary,
-      glowOpacity: 0.2,
+    final palette = AppPalette.of(context);
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.xxl),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              gradient: AppGradients.primary,
+              color: palette.primarySubtle,
               shape: BoxShape.circle,
-              boxShadow: AppShadows.glow(AppColors.primary, opacity: 0.4),
+              border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
             ),
-            child: const AppIcon(AppIcons.groupAdd, size: 34, color: AppColors.onPrimary),
+            child: AppIcon(AppIcons.groupAdd, size: 34, color: palette.primary),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(

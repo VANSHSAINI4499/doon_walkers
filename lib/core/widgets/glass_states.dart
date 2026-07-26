@@ -21,12 +21,12 @@ class GlassEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
+    final palette = AppPalette.of(context);
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         children: [
-          AppIcon(icon, size: 32, color: AppColors.textDisabled),
+          AppIcon(icon, size: 32, color: palette.textDisabled),
           const SizedBox(height: AppSpacing.md),
           Text(
             message,
@@ -58,10 +58,11 @@ class GlassSectionError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Row(
       children: [
         Expanded(
-          child: Text(message, style: AppTextStyles.tinted(AppTextStyles.bodySmall, AppColors.danger)),
+          child: Text(message, style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger)),
         ),
         PremiumButton(
           label: 'Retry',

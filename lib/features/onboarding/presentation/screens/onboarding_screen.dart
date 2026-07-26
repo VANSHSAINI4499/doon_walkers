@@ -156,6 +156,7 @@ class _SlideContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl),
       child: Column(
@@ -166,11 +167,11 @@ class _SlideContent extends StatelessWidget {
             height: 140,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              gradient: AppGradients.primary,
+              color: palette.primary,
               shape: BoxShape.circle,
-              boxShadow: AppShadows.glow(AppColors.primary, opacity: 0.28, radius: 40),
+              border: Border.all(color: palette.primary.withValues(alpha: 0.3), width: 3),
             ),
-            child: AppIcon(slide.icon, size: 64, color: AppColors.onPrimary),
+            child: AppIcon(slide.icon, size: 64, color: palette.onPrimary),
           ),
           const SizedBox(height: AppSpacing.xxxl),
           Text(slide.title, style: AppTextStyles.headlineMedium, textAlign: TextAlign.center),
@@ -194,6 +195,7 @@ class _DotIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -206,10 +208,7 @@ class _DotIndicator extends StatelessWidget {
             height: 8,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.pill),
-              color: i == activePage ? AppColors.primary : AppColors.glassBorder,
-              boxShadow: i == activePage
-                  ? AppShadows.glow(AppColors.primary, opacity: 0.5, radius: 12)
-                  : null,
+              color: i == activePage ? palette.primary : palette.border,
             ),
           ),
       ],

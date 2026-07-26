@@ -83,7 +83,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  GlassCard(
+                  AppCard(
                     child: Form(
                       key: _formKey,
                       child: Column(

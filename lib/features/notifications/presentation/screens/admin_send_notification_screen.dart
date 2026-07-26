@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,26 +53,26 @@ class _AdminSendNotificationScreenState extends ConsumerState<AdminSendNotificat
       return;
     }
 
+    final palette = AppPalette.of(context);
     final error = ref.read(notificationControllerProvider).error;
     debugPrint('AdminSendNotificationScreen: failed to send: $error');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Could not send this notification. Please try again.'),
-        backgroundColor: Theme.of(context).colorScheme.error,
+        backgroundColor: palette.danger,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isSaving = ref.watch(notificationControllerProvider).isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Send Notification')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
@@ -80,43 +81,42 @@ class _AdminSendNotificationScreenState extends ConsumerState<AdminSendNotificat
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'This goes out to every registered member as a push '
-                      'notification, and shows up in everyone\'s in-app list. '
-                      'There\'s no way to target a specific trek or group this '
-                      'phase — broadcast only.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'This goes out to every registered member as a push '
+                            'notification, and shows up in everyone\'s in-app list. '
+                            'Broadcast only.',
+                            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          TextFormField(
+                            controller: _titleController,
+                            decoration: const InputDecoration(labelText: 'Title'),
+                            textInputAction: TextInputAction.next,
+                            validator: (value) =>
+                                (value == null || value.trim().isEmpty) ? 'Please enter a title' : null,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          TextFormField(
+                            controller: _bodyController,
+                            decoration: const InputDecoration(labelText: 'Message'),
+                            maxLines: 4,
+                            validator: (value) =>
+                                (value == null || value.trim().isEmpty) ? 'Please enter a message' : null,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(labelText: 'Title'),
-                      textInputAction: TextInputAction.next,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty) ? 'Please enter a title' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _bodyController,
-                      decoration: const InputDecoration(labelText: 'Message'),
-                      maxLines: 4,
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty) ? 'Please enter a message' : null,
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: isSaving ? null : _submit,
-                      style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                      icon: isSaving
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.campaign_rounded),
-                      label: const Text('Send to Everyone'),
+                    const SizedBox(height: AppSpacing.xxl),
+                    PremiumButton(
+                      label: 'Send to Everyone',
+                      icon: AppIcons.announce,
+                      fullWidth: true,
+                      isLoading: isSaving,
+                      onPressed: _submit,
                     ),
                   ],
                 ),

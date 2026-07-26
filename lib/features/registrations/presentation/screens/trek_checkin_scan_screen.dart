@@ -105,6 +105,7 @@ class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
   }
 
   Widget _buildScanner(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -125,7 +126,7 @@ class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [AppColors.background, AppColors.background.withValues(alpha: 0)],
+                colors: [palette.background, palette.background.withValues(alpha: 0)],
               ),
             ),
             child: Column(
@@ -133,15 +134,15 @@ class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
               children: [
                 Text(
                   'Point your camera at the check-in QR code',
-                  style: AppTextStyles.tinted(AppTextStyles.bodyMedium, AppColors.white),
+                  style: AppTextStyles.tinted(AppTextStyles.bodyMedium, palette.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 if (_submitting) ...[
                   const SizedBox(height: AppSpacing.lg),
-                  const SizedBox(
+                  SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: palette.primary),
                   ),
                 ],
                 if (_error != null) ...[
@@ -173,16 +174,15 @@ class _SuccessState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: GlassCard(
-          glowColor: AppColors.primary,
-          glowOpacity: 0.18,
+        child: AppCard(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const AppIcon(AppIcons.checkCircle, size: 48, color: AppColors.primary),
+              AppIcon(AppIcons.checkCircle, size: 48, color: palette.primary),
               const SizedBox(height: AppSpacing.lg),
               Text("You're checked in!", style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
               const SizedBox(height: AppSpacing.sm),
@@ -204,22 +204,23 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.danger.withValues(alpha: 0.16),
+        color: palette.danger.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+        border: Border.all(color: palette.danger.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AppIcon(AppIcons.error, size: 18, color: AppColors.danger),
+          AppIcon(AppIcons.error, size: 18, color: palette.danger),
           const SizedBox(width: AppSpacing.sm),
           Flexible(
             child: Text(
               message,
-              style: AppTextStyles.tinted(AppTextStyles.bodySmall, AppColors.danger),
+              style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger),
               textAlign: TextAlign.center,
             ),
           ),
@@ -238,16 +239,17 @@ class _CameraError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final isPermissionDenied = error.errorCode == MobileScannerErrorCode.permissionDenied;
     return ColoredBox(
-      color: AppColors.background,
+      color: palette.background,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const AppIcon(AppIcons.error, size: 40, color: AppColors.danger),
+              AppIcon(AppIcons.error, size: 40, color: palette.danger),
               const SizedBox(height: AppSpacing.md),
               Text(
                 isPermissionDenied

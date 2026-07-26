@@ -155,7 +155,7 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xxl),
-        GlassCard(
+        AppCard(
           child: Form(
             key: _phoneFormKey,
             child: Column(
@@ -193,10 +193,11 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
   }
 
   Widget _buildOtpStep(bool isLoading, PhoneVerificationState data) {
+    final palette = AppPalette.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const AppIcon(AppIcons.verified, size: 56, color: AppColors.primary),
+        AppIcon(AppIcons.verified, size: 56, color: palette.primary),
         const SizedBox(height: AppSpacing.lg),
         Text('Enter the Code', style: AppTextStyles.headlineMedium, textAlign: TextAlign.center),
         const SizedBox(height: AppSpacing.sm),
@@ -206,7 +207,7 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xxl),
-        GlassCard(
+        AppCard(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -108,7 +108,7 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_deleteFailureMessage(error)),
-          backgroundColor: AppColors.danger,
+          backgroundColor: AppPalette.of(context).danger,
         ),
       );
       return;
@@ -128,9 +128,9 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not update trek. Please try again.'),
-          backgroundColor: AppColors.danger,
+        SnackBar(
+          content: const Text('Could not update trek. Please try again.'),
+          backgroundColor: AppPalette.of(context).danger,
         ),
       );
       return;
@@ -142,20 +142,21 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     if (_isPending) {
-      return const Padding(
-        padding: EdgeInsets.all(AppSpacing.md),
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          child: CircularProgressIndicator(strokeWidth: 2, color: palette.primary),
         ),
       );
     }
 
     return PopupMenuButton<String>(
       tooltip: 'Admin actions',
-      icon: AppIcon(AppIcons.more, color: widget.iconColor ?? AppColors.white),
+      icon: AppIcon(AppIcons.more, color: widget.iconColor ?? palette.textPrimary),
       onSelected: (value) {
         switch (value) {
           case 'edit':
@@ -185,9 +186,9 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
             label: widget.trek.isPublished ? 'Unpublish' : 'Publish',
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
-          child: _MenuRow(icon: AppIcons.delete, label: 'Delete', color: AppColors.danger),
+          child: _MenuRow(icon: AppIcons.delete, label: 'Delete', color: palette.danger),
         ),
       ],
     );
@@ -203,7 +204,8 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tint = color ?? AppColors.textPrimary;
+    final palette = AppPalette.of(context);
+    final tint = color ?? palette.textPrimary;
     return Row(
       children: [
         AppIcon(icon, size: 20, color: tint),

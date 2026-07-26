@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/comments/domain/entities/comment.dart';
 import 'package:doon_walkers/features/comments/presentation/providers/comment_providers.dart';
 import 'package:flutter/material.dart';
@@ -46,30 +47,32 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
       return;
     }
 
+    final palette = AppPalette.of(context);
     final error = ref.read(commentControllerProvider).error;
     debugPrint('AdminBlocklistScreen: failed to add "$term": $error');
     final message =
         error is DuplicateBlocklistTermException ? error.toString() : 'Could not add that term.';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Theme.of(context).colorScheme.error),
+      SnackBar(content: Text(message), backgroundColor: palette.danger),
     );
   }
 
   Future<void> _remove(String term) async {
+    final palette = AppPalette.of(context);
     final success = await ref.read(commentControllerProvider.notifier).removeBlocklistTerm(term);
     if (!mounted || success) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Could not remove "$term". Please try again.'),
-        backgroundColor: Theme.of(context).colorScheme.error,
+        backgroundColor: palette.danger,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final termsAsync = ref.watch(commentBlocklistProvider);
     final isSaving = ref.watch(commentControllerProvider).isLoading;
 
@@ -77,41 +80,46 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
       appBar: AppBar(title: const Text('Blocklist')),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Terms here are blocked case-insensitively, as whole '
-                'words or phrases — adding "trek" would not also block '
-                '"trekking". Enforced server-side on every comment; this '
-                'list is one layer, not a complete filter — admin '
-                'moderation (hide/show) is still the real backstop.',
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      decoration: const InputDecoration(
-                        hintText: 'Add a term or phrase…',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      onSubmitted: (_) => _add(),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Terms here are blocked case-insensitively as whole words or phrases.',
+                      style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: isSaving ? null : _add,
-                    child: const Text('Add'),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            decoration: const InputDecoration(
+                              hintText: 'Add a term or phrase…',
+                              isDense: true,
+                            ),
+                            onSubmitted: (_) => _add(),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        PremiumButton(
+                          label: 'Add',
+                          icon: AppIcons.add,
+                          isLoading: isSaving,
+                          size: PremiumButtonSize.small,
+                          onPressed: _add,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: termsAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
@@ -123,12 +131,15 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
                         children: [
                           Text(
                             'Could not load the blocklist.',
-                            style: theme.textTheme.titleMedium,
+                            style: AppTextStyles.titleMedium,
                           ),
-                          const SizedBox(height: 12),
-                          FilledButton(
+                          const SizedBox(height: AppSpacing.md),
+                          PremiumButton(
+                            label: 'Retry',
+                            icon: AppIcons.refresh,
+                            variant: PremiumButtonVariant.glass,
+                            size: PremiumButtonSize.small,
                             onPressed: () => ref.invalidate(commentBlocklistProvider),
-                            child: const Text('Retry'),
                           ),
                         ],
                       ),
@@ -139,24 +150,28 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
                       return Center(
                         child: Text(
                           'No terms yet.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                          style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
                         ),
                       );
                     }
                     return ListView.separated(
                       itemCount: terms.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1),
+                      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.xs),
                       itemBuilder: (context, index) {
                         final term = terms[index];
-                        return ListTile(
-                          dense: true,
-                          title: Text(term),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            tooltip: 'Remove',
-                            onPressed: isSaving ? null : () => _remove(term),
+                        return AppCard(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(term, style: AppTextStyles.bodyMedium),
+                              ),
+                              IconButton(
+                                icon: AppIcon(AppIcons.close, size: 18, color: palette.textSecondary),
+                                tooltip: 'Remove',
+                                onPressed: isSaving ? null : () => _remove(term),
+                              ),
+                            ],
                           ),
                         );
                       },

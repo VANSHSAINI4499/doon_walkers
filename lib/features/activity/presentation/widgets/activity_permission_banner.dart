@@ -119,10 +119,7 @@ class _Banner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
-      child: GlassCard(
-        blurEnabled: false,
-        glowColor: isSubtle ? null : accent,
-        glowOpacity: 0.16,
+      child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

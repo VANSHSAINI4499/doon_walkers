@@ -69,16 +69,15 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return AppCard(
       height: 180,
       padding: EdgeInsets.zero,
-      blurEnabled: false,
       onTap: _pick,
-      child: _buildContent(),
+      child: _buildContent(context),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     final initialImageUrl = widget.initialImageUrl;
 
     if (_pickedBytes != null) {
@@ -86,7 +85,7 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
         fit: StackFit.expand,
         children: [
           Image.memory(_pickedBytes!, fit: BoxFit.cover),
-          _editBadge(),
+          _editBadge(context),
         ],
       );
     }
@@ -98,37 +97,39 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
           Image.network(
             initialImageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stack) => _placeholder(),
+            errorBuilder: (context, error, stack) => _placeholder(context),
           ),
-          _editBadge(),
+          _editBadge(context),
         ],
       );
     }
 
-    return _placeholder(showHint: true);
+    return _placeholder(context, showHint: true);
   }
 
-  Widget _editBadge() {
+  Widget _editBadge(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Positioned(
       right: AppSpacing.sm,
       bottom: AppSpacing.sm,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
-          color: AppColors.background.withValues(alpha: 0.6),
+          color: palette.scrim,
           borderRadius: BorderRadius.circular(AppRadius.xs),
         ),
-        child: const AppIcon(AppIcons.edit, size: 16, color: AppColors.white),
+        child: AppIcon(AppIcons.edit, size: 16, color: palette.textPrimary),
       ),
     );
   }
 
-  Widget _placeholder({bool showHint = false}) {
+  Widget _placeholder(BuildContext context, {bool showHint = false}) {
+    final palette = AppPalette.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AppIcon(AppIcons.addPhoto, size: 32, color: AppColors.textDisabled),
+          AppIcon(AppIcons.addPhoto, size: 32, color: palette.textDisabled),
           if (showHint) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(widget.hintText, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),

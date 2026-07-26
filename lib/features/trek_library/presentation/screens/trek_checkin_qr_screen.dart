@@ -103,7 +103,7 @@ class TrekCheckinQrScreen extends ConsumerWidget {
               Text(trek.title, style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
               const SizedBox(height: AppSpacing.xxl),
 
-              GlassCard(
+              AppCard(
                 child: Column(
                   children: [
                     // A white plate behind the QR regardless of the
@@ -142,11 +142,12 @@ class _StatusBanner extends StatelessWidget {
   final _CheckinWindowStatus status;
   final Trek trek;
 
-  ({Color color, IconData icon, String title, String subtitle}) get _content {
+  ({Color color, IconData icon, String title, String subtitle}) _content(BuildContext context) {
+    final palette = AppPalette.of(context);
     switch (status) {
       case _CheckinWindowStatus.notScheduled:
         return (
-          color: AppColors.textSecondary,
+          color: palette.textSecondary,
           icon: AppIcons.info,
           title: 'Not scheduled',
           subtitle: 'Set a trek date and start time to enable check-in.',
@@ -155,7 +156,7 @@ class _StatusBanner extends StatelessWidget {
         final start = trek.trekStartTime!.onDate(trek.trekDate!);
         final opensAt = start.subtract(const Duration(hours: _checkinWindowHours));
         return (
-          color: AppColors.gold,
+          color: palette.gold,
           icon: AppIcons.schedule,
           title: 'Not open yet',
           subtitle: 'Opens ${_formatDateTime(opensAt)} '
@@ -163,14 +164,14 @@ class _StatusBanner extends StatelessWidget {
         );
       case _CheckinWindowStatus.open:
         return (
-          color: AppColors.primary,
+          color: palette.primary,
           icon: AppIcons.checkCircle,
           title: 'Check-in window is open',
           subtitle: 'Members can be checked in now.',
         );
       case _CheckinWindowStatus.closed:
         return (
-          color: AppColors.danger,
+          color: palette.danger,
           icon: AppIcons.eventBusy,
           title: 'Check-in window closed',
           subtitle: 'More than $_checkinWindowHours hours have passed since the trek started.',
@@ -191,7 +192,7 @@ class _StatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = _content;
+    final c = _content(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(

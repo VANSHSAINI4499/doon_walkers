@@ -84,10 +84,11 @@ class _ViewAllTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return AspectRatio(
       aspectRatio: backdrop.aspectRatio,
       child: Material(
-        color: AppColors.cardHigh,
+        color: palette.cardHigh,
         borderRadius: BorderRadius.circular(AppRadius.sm),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -109,8 +110,8 @@ class _ViewAllTile extends StatelessWidget {
                       cacheManager: MediaCacheManager.instance.imageCacheManager,
                       fit: BoxFit.cover,
                       placeholder: (context, _) =>
-                          Shimmer(child: Container(color: AppColors.cardHigh)),
-                      errorWidget: (context, _, __) => Container(color: AppColors.cardHigh),
+                          Shimmer(child: Container(color: palette.cardHigh)),
+                      errorWidget: (context, _, __) => Container(color: palette.cardHigh),
                     )
                   : VideoThumbnailWidget(thumbnailUrl: backdrop.thumbnailUrl),
               Container(color: Colors.black.withAlpha(140)),

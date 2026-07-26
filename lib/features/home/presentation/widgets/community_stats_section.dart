@@ -133,13 +133,7 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Over the flat page background there's nothing to frost, so blur is
-    // off (cheaper, identical look) — same call the Phase 1 GlassCard doc
-    // recommends for tiles/lists.
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: accent,
-      glowOpacity: 0.14,
+    return AppCard(
       borderRadius: AppRadius.card,
       padding: const EdgeInsets.symmetric(
         vertical: AppSpacing.xl,

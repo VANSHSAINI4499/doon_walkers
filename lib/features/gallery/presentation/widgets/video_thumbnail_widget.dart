@@ -20,6 +20,7 @@ class VideoThumbnailWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final url = thumbnailUrl;
 
     return Stack(
@@ -28,9 +29,9 @@ class VideoThumbnailWidget extends StatelessWidget {
       children: [
         if (url == null || url.isEmpty)
           Container(
-            color: AppColors.cardHigh,
+            color: palette.cardHigh,
             alignment: Alignment.center,
-            child: const AppIcon(AppIcons.video, size: 28, color: AppColors.textSecondary),
+            child: AppIcon(AppIcons.video, size: 28, color: palette.textSecondary),
           )
         else
           CachedNetworkImage(
@@ -38,11 +39,11 @@ class VideoThumbnailWidget extends StatelessWidget {
             cacheManager: MediaCacheManager.instance.imageCacheManager,
             fit: BoxFit.cover,
             memCacheWidth: memCacheWidth,
-            placeholder: (context, _) => Shimmer(child: Container(color: AppColors.cardHigh)),
+            placeholder: (context, _) => Shimmer(child: Container(color: palette.cardHigh)),
             errorWidget: (context, _, __) => Container(
-              color: AppColors.cardHigh,
+              color: palette.cardHigh,
               alignment: Alignment.center,
-              child: const AppIcon(AppIcons.imageBroken, size: 28, color: AppColors.textSecondary),
+              child: AppIcon(AppIcons.imageBroken, size: 28, color: palette.textSecondary),
             ),
           ),
         const _PlayBadge(),

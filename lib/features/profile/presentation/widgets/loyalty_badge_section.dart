@@ -40,12 +40,9 @@ class LoyaltyBadgeSection extends ConsumerWidget {
                   color: palette.gold,
                   shape: BoxShape.circle,
                 ),
-                child: const AppIcon(
+                child: AppIcon(
                   AppIcons.medal,
-                  // Fixed dark ink: the gold disc is mid-tone in both
-                  // themes, so charcoal is the legible choice either way —
-                  // same rule as TierBadgeIcon.
-                  color: AppColors.charcoal,
+                  color: palette.cardHigh,
                   size: 22,
                 ),
               ),

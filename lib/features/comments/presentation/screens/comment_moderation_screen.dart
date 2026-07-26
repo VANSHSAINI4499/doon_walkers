@@ -1,4 +1,5 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/comments/presentation/providers/comment_providers.dart';
 import 'package:doon_walkers/features/comments/presentation/widgets/comment_tile.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ class CommentModerationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final hiddenAsync = ref.watch(hiddenCommentsProvider);
 
     return Scaffold(
@@ -34,7 +35,7 @@ class CommentModerationScreen extends ConsumerWidget {
         title: const Text('Comment Moderation'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.block_rounded),
+            icon: const AppIcon(AppIcons.block),
             tooltip: 'Manage blocklist',
             onPressed: () => context.push(AppConstants.routeCommentBlocklist),
           ),
@@ -42,26 +43,29 @@ class CommentModerationScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: hiddenAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const _ModerationQueueSkeleton(),
           error: (error, stack) {
             debugPrint('CommentModerationScreen: failed to load hidden comments: $error');
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xxl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
+                    AppIcon(AppIcons.error, size: 40, color: palette.danger),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'Could not load hidden comments.',
-                      style: theme.textTheme.titleMedium,
+                      style: AppTextStyles.titleMedium,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
-                    FilledButton(
+                    const SizedBox(height: AppSpacing.lg),
+                    PremiumButton(
+                      label: 'Retry',
+                      icon: AppIcons.refresh,
+                      variant: PremiumButtonVariant.glass,
+                      size: PremiumButtonSize.small,
                       onPressed: () => ref.invalidate(hiddenCommentsProvider),
-                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -85,16 +89,14 @@ class CommentModerationScreen extends ConsumerWidget {
               onRefresh: onRefresh,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
                 itemCount: comments.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
-                  // No navigate-to-trek tap here — CommentTile already
-                  // has its own interactive Hide/Delete buttons, and
-                  // review + unhide (this queue's actual job) doesn't
-                  // need a trip to the trek page. showTrekTitle gives
-                  // enough context without it.
-                  return CommentTile(comment: comments[index], showTrekTitle: true);
+                  return AppReveal(
+                    index: index.clamp(0, 8),
+                    child: CommentTile(comment: comments[index], showTrekTitle: true),
+                  );
                 },
               ),
             );
@@ -110,26 +112,69 @@ class _EmptyModerationQueue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.task_alt_rounded, size: 56, color: theme.colorScheme.outline),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: palette.primarySubtle,
+              shape: BoxShape.circle,
+              border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
+            ),
+            child: AppIcon(AppIcons.taskDone, size: 48, color: palette.primary),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'Nothing to review',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: AppTextStyles.titleLarge,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Comments you hide from a trek page will show up here.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ModerationQueueSkeleton extends StatelessWidget {
+  const _ModerationQueueSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Shimmer(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        itemCount: 4,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: palette.card,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: palette.border),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 180, height: 16),
+              SizedBox(height: AppSpacing.sm),
+              SkeletonBox(width: 140, height: 12),
+              SizedBox(height: AppSpacing.md),
+              SkeletonBox(width: 240, height: 14),
+            ],
+          ),
+        ),
       ),
     );
   }

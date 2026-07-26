@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/merchandise/presentation/providers/product_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -105,7 +106,7 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final isSaving = ref.watch(productImageAdminControllerProvider).isLoading;
 
     ref.listen<AsyncValue<void>>(productImageAdminControllerProvider, (previous, next) {
@@ -114,7 +115,7 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_cleanError(error)),
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: palette.danger,
             ),
           );
         },
@@ -124,16 +125,16 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xs, AppSpacing.xl, AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               'Add Photo',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: AppTextStyles.titleLarge,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.lg),
 
             GestureDetector(
               onTap: _pickImage,
@@ -142,25 +143,24 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
                 width: double.infinity,
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  color: palette.cardHigh,
+                  border: Border.all(color: palette.border),
                 ),
                 child: _pickedBytes == null
                     ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.add_photo_alternate_outlined,
+                            AppIcon(
+                              AppIcons.addPhoto,
                               size: 36,
-                              color: theme.colorScheme.outline,
+                              color: palette.textSecondary,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             Text(
                               'Tap to choose a photo',
-                              style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                              style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                             ),
                           ],
                         ),
@@ -168,18 +168,14 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
                     : Image.memory(_pickedBytes!, fit: BoxFit.cover, width: double.infinity),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xxl),
 
-            FilledButton(
-              onPressed: isSaving ? null : _upload,
-              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: isSaving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Upload'),
+            PremiumButton(
+              label: 'Upload Photo',
+              icon: AppIcons.upload,
+              fullWidth: true,
+              isLoading: isSaving,
+              onPressed: _pickedBytes == null ? null : _upload,
             ),
           ],
         ),

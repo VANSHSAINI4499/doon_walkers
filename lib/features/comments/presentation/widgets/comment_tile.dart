@@ -103,21 +103,17 @@ class _CommentTileState extends ConsumerState<CommentTile> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final c = widget.comment;
     final currentUserId = ref.watch(supabaseClientProvider).auth.currentUser?.id;
     final isAdmin = ref.watch(isAdminProvider);
     final isOwnComment = currentUserId != null && currentUserId == c.userId;
     final avatar = c.userAvatar;
 
-    return GlassCard(
-      blurEnabled: false,
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       borderRadius: AppRadius.card,
-      // Hidden comments (admin-only, per the class doc) get a danger-tinted
-      // treatment so they never look like a normal comment.
-      glowColor: c.isVisible ? null : AppColors.danger,
-      glowOpacity: 0.12,
-      borderColor: c.isVisible ? null : AppColors.danger.withValues(alpha: 0.4),
+      borderColor: c.isVisible ? null : palette.danger.withValues(alpha: 0.4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

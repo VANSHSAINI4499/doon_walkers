@@ -168,13 +168,14 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
   Widget build(BuildContext context) {
     final isSaving = ref.watch(registrationControllerProvider).isLoading;
 
+    final palette = AppPalette.of(context);
     ref.listen<AsyncValue<void>>(registrationControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_errorMessage(error)),
-              backgroundColor: AppColors.danger,
+              backgroundColor: palette.danger,
             ),
           );
         },
@@ -201,10 +202,10 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      gradient: AppGradients.primary,
+                      color: palette.primary,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: const AppIcon(AppIcons.hiking, size: 20, color: AppColors.onPrimary),
+                    child: AppIcon(AppIcons.hiking, size: 20, color: palette.onPrimary),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -271,7 +272,7 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
 
               Row(
                 children: [
-                  const AppIcon(AppIcons.lock, size: 14, color: AppColors.textSecondary),
+                  AppIcon(AppIcons.lock, size: 14, color: palette.textSecondary),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
@@ -333,10 +334,8 @@ class _PaymentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: AppColors.gold,
-      glowOpacity: 0.12,
+    final palette = AppPalette.of(context);
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -346,10 +345,10 @@ class _PaymentSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.16),
+                  color: palette.gold.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: const AppIcon(AppIcons.payment, size: 18, color: AppColors.gold),
+                child: AppIcon(AppIcons.payment, size: 18, color: palette.gold),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -360,7 +359,7 @@ class _PaymentSection extends StatelessWidget {
                     Text('Registration fee', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
                     Text(
                       '₹${_formatFee(fee)}',
-                      style: AppTextStyles.tinted(AppTextStyles.statSmall, AppColors.gold),
+                      style: AppTextStyles.tinted(AppTextStyles.statSmall, palette.gold),
                     ),
                   ],
                 ),
@@ -383,8 +382,8 @@ class _PaymentSection extends StatelessWidget {
                     height: 120,
                     width: 120,
                     alignment: Alignment.center,
-                    color: AppColors.cardHigh,
-                    child: const AppIcon(AppIcons.imageBroken, color: AppColors.textDisabled),
+                    color: palette.cardHigh,
+                    child: AppIcon(AppIcons.imageBroken, color: palette.textDisabled),
                   ),
                 ),
               ),
@@ -403,23 +402,23 @@ class _PaymentSection extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                color: AppColors.surface,
+                color: palette.surface,
                 border: Border.all(
-                  color: showRequiredError ? AppColors.danger : AppColors.glassBorder,
+                  color: showRequiredError ? palette.danger : palette.border,
                   width: showRequiredError ? 2 : 1,
                 ),
               ),
               child: screenshotBytes != null
                   ? Image.memory(screenshotBytes!, fit: BoxFit.cover, width: double.infinity)
-                  : const Center(
+                  : Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AppIcon(AppIcons.addPhoto, size: 32, color: AppColors.textSecondary),
-                          SizedBox(height: AppSpacing.sm),
+                          AppIcon(AppIcons.addPhoto, size: 32, color: palette.textSecondary),
+                          const SizedBox(height: AppSpacing.sm),
                           Text(
                             'Tap to add your payment screenshot',
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                           ),
                         ],
                       ),
@@ -430,7 +429,7 @@ class _PaymentSection extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Please upload proof of payment before confirming.',
-              style: AppTextStyles.tinted(AppTextStyles.bodySmall, AppColors.danger),
+              style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger),
             ),
           ],
         ],

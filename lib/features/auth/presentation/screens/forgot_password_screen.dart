@@ -88,7 +88,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xxl),
-        GlassCard(
+        AppCard(
           child: Form(
             key: _formKey,
             child: Column(
@@ -128,12 +128,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Widget _buildSuccessView() {
-    return GlassCard(
-      glowColor: AppColors.primary,
+    final palette = AppPalette.of(context);
+    return AppCard(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AppIcon(AppIcons.emailRead, size: 56, color: AppColors.primary),
+          AppIcon(AppIcons.emailRead, size: 56, color: palette.primary),
           const SizedBox(height: AppSpacing.lg),
           Text(
             'Check Your Email',

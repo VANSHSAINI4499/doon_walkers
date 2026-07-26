@@ -18,12 +18,13 @@ class AdminFormSectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label.toUpperCase(),
-          style: AppTextStyles.overline.copyWith(color: AppColors.primary),
+          style: AppTextStyles.overline.copyWith(color: palette.primary),
         ),
         if (subtitle != null) ...[
           const SizedBox(height: AppSpacing.xs),
@@ -80,23 +81,26 @@ class AdminFormErrorState extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.xxl),
-      child: GlassCard(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppIcon(AppIcons.error, size: 40, color: AppColors.danger),
-            const SizedBox(height: AppSpacing.md),
-            Text(message, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
-            const SizedBox(height: AppSpacing.lg),
-            PremiumButton(label: 'Retry', variant: PremiumButtonVariant.glass, onPressed: onRetry),
-          ],
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: AppCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppIcon(AppIcons.error, size: 40, color: palette.danger),
+              const SizedBox(height: AppSpacing.md),
+              Text(message, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+              const SizedBox(height: AppSpacing.lg),
+              PremiumButton(label: 'Retry', variant: PremiumButtonVariant.glass, onPressed: onRetry),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// The Cancel/Save row every admin form ends on. Cancel is disabled

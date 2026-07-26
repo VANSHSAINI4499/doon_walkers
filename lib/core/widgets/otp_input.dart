@@ -1,8 +1,4 @@
-import 'package:doon_walkers/core/motion/app_motion.dart';
-import 'package:doon_walkers/core/theme/app_colors.dart';
-import 'package:doon_walkers/core/theme/app_dimens.dart';
-import 'package:doon_walkers/core/theme/app_shadows.dart';
-import 'package:doon_walkers/core/theme/app_text_styles.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -232,29 +228,25 @@ class _OTPDigitBoxState extends State<_OTPDigitBox> {
     if (mounted) setState(() => _focused = widget.focusNode.hasFocus);
   }
 
-  Color get _borderColor {
-    if (widget.hasError) return AppColors.danger;
-    if (_focused) return AppColors.primary;
-    if (_hovered) return AppColors.textSecondary;
-    return AppColors.glassBorder;
+  Color _borderColor(AppPalette palette) {
+    if (widget.hasError) return palette.danger;
+    if (_focused) return palette.primary;
+    if (_hovered) return palette.textSecondary;
+    return palette.border;
   }
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final box = AnimatedContainer(
       duration: AppMotion.fast,
       curve: AppMotion.standard,
       width: 52,
       height: 58,
       decoration: BoxDecoration(
-        color: _focused ? AppColors.cardHigh : AppColors.card,
+        color: _focused ? palette.cardHigh : palette.card,
         borderRadius: AppRadius.all(AppRadius.sm),
-        border: Border.all(color: _borderColor, width: _focused || widget.hasError ? 2 : 1),
-        boxShadow: _focused && !widget.hasError
-            ? AppShadows.glow(AppColors.primary, opacity: 0.3, radius: 14)
-            : widget.hasError
-                ? AppShadows.glow(AppColors.danger, opacity: 0.25, radius: 14)
-                : null,
+        border: Border.all(color: _borderColor(palette), width: _focused || widget.hasError ? 2 : 1),
       ),
       child: Focus(
         onKeyEvent: (node, event) {

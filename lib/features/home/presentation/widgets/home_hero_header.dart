@@ -71,12 +71,9 @@ class _GreetingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      // Blur ON here on purpose: it frosts the mountains behind it. Home's
-      // other cards sit over the flat page background and keep blur off.
+    final palette = AppPalette.of(context);
+    return AppCard(
       borderRadius: AppRadius.lg,
-      glowColor: AppColors.primary,
-      glowOpacity: 0.22,
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,21 +85,17 @@ class _GreetingCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  gradient: AppGradients.primary,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  color: palette.primarySubtle,
+                  shape: BoxShape.circle,
                 ),
-                child: const AppIcon(
-                  AppIcons.hiking,
-                  size: 18,
-                  color: AppColors.onPrimary,
-                ),
+                child: AppIcon(AppIcons.hiking, size: 20, color: palette.primary),
               ),
               const SizedBox(width: AppSpacing.md),
               Text(
                 'NAMASTE, TREKKER 🙏',
                 style: AppTextStyles.tinted(
-                  AppTextStyles.overline,
-                  AppColors.primaryLight,
+                  AppTextStyles.labelSmall,
+                  palette.primary,
                 ),
               ),
             ],

@@ -1,11 +1,5 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
-import 'package:doon_walkers/core/icons/app_icons.dart';
-import 'package:doon_walkers/core/motion/app_motion.dart';
-import 'package:doon_walkers/core/theme/app_colors.dart';
-import 'package:doon_walkers/core/theme/app_dimens.dart';
-import 'package:doon_walkers/core/theme/app_gradients.dart';
-import 'package:doon_walkers/core/theme/app_shadows.dart';
-import 'package:doon_walkers/core/theme/app_text_styles.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Branded launch splash — the Flutter-side half of the app's boot
@@ -54,16 +48,10 @@ class _AppSplashScreenState extends State<AppSplashScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      // A faint radial wash behind the badge, same device Home's hero and
-      // the Phase 1 demo gallery use for a glass surface to sit on top of.
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(-0.3, -0.6),
-          radius: 1.3,
-          colors: [Color(0xFF15241B), AppColors.background],
-          stops: [0, 0.7],
-        ),
+    final palette = AppPalette.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: palette.background,
       ),
       child: Center(
         child: AnimatedBuilder(
@@ -78,15 +66,14 @@ class _AppSplashScreenState extends State<AppSplashScreen> with SingleTickerProv
                   height: 96,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    gradient: AppGradients.primary,
+                    color: palette.primary,
                     shape: BoxShape.circle,
-                    boxShadow: AppShadows.glow(
-                      AppColors.primary,
-                      opacity: 0.26 + 0.22 * t,
-                      radius: 30 + 14 * t,
+                    border: Border.all(
+                      color: palette.primary.withValues(alpha: 0.3 + 0.2 * t),
+                      width: 2,
                     ),
                   ),
-                  child: const AppIcon(AppIcons.hiking, color: AppColors.onPrimary, size: 44),
+                  child: AppIcon(AppIcons.hiking, color: palette.onPrimary, size: 44),
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 Text(AppConstants.appName, style: AppTextStyles.headlineMedium),

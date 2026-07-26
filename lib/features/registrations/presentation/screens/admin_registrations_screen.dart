@@ -1,4 +1,5 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_tile.dart';
 import 'package:flutter/material.dart';
@@ -19,33 +20,36 @@ class AdminRegistrationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     final registrationsAsync = ref.watch(allRegistrationsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Registrations')),
       body: SafeArea(
         child: registrationsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const _RegistrationsSkeleton(),
           error: (error, stack) {
             debugPrint('AdminRegistrationsScreen: failed to load registrations: $error');
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xxl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline_rounded, size: 40, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
+                    AppIcon(AppIcons.error, size: 40, color: palette.danger),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'Could not load registrations.',
-                      style: theme.textTheme.titleMedium,
+                      style: AppTextStyles.titleMedium,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
-                    FilledButton(
+                    const SizedBox(height: AppSpacing.lg),
+                    PremiumButton(
+                      label: 'Retry',
+                      icon: AppIcons.refresh,
+                      variant: PremiumButtonVariant.glass,
+                      size: PremiumButtonSize.small,
                       onPressed: () => ref.invalidate(allRegistrationsProvider),
-                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -69,18 +73,21 @@ class AdminRegistrationsScreen extends ConsumerWidget {
               onRefresh: onRefresh,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
                 itemCount: registrations.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
                   final registration = registrations[index];
-                  return RegistrationTile(
-                    registration: registration,
-                    // Sensitive fields (age/gender/emergency contact/
-                    // medical notes) live behind this tap rather than in
-                    // the list — see AdminRegistrationDetailScreen.
-                    onTap: () => context.push(
-                      AppConstants.adminRegistrationDetailLocation(registration.id),
+                  return AppReveal(
+                    index: index.clamp(0, 8),
+                    child: RegistrationTile(
+                      registration: registration,
+                      // Sensitive fields (age/gender/emergency contact/
+                      // medical notes) live behind this tap rather than in
+                      // the list — see AdminRegistrationDetailScreen.
+                      onTap: () => context.push(
+                        AppConstants.adminRegistrationDetailLocation(registration.id),
+                      ),
                     ),
                   );
                 },
@@ -93,35 +100,74 @@ class AdminRegistrationsScreen extends ConsumerWidget {
   }
 }
 
-/// Empty state. Deliberately explicit that the *user-facing registration
-/// flow doesn't exist yet* (Phase 6) rather than a bare "nothing here" —
-/// otherwise a working-but-empty roster reads as broken to an admin who
-/// knows the community has members.
 class _EmptyRegistrations extends StatelessWidget {
   const _EmptyRegistrations();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppSpacing.xxxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.people_outline_rounded, size: 56, color: theme.colorScheme.outline),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              color: palette.primarySubtle,
+              shape: BoxShape.circle,
+              border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
+            ),
+            child: AppIcon(AppIcons.registrations, size: 48, color: palette.primary),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'No registrations yet',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: AppTextStyles.titleLarge,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
-            'Trek registrations will appear here once members can sign up for treks.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            'Trek registrations will appear here once members sign up for treks.',
+            style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RegistrationsSkeleton extends StatelessWidget {
+  const _RegistrationsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Shimmer(
+      child: ListView.separated(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        itemCount: 4,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: palette.card,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            border: Border.all(color: palette.border),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 180, height: 16),
+              SizedBox(height: AppSpacing.sm),
+              SkeletonBox(width: 140, height: 10),
+              SizedBox(height: AppSpacing.md),
+              SkeletonBox(width: 220, height: 44, borderRadius: AppRadius.sm),
+            ],
+          ),
+        ),
       ),
     );
   }

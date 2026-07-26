@@ -1,3 +1,4 @@
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Square grid tile for a single product photo. Mirrors
@@ -12,20 +13,20 @@ class ProductImageThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
 
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: Container(
-          color: theme.colorScheme.surfaceContainerHighest,
+          color: palette.cardHigh,
           child: Image.network(
             imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stack) => Icon(
-              Icons.broken_image_outlined,
-              color: theme.colorScheme.outline,
+            errorBuilder: (context, error, stack) => AppIcon(
+              AppIcons.imageBroken,
+              color: palette.textSecondary,
             ),
           ),
         ),

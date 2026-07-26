@@ -103,7 +103,6 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final tasks = ref.watch(
       mediaUploadControllerProvider.select(
         (state) => state.where((t) => t.trekId == widget.trekId).toList().reversed.toList(),
@@ -128,14 +127,14 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xs, AppSpacing.xl, AppSpacing.xxl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 'Add Photos & Videos',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: AppTextStyles.titleLarge,
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -156,14 +155,14 @@ class _GalleryUploadSheetState extends ConsumerState<_GalleryUploadSheet> {
               ),
               const SizedBox(height: AppSpacing.xl),
 
-              FilledButton(
+              PremiumButton(
+                label: _picked.isEmpty
+                    ? 'Choose Photos or Videos'
+                    : 'Upload ${_picked.length} item${_picked.length == 1 ? '' : 's'}',
+                icon: AppIcons.upload,
+                fullWidth: true,
+                isLoading: _isStarting,
                 onPressed: (_picked.isEmpty || _isPicking || _isStarting) ? null : _startUpload,
-                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: Text(
-                  _picked.isEmpty
-                      ? 'Choose Photos or Videos'
-                      : 'Upload ${_picked.length} item${_picked.length == 1 ? '' : 's'}',
-                ),
               ),
             ],
           ),
@@ -182,7 +181,7 @@ class _PickedFilesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
 
     return Wrap(
       spacing: AppSpacing.sm,
@@ -197,12 +196,12 @@ class _PickedFilesGrid extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              color: theme.colorScheme.surfaceContainerHighest,
-              border: Border.all(color: theme.colorScheme.outlineVariant),
+              color: palette.cardHigh,
+              border: Border.all(color: palette.border),
             ),
-            child: Icon(
-              files.isEmpty ? Icons.add_photo_alternate_outlined : Icons.add_rounded,
-              color: theme.colorScheme.outline,
+            child: AppIcon(
+              files.isEmpty ? AppIcons.addPhoto : AppIcons.add,
+              color: palette.textSecondary,
             ),
           ),
         ),
@@ -219,6 +218,7 @@ class _PickedFileChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final extension = file.name.contains('.') ? file.name.split('.').last.toLowerCase() : '';
     final isVideo = MediaType.fromExtension(extension) == MediaType.video;
 
@@ -229,10 +229,10 @@ class _PickedFileChip extends StatelessWidget {
           child: Container(
             width: 72,
             height: 72,
-            color: AppColors.cardHigh,
+            color: palette.cardHigh,
             alignment: Alignment.center,
             child: isVideo
-                ? const AppIcon(AppIcons.video, color: AppColors.textSecondary)
+                ? AppIcon(AppIcons.video, color: palette.textSecondary)
                 : Image.file(File(file.path), fit: BoxFit.cover, width: 72, height: 72),
           ),
         ),
@@ -240,14 +240,14 @@ class _PickedFileChip extends StatelessWidget {
           top: -6,
           right: -6,
           child: Material(
-            color: Colors.black87,
+            color: palette.scrim,
             shape: const CircleBorder(),
             child: InkWell(
               onTap: onRemove,
               customBorder: const CircleBorder(),
-              child: const Padding(
-                padding: EdgeInsets.all(4),
-                child: Icon(Icons.close_rounded, size: 14, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: AppIcon(AppIcons.close, size: 14, color: palette.textPrimary),
               ),
             ),
           ),
@@ -264,6 +264,7 @@ class _UploadTaskRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Row(
@@ -277,10 +278,10 @@ class _UploadTaskRow extends ConsumerWidget {
                   ? Image.file(
                       File(task.file.path),
                       fit: BoxFit.cover,
-                      errorBuilder: (context, _, __) => Container(color: AppColors.cardHigh),
+                      errorBuilder: (context, _, __) => Container(color: palette.cardHigh),
                     )
                   : Container(
-                      color: AppColors.cardHigh,
+                      color: palette.cardHigh,
                       alignment: Alignment.center,
                       child: const AppIcon(AppIcons.video, size: 18),
                     ),
@@ -318,6 +319,7 @@ class _StatusLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     switch (task.status) {
       case MediaUploadStatus.queued:
         return Text('Queued…', style: AppTextStyles.secondary(AppTextStyles.labelSmall));
@@ -329,18 +331,18 @@ class _StatusLine extends StatelessWidget {
           child: LinearProgressIndicator(
             value: task.progress.clamp(0, 1).toDouble(),
             minHeight: 4,
-            backgroundColor: AppColors.cardHigh,
+            backgroundColor: palette.cardHigh,
           ),
         );
       case MediaUploadStatus.success:
         return Text(
           'Uploaded',
-          style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.primary),
+          style: AppTextStyles.tinted(AppTextStyles.labelSmall, palette.primary),
         );
       case MediaUploadStatus.failed:
         return Text(
           task.errorMessage ?? 'Failed',
-          style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.danger),
+          style: AppTextStyles.tinted(AppTextStyles.labelSmall, palette.danger),
         );
       case MediaUploadStatus.cancelled:
         return Text('Cancelled', style: AppTextStyles.secondary(AppTextStyles.labelSmall));
@@ -355,6 +357,7 @@ class _TrailingAction extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
     if (task.isActive) {
       return IconButton(
         icon: const AppIcon(AppIcons.close, size: 18),
@@ -370,7 +373,7 @@ class _TrailingAction extends ConsumerWidget {
       );
     }
     if (task.status == MediaUploadStatus.success) {
-      return const AppIcon(AppIcons.checkCircle, size: 18, color: AppColors.primary);
+      return AppIcon(AppIcons.checkCircle, size: 18, color: palette.primary);
     }
     // Queued or cancelled — dismissible.
     return IconButton(
