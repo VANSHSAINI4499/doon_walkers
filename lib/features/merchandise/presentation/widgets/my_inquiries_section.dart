@@ -22,11 +22,12 @@ class MyInquiriesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inquiriesAsync = ref.watch(myMerchInquiriesPreviewProvider);
+    final palette = AppPalette.of(context);
 
     return PreviewSection<MerchInquiry>(
       title: 'My Inquiries',
       icon: AppIcons.bag,
-      accent: AppColors.accent,
+      accent: palette.accent,
       asyncItems: inquiriesAsync,
       itemBuilder: (inquiry) => MyInquiryTile(inquiry: inquiry),
       onViewAll: () => context.push(AppConstants.routeMyEnquiries),
@@ -49,8 +50,7 @@ class MyInquiryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final sizeLabel = inquiry.variantSize != null ? ' · Size ${inquiry.variantSize}' : '';
 
-    return GlassCard(
-      blurEnabled: false,
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,7 +2,6 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/core/router/auth_guard.dart';
-import 'package:doon_walkers/core/widgets/section_title.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
@@ -53,16 +52,25 @@ class ChallengeDetailScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+                    AppIcon(
+                      AppIcons.error,
+                      size: 40,
+                      color: AppPalette.of(context).danger,
+                    ),
                     const SizedBox(height: AppSpacing.md),
-                    Text('Could not load this challenge.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+                    Text(
+                      'Could not load this challenge.',
+                      style: AppTextStyles.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: AppSpacing.xl),
-                    PremiumButton(
+                    AppButton(
                       label: 'Retry',
                       icon: AppIcons.refresh,
-                      variant: PremiumButtonVariant.glass,
-                      size: PremiumButtonSize.small,
-                      onPressed: () => ref.invalidate(challengeByIdProvider(challengeId)),
+                      variant: AppButtonVariant.glass,
+                      size: AppButtonSize.small,
+                      onPressed: () =>
+                          ref.invalidate(challengeByIdProvider(challengeId)),
                     ),
                   ],
                 ),
@@ -90,6 +98,7 @@ class _ChallengeDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
     final isSignedIn = ref.watch(isSignedInProvider);
     final progressAsync = ref.watch(myChallengeProgressProvider);
 
@@ -119,16 +128,25 @@ class _ChallengeDetailBody extends ConsumerWidget {
                     child: Container(
                       width: 56,
                       height: 56,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      decoration: BoxDecoration(
+                        color: palette.primarySubtle,
                         shape: BoxShape.circle,
                       ),
-                      child: AppIcon(ChallengeIcon.forKey(challenge.icon), size: 28, color: AppColors.onPrimary),
+                      child: AppIcon(
+                        ChallengeIcon.forKey(challenge.icon),
+                        size: 26,
+                        color: palette.primary,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.lg),
                   Expanded(
-                    child: Text(challenge.title, style: AppTextStyles.headlineSmall),
+                    child: Text(
+                      challenge.title,
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        color: palette.textPrimary,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -139,25 +157,42 @@ class _ChallengeDetailBody extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.gold.withValues(alpha: 0.16),
+                      color: palette.accentContainer,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       'Draft — not visible to members yet',
-                      style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.gold),
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: palette.accent,
+                      ),
                     ),
                   ),
                 ),
               ],
               if (challenge.description.trim().isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.xl),
-                Text(challenge.description.trim(), style: AppTextStyles.secondary(AppTextStyles.bodyLarge)),
+                Text(
+                  challenge.description.trim(),
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: palette.textSecondary,
+                  ),
+                ),
               ],
               const SizedBox(height: AppSpacing.xxl),
               _HowMeasured(challenge: challenge),
               const SizedBox(height: AppSpacing.xxl),
-              const SectionTitle(title: 'Tiers', icon: AppIcons.medal, accent: AppColors.gold),
+              Row(
+                children: [
+                  AppIcon(AppIcons.medal, size: 18, color: palette.textSecondary),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Tiers',
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: palette.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.md),
               if (!isSignedIn) ...[
                 _SignInForProgressBanner(challenge: challenge),
@@ -182,12 +217,14 @@ class _ChallengeDetailBody extends ConsumerWidget {
               // challenges anyway, so hiding the entry point here avoids a
               // confusing always-empty screen.
               if (challenge.isActive)
-                PremiumButton(
+                AppButton(
                   label: 'View Leaderboard',
                   icon: AppIcons.leaderboard,
-                  variant: PremiumButtonVariant.secondary,
+                  variant: AppButtonVariant.glass,
                   fullWidth: true,
-                  onPressed: () => context.push(AppConstants.challengeLeaderboardLocation(challenge.id)),
+                  onPressed: () => context.push(
+                    AppConstants.challengeLeaderboardLocation(challenge.id),
+                  ),
                 ),
               const SizedBox(height: AppSpacing.xl),
             ],
@@ -206,28 +243,46 @@ class _HowMeasured extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: AppColors.secondary,
-      glowOpacity: 0.1,
+    final palette = AppPalette.of(context);
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const AppIcon(AppIcons.info, size: 18, color: AppColors.secondary),
+              AppIcon(AppIcons.info, size: 18, color: palette.textSecondary),
               const SizedBox(width: AppSpacing.sm),
-              Text('How this is measured', style: AppTextStyles.titleSmall),
+              Text(
+                'How this is measured',
+                style: AppTextStyles.titleSmall.copyWith(
+                  color: palette.textPrimary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Text(challenge.metric.explanation, style: AppTextStyles.bodyMedium),
+          Text(
+            challenge.metric.explanation,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: palette.textPrimary,
+            ),
+          ),
           if (challenge.metric != ChallengeMetric.activeStreakDays) ...[
             const SizedBox(height: AppSpacing.xs),
-            Text(_timeWindowExplanation(challenge), style: AppTextStyles.bodyMedium),
+            Text(
+              _timeWindowExplanation(challenge),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: palette.textPrimary,
+              ),
+            ),
           ],
           const SizedBox(height: AppSpacing.xs),
-          Text(challenge.metric.footnote, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+          Text(
+            challenge.metric.footnote,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: palette.textSecondary,
+            ),
+          ),
         ],
       ),
     );
@@ -259,10 +314,9 @@ class _SignInForProgressBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: AppColors.primary,
-      glowOpacity: 0.16,
+    final palette = AppPalette.of(context);
+    return AppCard(
+      borderColor: palette.primary.withValues(alpha: 0.45),
       onTap: () => AuthGuard.requireAuth(
         context,
         returnPath: AppConstants.challengeDetailLocation(challenge.id),
@@ -271,15 +325,15 @@ class _SignInForProgressBanner extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          const AppIcon(AppIcons.lock, size: 18, color: AppColors.primary),
+          AppIcon(AppIcons.lock, size: 18, color: palette.primary),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               "Sign in to see which tier you've reached.",
-              style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.primary),
+              style: AppTextStyles.labelMedium.copyWith(color: palette.primary),
             ),
           ),
-          const AppIcon(AppIcons.chevronRight, size: 18, color: AppColors.primary),
+          AppIcon(AppIcons.chevronRight, size: 18, color: palette.primary),
         ],
       ),
     );
@@ -301,16 +355,14 @@ class _TierRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final tierColor = TierBadge.colorFor(tier);
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: isCurrent ? tierColor : null,
-      glowOpacity: 0.2,
-      borderColor: isCurrent ? tierColor.withValues(alpha: 0.5) : null,
+    return AppCard(
+      borderColor: isCurrent ? tierColor.withValues(alpha: 0.6) : null,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
-          TierBadgeIcon(tier: tier, size: 44, locked: !isReached, glow: isCurrent),
+          TierBadgeIcon(tier: tier, size: 40, locked: !isReached),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -318,29 +370,40 @@ class _TierRow extends StatelessWidget {
               children: [
                 Text(
                   tier.label,
-                  style: isReached
-                      ? AppTextStyles.titleSmall
-                      : AppTextStyles.disabled(AppTextStyles.titleSmall),
+                  style: AppTextStyles.titleSmall.copyWith(
+                    color: isReached
+                        ? palette.textPrimary
+                        : palette.textDisabled,
+                  ),
                 ),
-                Text('Reach $thresholdLabel', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                Text(
+                  'Reach $thresholdLabel',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: palette.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
           if (isCurrent)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: 4,
+              ),
               decoration: BoxDecoration(
                 color: tierColor,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
-                boxShadow: AppShadows.glow(tierColor, opacity: 0.5, radius: 10),
               ),
               child: Text(
                 'You are here',
-                style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.background),
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.charcoal,
+                ),
               ),
             )
           else if (isReached)
-            AppIcon(AppIcons.checkCircle, color: tierColor),
+            AppIcon(AppIcons.checkCircle, size: 20, color: tierColor),
         ],
       ),
     );

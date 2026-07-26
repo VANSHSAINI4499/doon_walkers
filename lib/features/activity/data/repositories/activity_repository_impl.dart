@@ -57,6 +57,75 @@ class ActivityRepositoryImpl implements ActivityRepository {
     return DateTime.parse(row['synced_at'] as String);
   }
 
+  @override
+  Future<List<DailyActivity>> fetchDailyActivitySince(DateTime from) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return const [];
+
+    final rows = await _supabase
+        .from(AppConstants.tableDailyActivitySummary)
+        .select('date, steps, distance_km, calories')
+        .eq('user_id', userId)
+        .gte('date', _formatDate(from))
+        .order('date');
+
+    return (rows as List).map(_rowToActivity).toList();
+  }
+
+  @override
+  Future<List<DailyActivity>> fetchDailyActivityRange({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return const [];
+
+    final rows = await _supabase
+        .from(AppConstants.tableDailyActivitySummary)
+        .select('date, steps, distance_km, calories')
+        .eq('user_id', userId)
+        .gte('date', _formatDate(from))
+        // `lte`, not `lt`: ActivityPeriod's range is inclusive at both
+        // ends, so a `lt` here would silently drop the last day of every
+        // week and month.
+        .lte('date', _formatDate(to))
+        .order('date');
+
+    return (rows as List).map(_rowToActivity).toList();
+  }
+
+  @override
+  Future<int?> fetchActivityPercentile(DateTime month) async {
+    if (_supabase.auth.currentUser == null) return null;
+
+    final result = await _supabase.rpc(
+      AppConstants.rpcGetMyActivityPercentile,
+      // The RPC truncates to the month itself; passing the 1st keeps the
+      // cache key stable regardless of which day the caller was on.
+      params: {'p_month': _formatDate(DateTime(month.year, month.month))},
+    );
+
+    // NULL is a real, expected answer ("cannot say") — not an error, and
+    // deliberately not coerced to 0.
+    return (result as num?)?.toInt();
+  }
+
+  static DailyActivity _rowToActivity(Object? row) {
+    final map = row! as Map<String, dynamic>;
+    return DailyActivity(
+      date: DateTime.parse(map['date'] as String),
+      steps: (map['steps'] as num?)?.toInt() ?? 0,
+      distanceKm: _toDouble(map['distance_km']),
+      calories: _toDouble(map['calories']),
+    );
+  }
+
+  static double _toDouble(Object? value) => switch (value) {
+    final num n => n.toDouble(),
+    final String s => double.tryParse(s) ?? 0,
+    _ => 0,
+  };
+
   String _formatDate(DateTime date) {
     return '${date.year.toString().padLeft(4, '0')}-'
         '${date.month.toString().padLeft(2, '0')}-'

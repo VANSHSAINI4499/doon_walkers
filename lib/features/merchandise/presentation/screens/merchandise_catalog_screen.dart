@@ -159,15 +159,13 @@ class _HeroBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xxl, AppSpacing.xl, AppSpacing.xxl),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF15241B), AppColors.background],
-        ),
+      decoration: BoxDecoration(
+        color: palette.backgroundAlt,
+        border: Border(bottom: BorderSide(color: palette.border)),
       ),
       child: Row(
         children: [
@@ -176,16 +174,15 @@ class _HeroBanner extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: AppGradients.primary,
               borderRadius: BorderRadius.circular(AppRadius.md),
-              boxShadow: AppShadows.glow(AppColors.primary, opacity: 0.35, radius: 16),
             ),
-            child: const AppIcon(AppIcons.store, size: 28, color: AppColors.onPrimary),
+            child: AppIcon(AppIcons.store, size: 28, color: palette.onPrimary),
           ),
           const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('WEAR YOUR TRAIL PRIDE', style: AppTextStyles.tinted(AppTextStyles.overline, AppColors.primaryLight)),
+                Text('WEAR YOUR TRAIL PRIDE', style: AppTextStyles.tinted(AppTextStyles.overline, palette.primary)),
                 const SizedBox(height: AppSpacing.xs),
                 Text('Doon Walkers Merchandise', style: AppTextStyles.headlineSmall),
               ],
@@ -205,6 +202,7 @@ class _AddProductFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Pressable(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.button),
@@ -213,14 +211,14 @@ class _AddProductFab extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: AppGradients.primary,
           borderRadius: BorderRadius.circular(AppRadius.button),
-          boxShadow: AppShadows.button(AppColors.primary),
+          boxShadow: AppShadows.button(palette.primary),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon(AppIcons.add, size: 22, color: AppColors.onPrimary),
+            AppIcon(AppIcons.add, size: 22, color: palette.onPrimary),
             const SizedBox(width: AppSpacing.sm),
-            Text('Add Product', style: AppTextStyles.tinted(AppTextStyles.labelLarge, AppColors.onPrimary)),
+            Text('Add Product', style: AppTextStyles.tinted(AppTextStyles.labelLarge, palette.onPrimary)),
           ],
         ),
       ),
@@ -235,13 +233,14 @@ class _CatalogError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+            AppIcon(AppIcons.error, size: 44, color: palette.danger),
             const SizedBox(height: AppSpacing.md),
             Text('Could not load merchandise.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.xl),
@@ -270,6 +269,7 @@ class _EmptyCatalog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final title = noMatch
         ? 'No matching products'
         : (isAdmin ? 'No products yet' : 'No merchandise yet');
@@ -288,11 +288,11 @@ class _EmptyCatalog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppSpacing.xl),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: palette.primarySubtle,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
               ),
-              child: AppIcon(noMatch ? AppIcons.searchOff : AppIcons.bag, size: 48, color: AppColors.primary),
+              child: AppIcon(noMatch ? AppIcons.searchOff : AppIcons.bag, size: 48, color: palette.primary),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(title, style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
@@ -317,6 +317,7 @@ class _CatalogSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Shimmer(
       child: MasonryGridView.count(
         crossAxisCount: 2,
@@ -327,9 +328,9 @@ class _CatalogSkeleton extends StatelessWidget {
         itemCount: _imageHeights.length,
         itemBuilder: (context, index) => Container(
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: palette.card,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: palette.border),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(

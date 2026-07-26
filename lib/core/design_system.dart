@@ -38,6 +38,7 @@ export 'package:doon_walkers/core/theme/app_theme.dart';
 export 'package:doon_walkers/core/theme/theme_mode_provider.dart';
 // Components
 export 'package:doon_walkers/core/widgets/app_progress.dart';
+export 'package:doon_walkers/core/widgets/app_segmented_control.dart';
 export 'package:doon_walkers/core/widgets/app_splash_screen.dart';
 export 'package:doon_walkers/core/widgets/floating_nav_bar.dart';
 export 'package:doon_walkers/core/widgets/glass_card.dart';

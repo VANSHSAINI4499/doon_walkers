@@ -26,11 +26,12 @@ import 'package:go_router/go_router.dart';
 /// carries a `register=1` flag so Trek Detail can reopen the form
 /// automatically once they're back.
 ///
-/// Redesign Phase 3 restyles the button and status cards onto the design
-/// system. Every state and every gating condition below — the unpublished
-/// guard, the loading double-submit guard, the fail-open-when-upcoming
-/// error branch, the completed→closed rule, and the already-registered
-/// summary — is exactly as it was; only the widgets drawing them changed.
+/// Redesign 2.0 Phase 15 restyles the button and status cards calm (flat
+/// cards, no glow). Every state and every gating condition below — the
+/// unpublished guard, the loading double-submit guard, the
+/// fail-open-when-upcoming error branch, the completed→closed rule, and
+/// the already-registered summary — is exactly as it was; only the
+/// widgets drawing them changed.
 class TrekRegisterButton extends ConsumerWidget {
   const TrekRegisterButton({
     super.key,
@@ -54,7 +55,7 @@ class TrekRegisterButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!trek.isPublished) {
-      return const PremiumButton(
+      return const AppButton(
         label: 'Publish this trek to open registrations',
         onPressed: null,
         fullWidth: true,
@@ -66,7 +67,7 @@ class TrekRegisterButton extends ConsumerWidget {
     return registrationAsync.when(
       // Disabled rather than hidden: keeps the layout stable and makes a
       // double-submit impossible while we're still resolving.
-      loading: () => const PremiumButton(
+      loading: () => const AppButton(
         label: 'Register for this Trek',
         icon: AppIcons.hiking,
         isLoading: true,
@@ -117,10 +118,10 @@ class _RegisterCta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PremiumButton(
+    return AppButton(
       label: 'Register for this Trek',
       icon: AppIcons.hiking,
-      size: PremiumButtonSize.large,
+      size: AppButtonSize.large,
       fullWidth: true,
       onPressed: onPressed,
     );
@@ -135,17 +136,17 @@ class _RegistrationClosed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
+    final palette = AppPalette.of(context);
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          const AppIcon(AppIcons.eventBusy, color: AppColors.textSecondary),
+          AppIcon(AppIcons.eventBusy, color: palette.textSecondary),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               'This trek has already taken place — registration is closed.',
-              style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+              style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
             ),
           ),
         ],
@@ -184,10 +185,13 @@ class _AlreadyRegistered extends StatelessWidget {
           now: DateTime.now(),
         );
 
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: AppColors.primary,
-      glowOpacity: 0.18,
+    final palette = AppPalette.of(context);
+    final checkedIn = registration.checkedInAt != null;
+
+    return AppCard(
+      // A tinted hairline marks this as a live, positive state — the
+      // calm replacement for the glow this card used to cast.
+      borderColor: palette.primary.withValues(alpha: 0.45),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -195,8 +199,8 @@ class _AlreadyRegistered extends StatelessWidget {
           Row(
             children: [
               AppIcon(
-                registration.checkedInAt != null ? AppIcons.verified : AppIcons.checkCircle,
-                color: AppColors.primary,
+                checkedIn ? AppIcons.verified : AppIcons.checkCircle,
+                color: palette.primary,
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -205,11 +209,14 @@ class _AlreadyRegistered extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      registration.checkedInAt != null ? "You're checked in" : "You're registered",
-                      style: AppTextStyles.titleSmall,
+                      checkedIn ? "You're checked in" : "You're registered",
+                      style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
                     ),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+                    ),
                   ],
                 ),
               ),
@@ -217,10 +224,10 @@ class _AlreadyRegistered extends StatelessWidget {
           ),
           if (showCheckIn) ...[
             const SizedBox(height: AppSpacing.md),
-            PremiumButton(
+            AppButton(
               label: 'Check In',
               icon: AppIcons.qr,
-              variant: PremiumButtonVariant.glass,
+              variant: AppButtonVariant.glass,
               fullWidth: true,
               onPressed: () => context.push(AppConstants.trekCheckInLocation(trek.id)),
             ),

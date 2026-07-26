@@ -80,22 +80,23 @@ class _WishlistButtonState extends ConsumerState<WishlistButton> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final wishlistedAsync = ref.watch(isProductWishlistedProvider(widget.productId));
     final isWishlisted = wishlistedAsync.valueOrNull ?? false;
 
     if (_isPending || wishlistedAsync.isLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(AppSpacing.md),
-        child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.danger)),
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger)),
       );
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: isWishlisted ? AppColors.danger.withValues(alpha: 0.14) : AppColors.card,
+        color: isWishlisted ? palette.danger.withValues(alpha: 0.14) : palette.card,
         shape: BoxShape.circle,
         border: Border.all(
-          color: isWishlisted ? AppColors.danger.withValues(alpha: 0.4) : AppColors.glassBorder,
+          color: isWishlisted ? palette.danger.withValues(alpha: 0.4) : palette.border,
         ),
       ),
       child: IconButton(
@@ -104,7 +105,7 @@ class _WishlistButtonState extends ConsumerState<WishlistButton> {
         icon: AppIcon(
           AppIcons.favorite,
           fill: isWishlisted ? 1 : 0,
-          color: isWishlisted ? AppColors.danger : AppColors.textSecondary,
+          color: isWishlisted ? palette.danger : palette.textSecondary,
         ),
       ),
     );

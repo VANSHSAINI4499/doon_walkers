@@ -13,16 +13,18 @@ class StockStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isInStock ? AppColors.primary : AppColors.danger;
+    final palette = AppPalette.of(context);
+    final color = isInStock ? palette.primary : palette.danger;
+    final bgSubtle = isInStock ? palette.primarySubtle : palette.danger.withValues(alpha: 0.14);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: dense ? AppSpacing.sm : AppSpacing.md,
         vertical: dense ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
+        color: bgSubtle,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -19,6 +19,7 @@ class AdminMerchInquiriesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
     final inquiriesAsync = ref.watch(allMerchInquiriesProvider);
 
     return Scaffold(
@@ -34,7 +35,7 @@ class AdminMerchInquiriesScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+                    AppIcon(AppIcons.error, size: 44, color: palette.danger),
                     const SizedBox(height: AppSpacing.md),
                     Text('Could not load inquiries.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
                     const SizedBox(height: AppSpacing.xl),
@@ -88,6 +89,7 @@ class _EmptyInquiries extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xxxl),
       child: Column(
@@ -96,11 +98,11 @@ class _EmptyInquiries extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              color: palette.primarySubtle,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
             ),
-            child: const AppIcon(AppIcons.bag, size: 48, color: AppColors.primary),
+            child: AppIcon(AppIcons.bag, size: 48, color: palette.primary),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text('No inquiries yet', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
@@ -131,6 +133,7 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
   Future<void> _updateStatus(MerchInquiryStatus status) async {
     if (status == widget.inquiry.status) return;
 
+    final palette = AppPalette.of(context);
     setState(() => _isSaving = true);
     final success = await ref
         .read(merchInquiryControllerProvider.notifier)
@@ -140,9 +143,9 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not update this inquiry. Please try again.'),
-          backgroundColor: AppColors.danger,
+        SnackBar(
+          content: const Text('Could not update this inquiry. Please try again.'),
+          backgroundColor: palette.danger,
         ),
       );
     }
@@ -150,11 +153,11 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final inquiry = widget.inquiry;
     final sizeLabel = inquiry.variantSize != null ? ' · Size ${inquiry.variantSize}' : '';
 
-    return GlassCard(
-      blurEnabled: false,
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +180,7 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              const AppIcon(AppIcons.person, size: 16, color: AppColors.textSecondary),
+              AppIcon(AppIcons.person, size: 16, color: palette.textSecondary),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -196,11 +199,11 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
             const SizedBox(height: AppSpacing.xs),
             Row(
               children: [
-                const AppIcon(AppIcons.call, size: 16, color: AppColors.primary),
+                AppIcon(AppIcons.call, size: 16, color: palette.primary),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Contact for this order: ${inquiry.phoneNumber}',
-                  style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.primary),
+                  style: AppTextStyles.tinted(AppTextStyles.labelMedium, palette.primary),
                 ),
               ],
             ),
@@ -243,6 +246,7 @@ class _InquiriesSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Shimmer(
       child: ListView.separated(
         physics: const NeverScrollableScrollPhysics(),
@@ -252,9 +256,9 @@ class _InquiriesSkeleton extends StatelessWidget {
         itemBuilder: (context, index) => Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: palette.card,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: palette.border),
           ),
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,

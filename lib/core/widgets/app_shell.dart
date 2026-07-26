@@ -2,6 +2,7 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
+import 'package:doon_walkers/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -235,11 +236,11 @@ class _AppShellState extends ConsumerState<AppShell>
           // state, same convention as the Profile tab: the router's own
           // guest-redirect guard is what protects /notifications, not
           // conditional visibility of the affordance that opens it.
-          IconButton(
-            icon: const AppIcon(AppIcons.notifications),
-            tooltip: 'Notifications',
-            onPressed: () => context.push(AppConstants.routeNotifications),
-          ),
+          //
+          // Phase 13 added the unread badge. The bell itself was already
+          // correct from Phase 10 (theme-resolved ink, no hardcoded
+          // colour), so this is additive rather than a restyle.
+          const _NotificationBellAction(),
           Builder(
             builder: (ctx) => IconButton(
               icon: const AppIcon(AppIcons.menu),
@@ -264,6 +265,65 @@ class _AppShellState extends ConsumerState<AppShell>
       ),
 
       body: widget.navigationShell,
+    );
+  }
+}
+
+/// The app bar's bell, with an unread count badge.
+///
+/// The count comes from [unreadNotificationCountProvider], which compares
+/// the visible notification list against this device's read state (see
+/// `NotificationReadTracker` for why read state is device-local). It reads
+/// 0 — and so renders no badge — while the list is loading and for a guest,
+/// so the badge never flashes a number it then corrects.
+///
+/// Counts above 9 render as "9+": the badge is 16px, and the exact number
+/// stops mattering well before it stops fitting.
+class _NotificationBellAction extends ConsumerWidget {
+  const _NotificationBellAction();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final unread = ref.watch(unreadNotificationCountProvider);
+
+    return IconButton(
+      tooltip: unread > 0 ? 'Notifications ($unread unread)' : 'Notifications',
+      onPressed: () => context.push(AppConstants.routeNotifications),
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const AppIcon(AppIcons.notifications),
+          if (unread > 0)
+            Positioned(
+              // Nudged outside the glyph's box so the badge sits on the
+              // bell's shoulder rather than covering it.
+              top: -4,
+              right: -5,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                constraints: const BoxConstraints(minWidth: 16),
+                height: 16,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: palette.primary,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  // A ring in the bar's own colour keeps the badge legible
+                  // where it overlaps the dark bell glyph.
+                  border: Border.all(color: palette.background, width: 1.5),
+                ),
+                child: Text(
+                  unread > 9 ? '9+' : '$unread',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: palette.onPrimary,
+                    fontSize: 9,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/widgets/preview_section.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
+import 'package:doon_walkers/features/registrations/domain/services/registration_status_group.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_status_chip.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,14 @@ class MyRegistrationsSection extends ConsumerWidget {
 
 /// One registration row — shared by [MyRegistrationsSection]'s preview
 /// and [MyRegistrationsScreen]'s full list.
+///
+/// Redesign 2.0 Phase 15 restyles this calm and adds the trek's scheduled
+/// date (real — [Registration.trekDate], already joined) alongside the
+/// existing "Registered on" line. It does **not** add duration or a
+/// location name: neither is joined onto a registration row (only
+/// `trek_date` and `title` are — see `RegistrationRepositoryImpl`'s
+/// `treks(title, trek_date)` select), so a card here can't show what a
+/// Trek Library/Detail card can.
 class MyRegistrationTile extends ConsumerStatefulWidget {
   const MyRegistrationTile({super.key, required this.registration});
 
@@ -57,6 +66,7 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
 
   Future<void> _confirmCancel() async {
     final r = widget.registration;
+    final palette = AppPalette.of(context);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -67,16 +77,16 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
           'You can register again later if spots are still open.',
         ),
         actions: [
-          PremiumButton(
+          AppButton(
             label: 'Keep it',
-            variant: PremiumButtonVariant.glass,
-            size: PremiumButtonSize.small,
+            variant: AppButtonVariant.glass,
+            size: AppButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(false),
           ),
-          PremiumButton(
+          AppButton(
             label: 'Cancel registration',
-            variant: PremiumButtonVariant.danger,
-            size: PremiumButtonSize.small,
+            variant: AppButtonVariant.danger,
+            size: AppButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
@@ -97,17 +107,19 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
         content: Text(
           success ? 'Registration cancelled.' : 'Could not cancel your registration. Please try again.',
         ),
-        backgroundColor: success ? null : AppColors.danger,
+        backgroundColor: success ? null : palette.danger,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final r = widget.registration;
+    final group = registrationStatusGroupFor(r);
+    final trekDate = r.trekDate;
 
-    return GlassCard(
-      blurEnabled: false,
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +130,7 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
               Expanded(
                 child: Text(
                   r.trekTitle,
-                  style: AppTextStyles.titleSmall,
+                  style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -132,34 +144,84 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Registered ${formatRegistrationDate(r.createdAt)}',
-            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.xs,
+            children: [
+              if (trekDate != null)
+                _MetaLine(
+                  icon: AppIcons.calendar,
+                  text: formatRegistrationDate(trekDate),
+                  palette: palette,
+                ),
+              _MetaLine(
+                icon: AppIcons.eventAvailable,
+                text: 'Registered ${formatRegistrationDate(r.createdAt)}',
+                palette: palette,
+              ),
+              // Only meaningful once the trek has actually happened — a
+              // silent no-op for an upcoming/cancelled registration, since
+              // checkedInAt can't be set yet either way.
+              if (group == RegistrationStatusGroup.completed && r.checkedInAt != null)
+                _MetaLine(
+                  icon: AppIcons.verified,
+                  text: 'Checked in',
+                  palette: palette,
+                  tint: palette.primary,
+                ),
+            ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.centerLeft,
             child: _isPending
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                     child: SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.danger),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger),
                     ),
                   )
                 : TextButton.icon(
                     onPressed: _confirmCancel,
-                    icon: const AppIcon(AppIcons.close, size: 18, color: AppColors.danger),
+                    icon: AppIcon(AppIcons.close, size: 18, color: palette.danger),
                     label: Text(
                       'Cancel registration',
-                      style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.danger),
+                      style: AppTextStyles.labelMedium.copyWith(color: palette.danger),
                     ),
                     style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
                   ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MetaLine extends StatelessWidget {
+  const _MetaLine({
+    required this.icon,
+    required this.text,
+    required this.palette,
+    this.tint,
+  });
+
+  final IconData icon;
+  final String text;
+  final AppPalette palette;
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = tint ?? palette.textSecondary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppIcon(icon, size: 14, color: color),
+        const SizedBox(width: AppSpacing.xs),
+        Text(text, style: AppTextStyles.bodySmall.copyWith(color: color)),
+      ],
     );
   }
 }

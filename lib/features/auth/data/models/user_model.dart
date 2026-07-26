@@ -14,6 +14,7 @@ class UserModel extends UserEntity {
     super.showOnLeaderboard,
     super.phoneVerified,
     super.phoneVerifiedAt,
+    super.dailyStepGoal,
   });
 
   /// Creates a [UserModel] from a database row (JSON map).
@@ -35,6 +36,12 @@ class UserModel extends UserEntity {
       phoneVerifiedAt: json['phone_verified_at'] != null
           ? DateTime.parse(json['phone_verified_at'] as String)
           : null,
+      // Same "missing means the column default" treatment as
+      // show_on_leaderboard above — a cached row from before 0034 must
+      // not resolve to a 0 goal, which would divide by zero downstream.
+      dailyStepGoal:
+          (json['daily_step_goal'] as num?)?.toInt() ??
+          UserEntity.defaultDailyStepGoal,
     );
   }
 
@@ -49,6 +56,7 @@ class UserModel extends UserEntity {
       if (profileImage != null) 'profile_image': profileImage,
       'created_at': createdAt.toIso8601String(),
       'show_on_leaderboard': showOnLeaderboard,
+      'daily_step_goal': dailyStepGoal,
     };
   }
 
@@ -60,6 +68,7 @@ class UserModel extends UserEntity {
     UserRole? role,
     String? profileImage,
     bool? showOnLeaderboard,
+    int? dailyStepGoal,
   }) {
     return UserModel(
       id: id,
@@ -70,6 +79,9 @@ class UserModel extends UserEntity {
       profileImage: profileImage ?? this.profileImage,
       createdAt: createdAt,
       showOnLeaderboard: showOnLeaderboard ?? this.showOnLeaderboard,
+      phoneVerified: phoneVerified,
+      phoneVerifiedAt: phoneVerifiedAt,
+      dailyStepGoal: dailyStepGoal ?? this.dailyStepGoal,
     );
   }
 }

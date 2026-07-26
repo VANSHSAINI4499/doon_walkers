@@ -47,15 +47,15 @@ class ProductImagesSection extends ConsumerWidget {
         : null;
 
     if (images.isEmpty) {
+      final palette = AppPalette.of(context);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GlassCard(
-            blurEnabled: false,
+          AppCard(
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: Row(
               children: [
-                const AppIcon(AppIcons.photo, size: 22, color: AppColors.textSecondary),
+                AppIcon(AppIcons.photo, size: 22, color: palette.textSecondary),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(

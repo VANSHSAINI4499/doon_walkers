@@ -101,6 +101,22 @@ final isSignedInProvider = Provider<bool>(
   name: 'isSignedInProvider',
 );
 
+/// The signed-in user's auth id, or null for a guest.
+///
+/// Same live-session read as [isSignedInProvider] (and the same reason:
+/// it flips the instant auth changes rather than waiting on the
+/// `public.users` row stream). Useful for the several places that need to
+/// key device-local state per user — notification read state, the
+/// challenge celebration baseline — without depending on the profile row
+/// having loaded.
+final currentUserIdProvider = Provider<String?>(
+  (ref) {
+    ref.watch(authStateChangesProvider);
+    return Supabase.instance.client.auth.currentUser?.id;
+  },
+  name: 'currentUserIdProvider',
+);
+
 /// Example trivial provider — demonstrates the Riverpod pattern works.
 ///
 /// Replace with real app-version logic (e.g. from package_info_plus) in

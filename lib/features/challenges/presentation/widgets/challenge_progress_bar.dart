@@ -33,6 +33,8 @@ class ChallengeProgressBar extends StatelessWidget {
         : tiers.indexWhere((t) => t.tier == currentTier);
     final isMaxTier = currentTierIndex == tiers.length - 1;
 
+    final palette = AppPalette.of(context);
+
     if (isMaxTier) {
       final platinum = TierBadge.colorFor(ChallengeTier.platinum);
       return Container(
@@ -52,7 +54,7 @@ class ChallengeProgressBar extends StatelessWidget {
             Expanded(
               child: Text(
                 'Platinum reached — the top tier!',
-                style: AppTextStyles.tinted(AppTextStyles.labelMedium, platinum),
+                style: AppTextStyles.labelMedium.copyWith(color: platinum),
               ),
             ),
           ],
@@ -65,67 +67,36 @@ class ChallengeProgressBar extends StatelessWidget {
     final nextThreshold = next.thresholdValue;
     final span = nextThreshold - prevThreshold;
     final fraction = span <= 0 ? 0.0 : ((currentValue - prevThreshold) / span).clamp(0.0, 1.0);
-    final nextColor = TierBadge.colorFor(next.tier);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _ProgressTrack(fraction: fraction, color: nextColor),
+        // The shared bar, in the single accent — not the next tier's metal
+        // colour as before. A bar that changes hue as you climb made every
+        // card on the list a different colour; the tier being aimed for is
+        // already named in the caption right below it.
+        AppProgressBar(value: fraction, height: 6),
         const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
-            AppIcon(TierBadge.icon, size: 13, color: nextColor),
+            AppIcon(
+              TierBadge.icon,
+              size: 13,
+              color: TierBadge.colorFor(next.tier),
+            ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
                 '${challenge.metric.formatValue(currentValue)} / '
                 '${challenge.metric.formatValue(nextThreshold)} to ${next.tier.label}',
-                style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: palette.textSecondary,
+                ),
               ),
             ),
           ],
         ),
       ],
-    );
-  }
-}
-
-/// A rounded track whose fill animates up to [fraction] in [color], with a
-/// soft glow on the filled portion.
-class _ProgressTrack extends StatelessWidget {
-  const _ProgressTrack({required this.fraction, required this.color});
-
-  final double fraction;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Container(
-        height: 8,
-        color: AppColors.cardHigh,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: LayoutBuilder(
-            builder: (context, constraints) => TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: fraction.clamp(0.0, 1.0)),
-              duration: AppMotion.slow,
-              curve: AppMotion.emphasized,
-              builder: (context, value, _) => Container(
-                width: constraints.maxWidth * value,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color.withValues(alpha: 0.7), color],
-                  ),
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  boxShadow: AppShadows.glow(color, opacity: 0.5, radius: 8),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

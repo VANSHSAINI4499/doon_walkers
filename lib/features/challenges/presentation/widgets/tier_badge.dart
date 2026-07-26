@@ -39,29 +39,25 @@ abstract final class TierBadge {
     ChallengeTier.platinum => AppColors.platinum,
   };
 
-  /// A top-left→bottom-right gradient in the tier's colour, for filled
-  /// badge surfaces that should catch light like the rest of the system.
-  static LinearGradient gradientFor(ChallengeTier tier) {
-    final base = colorFor(tier);
-    return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color.lerp(base, Colors.white, 0.35)!, base],
-    );
-  }
-
   /// Same glyph for every tier — [colorFor] is what differentiates them,
   /// so adding a 5th tier later needs only a new switch arm on [colorFor].
   static const IconData icon = AppIcons.medal;
 }
 
-/// A single tier badge — a medal glyph in a tinted, softly-glowing circle.
+/// A single tier badge — a medal glyph on a flat, tinted disc.
 ///
-/// [locked] renders the same badge desaturated (a lock glyph over a muted
-/// fill) for tiers the user hasn't reached yet, used on Challenge Detail's
-/// tier ladder. [glow] adds a coloured halo for hero contexts (the
-/// celebration, a card's current tier); it's off by default so a dense
-/// list of badges doesn't shimmer.
+/// [locked] renders the same badge muted (a lock glyph on a dead fill) for
+/// tiers the user hasn't reached yet, used on Challenge Detail's tier
+/// ladder.
+///
+/// Redesign 2.0 Phase 12 flattened this: the metal gradient and the
+/// coloured halo are gone. A tier is now a solid disc in its metal
+/// colour, which is legible at 20px in a dense list and does not need a
+/// glow to read as special — the metals are already the only saturated
+/// colours the calm palette allows outside the single green accent.
+///
+/// The [glow] parameter survives so the ~4 call sites that pass it keep
+/// compiling; it is ignored.
 class TierBadgeIcon extends StatelessWidget {
   const TierBadgeIcon({
     super.key,
@@ -74,11 +70,13 @@ class TierBadgeIcon extends StatelessWidget {
   final ChallengeTier tier;
   final double size;
   final bool locked;
+
+  /// Retired — ignored. Was a coloured halo.
   final bool glow;
 
   @override
   Widget build(BuildContext context) {
-    final color = TierBadge.colorFor(tier);
+    final palette = AppPalette.of(context);
 
     if (locked) {
       return Container(
@@ -86,22 +84,32 @@ class TierBadgeIcon extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.cardHigh,
-          border: Border.all(color: AppColors.glassBorder),
+          color: palette.cardHigh,
+          border: Border.all(color: palette.border),
         ),
-        child: AppIcon(AppIcons.lock, color: AppColors.textDisabled, size: size * 0.5),
+        child: AppIcon(
+          AppIcons.lock,
+          color: palette.textDisabled,
+          size: size * 0.46,
+        ),
       );
     }
+
+    final color = TierBadge.colorFor(tier);
 
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: TierBadge.gradientFor(tier),
-        boxShadow: glow ? AppShadows.glow(color, opacity: 0.5, radius: size * 0.5) : null,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      child: AppIcon(
+        TierBadge.icon,
+        // Ink sits on the metal disc, not on the page, so it does not
+        // follow the theme: all four metals are mid-tone (bronze #B08B54
+        // through platinum #77A0AB), where charcoal clears 4.5:1 and
+        // white does not. One fixed dark ink is correct in both themes.
+        color: AppColors.charcoal,
+        size: size * 0.52,
       ),
-      child: AppIcon(TierBadge.icon, color: AppColors.background, size: size * 0.52),
     );
   }
 }

@@ -4,7 +4,7 @@ import 'package:doon_walkers/features/trek_library/presentation/widgets/difficul
 import 'package:flutter/material.dart';
 
 /// Card summary for a trek in the public library grid — cover image,
-/// title, difficulty badge, distance/duration at a glance.
+/// title, difficulty badge, date/distance/duration at a glance.
 ///
 /// The same card serves every role. [adminActions] is the only
 /// role-dependent part: the Trek Library screen passes a
@@ -12,14 +12,27 @@ import 'package:flutter/material.dart';
 /// otherwise, so guests and members see an identical card with no admin
 /// affordances rather than a separate screen.
 ///
-/// Redesign Phase 3: rebuilt on the design system. Badge *logic* is
-/// unchanged — the draft marker still shows only in an admin view of an
-/// unpublished trek, and the "Upcoming" pill still keys off
-/// [Trek.isUpcoming] (automatic from `trek_date`, never a manual flag).
-/// Only the visual treatment changed. The card is still driven by its own
-/// intrinsic height so the masonry grid can pack varied-length
-/// descriptions without clipping or wasted space — every text child below
-/// caps itself with `maxLines`/ellipsis and the outer column shrink-wraps.
+/// Redesign 2.0 Phase 15 restyles this calm (flat card, no glow) and adds
+/// the trek's scheduled date as a fact chip — real data
+/// ([Trek.trekDate]) that the card simply never surfaced before, even
+/// though Trek Detail already showed it. Badge *logic* is unchanged: the
+/// draft marker still shows only in an admin view of an unpublished trek,
+/// and the "Upcoming" pill still keys off [Trek.isUpcoming] (automatic
+/// from `trek_date`, never a manual flag).
+///
+/// ## What's still not here, on purpose
+///
+/// No "Spots Left" — `treks` has no capacity column, so a count would be
+/// fabricated. No location name — the schema only has [Trek.googleMapLink]
+/// (a raw URL, no place-name text), which is why Trek Detail's location
+/// affordance is a maps-link button rather than a text line; this card
+/// doesn't invent a name to show either. See TrekLibraryScreen's doc for
+/// why there is still no Upcoming/Completed toggle on this grid.
+///
+/// The card is still driven by its own intrinsic height so the masonry
+/// grid can pack varied-length descriptions without clipping or wasted
+/// space — every text child below caps itself with `maxLines`/ellipsis
+/// and the outer column shrink-wraps.
 class TrekCard extends StatelessWidget {
   const TrekCard({
     super.key,
@@ -36,16 +49,17 @@ class TrekCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final coverImage = trek.coverImage;
     final isAdminView = adminActions != null;
 
-    return GlassCard(
+    return AppCard(
       onTap: onTap,
-      blurEnabled: false,
       padding: EdgeInsets.zero,
       borderRadius: AppRadius.card,
-      glowColor: trek.isUpcoming ? AppColors.primary : null,
-      glowOpacity: 0.14,
+      // A tinted hairline marks an upcoming trek — the calm replacement
+      // for the glow this card used to cast for the same signal.
+      borderColor: trek.isUpcoming ? palette.primary.withValues(alpha: 0.4) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -88,7 +102,7 @@ class TrekCard extends StatelessWidget {
                       icon: AppIcons.editNote,
                       label: 'Draft',
                       background: Color(0xCC000000),
-                      foreground: AppColors.white,
+                      foreground: Colors.white,
                     ),
                   ),
                 if (isAdminView)
@@ -107,15 +121,14 @@ class TrekCard extends StatelessWidget {
                 // (top-left) or the admin actions menu (top-right).
                 // Automatic from trek_date — see Trek.isUpcoming.
                 if (trek.isUpcoming)
-                  const Positioned(
+                  Positioned(
                     bottom: AppSpacing.sm,
                     left: AppSpacing.sm,
                     child: _CardBadge(
                       icon: AppIcons.eventAvailable,
                       label: 'Upcoming',
-                      background: AppColors.primary,
-                      foreground: AppColors.onPrimary,
-                      glow: true,
+                      background: palette.primary,
+                      foreground: palette.onPrimary,
                     ),
                   ),
               ],
@@ -133,7 +146,9 @@ class TrekCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         trek.title,
-                        style: AppTextStyles.titleMedium,
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: palette.textPrimary,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -146,21 +161,34 @@ class TrekCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     trek.description.trim(),
-                    style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: palette.textSecondary,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                if (trek.distanceKm != null || trek.durationDays != null) ...[
+                if (trek.trekDate != null ||
+                    trek.distanceKm != null ||
+                    trek.durationDays != null) ...[
                   const SizedBox(height: AppSpacing.md),
-                  // Wrap, not Row — on a narrow masonry column two chips
-                  // don't reliably fit side by side; Wrap drops the second
-                  // to its own line, which the content-driven masonry cell
-                  // handles cleanly.
+                  // Wrap, not Row — on a narrow masonry column, three
+                  // chips don't reliably fit on one line; Wrap drops the
+                  // overflow to its own line, which the content-driven
+                  // masonry cell handles cleanly.
                   Wrap(
                     spacing: AppSpacing.sm,
                     runSpacing: AppSpacing.xs,
                     children: [
+                      // First — matches Trek Detail's own ordering ("when"
+                      // is the most decision-relevant fact once a trek
+                      // has a real date). Never shown for a trek not yet
+                      // backfilled with one, per Trek.trekDate's own doc.
+                      if (trek.trekDate != null)
+                        _FactChip(
+                          icon: AppIcons.calendar,
+                          label: _formatDate(trek.trekDate!),
+                        ),
                       if (trek.distanceKm != null)
                         _FactChip(
                           icon: AppIcons.distance,
@@ -169,7 +197,9 @@ class TrekCard extends StatelessWidget {
                       if (trek.durationDays != null)
                         _FactChip(
                           icon: AppIcons.duration,
-                          label: '${trek.durationDays} ${trek.durationDays == 1 ? 'day' : 'days'}',
+                          label:
+                              '${trek.durationDays} '
+                              '${trek.durationDays == 1 ? 'day' : 'days'}',
                         ),
                     ],
                   ),
@@ -183,6 +213,13 @@ class TrekCard extends StatelessWidget {
   }
 
   String _formatDistance(double km) => km % 1 == 0 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _formatDate(DateTime dt) => '${dt.day} ${_months[dt.month - 1]}';
 }
 
 class _CoverPlaceholder extends StatelessWidget {
@@ -190,16 +227,11 @@ class _CoverPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF16302A), AppColors.card],
-        ),
-      ),
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(color: palette.cardHigh),
       child: Center(
-        child: AppIcon(AppIcons.landscape, size: 40, color: AppColors.textDisabled),
+        child: AppIcon(AppIcons.landscape, size: 40, color: palette.textDisabled),
       ),
     );
   }
@@ -212,14 +244,12 @@ class _CardBadge extends StatelessWidget {
     required this.label,
     required this.background,
     required this.foreground,
-    this.glow = false,
   });
 
   final IconData icon;
   final String label;
   final Color background;
   final Color foreground;
-  final bool glow;
 
   @override
   Widget build(BuildContext context) {
@@ -228,21 +258,20 @@ class _CardBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        boxShadow: glow ? AppShadows.glow(background, opacity: 0.5, radius: 12) : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppIcon(icon, size: 12, color: foreground),
           const SizedBox(width: AppSpacing.xs),
-          Text(label, style: AppTextStyles.tinted(AppTextStyles.labelSmall, foreground)),
+          Text(label, style: AppTextStyles.labelSmall.copyWith(color: foreground)),
         ],
       ),
     );
   }
 }
 
-/// Small tinted pill for a distance/duration fact.
+/// Small tinted pill for a distance/duration/date fact.
 class _FactChip extends StatelessWidget {
   const _FactChip({required this.icon, required this.label});
 
@@ -251,19 +280,22 @@ class _FactChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.cardHigh,
+        color: palette.cardHigh,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.glassBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppIcon(icon, size: 13, color: AppColors.primary),
+          AppIcon(icon, size: 13, color: palette.primary),
           const SizedBox(width: AppSpacing.xs),
-          Text(label, style: AppTextStyles.labelSmall),
+          Text(
+            label,
+            style: AppTextStyles.labelSmall.copyWith(color: palette.textPrimary),
+          ),
         ],
       ),
     );

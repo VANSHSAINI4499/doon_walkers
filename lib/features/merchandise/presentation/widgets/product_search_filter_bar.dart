@@ -29,6 +29,7 @@ class ProductSearchFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -39,11 +40,11 @@ class ProductSearchFilterBar extends StatelessWidget {
             onChanged: onSearchChanged,
             decoration: InputDecoration(
               hintText: 'Search merchandise…',
-              prefixIcon: const AppIcon(AppIcons.search, size: 20, color: AppColors.textSecondary),
+              prefixIcon: AppIcon(AppIcons.search, size: 20, color: palette.textSecondary),
               suffixIcon: searchController.text.isEmpty
                   ? null
                   : IconButton(
-                      icon: const AppIcon(AppIcons.close, size: 18, color: AppColors.textSecondary),
+                      icon: AppIcon(AppIcons.close, size: 18, color: palette.textSecondary),
                       tooltip: 'Clear search',
                       onPressed: onClearSearch,
                     ),
@@ -86,6 +87,7 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Pressable(
       onTap: onSelected,
       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -95,18 +97,17 @@ class _CategoryChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
           gradient: selected ? AppGradients.primary : null,
-          color: selected ? null : AppColors.card,
+          color: selected ? null : palette.card,
           borderRadius: BorderRadius.circular(AppRadius.pill),
           border: Border.all(
-            color: selected ? Colors.transparent : AppColors.glassBorder,
+            color: selected ? Colors.transparent : palette.border,
           ),
-          boxShadow: selected ? AppShadows.glow(AppColors.primary, opacity: 0.3, radius: 10) : null,
         ),
         child: Text(
           label,
           style: AppTextStyles.tinted(
             AppTextStyles.labelMedium,
-            selected ? AppColors.onPrimary : AppColors.textSecondary,
+            selected ? palette.onPrimary : palette.textSecondary,
           ),
         ),
       ),

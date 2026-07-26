@@ -24,13 +24,14 @@ class ListSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return TextField(
       controller: controller,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: const AppIcon(AppIcons.search, size: 20, color: AppColors.textSecondary),
+        prefixIcon: AppIcon(AppIcons.search, size: 20, color: palette.textSecondary),
         filled: true,
-        fillColor: AppColors.cardHigh,
+        fillColor: palette.cardHigh,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
           borderSide: BorderSide.none,

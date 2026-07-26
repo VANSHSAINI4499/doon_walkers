@@ -9,7 +9,8 @@ import 'package:go_router/go_router.dart';
 /// rendered on the Profile screen — the old standalone Admin Panel it used
 /// to live on is gone, so this is now the only way in.
 ///
-/// Redesign Phase 5 restyles it as a [PremiumButton]. The gating is
+/// An [AppButton] since Phase 13 — it was already rendering calm via the
+/// `PremiumButton` typedef, this just drops the retired name. The gating is
 /// unchanged: it renders nothing for a non-admin (defence in depth — the
 /// Profile screen also gates the whole admin group), same
 /// [isAdminProvider] convention as every other admin-only affordance.
@@ -21,10 +22,10 @@ class AdminSendNotificationCard extends ConsumerWidget {
     final isAdmin = ref.watch(isAdminProvider);
     if (!isAdmin) return const SizedBox.shrink();
 
-    return PremiumButton(
+    return AppButton(
       label: 'Send Notification',
       icon: AppIcons.announce,
-      variant: PremiumButtonVariant.accent,
+      variant: AppButtonVariant.accent,
       fullWidth: true,
       onPressed: () => context.push(AppConstants.routeAdminSendNotification),
     );

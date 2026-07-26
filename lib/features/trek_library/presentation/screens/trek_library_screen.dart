@@ -23,9 +23,19 @@ import 'package:go_router/go_router.dart';
 /// unpublished rows to an admin caller — so a non-admin can't obtain
 /// drafts even if this widget asked for them.
 ///
-/// Redesign Phase 3: rebuilt on the design system (skeleton loading,
-/// glass trek cards, a gradient add-trek button). The role split, the
-/// masonry layout, and every gating rule are unchanged.
+/// Redesign 2.0 Phase 15 restyles this calm (flat cards, no glow FAB).
+///
+/// ## Still no Upcoming/Completed toggle here, on purpose
+///
+/// [sortTreksForLibrary] (see `trek_providers.dart`) already partitions
+/// the grid — upcoming first nearest-date-first, then completed
+/// most-recent-first, then unscheduled — and that partition is
+/// **deliberately automatic, never a manual tab**, per that function's own
+/// doc: an admin is backfilling ~35 historical treks with real past dates
+/// over time, and the grid has to keep re-sorting itself correctly as
+/// that happens without anyone touching a toggle. Phase 15 adds the
+/// "Upcoming" pill directly on [TrekCard] instead — the same automatic
+/// signal, shown per card rather than gating the grid into tabs.
 class TrekLibraryScreen extends ConsumerWidget {
   const TrekLibraryScreen({super.key});
 
@@ -38,7 +48,11 @@ class TrekLibraryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Trek Library')),
       floatingActionButton: isAdmin
-          ? _AddTrekFab(onTap: () => context.push(AppConstants.routeTrekNew))
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push(AppConstants.routeTrekNew),
+              icon: const AppIcon(AppIcons.add, size: 20),
+              label: const Text('Add Trek'),
+            )
           : null,
       body: SafeArea(
         child: treksAsync.when(
@@ -104,44 +118,6 @@ class TrekLibraryScreen extends ConsumerWidget {
   }
 }
 
-/// Gradient "Add Trek" button — the design system's take on an extended
-/// FAB. Admin-only; the caller gates it (RLS gates the writes it leads to).
-class _AddTrekFab extends StatelessWidget {
-  const _AddTrekFab({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Pressable(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.button),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xl,
-          vertical: AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          gradient: AppGradients.primary,
-          borderRadius: BorderRadius.circular(AppRadius.button),
-          boxShadow: AppShadows.button(AppColors.primary),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppIcon(AppIcons.add, size: 22, color: AppColors.onPrimary),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              'Add Trek',
-              style: AppTextStyles.tinted(AppTextStyles.labelLarge, AppColors.onPrimary),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _TrekLibraryError extends StatelessWidget {
   const _TrekLibraryError({required this.onRetry});
 
@@ -149,25 +125,26 @@ class _TrekLibraryError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+            AppIcon(AppIcons.error, size: 40, color: palette.danger),
             const SizedBox(height: AppSpacing.md),
             Text(
               'Could not load treks.',
-              style: AppTextStyles.titleMedium,
+              style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.xl),
-            PremiumButton(
+            AppButton(
               label: 'Retry',
               icon: AppIcons.refresh,
-              variant: PremiumButtonVariant.glass,
-              size: PremiumButtonSize.small,
+              variant: AppButtonVariant.glass,
+              size: AppButtonSize.small,
               onPressed: onRetry,
             ),
           ],
@@ -184,24 +161,22 @@ class _EmptyTrekLibrary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xxxl),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-            ),
-            child: const AppIcon(AppIcons.hiking, size: 48, color: AppColors.primary),
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(color: palette.primarySubtle, shape: BoxShape.circle),
+            child: AppIcon(AppIcons.hiking, size: 32, color: palette.primary),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
             isAdmin ? 'No treks yet' : 'No treks published yet',
-            style: AppTextStyles.titleLarge,
+            style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -209,7 +184,7 @@ class _EmptyTrekLibrary extends StatelessWidget {
             isAdmin
                 ? 'Tap "Add Trek" to create the first one.'
                 : 'Check back soon — new treks are on the way.',
-            style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+            style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -219,7 +194,7 @@ class _EmptyTrekLibrary extends StatelessWidget {
 }
 
 /// Trek-card-shaped placeholders while the grid loads, matching the real
-/// masonry layout and the Phase 1 skeleton style.
+/// masonry layout.
 class _TrekGridSkeleton extends StatelessWidget {
   const _TrekGridSkeleton();
 
@@ -253,11 +228,12 @@ class _TrekCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: palette.card,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: palette.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(

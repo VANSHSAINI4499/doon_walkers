@@ -5,25 +5,26 @@ import 'package:flutter/material.dart';
 /// Small colour-coded pill showing a trek's difficulty.
 ///
 /// The colour mapping is unchanged (easy→green, moderate→gold, hard→
-/// orange, extreme→red) — those [AppColors.difficulty*] tokens already
-/// point at the Phase 1 palette. Restyled to the design system's pill:
-/// a tinted glass fill, a signal icon, and the bold label type.
+/// orange, extreme→red) — [AppPalette.difficultyEasy] et al. already point
+/// at the calm palette. Redesign 2.0 Phase 15 drops the glass tint for a
+/// flat, dual-tone pill: a soft fill in the difficulty colour, no border
+/// glow — reads at a glance without competing with the card's own hairline.
 class DifficultyBadge extends StatelessWidget {
   const DifficultyBadge({super.key, required this.difficulty, this.dense = false});
 
   final TrekDifficulty difficulty;
   final bool dense;
 
-  Color get _color => switch (difficulty) {
-    TrekDifficulty.easy => AppColors.difficultyEasy,
-    TrekDifficulty.moderate => AppColors.difficultyModerate,
-    TrekDifficulty.hard => AppColors.difficultyHard,
-    TrekDifficulty.extreme => AppColors.difficultyExtreme,
+  Color _color(AppPalette palette) => switch (difficulty) {
+    TrekDifficulty.easy => palette.difficultyEasy,
+    TrekDifficulty.moderate => palette.difficultyModerate,
+    TrekDifficulty.hard => palette.difficultyHard,
+    TrekDifficulty.extreme => palette.difficultyExtreme,
   };
 
   @override
   Widget build(BuildContext context) {
-    final color = _color;
+    final color = _color(AppPalette.of(context));
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: dense ? AppSpacing.sm : AppSpacing.md,
@@ -32,7 +33,6 @@ class DifficultyBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -41,10 +41,9 @@ class DifficultyBadge extends StatelessWidget {
           SizedBox(width: dense ? 4 : AppSpacing.xs),
           Text(
             difficulty.label,
-            style: AppTextStyles.tinted(
-              dense ? AppTextStyles.labelSmall : AppTextStyles.labelMedium,
-              color,
-            ),
+            style:
+                (dense ? AppTextStyles.labelSmall : AppTextStyles.labelMedium)
+                    .copyWith(color: color),
           ),
         ],
       ),

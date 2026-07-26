@@ -45,6 +45,12 @@ class AppConstants {
   /// guard instead of having to remember to add it.
   static const String routeActivity = '/activity';
 
+  /// Activity Insights — the monthly read, pushed from the Activity tab's
+  /// app bar (Redesign 2.0, Phase 11). Nested under [routeActivity] so it
+  /// inherits that path's sign-in guard automatically rather than needing
+  /// its own entry in `isProtectedRoute`.
+  static const String routeActivityInsights = '$routeActivity/insights';
+
   // ── Drawer destinations (Redesign 2.0, Phase 10) ──────────────────
   // Thin screens over data the app already has: [routeAbout],
   // [routeContact] and [routeSupport] all read `public.settings` via
@@ -393,6 +399,16 @@ class AppConstants {
   /// [rpcGetMyChallengeProgress]. Not scoped to any challenge — a
   /// general attendance-consistency stat.
   static const String rpcGetMyStreak = 'get_my_streak';
+
+  /// How the caller's monthly step total ranks against other tracking
+  /// members, as a single percentage (0035_activity_percentile.sql) —
+  /// Redesign 2.0, Phase 11. Aggregate-only and SECURITY DEFINER, the
+  /// same privacy posture as `get_community_stats()`: it returns one
+  /// integer and cannot expose another member's activity rows.
+  ///
+  /// Returns NULL when fewer than 5 members tracked that month (a
+  /// k-anonymity floor) or when the caller has no data for it.
+  static const String rpcGetMyActivityPercentile = 'get_my_activity_percentile';
 
   /// Ranks every leaderboard-visible user by their progress on ONE
   /// challenge (0025_leaderboard.sql) — Version 2, Phase C3. Takes a

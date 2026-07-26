@@ -41,17 +41,17 @@ class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
           'tier thresholds. This cannot be undone.',
         ),
         actions: [
-          PremiumButton(
+          AppButton(
             label: 'Cancel',
-            variant: PremiumButtonVariant.glass,
-            size: PremiumButtonSize.small,
+            variant: AppButtonVariant.glass,
+            size: AppButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(false),
           ),
-          PremiumButton(
+          AppButton(
             label: 'Delete',
             icon: AppIcons.delete,
-            variant: PremiumButtonVariant.danger,
-            size: PremiumButtonSize.small,
+            variant: AppButtonVariant.danger,
+            size: AppButtonSize.small,
             onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
@@ -69,9 +69,9 @@ class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not delete challenge. Please try again.'),
-          backgroundColor: AppColors.danger,
+        SnackBar(
+          content: const Text('Could not delete challenge. Please try again.'),
+          backgroundColor: AppPalette.of(context).danger,
         ),
       );
     }
@@ -87,9 +87,9 @@ class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
 
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not update challenge. Please try again.'),
-          backgroundColor: AppColors.danger,
+        SnackBar(
+          content: const Text('Could not update challenge. Please try again.'),
+          backgroundColor: AppPalette.of(context).danger,
         ),
       );
     }
@@ -103,14 +103,14 @@ class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
         child: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
       );
     }
 
     return PopupMenuButton<String>(
       tooltip: 'Admin actions',
-      icon: AppIcon(AppIcons.more, color: widget.iconColor ?? AppColors.white),
+      icon: AppIcon(AppIcons.more, color: widget.iconColor),
       onSelected: (value) {
         switch (value) {
           case 'edit':
@@ -133,9 +133,13 @@ class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
             label: widget.challenge.isActive ? 'Deactivate' : 'Activate',
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
-          child: _MenuRow(icon: AppIcons.delete, label: 'Delete', color: AppColors.danger),
+          child: _MenuRow(
+            icon: AppIcons.delete,
+            label: 'Delete',
+            color: AppPalette.of(context).danger,
+          ),
         ),
       ],
     );
@@ -151,12 +155,12 @@ class _MenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tint = color ?? AppColors.textPrimary;
+    final tint = color ?? AppPalette.of(context).textPrimary;
     return Row(
       children: [
         AppIcon(icon, size: 20, color: tint),
         const SizedBox(width: AppSpacing.md),
-        Text(label, style: AppTextStyles.tinted(AppTextStyles.bodyMedium, tint)),
+        Text(label, style: AppTextStyles.bodyMedium.copyWith(color: tint)),
       ],
     );
   }

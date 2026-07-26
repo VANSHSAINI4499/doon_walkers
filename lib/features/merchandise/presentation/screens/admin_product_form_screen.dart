@@ -183,7 +183,7 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_cleanError(error)),
-              backgroundColor: AppColors.danger,
+              backgroundColor: AppPalette.of(context).danger,
             ),
           );
         },
@@ -240,7 +240,7 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    GlassCard(
+                    AppCard(
                       child: AbsorbPointer(
                         absorbing: isSaving,
                         child: Opacity(

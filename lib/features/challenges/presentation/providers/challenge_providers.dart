@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:doon_walkers/core/providers/shared_preferences_provider.dart';
+import 'package:doon_walkers/features/activity/data/repositories/activity_repository_impl.dart';
 import 'package:doon_walkers/features/challenges/data/repositories/challenge_repository_impl.dart';
 import 'package:doon_walkers/features/challenges/data/services/challenge_celebration_tracker.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_tier_achievement.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/leaderboard_entry.dart';
+import 'package:doon_walkers/features/challenges/domain/services/activity_streak.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// All challenges (active + draft) — admin management list only. There
@@ -59,6 +61,31 @@ final myTierHistoryProvider = FutureProvider<List<ChallengeTierAchievement>>(
   (ref) => ref.watch(challengeRepositoryProvider).fetchMyTierHistory(),
   name: 'myTierHistoryProvider',
 );
+
+/// The signed-in user's current activity streak in consecutive days —
+/// feeds the Challenges tab's summary header (Redesign 2.0, Phase 12).
+///
+/// Computed client-side from the user's own `daily_activity_summary` rows
+/// rather than by an RPC, because no RPC returns this: `get_my_streak()`
+/// is the month-granular *trekking* streak, and the day-granular activity
+/// streak only exists inside `get_my_challenge_progress()` for challenges
+/// using the `active_streak_days` metric. See [computeActiveStreak] for
+/// the rule it mirrors and the one known UTC-vs-local divergence.
+///
+/// A 400-day window is fetched rather than the whole history: the streak
+/// only ever depends on an unbroken run ending today/yesterday, so a
+/// longer lookback cannot change the answer for any realistic streak, and
+/// this keeps the query bounded. 0 for a guest (the repository returns no
+/// rows without a session).
+final myActivityStreakProvider = FutureProvider<int>((ref) async {
+  final from = DateTime.now().subtract(const Duration(days: 400));
+  final rows = await ref
+      .watch(activityRepositoryProvider)
+      .fetchDailyActivitySince(from);
+  return computeActiveStreak(
+    rows.map((r) => ActiveDay(date: r.date, steps: r.steps)).toList(),
+  );
+}, name: 'myActivityStreakProvider');
 
 final challengeCelebrationTrackerProvider = Provider<ChallengeCelebrationTracker>(
   (ref) => ChallengeCelebrationTracker(ref.watch(sharedPreferencesProvider)),

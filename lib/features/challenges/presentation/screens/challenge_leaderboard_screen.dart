@@ -91,13 +91,17 @@ class _LeaderboardBody extends ConsumerWidget {
   }
 }
 
-/// Rank-badge colours for the podium — gold/silver/bronze, matching the
-/// tier palette's top three, then a neutral grey for everyone else.
-Color _rankColor(int rank) => switch (rank) {
-  1 => AppColors.gold,
-  2 => const Color(0xFFB8C2CC),
-  3 => const Color(0xFFC87941),
-  _ => AppColors.textSecondary,
+/// Rank-badge colours for the podium — the design system's achievement
+/// metals, then neutral ink for everyone else.
+///
+/// Reads from the palette rather than the hardcoded hexes places 2 and 3
+/// used to be, so the podium stays consistent with tier badges and works
+/// in both themes.
+Color _rankColor(AppPalette palette, int rank) => switch (rank) {
+  1 => palette.gold,
+  2 => palette.silver,
+  3 => palette.bronze,
+  _ => palette.textSecondary,
 };
 
 class _LeaderboardRow extends StatelessWidget {
@@ -108,14 +112,16 @@ class _LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final isTopThree = entry.rank <= 3;
-    final rankColor = _rankColor(entry.rank);
+    final rankColor = _rankColor(palette, entry.rank);
 
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: isTopThree ? rankColor : null,
-      glowOpacity: 0.16,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+    return AppCard(
+      borderColor: isTopThree ? rankColor.withValues(alpha: 0.5) : null,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Row(
         children: [
           Container(
@@ -129,7 +135,10 @@ class _LeaderboardRow extends StatelessWidget {
             ),
             child: isTopThree
                 ? AppIcon(AppIcons.medal, size: 20, color: rankColor)
-                : Text('${entry.rank}', style: AppTextStyles.tinted(AppTextStyles.titleSmall, rankColor)),
+                : Text(
+                    '${entry.rank}',
+                    style: AppTextStyles.titleSmall.copyWith(color: rankColor),
+                  ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -138,12 +147,19 @@ class _LeaderboardRow extends StatelessWidget {
                 if (isTopThree)
                   Padding(
                     padding: const EdgeInsets.only(right: AppSpacing.sm),
-                    child: Text('#${entry.rank}', style: AppTextStyles.tinted(AppTextStyles.titleSmall, rankColor)),
+                    child: Text(
+                      '#${entry.rank}',
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: rankColor,
+                      ),
+                    ),
                   ),
                 Expanded(
                   child: Text(
                     entry.displayName,
-                    style: AppTextStyles.titleSmall,
+                    style: AppTextStyles.titleSmall.copyWith(
+                      color: palette.textPrimary,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -154,7 +170,9 @@ class _LeaderboardRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Text(
             challenge.metric.formatValue(entry.score),
-            style: AppTextStyles.tinted(AppTextStyles.statSmall, isTopThree ? rankColor : AppColors.textPrimary),
+            style: AppTextStyles.statSmall.copyWith(
+              color: isTopThree ? rankColor : palette.textPrimary,
+            ),
           ),
         ],
       ),
@@ -167,26 +185,39 @@ class _EmptyLeaderboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xxxl),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSpacing.xl),
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.12),
+              color: palette.cardHigh,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
             ),
-            child: const AppIcon(AppIcons.leaderboard, size: 48, color: AppColors.secondary),
+            child: AppIcon(
+              AppIcons.leaderboard,
+              size: 32,
+              color: palette.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('No one has made progress here yet', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+          Text(
+            'No one has made progress here yet',
+            style: AppTextStyles.titleMedium.copyWith(
+              color: palette.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Be the first to attend a trek toward this challenge.',
-            style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+            'Be the first to make progress toward this challenge.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: palette.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -208,15 +239,23 @@ class _LeaderboardError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+            AppIcon(
+              AppIcons.error,
+              size: 40,
+              color: AppPalette.of(context).danger,
+            ),
             const SizedBox(height: AppSpacing.md),
-            Text('Could not load the leaderboard.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+            Text(
+              'Could not load the leaderboard.',
+              style: AppTextStyles.titleMedium,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpacing.xl),
-            PremiumButton(
+            AppButton(
               label: 'Retry',
               icon: AppIcons.refresh,
-              variant: PremiumButtonVariant.glass,
-              size: PremiumButtonSize.small,
+              variant: AppButtonVariant.glass,
+              size: AppButtonSize.small,
               onPressed: onRetry,
             ),
           ],
@@ -231,6 +270,7 @@ class _LeaderboardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Shimmer(
       child: ListView.separated(
         physics: const NeverScrollableScrollPhysics(),
@@ -240,9 +280,9 @@ class _LeaderboardSkeleton extends StatelessWidget {
         itemBuilder: (context, index) => Container(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: palette.card,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: palette.border),
           ),
           child: const Row(
             children: [

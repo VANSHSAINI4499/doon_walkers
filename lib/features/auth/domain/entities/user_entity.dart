@@ -57,6 +57,16 @@ class UserEntity {
   /// When [phoneVerified] became true. Null while unverified.
   final DateTime? phoneVerifiedAt;
 
+  /// The user's own daily step target, backing every progress figure on
+  /// the Activity tab (Redesign 2.0, Phase 11). Defaults to 6,500 at the
+  /// DB column level (0034_daily_step_goal.sql) and is self-editable via
+  /// the existing `users_update_own_or_admin` policy — same shape as
+  /// [showOnLeaderboard].
+  ///
+  /// Weekly and monthly targets are **derived** from this, not stored:
+  /// see `ActivityPeriod.stepGoal`.
+  final int dailyStepGoal;
+
   const UserEntity({
     required this.id,
     required this.name,
@@ -68,7 +78,12 @@ class UserEntity {
     this.showOnLeaderboard = true,
     this.phoneVerified = false,
     this.phoneVerifiedAt,
+    this.dailyStepGoal = defaultDailyStepGoal,
   });
+
+  /// Mirrors the DB column default so a row fetched before the column
+  /// existed (or a locally-constructed entity) agrees with the server.
+  static const int defaultDailyStepGoal = 6500;
 
   bool get isAdmin => role == UserRole.admin;
   bool get isRegisteredUser => role == UserRole.user || role == UserRole.admin;

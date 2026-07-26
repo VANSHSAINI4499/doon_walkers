@@ -36,15 +36,22 @@ Future<void> _pump(
   required Challenge challenge,
   required bool signedIn,
   ChallengeProgress? progress,
+  ThemeData? theme,
+  bool showMeta = false,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [isSignedInProvider.overrideWith((ref) => signedIn)],
       child: MaterialApp(
-        theme: AppTheme.dark,
+        theme: theme ?? AppTheme.dark,
         home: Scaffold(
           body: SingleChildScrollView(
-            child: ChallengeCard(challenge: challenge, progress: progress, onTap: () {}),
+            child: ChallengeCard(
+              challenge: challenge,
+              progress: progress,
+              showMeta: showMeta,
+              onTap: () {},
+            ),
           ),
         ),
       ),
@@ -97,6 +104,77 @@ void main() {
       );
       expect(find.text('Platinum reached — the top tier!'), findsOneWidget);
       expect(find.textContaining('to Silver'), findsNothing);
+    });
+  });
+
+  group('ChallengeCard — calm migration (Phase 12)', () {
+    testWidgets('renders in light theme with the same state branching', (
+      tester,
+    ) async {
+      // The card is the most-repeated surface in the tab; if it only
+      // resolved colour correctly in dark, every list would be wrong in
+      // light. Asserting the branching (not just "no throw") also proves
+      // the restyle didn't quietly change which state renders.
+      await _pump(
+        tester,
+        challenge: _challenge(),
+        signedIn: true,
+        progress: const ChallengeProgress(
+          challengeId: 'c1',
+          currentValue: 120,
+          currentTier: ChallengeTier.bronze,
+        ),
+        theme: AppTheme.light,
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('to Silver'), findsOneWidget);
+      expect(find.byType(TierBadgeIcon), findsWidgets);
+    });
+
+    testWidgets('never paints a BackdropFilter — glass is retired', (
+      tester,
+    ) async {
+      await _pump(tester, challenge: _challenge(), signedIn: true);
+      expect(find.byType(BackdropFilter), findsNothing);
+    });
+
+    testWidgets('shows no points and no join affordance', (tester) async {
+      // Neither concept exists in the engine. This pins the reference's
+      // points/Join being deliberately omitted rather than forgotten, so a
+      // later pass doesn't "restore" them from the mockups.
+      await _pump(
+        tester,
+        challenge: _challenge(),
+        signedIn: true,
+        progress: const ChallengeProgress(
+          challengeId: 'c1',
+          currentValue: 120,
+          currentTier: ChallengeTier.bronze,
+        ),
+      );
+      expect(find.textContaining('Point'), findsNothing);
+      expect(find.textContaining('point'), findsNothing);
+      expect(find.textContaining('Join'), findsNothing);
+      expect(find.textContaining('participant'), findsNothing);
+    });
+
+    testWidgets('showMeta adds the metric and window chips', (tester) async {
+      await _pump(
+        tester,
+        challenge: _challenge(),
+        signedIn: true,
+        showMeta: true,
+      );
+      // _challenge() is dailySteps over a daily window.
+      expect(find.text('Steps'), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
+    });
+
+    testWidgets('meta chips are absent by default on My Challenges', (
+      tester,
+    ) async {
+      await _pump(tester, challenge: _challenge(), signedIn: true);
+      expect(find.text('Today'), findsNothing);
     });
   });
 

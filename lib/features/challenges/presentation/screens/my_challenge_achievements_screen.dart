@@ -36,15 +36,19 @@ class MyChallengeAchievementsScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
+                    AppIcon(
+                      AppIcons.error,
+                      size: 40,
+                      color: AppPalette.of(context).danger,
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     Text('Could not load your achievements.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
                     const SizedBox(height: AppSpacing.xl),
-                    PremiumButton(
+                    AppButton(
                       label: 'Retry',
                       icon: AppIcons.refresh,
-                      variant: PremiumButtonVariant.glass,
-                      size: PremiumButtonSize.small,
+                      variant: AppButtonVariant.glass,
+                      size: AppButtonSize.small,
                       onPressed: () => ref.invalidate(myTierHistoryProvider),
                     ),
                   ],
@@ -98,26 +102,33 @@ class _EmptyAchievements extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xxxl),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSpacing.xl),
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.12),
+              color: palette.cardHigh,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
             ),
-            child: const AppIcon(AppIcons.medal, size: 48, color: AppColors.gold),
+            child: AppIcon(
+              AppIcons.medal,
+              size: 32,
+              color: palette.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text('No tiers reached yet', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Attend a trek and check back — your progress builds automatically.',
-            style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: palette.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -134,7 +145,7 @@ class _AchievementTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return AppCard(
       blurEnabled: false,
       glowColor: TierBadge.colorFor(achievement.tier),
       glowOpacity: 0.12,
@@ -156,13 +167,19 @@ class _AchievementTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   'Reached ${_formatDate(achievement.achievedAt)}',
-                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppPalette.of(context).textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
           if (challenge != null)
-            AppIcon(ChallengeIcon.forKey(challenge!.icon), color: AppColors.textSecondary),
+            AppIcon(
+              ChallengeIcon.forKey(challenge!.icon),
+              size: 20,
+              color: AppPalette.of(context).textSecondary,
+            ),
         ],
       ),
     );
@@ -182,6 +199,7 @@ class _AchievementsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Shimmer(
       child: ListView.separated(
         physics: const NeverScrollableScrollPhysics(),
@@ -191,9 +209,9 @@ class _AchievementsSkeleton extends StatelessWidget {
         itemBuilder: (context, index) => Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: palette.card,
             borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: palette.border),
           ),
           child: const Row(
             children: [

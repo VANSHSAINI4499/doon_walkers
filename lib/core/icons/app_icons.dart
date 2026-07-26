@@ -69,9 +69,11 @@ abstract final class AppIcons {
   // ── Activity & achievement ────────────────────────────────────────
   static const IconData streak = Symbols.local_fire_department_rounded;
   static const IconData steps = Symbols.footprint_rounded;
+  static const IconData calories = Symbols.mode_heat_rounded;
   static const IconData leaderboard = Symbols.leaderboard_rounded;
   static const IconData insights = Symbols.insights_rounded;
   static const IconData trending = Symbols.trending_up_rounded;
+  static const IconData trendingDown = Symbols.trending_down_rounded;
   static const IconData medal = Symbols.military_tech_rounded;
   static const IconData premium = Symbols.workspace_premium_rounded;
   static const IconData celebrate = Symbols.celebration_rounded;
@@ -197,6 +199,8 @@ abstract final class AppIcons {
     'flag': flag,
     'streak': streak,
     'steps': steps,
+    'calories': calories,
+    'trendingDown': trendingDown,
     'leaderboard': leaderboard,
     'insights': insights,
     'trending': trending,

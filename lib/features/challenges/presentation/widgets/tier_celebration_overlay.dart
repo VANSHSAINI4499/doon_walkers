@@ -11,17 +11,24 @@ import 'package:flutter/material.dart';
 /// `await` this before showing the next one, keeping them from
 /// overlapping.
 ///
-/// Redesign Phase 4 rebuilds the visual on the design system — a frosted
-/// [GlassCard] panel glowing in the tier's colour, a spring-scaled tier
-/// badge, and a radial particle burst — using the Phase 1 motion tokens.
-/// **This is presentation only.** The trigger (a genuine new-tier
-/// achievement, detected in ChallengesScreen via `isNewlyAchievedTier`
-/// against the persisted baseline) is untouched; this function is just how
-/// that already-decided celebration is drawn.
+/// Redesign 2.0 Phase 12 recuts the visual calm: a flat card with a
+/// tier-tinted hairline instead of a glowing frosted panel, and a smaller,
+/// quieter burst. **This is presentation only.** The trigger (a genuine
+/// new-tier achievement, detected in ChallengesScreen via
+/// `isNewlyAchievedTier` against the persisted baseline) is untouched;
+/// this function is just how that already-decided celebration is drawn.
 ///
-/// Still a custom AnimationController effect rather than a confetti
-/// package — Flutter's own primitives cover a badge pop plus an 18-particle
-/// burst for something shown ~2.5s a few times a month.
+/// ## Why this keeps its animation when the rest of the app lost theirs
+///
+/// The calm direction rules out ambient and decorative motion. A
+/// celebration is neither: it fires a handful of times a month, only on a
+/// genuine achievement, and the motion *is* the message — a static "you
+/// reached Gold" card would not read as a moment. So the badge pop and the
+/// burst stay, toned down (12 particles, no glow, tighter travel) rather
+/// than removed.
+///
+/// Still a custom AnimationController rather than a confetti package —
+/// Flutter's own primitives cover a badge pop plus a small burst.
 Future<void> showTierCelebration(
   BuildContext context, {
   required Challenge challenge,
@@ -31,7 +38,7 @@ Future<void> showTierCelebration(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Dismiss',
-    barrierColor: AppColors.background.withValues(alpha: 0.72),
+    barrierColor: AppPalette.of(context).scrim,
     transitionDuration: AppMotion.medium,
     pageBuilder: (context, animation, secondaryAnimation) =>
         _TierCelebrationDialog(challenge: challenge, tier: tier),
@@ -80,17 +87,20 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
     });
   }
 
+  /// 12 particles in the tier's own colour only — the old version mixed in
+  /// white, which on a light background was invisible and on a dark one
+  /// read as a second, competing effect.
   List<_Particle> _generateParticles(Color tierColor) {
     final random = Random();
-    final colors = [tierColor, AppColors.white, tierColor.withValues(alpha: 0.7)];
-    return List.generate(18, (i) {
-      final angle = (2 * pi / 18) * i + random.nextDouble() * 0.3;
-      final distance = 66 + random.nextDouble() * 44;
+    const count = 12;
+    return List.generate(count, (i) {
+      final angle = (2 * pi / count) * i + random.nextDouble() * 0.3;
+      final distance = 52 + random.nextDouble() * 28;
       return _Particle(
         angle: angle,
         distance: distance,
-        color: colors[i % colors.length],
-        radius: 2.5 + random.nextDouble() * 2,
+        color: i.isEven ? tierColor : tierColor.withValues(alpha: 0.6),
+        radius: 2 + random.nextDouble() * 1.5,
       );
     });
   }
@@ -103,6 +113,7 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final tierColor = TierBadge.colorFor(widget.tier);
 
     return Center(
@@ -110,49 +121,61 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
         onTap: () => Navigator.of(context).maybePop(),
         child: SizedBox(
           width: 300,
-          child: GlassCard(
-            glowColor: tierColor,
-            glowOpacity: 0.4,
-            borderColor: tierColor.withValues(alpha: 0.5),
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxxl, horizontal: AppSpacing.xxl),
+          child: AppCard(
+            borderColor: tierColor.withValues(alpha: 0.55),
+            elevation: 3,
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.xxl,
+              horizontal: AppSpacing.xl,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'NEW TIER ACHIEVED',
-                  style: AppTextStyles.tinted(AppTextStyles.overline, tierColor),
+                  style: AppTextStyles.overline.copyWith(color: tierColor),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 SizedBox(
-                  width: 150,
-                  height: 150,
+                  width: 132,
+                  height: 132,
                   child: AnimatedBuilder(
                     animation: _controller,
                     builder: (context, child) => CustomPaint(
-                      painter: _ParticleBurstPainter(particles: _particles, progress: _controller.value),
+                      painter: _ParticleBurstPainter(
+                        particles: _particles,
+                        progress: _controller.value,
+                      ),
                       child: Center(
-                        child: Transform.scale(scale: _badgeScale.value, child: child),
+                        child: Transform.scale(
+                          scale: _badgeScale.value,
+                          child: child,
+                        ),
                       ),
                     ),
-                    child: TierBadgeIcon(tier: widget.tier, size: 80, glow: true),
+                    child: TierBadgeIcon(tier: widget.tier, size: 72),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
                   widget.tier.label,
-                  style: AppTextStyles.tinted(AppTextStyles.headlineSmall, tierColor),
+                  style: AppTextStyles.headlineSmall.copyWith(color: tierColor),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   widget.challenge.title,
-                  style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: palette.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
                   'Tap to continue',
-                  style: AppTextStyles.disabled(AppTextStyles.labelSmall),
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: palette.textDisabled,
+                  ),
                 ),
               ],
             ),

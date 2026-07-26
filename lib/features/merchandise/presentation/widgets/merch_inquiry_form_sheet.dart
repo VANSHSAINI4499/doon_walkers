@@ -95,6 +95,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final isSaving = ref.watch(merchInquiryControllerProvider).isLoading;
 
     ref.listen<AsyncValue<void>>(merchInquiryControllerProvider, (previous, next) {
@@ -103,7 +104,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(_errorMessage(error)),
-              backgroundColor: AppColors.danger,
+              backgroundColor: palette.danger,
             ),
           );
         },
@@ -128,7 +129,7 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                       gradient: AppGradients.primary,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: const AppIcon(AppIcons.bag, size: 20, color: AppColors.onPrimary),
+                    child: AppIcon(AppIcons.bag, size: 20, color: palette.onPrimary),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(

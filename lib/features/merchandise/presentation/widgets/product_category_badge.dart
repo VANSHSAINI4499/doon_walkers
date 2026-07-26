@@ -14,21 +14,22 @@ class ProductCategoryBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: dense ? AppSpacing.sm : AppSpacing.md,
         vertical: dense ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.14),
+        color: palette.primarySubtle,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+        border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
       ),
       child: Text(
         category.label,
         style: AppTextStyles.tinted(
           dense ? AppTextStyles.labelSmall : AppTextStyles.labelMedium,
-          AppColors.primary,
+          palette.primary,
         ),
       ),
     );

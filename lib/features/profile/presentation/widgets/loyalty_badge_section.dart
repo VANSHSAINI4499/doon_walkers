@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// nudge, both derived from [myRegistrationStatsProvider]'s attended count
 /// via [loyaltyBadgeFor]/[nextLoyaltyBadgeAfter].
 ///
-/// Redesign Phase 5 restyles this onto a gold-glowing glass card. The
-/// computation (attendance-based, from `totalAttended`) is untouched.
+/// Phase 14 restyles it calm: a flat card with a gold medal disc, no glow
+/// or gradient. Gold is sanctioned here — it is an achievement badge, the
+/// one place the palette allows a metal. The computation
+/// (attendance-based, from `totalAttended`) is untouched.
 class LoyaltyBadgeSection extends ConsumerWidget {
   const LoyaltyBadgeSection({super.key});
 
@@ -25,22 +27,27 @@ class LoyaltyBadgeSection extends ConsumerWidget {
         final badge = loyaltyBadgeFor(attended);
         final next = nextLoyaltyBadgeAfter(attended);
 
-        return GlassCard(
-          blurEnabled: false,
-          glowColor: AppColors.gold,
-          glowOpacity: 0.16,
+        final palette = AppPalette.of(context);
+
+        return AppCard(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  gradient: AppGradients.gold,
+                  color: palette.gold,
                   shape: BoxShape.circle,
-                  boxShadow: AppShadows.glow(AppColors.gold, opacity: 0.4, radius: 14),
                 ),
-                child: const AppIcon(AppIcons.medal, color: AppColors.background, size: 26),
+                child: const AppIcon(
+                  AppIcons.medal,
+                  // Fixed dark ink: the gold disc is mid-tone in both
+                  // themes, so charcoal is the legible choice either way —
+                  // same rule as TierBadgeIcon.
+                  color: AppColors.charcoal,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -48,17 +55,29 @@ class LoyaltyBadgeSection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('LOYALTY BADGE', style: AppTextStyles.tinted(AppTextStyles.overline, AppColors.gold)),
+                    Text(
+                      'LOYALTY BADGE',
+                      style: AppTextStyles.overline.copyWith(
+                        color: palette.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(badge.name, style: AppTextStyles.titleMedium),
+                    Text(
+                      badge.name,
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: palette.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       next == null
                           ? "You've reached the top of the ladder!"
                           : '${next.minAttended - attended} more trek'
-                              '${next.minAttended - attended == 1 ? '' : 's'} '
-                              'to ${next.name}',
-                      style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                                '${next.minAttended - attended == 1 ? '' : 's'} '
+                                'to ${next.name}',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: palette.textSecondary,
+                      ),
                     ),
                   ],
                 ),

@@ -19,10 +19,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// non-admin isn't allowed to see — both render the same "not found" state
 /// rather than leaking which case it was.
 ///
-/// Redesign Phase 3: rebuilt on the design system (hero cover with the
-/// shared card→detail flight, glass quick-fact tiles, skeleton loading).
-/// The auto-open-registration flow, the admin-only register-slot hiding,
-/// and every other conditional are unchanged.
+/// Redesign 2.0 Phase 15 restyles this calm (flat quick-fact tiles, no
+/// glow) — the auto-open-registration flow, the admin-only register-slot
+/// hiding, and every other conditional are unchanged.
 class TrekDetailScreen extends ConsumerStatefulWidget {
   const TrekDetailScreen({
     super.key,
@@ -134,6 +133,7 @@ class _DetailMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return SafeArea(
       child: Center(
         child: Padding(
@@ -141,24 +141,28 @@ class _DetailMessage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppIcon(icon, size: 48, color: AppColors.textDisabled),
+              AppIcon(icon, size: 44, color: palette.textDisabled),
               const SizedBox(height: AppSpacing.lg),
-              Text(title, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+              Text(
+                title,
+                style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+                textAlign: TextAlign.center,
+              ),
               if (actionLabel != null && onAction != null) ...[
                 const SizedBox(height: AppSpacing.lg),
-                PremiumButton(
+                AppButton(
                   label: actionLabel!,
                   icon: AppIcons.refresh,
-                  size: PremiumButtonSize.small,
+                  size: AppButtonSize.small,
                   onPressed: onAction,
                 ),
               ],
               const SizedBox(height: AppSpacing.md),
-              PremiumButton(
+              AppButton(
                 label: 'Back',
                 icon: AppIcons.back,
-                variant: PremiumButtonVariant.ghost,
-                size: PremiumButtonSize.small,
+                variant: AppButtonVariant.ghost,
+                size: AppButtonSize.small,
                 onPressed: () => Navigator.of(context).canPop() ? Navigator.of(context).pop() : null,
               ),
             ],
@@ -184,6 +188,7 @@ class _TrekDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final coverImage = trek.coverImage;
 
     return CustomScrollView(
@@ -191,14 +196,14 @@ class _TrekDetailBody extends StatelessWidget {
         SliverAppBar(
           expandedHeight: 280,
           pinned: true,
-          backgroundColor: AppColors.background,
+          backgroundColor: palette.background,
           surfaceTintColor: Colors.transparent,
-          iconTheme: const IconThemeData(color: AppColors.white),
+          iconTheme: IconThemeData(color: palette.textPrimary),
           actions: [
             if (isAdmin)
               TrekAdminActions(
                 trek: trek,
-                iconColor: AppColors.white,
+                iconColor: palette.textPrimary,
                 // The trek this screen is showing no longer exists — pop
                 // rather than sit on a dangling detail view.
                 onDeleted: () {
@@ -225,13 +230,17 @@ class _TrekDetailBody extends StatelessWidget {
                 ),
                 // Top scrim keeps the back button + admin menu legible over
                 // a bright photo; bottom scrim melts the image into the page.
-                const DecoratedBox(
+                DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Color(0x99000000), Color(0x00000000), Color(0xFF090909)],
-                      stops: [0, 0.35, 1],
+                      colors: [
+                        const Color(0x99000000),
+                        const Color(0x00000000),
+                        palette.background,
+                      ],
+                      stops: const [0, 0.35, 1],
                     ),
                   ),
                 ),
@@ -259,7 +268,12 @@ class _TrekDetailBody extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(trek.title, style: AppTextStyles.headlineSmall),
+                          child: Text(
+                            trek.title,
+                            style: AppTextStyles.headlineSmall.copyWith(
+                              color: palette.textPrimary,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.md),
                         DifficultyBadge(difficulty: trek.difficulty),
@@ -272,26 +286,32 @@ class _TrekDetailBody extends StatelessWidget {
                     if (trek.description.trim().isNotEmpty) ...[
                       const SectionTitle(title: 'About This Trek', icon: AppIcons.book),
                       const SizedBox(height: AppSpacing.md),
-                      Text(trek.description, style: AppTextStyles.secondary(AppTextStyles.bodyLarge)),
+                      Text(
+                        trek.description,
+                        style: AppTextStyles.bodyLarge.copyWith(color: palette.textSecondary),
+                      ),
                       const SizedBox(height: AppSpacing.xxl),
                     ],
 
                     if ((trek.thingsToCarry ?? '').trim().isNotEmpty) ...[
-                      const SectionTitle(
+                      SectionTitle(
                         title: 'Things to Carry',
                         icon: AppIcons.packing,
-                        accent: AppColors.accent,
+                        accent: palette.accent,
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      Text(trek.thingsToCarry!, style: AppTextStyles.secondary(AppTextStyles.bodyLarge)),
+                      Text(
+                        trek.thingsToCarry!,
+                        style: AppTextStyles.bodyLarge.copyWith(color: palette.textSecondary),
+                      ),
                       const SizedBox(height: AppSpacing.xxl),
                     ],
 
                     if ((trek.googleMapLink ?? '').trim().isNotEmpty) ...[
-                      PremiumButton(
+                      AppButton(
                         label: 'Open Route in Google Maps',
                         icon: AppIcons.map,
-                        variant: PremiumButtonVariant.secondary,
+                        variant: AppButtonVariant.secondary,
                         fullWidth: true,
                         onPressed: () => openExternalLink(context, trek.googleMapLink!),
                       ),
@@ -309,10 +329,10 @@ class _TrekDetailBody extends StatelessWidget {
 
                     const Divider(),
                     const SizedBox(height: AppSpacing.xl),
-                    const SectionTitle(
+                    SectionTitle(
                       title: 'Gallery & Videos',
                       icon: AppIcons.photo,
-                      accent: AppColors.secondary,
+                      accent: palette.secondary,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TrekGallerySection(trekId: trek.id, trekTitle: trek.title),
@@ -340,16 +360,11 @@ class _CoverFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF16302A), AppColors.background],
-        ),
-      ),
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(color: palette.cardHigh),
       child: Center(
-        child: AppIcon(AppIcons.landscape, size: 64, color: AppColors.textDisabled),
+        child: AppIcon(icon, size: 56, color: palette.textDisabled),
       ),
     );
   }
@@ -358,19 +373,18 @@ class _CoverFallback extends StatelessWidget {
 class _DraftBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: AppColors.gold,
-      glowOpacity: 0.12,
+    final palette = AppPalette.of(context);
+    return AppCard(
+      borderColor: palette.gold.withValues(alpha: 0.5),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
       child: Row(
         children: [
-          const AppIcon(AppIcons.editNote, size: 18, color: AppColors.gold),
+          AppIcon(AppIcons.editNote, size: 18, color: palette.gold),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               'Draft — not visible to members yet.',
-              style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.gold),
+              style: AppTextStyles.labelMedium.copyWith(color: palette.gold),
             ),
           ),
         ],
@@ -386,20 +400,21 @@ class _QuickFactsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final facts = <_QuickFact>[
       // First — "when" is the most decision-relevant fact once a trek has
       // a real date. Omitted entirely for an older trek not yet backfilled
       // with one, rather than showing a blank placeholder.
       if (trek.trekDate != null)
-        _QuickFact(AppIcons.calendar, 'Trek Date', _formatTrekDate(trek.trekDate!), AppColors.primary),
+        _QuickFact(AppIcons.calendar, 'Trek Date', _formatTrekDate(trek.trekDate!), palette.primary),
       if (trek.distanceKm != null)
-        _QuickFact(AppIcons.distance, 'Distance', '${_formatNum(trek.distanceKm!)} km', AppColors.secondary),
+        _QuickFact(AppIcons.distance, 'Distance', '${_formatNum(trek.distanceKm!)} km', palette.secondary),
       if (trek.durationDays != null)
-        _QuickFact(AppIcons.duration, 'Duration', '${trek.durationDays} ${trek.durationDays == 1 ? 'day' : 'days'}', AppColors.accent),
+        _QuickFact(AppIcons.duration, 'Duration', '${trek.durationDays} ${trek.durationDays == 1 ? 'day' : 'days'}', palette.accent),
       if (trek.altitudeM != null)
-        _QuickFact(AppIcons.altitude, 'Max Altitude', '${trek.altitudeM} m', AppColors.gold),
+        _QuickFact(AppIcons.altitude, 'Max Altitude', '${trek.altitudeM} m', palette.gold),
       if ((trek.bestSeason ?? '').isNotEmpty)
-        _QuickFact(AppIcons.season, 'Best Season', trek.bestSeason!, AppColors.primary),
+        _QuickFact(AppIcons.season, 'Best Season', trek.bestSeason!, palette.primary),
     ];
 
     if (facts.isEmpty) return const SizedBox.shrink();
@@ -439,13 +454,14 @@ class _QuickFactTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
       width: 150,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: palette.card,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: palette.border),
       ),
       child: Row(
         children: [
@@ -465,13 +481,13 @@ class _QuickFactTile extends StatelessWidget {
               children: [
                 Text(
                   fact.value,
-                  style: AppTextStyles.titleSmall,
+                  style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   fact.label,
-                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                  style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

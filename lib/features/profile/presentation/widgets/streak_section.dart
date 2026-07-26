@@ -11,9 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///
 /// This is deliberately a SEPARATE system from the Challenges module's
 /// fitness (daily-activity) streaks — it is measured in *months of
-/// attended treks*, not days of recorded activity. The redesign keeps it
-/// visually distinct: an accent-orange "TREKKING STREAK" card that reads
-/// clearly as its own thing, never merged with any Challenges content.
+/// attended treks*, not days of recorded activity. Phase 14 keeps that
+/// distinction in the label ("TREKKING STREAK") rather than in a
+/// different colour: the calm palette has one accent, and two streak
+/// systems in two hues would imply two brands.
 class StreakSection extends ConsumerWidget {
   const StreakSection({super.key});
 
@@ -44,26 +45,23 @@ class _StreakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: AppColors.accent,
-      glowOpacity: streak.isActive ? 0.18 : 0.08,
+    final palette = AppPalette.of(context);
+    // An active streak earns the accent; a lapsed one goes neutral, which
+    // is the whole signal — no glow needed to say "this one is live".
+    final ink = streak.isActive ? palette.primary : palette.textSecondary;
+
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: streak.isActive ? 0.18 : 0.1),
+              color: streak.isActive ? palette.primarySubtle : palette.cardHigh,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
             ),
-            child: AppIcon(
-              AppIcons.streak,
-              color: streak.isActive ? AppColors.accent : AppColors.textSecondary,
-              size: 26,
-            ),
+            child: AppIcon(AppIcons.streak, color: ink, size: 22),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -71,17 +69,28 @@ class _StreakCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('TREKKING STREAK', style: AppTextStyles.tinted(AppTextStyles.overline, AppColors.accent)),
+                Text(
+                  'TREKKING STREAK',
+                  style: AppTextStyles.overline.copyWith(
+                    color: palette.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(
-                  streak.isActive ? '${streak.currentMonths}-month streak' : 'No active streak right now',
-                  style: AppTextStyles.titleMedium,
+                  streak.isActive
+                      ? '${streak.currentMonths}-month streak'
+                      : 'No active streak right now',
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: palette.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Longest streak: ${streak.longestMonths} month'
                   '${streak.longestMonths == 1 ? '' : 's'}',
-                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: palette.textSecondary,
+                  ),
                 ),
               ],
             ),

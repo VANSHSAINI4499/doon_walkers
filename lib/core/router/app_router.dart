@@ -7,6 +7,7 @@ import 'package:doon_walkers/core/widgets/app_shell.dart';
 import 'package:doon_walkers/features/about/presentation/screens/about_screen.dart';
 import 'package:doon_walkers/features/about/presentation/screens/contact_screen.dart';
 import 'package:doon_walkers/features/about/presentation/screens/support_screen.dart';
+import 'package:doon_walkers/features/activity/presentation/screens/activity_insights_screen.dart';
 import 'package:doon_walkers/features/activity/presentation/screens/activity_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/phone_verification_screen.dart';
@@ -412,6 +413,26 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
               path: AppConstants.routeActivity,
               name: 'activity',
               builder: (context, state) => const ActivityScreen(),
+              routes: [
+                // /activity/insights — nested so it pushes onto THIS
+                // branch's stack, meaning back returns to the Activity tab
+                // rather than to whatever tab was last visited.
+                //
+                // Nesting does NOT inherit the sign-in guard:
+                // `isProtectedRoute` below matches locations by exact
+                // equality, not by prefix, so this path is listed there
+                // explicitly. Same reason /profile/wishlist etc. each have
+                // their own entry.
+                GoRoute(
+                  path: 'insights',
+                  name: 'activity-insights',
+                  pageBuilder: (context, state) =>
+                      AppTransitions.sharedAxisPage(
+                        key: state.pageKey,
+                        child: const ActivityInsightsScreen(),
+                      ),
+                ),
+              ],
             ),
           ],
         ),
@@ -817,6 +838,7 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    the guard instead of having to remember to add it.
     final isProtectedRoute = location == AppConstants.routeProfile ||
         location == AppConstants.routeActivity ||
+        location == AppConstants.routeActivityInsights ||
         location == AppConstants.routeMyWishlist ||
         location == AppConstants.routeMyEnquiries ||
         location == AppConstants.routeMyRegistrations ||

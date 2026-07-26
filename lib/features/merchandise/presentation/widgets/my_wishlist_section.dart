@@ -21,11 +21,12 @@ class MyWishlistSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wishlistAsync = ref.watch(myWishlistPreviewProvider);
+    final palette = AppPalette.of(context);
 
     return PreviewSection<WishlistItem>(
       title: 'My Wishlist',
       icon: AppIcons.favorite,
-      accent: AppColors.danger,
+      accent: palette.danger,
       asyncItems: wishlistAsync,
       itemBuilder: (item) => WishlistTile(item: item),
       onViewAll: () => context.push(AppConstants.routeMyWishlist),
@@ -54,6 +55,7 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
   bool _isPending = false;
 
   Future<void> _remove() async {
+    final palette = AppPalette.of(context);
     setState(() => _isPending = true);
     final success =
         await ref.read(wishlistControllerProvider.notifier).remove(widget.item.productId);
@@ -65,7 +67,7 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
         content: Text(
           success ? 'Removed from your wishlist.' : 'Could not remove this item. Please try again.',
         ),
-        backgroundColor: success ? null : AppColors.danger,
+        backgroundColor: success ? null : palette.danger,
       ),
     );
   }
@@ -77,9 +79,9 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
   Widget build(BuildContext context) {
     final product = widget.item.product;
     final coverImage = product.coverImageUrl;
+    final palette = AppPalette.of(context);
 
-    return GlassCard(
-      blurEnabled: false,
+    return AppCard(
       onTap: () => context.push(AppConstants.merchandiseDetailLocation(product.id)),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
@@ -114,24 +116,24 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
                 const SizedBox(height: 4),
                 Text(
                   _formatPrice(product.price),
-                  style: AppTextStyles.tinted(AppTextStyles.titleSmall, AppColors.primary),
+                  style: AppTextStyles.tinted(AppTextStyles.titleSmall, palette.primary),
                 ),
               ],
             ),
           ),
           _isPending
-              ? const Padding(
-                  padding: EdgeInsets.all(AppSpacing.sm),
+              ? Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
                   child: SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.danger),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger),
                   ),
                 )
               : IconButton(
                   onPressed: _remove,
                   tooltip: 'Remove from wishlist',
-                  icon: const AppIcon(AppIcons.favorite, color: AppColors.danger),
+                  icon: AppIcon(AppIcons.favorite, color: palette.danger),
                 ),
         ],
       ),
@@ -146,10 +148,11 @@ class _ThumbFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
-      color: AppColors.cardHigh,
+      color: palette.cardHigh,
       alignment: Alignment.center,
-      child: AppIcon(icon, size: 22, color: AppColors.textDisabled),
+      child: AppIcon(icon, size: 22, color: palette.textDisabled),
     );
   }
 }

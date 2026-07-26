@@ -1,133 +1,157 @@
 import 'package:doon_walkers/core/design_system.dart';
-import 'package:doon_walkers/features/registrations/domain/entities/registration_stats.dart';
+import 'package:doon_walkers/features/activity/domain/services/activity_period.dart';
+import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
+import 'package:doon_walkers/features/activity/presentation/widgets/activity_format.dart';
+import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Four Profile stat tiles sourced from [myRegistrationStatsProvider],
-/// laid out 2x2. Redesign Phase 5 restyles them as glass stat tiles with
-/// the bold stat numeral type, consistent with the Challenges tiles — the
-/// data (registered / attended / upcoming / cancelled) is unchanged.
+/// The member's own numbers — treks attended, steps this month, tiers
+/// earned — plus a secondary row of registration counts.
+///
+/// ## Every figure here is real
+///
+/// The Profile reference showed an "Events" stat and a Recent Achievements
+/// strip ("Mountain Explorer" and friends). Neither exists: there is no
+/// events concept, and those badge names match neither the real loyalty
+/// ladder (attendance-derived, see [LoyaltyBadgeSection]) nor per-challenge
+/// tier history. Both are omitted rather than filled with mismatched data.
+///
+/// What is shown:
+///
+///  - **Treks attended** — `myRegistrationStatsProvider.totalAttended`,
+///    the check-in-verified count.
+///  - **Steps this month** — the current month's total from Phase 11's
+///    `activitySummaryProvider`. Deliberately *this month* rather than an
+///    all-time "total steps": an all-time figure would need an unbounded
+///    query, and the honest label is the one that matches the window it
+///    actually sums.
+///  - **Tiers earned** — the length of `myTierHistoryProvider`, which is
+///    real earned (challenge, tier) pairs.
 class ProfileStatsSection extends ConsumerWidget {
   const ProfileStatsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
     final statsAsync = ref.watch(myRegistrationStatsProvider);
 
     return statsAsync.when(
-      loading: () => const Column(
-        children: [
-          SkeletonStatRow(count: 2),
-          SizedBox(height: AppSpacing.md),
-          SkeletonStatRow(count: 2),
-        ],
-      ),
+      loading: () => const AppCard(child: SkeletonStatRow()),
       error: (error, stack) {
         debugPrint('ProfileStatsSection: failed to load stats: $error');
-        return Text(
-          'Stats unavailable right now.',
-          style: AppTextStyles.secondary(AppTextStyles.bodySmall),
-          textAlign: TextAlign.center,
-        );
-      },
-      data: (stats) => _StatsGrid(stats: stats),
-    );
-  }
-}
-
-class _StatsGrid extends StatelessWidget {
-  const _StatsGrid({required this.stats});
-
-  final RegistrationStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _StatTile(
-                  icon: AppIcons.ticket,
-                  value: stats.totalRegistered,
-                  label: 'Total Treks Registered',
-                  accent: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _StatTile(
-                  icon: AppIcons.hiking,
-                  value: stats.totalAttended,
-                  label: 'Total Treks Attended',
-                  accent: AppColors.secondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _StatTile(
-                  icon: AppIcons.eventAvailable,
-                  value: stats.upcoming,
-                  label: 'Upcoming Treks',
-                  accent: AppColors.accent,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: _StatTile(
-                  icon: AppIcons.eventBusy,
-                  value: stats.cancelled,
-                  label: 'Cancelled Registrations',
-                  accent: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile({required this.icon, required this.value, required this.label, required this.accent});
-
-  final IconData icon;
-  final int value;
-  final String label;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      blurEnabled: false,
-      glowColor: accent,
-      glowOpacity: 0.12,
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: AppSpacing.sm),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppIcon(icon, color: accent, size: 24),
-          const SizedBox(height: AppSpacing.sm),
-          Text('$value', style: AppTextStyles.tinted(AppTextStyles.statMedium, accent)),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            label,
-            style: AppTextStyles.statLabel,
+        return AppCard(
+          child: Text(
+            'Stats unavailable right now.',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: palette.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
-        ],
-      ),
+        );
+      },
+      data: (stats) {
+        final monthSteps = ref
+            .watch(
+              activitySummaryProvider(ActivityPeriod.month(DateTime.now())),
+            )
+            .valueOrNull
+            ?.totalSteps;
+        final tiers = ref.watch(myTierHistoryProvider).valueOrNull?.length;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppCard(
+              child: StatRow(
+                stats: [
+                  StatDisplay(
+                    value: '${stats.totalAttended}',
+                    label: 'treks attended',
+                  ),
+                  StatDisplay(
+                    // An em dash while loading, never a 0 that then jumps —
+                    // "0 steps" and "still loading" look identical
+                    // otherwise.
+                    value: monthSteps == null
+                        ? '—'
+                        : ActivityFormat.stepsCompact(monthSteps),
+                    label: 'steps this month',
+                  ),
+                  StatDisplay(
+                    value: tiers == null ? '—' : '$tiers',
+                    label: tiers == 1 ? 'tier earned' : 'tiers earned',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppCard(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: Column(
+                children: [
+                  _CountRow(
+                    icon: AppIcons.ticket,
+                    label: 'Treks registered',
+                    value: stats.totalRegistered,
+                  ),
+                  Divider(height: AppSpacing.lg, color: palette.border),
+                  _CountRow(
+                    icon: AppIcons.eventAvailable,
+                    label: 'Upcoming',
+                    value: stats.upcoming,
+                  ),
+                  Divider(height: AppSpacing.lg, color: palette.border),
+                  _CountRow(
+                    icon: AppIcons.eventBusy,
+                    label: 'Cancelled',
+                    value: stats.cancelled,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CountRow extends StatelessWidget {
+  const _CountRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Row(
+      children: [
+        AppIcon(icon, size: 18, color: palette.textSecondary),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: palette.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          '$value',
+          style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+        ),
+      ],
     );
   }
 }

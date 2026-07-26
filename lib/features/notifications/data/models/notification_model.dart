@@ -10,6 +10,10 @@ class NotificationModel {
       title: json['title'] as String,
       body: json['body'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+      // Read back as of Phase 13 — previously written on insert but
+      // discarded on read, so the list couldn't tell a targeted message
+      // from a broadcast.
+      targetUserId: json['target_user_id'] as String?,
     );
   }
 

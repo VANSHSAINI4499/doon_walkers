@@ -29,12 +29,12 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     final coverImage = product.coverImageUrl;
     final isAdminView = adminActions != null;
 
-    return GlassCard(
+    return AppCard(
       onTap: onTap,
-      blurEnabled: false,
       padding: EdgeInsets.zero,
       borderRadius: AppRadius.card,
       child: Column(
@@ -123,7 +123,7 @@ class ProductCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   _formatPrice(product.price),
-                  style: AppTextStyles.tinted(AppTextStyles.titleMedium, AppColors.primary),
+                  style: AppTextStyles.tinted(AppTextStyles.titleMedium, palette.primary),
                 ),
               ],
             ),
@@ -141,16 +141,13 @@ class _CoverPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
+    final palette = AppPalette.of(context);
+    return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1A2A24), AppColors.card],
-        ),
+        color: palette.cardHigh,
       ),
       child: Center(
-        child: AppIcon(AppIcons.bag, size: 40, color: AppColors.textDisabled),
+        child: AppIcon(AppIcons.bag, size: 40, color: palette.textDisabled),
       ),
     );
   }
@@ -161,18 +158,19 @@ class _DraftBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xCC000000),
+        color: palette.scrim,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const AppIcon(AppIcons.editNote, size: 12, color: AppColors.white),
+          AppIcon(AppIcons.editNote, size: 12, color: palette.textInverse),
           const SizedBox(width: AppSpacing.xs),
-          Text('Draft', style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.white)),
+          Text('Draft', style: AppTextStyles.tinted(AppTextStyles.labelSmall, palette.textInverse)),
         ],
       ),
     );
