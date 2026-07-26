@@ -139,4 +139,16 @@ abstract class ChallengeRepository {
   /// Popular Challenges section on Explore. Uses a subquery count rather
   /// than a stored counter; fine at this project's scale.
   Future<List<Challenge>> fetchPopularChallenges({int limit = 5});
+
+  /// Phase 24: awards `challenge_completed` points for every challenge
+  /// in [challenges] where [progressList] shows [enrolledChallengeIds]
+  /// has reached platinum, once per (user, challenge) — see
+  /// `triggerChallengeCompletedPointsAward`'s doc for the exact rule.
+  /// Fire-and-forget; failures are logged, not thrown.
+  Future<void> maybeAwardChallengeCompletedPoints({
+    required String userId,
+    required List<Challenge> challenges,
+    required List<ChallengeProgress> progressList,
+    required Set<String> enrolledChallengeIds,
+  });
 }

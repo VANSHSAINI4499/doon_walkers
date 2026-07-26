@@ -13,6 +13,8 @@ import 'package:doon_walkers/features/challenges/domain/entities/challenge_tier_
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_top_participant.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/leaderboard_entry.dart';
 import 'package:doon_walkers/features/challenges/domain/repositories/challenge_repository.dart';
+import 'package:doon_walkers/features/challenges/domain/services/challenge_completion_award.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -306,6 +308,22 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
     return list.take(limit).map(ChallengeModel.fromJson).toList();
   }
 
+  @override
+  Future<void> maybeAwardChallengeCompletedPoints({
+    required String userId,
+    required List<Challenge> challenges,
+    required List<ChallengeProgress> progressList,
+    required Set<String> enrolledChallengeIds,
+  }) {
+    return triggerChallengeCompletedPointsAward(
+      userId: userId,
+      challenges: challenges,
+      progressList: progressList,
+      enrolledChallengeIds: enrolledChallengeIds,
+      gateway: _SupabaseChallengeCompletionAwardGateway(_supabase),
+    );
+  }
+
   // ── Private helpers ───────────────────────────────────────────────
 
   Map<String, dynamic> _writablePayload({
@@ -341,6 +359,56 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
   String? _formatDateNullable(DateTime? date) {
     if (date == null) return null;
     return _formatDate(date);
+  }
+}
+
+/// Real (Supabase-backed) implementation of
+/// [ChallengeCompletionAwardGateway] — the points_ledger check and
+/// award_points RPC call that used to live directly in
+/// `_ChallengesScreenState._maybeTriggerChallengeCompletedPoints`
+/// before Phase 24 extracted it here for direct test coverage of
+/// `triggerChallengeCompletedPointsAward`.
+class _SupabaseChallengeCompletionAwardGateway
+    implements ChallengeCompletionAwardGateway {
+  const _SupabaseChallengeCompletionAwardGateway(this._supabase);
+
+  final SupabaseClient _supabase;
+
+  @override
+  Future<bool> hasAwardedChallengeCompleted(
+    String userId,
+    String challengeId,
+  ) async {
+    final existing = await _supabase
+        .from('points_ledger')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('reason', 'challenge_completed')
+        .eq('reference_id', challengeId)
+        .limit(1);
+    return (existing as List).isNotEmpty;
+  }
+
+  @override
+  Future<void> awardChallengeCompleted(
+    String userId,
+    String challengeId,
+    int points,
+  ) async {
+    try {
+      await _supabase.rpc('award_points', params: {
+        'p_user_id': userId,
+        'p_points': points,
+        'p_reason': 'challenge_completed',
+        'p_reference_id': challengeId,
+      });
+    } catch (e) {
+      debugPrint(
+        'ChallengeRepositoryImpl: challenge_completed award failed for '
+        'user $userId on challenge $challengeId (non-fatal): $e',
+      );
+      rethrow;
+    }
   }
 }
 

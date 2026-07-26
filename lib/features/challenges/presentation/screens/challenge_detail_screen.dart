@@ -113,6 +113,9 @@ class _ChallengeDetailBody extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final isSignedIn = ref.watch(isSignedInProvider);
     final progressAsync = ref.watch(myChallengeProgressProvider);
+    final participantCount = challenge.isActive
+        ? ref.watch(challengeParticipantCountProvider(challenge.id)).valueOrNull
+        : null;
 
     ChallengeProgress? myProgress;
     for (final p in progressAsync.valueOrNull ?? const <ChallengeProgress>[]) {
@@ -181,6 +184,35 @@ class _ChallengeDetailBody extends ConsumerWidget {
                   ),
                 ),
               ],
+              // Phase 24: real enrollment count, not a fabricated
+              // threshold — see kPopularChallengeThreshold's doc.
+              if (participantCount != null &&
+                  participantCount >= kPopularChallengeThreshold) ...[
+                const SizedBox(height: AppSpacing.md),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: palette.gold.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppIcon(AppIcons.trending, size: 14, color: palette.gold),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(
+                          'Popular Challenge',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: palette.gold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               if (challenge.description.trim().isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.xl),
                 Text(
@@ -193,11 +225,7 @@ class _ChallengeDetailBody extends ConsumerWidget {
               const SizedBox(height: AppSpacing.lg),
               ChallengeMetaRow(
                 challenge: challenge,
-                participantCount: challenge.isActive
-                    ? ref
-                        .watch(challengeParticipantCountProvider(challenge.id))
-                        .valueOrNull
-                    : null,
+                participantCount: participantCount,
                 pointValue: challenge.pointValue,
               ),
               if (challenge.isActive && isSignedIn) ...[

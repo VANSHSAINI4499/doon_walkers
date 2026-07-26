@@ -1,4 +1,16 @@
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
+import 'package:doon_walkers/features/challenges/domain/services/challenge_duration.dart';
+
+/// An inclusive [minDays]–[maxDays] bound for the Explore filter sheet's
+/// duration slider. Both bounds are whole days.
+class ChallengeDurationRange {
+  const ChallengeDurationRange({required this.minDays, required this.maxDays});
+
+  final int minDays;
+  final int maxDays;
+
+  bool contains(int days) => days >= minDays && days <= maxDays;
+}
 
 /// The metric families Explore's filter chips offer.
 ///
@@ -66,10 +78,16 @@ enum ChallengeMetricFilter {
 ///    what a row of independently-toggleable chips implies.
 ///  - Ordering is preserved from the input, so the caller stays in
 ///    control of sort.
+///  - [durationRange], when non-null, additionally requires
+///    `challengeDurationDays(challenge)` to fall inside it — Phase 24's
+///    filter sheet. A challenge with no derivable duration (`allTime`,
+///    or a `customRange` missing a date) always passes this condition
+///    rather than being excluded by a number it was never given.
 List<Challenge> filterChallenges(
   List<Challenge> challenges, {
   String query = '',
   Set<ChallengeMetricFilter> metricFilters = const {},
+  ChallengeDurationRange? durationRange,
 }) {
   final needle = query.trim().toLowerCase();
 
@@ -77,6 +95,11 @@ List<Challenge> filterChallenges(
     if (metricFilters.isNotEmpty &&
         !metricFilters.any((f) => f.matches(challenge.metric))) {
       return false;
+    }
+
+    if (durationRange != null) {
+      final days = challengeDurationDays(challenge);
+      if (days != null && !durationRange.contains(days)) return false;
     }
 
     if (needle.isEmpty) return true;

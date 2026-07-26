@@ -3,6 +3,7 @@ import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
 import 'package:doon_walkers/features/activity/presentation/widgets/activity_permission_banner.dart';
+import 'package:doon_walkers/features/challenges/data/repositories/challenge_repository_impl.dart';
 import 'package:doon_walkers/features/challenges/data/services/challenge_celebration_tracker.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_enrollment.dart';
@@ -176,15 +177,22 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
     _celebrationQueueRunning = false;
   }
 
-  /// Phase 21/23: for any challenge the user is enrolled in where they
-  /// have reached the top (platinum) tier, check the ledger and award
-  /// challenge_completed points once if not yet awarded. Fire-and-forget.
+  /// Phase 21/23/24: for any challenge the user is enrolled in where
+  /// they have reached the top (platinum) tier, check the ledger and
+  /// award challenge_completed points once if not yet awarded.
+  /// Fire-and-forget.
   ///
   /// "Completed" is defined as `currentTier == platinum` — the tier
   /// engine has no separate 0–1 completion fraction (see
   /// [ChallengeProgress]'s doc: it only exposes `currentValue` and
   /// `currentTier`), so this reuses the existing tier data rather than
   /// inventing a new field on that entity.
+  ///
+  /// Phase 24 moved the actual ledger-check-and-award logic into
+  /// [ChallengeRepository.maybeAwardChallengeCompletedPoints] /
+  /// `triggerChallengeCompletedPointsAward` so it can be unit-tested
+  /// with a fake gateway instead of a real Supabase client — this
+  /// method is now just the trigger, unchanged in behavior.
   void _maybeTriggerChallengeCompletedPoints(
     List<Challenge> challenges,
     List<ChallengeProgress> progressList,
@@ -193,49 +201,12 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
 
-    final enrolledIds = enrollments.map((e) => e.challengeId).toSet();
-
-    for (final progress in progressList) {
-      if (!enrolledIds.contains(progress.challengeId)) continue;
-      if (progress.currentTier != ChallengeTier.platinum) continue;
-
-      Challenge? challenge;
-      for (final c in challenges) {
-        if (c.id == progress.challengeId) {
-          challenge = c;
-          break;
-        }
-      }
-      if (challenge == null) continue;
-
-      final challengeId = challenge.id;
-      final pointValue = challenge.pointValue;
-
-      () async {
-        try {
-          final supabase = Supabase.instance.client;
-          // Guard: check if challenge_completed already in ledger for this challenge
-          final existing = await supabase
-              .from('points_ledger')
-              .select('id')
-              .eq('user_id', userId)
-              .eq('reason', 'challenge_completed')
-              .eq('reference_id', challengeId)
-              .limit(1);
-          if ((existing as List).isNotEmpty) return;
-
-          await supabase.rpc('award_points', params: {
-            'p_user_id': userId,
-            'p_points': pointValue,
-            'p_reason': 'challenge_completed',
-            'p_reference_id': challengeId,
-          });
-          debugPrint('ChallengesScreen: awarded challenge_completed pts ($pointValue) for $challengeId');
-        } catch (e) {
-          debugPrint('ChallengesScreen: challenge_completed award failed (non-fatal): $e');
-        }
-      }();
-    }
+    ref.read(challengeRepositoryProvider).maybeAwardChallengeCompletedPoints(
+          userId: userId,
+          challenges: challenges,
+          progressList: progressList,
+          enrolledChallengeIds: enrollments.map((e) => e.challengeId).toSet(),
+        );
   }
 }
 

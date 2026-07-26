@@ -1,3 +1,13 @@
+/// Enrollment count at/above which Challenge Detail shows a "Popular
+/// Challenge" badge — Phase 24. Phase 23's audit found NO existing
+/// 500-enrollment constant anywhere in the codebase (the reference
+/// mockup's number was never real); this is a fresh product decision
+/// for an early-stage app, not a restored value. 50 is a plain
+/// hardcoded threshold, not admin-configurable — if the club grows
+/// enough that a fixed number stops making sense across all challenges,
+/// this should move to a per-challenge or app-settings value instead.
+const int kPopularChallengeThreshold = 50;
+
 /// Maps to the `challenge_metric` enum in Postgres — see
 /// 0022_challenges.sql (original trek-based metrics) and
 /// 0026_fitness_activity_schema.sql (Version 2, Challenges Module

@@ -227,4 +227,84 @@ void main() {
       );
     });
   });
+
+  group('filterChallenges — durationRange (Phase 24)', () {
+    // All 5 fixtures above (_all) default to a `daily` time window —
+    // their metric names (e.g. monthlySteps) describe what they SUM,
+    // not how long the challenge itself runs — so duration tests build
+    // their own fixtures with an explicit timeWindow instead of reusing
+    // those.
+    final monthLong = _challenge(
+      id: 'm1',
+      title: 'Month Long',
+      timeWindow: ChallengeTimeWindow.monthly,
+    );
+    final dayLong = _challenge(
+      id: 'd1',
+      title: 'Today Only',
+      timeWindow: ChallengeTimeWindow.daily,
+      metric: ChallengeMetric.dailySteps,
+    );
+    final foreverOpen = _challenge(
+      id: 'z1',
+      title: 'Forever',
+      timeWindow: ChallengeTimeWindow.allTime,
+    );
+
+    test('null durationRange means no duration filtering', () {
+      expect(filterChallenges(_all, durationRange: null).length, 5);
+    });
+
+    test('excludes a challenge whose derived duration falls outside the range', () {
+      expect(
+        _ids(
+          filterChallenges(
+            [monthLong, dayLong],
+            durationRange: const ChallengeDurationRange(minDays: 1, maxDays: 7),
+          ),
+        ),
+        ['d1'], // dayLong (1 day) passes; monthLong (30 days) does not
+      );
+    });
+
+    test('a challenge with no derivable duration always passes the range filter', () {
+      expect(
+        _ids(
+          filterChallenges(
+            [foreverOpen],
+            durationRange: const ChallengeDurationRange(minDays: 1, maxDays: 1),
+          ),
+        ),
+        ['z1'],
+      );
+    });
+
+    test('a daily challenge (1 day) matches a 1-7 day range', () {
+      expect(
+        _ids(
+          filterChallenges(
+            [dayLong],
+            durationRange: const ChallengeDurationRange(minDays: 1, maxDays: 7),
+          ),
+        ),
+        ['d1'],
+      );
+    });
+
+    test('AND-composes with metric filters — matching the metric is not enough', () {
+      // monthLong's metric defaults to dailySteps, so it passes the Steps
+      // filter, but its 30-day window fails a 1-7 day range — both
+      // conditions must hold.
+      expect(
+        _ids(
+          filterChallenges(
+            [dayLong, monthLong],
+            metricFilters: const {ChallengeMetricFilter.steps},
+            durationRange: const ChallengeDurationRange(minDays: 1, maxDays: 7),
+          ),
+        ),
+        ['d1'],
+      );
+    });
+  });
 }
