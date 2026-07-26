@@ -138,10 +138,14 @@ void main() {
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
-    testWidgets('shows no points and no join affordance', (tester) async {
-      // Neither concept exists in the engine. This pins the reference's
-      // points/Join being deliberately omitted rather than forgotten, so a
-      // later pass doesn't "restore" them from the mockups.
+    testWidgets('points/participant count are opt-in, off by default', (tester) async {
+      // Phase 21 made points/participant count real (challenges.point_value,
+      // get_challenge_participant_count()), so this no longer pins their
+      // absence from the engine — it pins that ChallengeCard keeps them
+      // opt-in (showPoints/participantCount both default false/null), so a
+      // plain card on My Challenges isn't cluttered with chips nobody asked
+      // for. Join lives on Challenge Detail (JoinChallengeButton), never on
+      // the card itself, in any configuration.
       await _pump(
         tester,
         challenge: _challenge(),
@@ -152,10 +156,37 @@ void main() {
           currentTier: ChallengeTier.bronze,
         ),
       );
-      expect(find.textContaining('Point'), findsNothing);
-      expect(find.textContaining('point'), findsNothing);
+      expect(find.textContaining('pts'), findsNothing);
+      expect(find.textContaining('joined'), findsNothing);
       expect(find.textContaining('Join'), findsNothing);
-      expect(find.textContaining('participant'), findsNothing);
+    });
+
+    testWidgets('showMeta + showPoints + participantCount render real chips', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [isSignedInProvider.overrideWith((ref) => true)],
+          child: MaterialApp(
+            theme: AppTheme.dark,
+            home: Scaffold(
+              body: ChallengeCard(
+                challenge: _challenge(),
+                progress: null,
+                showMeta: true,
+                showPoints: true,
+                participantCount: 7,
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('7 joined'), findsOneWidget);
+      expect(find.text('+50 pts'), findsOneWidget);
     });
 
     testWidgets('showMeta adds the metric and window chips', (tester) async {

@@ -58,6 +58,7 @@ dependencies:
   # trek_library_screen.dart comment on why a plain GridView can't do
   # this without either overflowing or wasting space.
   flutter_staggered_grid_view: ^0.7.0
+  fl_chart: ^0.70.2
 
   # Phase 8 — push notifications (FCM). firebase_core must be
   # initialized before any other Firebase plugin; firebase_messaging is

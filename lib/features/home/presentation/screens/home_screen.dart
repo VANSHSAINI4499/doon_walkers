@@ -1,29 +1,15 @@
+import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/community_stats_section.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_hero_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/home_section_header.dart';
 import 'package:doon_walkers/features/home/presentation/widgets/join_community_section.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// The Home tab.
 ///
 /// Redesign Phase 2: rebuilt entirely on the Phase 1 design system.
-/// Content since then:
-///   - Hero greeting: tagline from settings (unchanged).
-///   - Community stats: `get_community_stats()` (unchanged; the Home
-///     content pass removed the Signups tile and bucketed the member
-///     count — see CommunityStatsSection's own doc).
-///   - The "Upcoming Trek"/"Featured Trek"/"Recent Memories" placeholder
-///     blocks (never backed by real data) were removed outright in that
-///     same pass — upcoming treks already sort to the top of the Treks
-///     tab, and the other two weren't wanted at all.
-///   - Join Community: guest-only now (see its own doc) + About:
-///     unchanged settings logic.
-///
-/// Assembly notes: the hero is full-bleed (outside the reading-width
-/// clamp); everything below sits in a 720dp-max column so the screen
-/// stays comfortable on tablets and web. Sections fade-and-rise in on a
-/// gentle stagger via [AppReveal] — polish, not spectacle.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -71,12 +57,8 @@ class _HomeBody extends StatelessWidget {
         ),
         child: CommunityStatsSection(),
       ),
+      const _ChallengesQuickCard(),
       const JoinCommunitySection(),
-      // About content used to be appended here (Part B folded it in when
-      // the standalone About screen was removed). Redesign 2.0 Phase 10
-      // gave About its own drawer destination and moved the content
-      // there **wholly**, rather than duplicating it — see AboutScreen's
-      // doc. Home is back to one purpose: what's happening right now.
     ];
 
     return Column(
@@ -113,6 +95,47 @@ class _Section extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         child,
       ],
+    );
+  }
+}
+
+class _ChallengesQuickCard extends StatelessWidget {
+  const _ChallengesQuickCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return AppCard(
+      onTap: () => context.push(AppConstants.routeChallenges),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: palette.primarySubtle,
+              shape: BoxShape.circle,
+            ),
+            child: AppIcon(AppIcons.challenges, size: 24, color: palette.primary),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Explore Challenges', style: AppTextStyles.titleMedium),
+                const SizedBox(height: 2),
+                Text(
+                  'Join community challenges and earn streak badges.',
+                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                ),
+              ],
+            ),
+          ),
+          AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
+        ],
+      ),
     );
   }
 }

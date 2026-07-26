@@ -23,16 +23,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// progress bar for a signed-in member, the tier badge only when a tier
 /// is actually held.
 ///
-/// ## Not shown, on purpose
+/// ## Points and participant count are real (Phase 21/23)
 ///
-/// No points and no participant count. The engine awards tiers, not
-/// points, and has no join/opt-in concept — active challenges apply to
-/// everyone and progress is computed from activity data. Rendering either
-/// would mean inventing a number.
+/// This doc used to say neither existed — that was true through Phase 12,
+/// but Phase 21's `0038_challenge_enrollments.sql` added opt-in enrollment,
+/// `challenges.point_value`, and `get_challenge_participant_count()`, so
+/// both are now real, sourced figures: [showPoints] renders
+/// `challenge.pointValue` and [participantCount] (when the caller has
+/// fetched one) renders the enrolled-member count. Neither is invented —
+/// a caller that hasn't loaded a participant count simply passes null and
+/// the chip is omitted, same discipline as the days-left chip below.
 ///
-/// [showMeta] adds the metric/window/days-left row used by Explore, where
-/// a card has to be legible without the user already knowing what the
-/// challenge measures.
+/// [showMeta] adds the metric/window/days-left/participant-count/points
+/// row used by Explore and My Challenges, where a card has to be legible
+/// without the user already knowing what the challenge measures.
 class ChallengeCard extends ConsumerWidget {
   const ChallengeCard({
     super.key,
@@ -41,6 +45,8 @@ class ChallengeCard extends ConsumerWidget {
     required this.onTap,
     this.adminActions,
     this.showMeta = false,
+    this.showPoints = false,
+    this.participantCount,
   });
 
   final Challenge challenge;
@@ -54,6 +60,12 @@ class ChallengeCard extends ConsumerWidget {
 
   /// Show the metric / time-window / days-left chips.
   final bool showMeta;
+
+  /// Show the points pill (e.g. "+50 pts") — Phase 21.
+  final bool showPoints;
+
+  /// When non-null, render a participant count chip. Phase 21.
+  final int? participantCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -122,7 +134,11 @@ class ChallengeCard extends ConsumerWidget {
           ),
           if (showMeta) ...[
             const SizedBox(height: AppSpacing.md),
-            ChallengeMetaRow(challenge: challenge),
+            ChallengeMetaRow(
+              challenge: challenge,
+              participantCount: participantCount,
+              pointValue: showPoints ? challenge.pointValue : null,
+            ),
           ],
           const SizedBox(height: AppSpacing.md),
           if (!challenge.isActive)

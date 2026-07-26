@@ -2,9 +2,12 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/auth/domain/entities/user_entity.dart';
+import 'package:doon_walkers/features/challenges/presentation/widgets/level_badge.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/my_inquiries_section.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/my_wishlist_section.dart';
+import 'package:doon_walkers/features/profile/presentation/providers/points_providers.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/loyalty_badge_section.dart';
+import 'package:doon_walkers/features/profile/presentation/widgets/points_summary_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/profile_stats_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/streak_section.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/my_registrations_section.dart';
@@ -32,13 +35,28 @@ import 'package:go_router/go_router.dart';
 /// attendance-derived loyalty badge, the Trekking Streak, and their own
 /// registrations / wishlist / inquiries.
 ///
+/// ## Phase 22: Points & Levels surfaced
+///
+/// The level badge next to the name and the points summary card both
+/// read from `get_my_points_summary()`
+/// (0039_points_history_and_enrollment_fix.sql) — the level ladder
+/// itself lives ONLY in that RPC's `level_for_points()`/
+/// `points_for_level()` functions, never reimplemented here. "View
+/// History" opens the full ledger at [AppConstants.routePointsHistory].
+/// [LevelBadge] is the same widget Phase 21's challenge leaderboard
+/// already uses — one level-badge widget in the codebase, not two.
+///
 /// ## Omitted from the reference, deliberately
 ///
 /// No photo upload (no Storage bucket or picker for it), no "View
 /// Membership" card (there is no membership tier system — the loyalty
-/// badge is attendance-derived and already shown), no Recent Achievements
-/// strip (its names match neither the loyalty ladder nor challenge tier
-/// history), no "Events" stat (no events concept exists).
+/// badge is attendance-derived and already shown). No separate
+/// Achievements grid either: `user_achievements` exists as a schema
+/// (0036_phase19_schema_foundations.sql) but nothing anywhere awards
+/// into it, so it would always render empty — the real "what have I
+/// earned" answer is already the loyalty badge plus [ProfileStatsSection]'s
+/// tiers-earned count, both shown below. No "Events" stat (no events
+/// concept exists).
 ///
 /// **"Member since" is new and real** — `users.created_at`, which has
 /// always been there.
@@ -114,6 +132,7 @@ class ProfileScreen extends ConsumerWidget {
 
           final blocks = <Widget>[
             _ProfileHeader(user: user),
+            const PointsSummarySection(),
             const LoyaltyBadgeSection(),
             // Renders nothing until there's a real streak, so it never
             // leaves an empty gap for a brand-new member.
@@ -160,9 +179,9 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-/// Identity: initial, name, email, role, and how long they've been a
-/// member.
-class _ProfileHeader extends StatelessWidget {
+/// Identity: initial, name, email, role, level, and how long they've
+/// been a member.
+class _ProfileHeader extends ConsumerWidget {
   const _ProfileHeader({required this.user});
 
   final UserEntity user;
@@ -173,9 +192,10 @@ class _ProfileHeader extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
     final created = user.createdAt.toLocal();
+    final level = ref.watch(myPointsSummaryProvider).valueOrNull?.level;
 
     return AppCard(
       child: Column(
@@ -197,12 +217,24 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(
-            user.name.isNotEmpty ? user.name : 'Doon Walkers Member',
-            style: AppTextStyles.headlineSmall.copyWith(
-              color: palette.textPrimary,
-            ),
-            textAlign: TextAlign.center,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  user.name.isNotEmpty ? user.name : 'Doon Walkers Member',
+                  style: AppTextStyles.headlineSmall.copyWith(
+                    color: palette.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (level != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                LevelBadge(level: level),
+              ],
+            ],
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

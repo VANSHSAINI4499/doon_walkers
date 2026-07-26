@@ -3,8 +3,8 @@
 // out-of-range selectedIndex reaching the nav bar and tripping its
 // assertion).
 //
-// Branch layout after Redesign 2.0 Phase 10:
-//   0 Home · 1 Activity · 2 Treks · 3 Challenges · 4 Profile
+// Branch layout after Redesign 2.0 Phase 18:
+//   0 Home · 1 Activity · 2 Treks · 3 Community · 4 Profile
 //   5 admin-only screens (NEVER a tab)
 //
 // The important change from the previous two layouts: **every role now

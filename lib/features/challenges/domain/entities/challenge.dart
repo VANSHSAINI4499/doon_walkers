@@ -279,6 +279,11 @@ class Challenge {
 
   final List<ChallengeTierThreshold> tiers;
 
+  /// Points awarded to a user when they complete this challenge
+  /// (reach 100% progress). Added in Phase 21 (0038_challenge_enrollments.sql).
+  /// Defaults to 50 for challenges created before this phase.
+  final int pointValue;
+
   const Challenge({
     required this.id,
     required this.title,
@@ -291,6 +296,7 @@ class Challenge {
     required this.isActive,
     required this.createdAt,
     this.tiers = const [],
+    this.pointValue = 50,
   });
 
   /// The 4 tiers in ascending order (bronze → platinum), regardless of
@@ -301,5 +307,12 @@ class Challenge {
           ChallengeTier.values.indexOf(b.tier),
         ));
     return sorted;
+  }
+
+  /// The top tier threshold value (platinum), used for milestone
+  /// calculations. Returns 0 if no tiers are defined.
+  double get topTierValue {
+    if (tiers.isEmpty) return 0;
+    return tiersAscending.last.thresholdValue;
   }
 }

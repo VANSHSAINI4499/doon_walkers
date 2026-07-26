@@ -21,14 +21,22 @@ import 'package:go_router/go_router.dart';
 /// metric/window/days-left metadata row that a browsing card needs and a
 /// tracking card doesn't.
 ///
-/// ## What is deliberately absent
+/// ## Participant counts and points are real now (Phase 21/23)
 ///
-/// No participant counts and no Join buttons. The engine has no opt-in
-/// concept — an active challenge applies to everyone and progress is
-/// computed from activity data — so a participant count would be a
-/// fabricated number and a Join button would be a no-op. Each card shows
-/// the viewer's own current progress instead, which is the real answer to
-/// "where do I stand on this".
+/// This doc used to say a participant count would be a fabricated number
+/// — true through Phase 12, when the engine had no opt-in concept. Phase
+/// 21 added real enrollment (`challenge_enrollments`), so each card here
+/// now also shows the real enrolled-participant count and point value via
+/// [ChallengeCard.participantCount]/`showPoints`. There is still no Join
+/// button here on purpose: joining is a Challenge Detail action (see
+/// [JoinChallengeButton]), not something to trigger from a scannable
+/// browsing list.
+///
+/// There is also still no separate "Popular"/"New" split — only a single
+/// searchable/filterable list. `popularChallengesProvider` (Phase 21)
+/// exists but is unconsumed; building a distinct Popular section is new
+/// UI scope this phase (23) deliberately leaves alone (its own brief is
+/// "close debt only, no new features").
 ///
 /// Drafts never appear here even for an admin: Explore is explicitly the
 /// member-facing browse surface, and an admin managing drafts has the My
@@ -137,6 +145,10 @@ class _ExploreChallengesViewState extends ConsumerState<ExploreChallengesView> {
                     challenge: challenge,
                     progress: progressByChallenge[challenge.id],
                     showMeta: true,
+                    showPoints: true,
+                    participantCount: ref
+                        .watch(challengeParticipantCountProvider(challenge.id))
+                        .valueOrNull,
                     onTap: () => context.push(
                       AppConstants.challengeDetailLocation(challenge.id),
                     ),

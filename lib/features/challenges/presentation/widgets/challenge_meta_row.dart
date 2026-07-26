@@ -18,10 +18,31 @@ import 'package:flutter/material.dart';
 /// deadline, and inventing one ("6 days left" from the week rolling over)
 /// would imply the challenge itself expires. So the chip is absent
 /// entirely rather than showing a made-up number.
+///
+/// ## Participant count and points (Phase 21/23)
+///
+/// [participantCount] and [pointValue] are both optional and both real:
+/// the former comes from `get_challenge_participant_count()` against the
+/// Phase 21 `challenge_enrollments` table, the latter from
+/// `challenges.point_value` (also Phase 21). Null means "the caller
+/// didn't fetch/pass it", not "zero" — [ChallengeCard] only supplies
+/// [participantCount] where it has actually loaded one, and only passes
+/// [pointValue] when its own `showPoints` is true.
 class ChallengeMetaRow extends StatelessWidget {
-  const ChallengeMetaRow({super.key, required this.challenge});
+  const ChallengeMetaRow({
+    super.key,
+    required this.challenge,
+    this.participantCount,
+    this.pointValue,
+  });
 
   final Challenge challenge;
+
+  /// Enrolled-participant count, or null to omit the chip.
+  final int? participantCount;
+
+  /// Points awarded on completion, or null to omit the chip.
+  final int? pointValue;
 
   /// Whole days from today until [Challenge.endDate], or null when there
   /// is no real deadline. Negative results collapse to 0 ("last day")
@@ -64,6 +85,13 @@ class ChallengeMetaRow extends StatelessWidget {
             // time-critical, so it is the only one allowed the accent.
             emphasised: remaining <= 3,
           ),
+        if (participantCount != null)
+          _MetaChip(
+            icon: AppIcons.group,
+            label: participantCount == 1 ? '1 joined' : '$participantCount joined',
+          ),
+        if (pointValue != null)
+          _MetaChip(icon: AppIcons.star, label: '+$pointValue pts'),
       ],
     );
   }

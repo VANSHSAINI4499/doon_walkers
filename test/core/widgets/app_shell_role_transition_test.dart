@@ -62,7 +62,7 @@ GoRouter _buildTestRouter({required String initialLocation}) {
           branch(AppConstants.routeHome, 'HomeBody'),
           branch(AppConstants.routeActivity, 'ActivityBody'),
           branch(AppConstants.routeTrekLibrary, 'TreksBody'),
-          branch(AppConstants.routeChallenges, 'ChallengesBody'),
+          branch(AppConstants.routeCommunity, 'CommunityBody'),
           branch(AppConstants.routeProfile, 'ProfileBody'),
         ],
       ),
@@ -102,7 +102,7 @@ Future<ProviderContainer> _pumpShell(
 }
 
 /// The five tab labels, in order.
-const _tabLabels = ['Home', 'Activity', 'Treks', 'Challenges', 'Profile'];
+const _tabLabels = ['Home', 'Activity', 'Treks', 'Community', 'Profile'];
 
 void _expectAllFiveTabs() {
   for (final label in _tabLabels) {
@@ -202,7 +202,7 @@ void main() {
         'HomeBody',
         'ActivityBody',
         'TreksBody',
-        'ChallengesBody',
+        'CommunityBody',
         'ProfileBody',
       ];
 

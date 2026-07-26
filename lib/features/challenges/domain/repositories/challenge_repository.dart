@@ -1,6 +1,8 @@
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/challenge_enrollment.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_tier_achievement.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/challenge_top_participant.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/leaderboard_entry.dart';
 
 /// Abstract interface for reading and managing challenges.
@@ -44,6 +46,7 @@ abstract class ChallengeRepository {
     DateTime? endDate,
     String? icon,
     required Map<ChallengeTier, double> tierThresholds,
+    int pointValue = 50,
   });
 
   /// Updates a challenge's fields AND reconciles its 4 tier
@@ -62,6 +65,7 @@ abstract class ChallengeRepository {
     DateTime? endDate,
     String? icon,
     required Map<ChallengeTier, double> tierThresholds,
+    int pointValue = 50,
   });
 
   /// Deletes the challenge row. `challenge_tiers` rows cascade
@@ -96,4 +100,43 @@ abstract class ChallengeRepository {
   /// 0025_leaderboard.sql's doc for why that's enforced in the
   /// function body, not just by what this method happens to select.
   Future<List<LeaderboardEntry>> fetchLeaderboard(String challengeId);
+
+  // ── Phase 21: Enrollment methods ─────────────────────────────────
+
+  /// Enrolls the signed-in user in a challenge. Idempotent — calling
+  /// again for an already-enrolled challenge returns the existing row
+  /// without awarding the bonus a second time. Returns the enrollment row.
+  Future<ChallengeEnrollment> enrollInChallenge(String challengeId);
+
+  /// Removes the signed-in user's enrollment. The 10-pt enrollment
+  /// bonus is NOT reversed. Returns silently if not enrolled.
+  Future<void> unenrollFromChallenge(String challengeId);
+
+  /// Whether the signed-in user is enrolled in [challengeId]. Returns
+  /// false for a guest (no session → no enrollment rows).
+  Future<bool> isEnrolled(String challengeId);
+
+  /// All of the signed-in user's current enrollments. Empty for a guest.
+  Future<List<ChallengeEnrollment>> fetchMyEnrollments();
+
+  /// Total count of enrolled participants for [challengeId].
+  /// Safe to call as a guest.
+  Future<int> fetchParticipantCount(String challengeId);
+
+  /// Top [limit] enrolled participants ordered by live score, with
+  /// total_points and level for the level badge display.
+  Future<List<ChallengeTopParticipant>> fetchTopParticipants(
+    String challengeId, {
+    int limit = 10,
+  });
+
+  /// Active challenges where start_date > today, ordered by start_date
+  /// ascending, limited to 3. Used for the Upcoming Challenges section
+  /// on My Challenges.
+  Future<List<Challenge>> fetchUpcomingChallenges({int limit = 3});
+
+  /// Active challenges ordered by enrollment count descending — the
+  /// Popular Challenges section on Explore. Uses a subquery count rather
+  /// than a stored counter; fine at this project's scale.
+  Future<List<Challenge>> fetchPopularChallenges({int limit = 5});
 }

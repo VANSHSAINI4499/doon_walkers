@@ -7,8 +7,10 @@ import 'package:doon_walkers/features/registrations/data/models/trekking_streak_
 import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
 import 'package:doon_walkers/features/registrations/domain/entities/trekking_streak.dart';
 import 'package:doon_walkers/features/registrations/domain/repositories/registration_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 /// Riverpod provider exposing the implementation of [RegistrationRepository].
 final registrationRepositoryProvider = Provider<RegistrationRepository>(
@@ -251,7 +253,25 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
         AppConstants.rpcVerifyTrekCheckin,
         params: {'p_trek_id': trekId, 'p_token': scannedToken},
       );
-      return DateTime.parse(result as String);
+      final checkedInAt = DateTime.parse(result as String);
+
+      // Award 100 points for the check-in — fire-and-forget. The user
+      // already got their check-in confirmed above; a points failure
+      // here should never surface as an error to them. award_points()
+      // is SECURITY DEFINER and idempotent-safe for ledger inserts.
+      final uid = _supabase.auth.currentUser?.id;
+      if (uid != null) {
+        _supabase.rpc('award_points', params: {
+          'p_user_id': uid,
+          'p_points': 100,
+          'p_reason': 'trek_checkin',
+          'p_reference_id': trekId,
+        }).catchError((e) {
+          debugPrint('verifyCheckin: award_points failed (non-fatal): $e');
+        });
+      }
+
+      return checkedInAt;
     } on PostgrestException catch (error) {
       final reason = _checkinErrorReasons[error.code];
       if (reason != null) {
@@ -261,3 +281,4 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
     }
   }
 }
+

@@ -1,51 +1,65 @@
+import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/activity/domain/services/activity_period.dart';
 import 'package:doon_walkers/features/activity/domain/services/activity_summary.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
 import 'package:doon_walkers/features/activity/presentation/widgets/activity_bar_chart.dart';
 import 'package:doon_walkers/features/activity/presentation/widgets/activity_format.dart';
+import 'package:doon_walkers/features/activity/presentation/widgets/activity_rings.dart';
+import 'package:doon_walkers/features/activity/presentation/widgets/cumulative_steps_chart.dart';
 import 'package:doon_walkers/features/activity/presentation/widgets/step_goal_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-/// The Day / Week / Month bodies of the Activity dashboard.
-///
-/// All three read the same [activitySummaryProvider] family — the shape of
-/// the answer differs, the data path does not.
-///
-/// ## No "active time" tile anywhere
-///
-/// The reference shows one. `HealthDataType.EXERCISE_TIME` is **not** in
-/// the `health` package's Android list (13.1.3, `heath_data_types.dart`) —
-/// it is iOS-only — and there is no `active_minutes` column. `WORKOUT` is
-/// available but would read 0 for anyone who walks without logging an
-/// exercise session, which is most people. So the tile is omitted rather
-/// than filled with a number that means nothing.
-
-/// Shared metric tiles: distance and calories, both real columns.
-class _MetricTiles extends StatelessWidget {
-  const _MetricTiles({required this.summary});
+/// Shared 4 metric tiles: steps, distance, calories, active time.
+class _FourMetricTiles extends StatelessWidget {
+  const _FourMetricTiles({required this.summary});
 
   final ActivitySummary summary;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _MetricTile(
-            icon: AppIcons.distance,
-            value: ActivityFormat.distance(summary.totalDistanceKm),
-            label: 'distance',
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                icon: AppIcons.steps,
+                value: ActivityFormat.steps(summary.totalSteps),
+                label: 'steps',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _MetricTile(
+                icon: AppIcons.distance,
+                value: ActivityFormat.distance(summary.totalDistanceKm),
+                label: 'distance',
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _MetricTile(
-            icon: AppIcons.calories,
-            value: ActivityFormat.calories(summary.totalCalories),
-            label: 'burned',
-          ),
+        const SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                icon: AppIcons.calories,
+                value: ActivityFormat.calories(summary.totalCalories),
+                label: 'burned',
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: _MetricTile(
+                icon: AppIcons.duration,
+                value: '${summary.totalActiveMinutes} mins',
+                label: 'active time (est)',
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -92,6 +106,56 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
+/// Insights teaser card shared across views.
+class _InsightsTeaserCard extends ConsumerWidget {
+  const _InsightsTeaserCard({required this.date});
+
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final percentileAsync = ref.watch(dailyPercentileProvider(date));
+
+    final title = percentileAsync.when(
+      data: (p) => p != null ? 'Top $p% of Doon Walkers today' : 'Community Insights',
+      loading: () => 'Loading insights...',
+      error: (_, __) => 'Community Insights',
+    );
+
+    return AppCard(
+      onTap: () => context.push(AppConstants.routeActivityInsights),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: palette.primarySubtle,
+              shape: BoxShape.circle,
+            ),
+            child: AppIcon(AppIcons.insights, size: 20, color: palette.primary),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.titleSmall),
+                const SizedBox(height: 2),
+                Text(
+                  'Tap to view activity highlights & monthly stats',
+                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                ),
+              ],
+            ),
+          ),
+          AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
 /// A labelled figure with an optional vs-previous delta.
 class PeriodStat extends StatelessWidget {
   const PeriodStat({
@@ -104,11 +168,7 @@ class PeriodStat extends StatelessWidget {
 
   final String value;
   final String label;
-
-  /// Null renders "no comparison yet" rather than a fabricated 0% — see
-  /// [percentChange].
   final int? delta;
-
   final StatSize size;
 
   @override
@@ -152,23 +212,6 @@ class PeriodStat extends StatelessWidget {
 
 // ── Day ───────────────────────────────────────────────────────────────
 
-/// Steps vs goal as a ring, the two real metric tiles, and a rolling
-/// seven-day context chart.
-///
-/// ## Why there is no hour-by-hour curve
-///
-/// The reference's Day view charts a cumulative 12AM→12AM line.
-/// `daily_activity_summary` holds **one row per day** — there is no
-/// intraday data to draw it from, and synthesising a curve would be
-/// inventing data.
-///
-/// Per-hour reads *are* technically possible (`getTotalStepsInInterval`
-/// over 24 hourly windows returns real on-device buckets), but only on
-/// Android, only while permission is live, and only inside Health
-/// Connect's ~30-day retention — so the chart would vanish when paging
-/// back past a month, at a cost of 24 queries per date change. A trailing
-/// seven-day comparison works for every day, on every platform, from data
-/// already synced. That trade is the deliberate choice here.
 class ActivityDayView extends ConsumerWidget {
   const ActivityDayView({super.key, required this.period});
 
@@ -193,6 +236,7 @@ class ActivityDayView extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Goal progress ring
             AppCard(
               child: Column(
                 children: [
@@ -245,8 +289,59 @@ class ActivityDayView extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            _MetricTiles(summary: summary),
+
+            // Cumulative progress curve ("Today's progress")
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Today\'s progress', style: AppTextStyles.titleSmall),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Cumulative steps curve',
+                    style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  CumulativeStepsChart(totalSteps: steps, targetSteps: goal),
+                ],
+              ),
+            ),
             const SizedBox(height: AppSpacing.md),
+
+            // 4 Metric Tiles
+            _FourMetricTiles(summary: summary),
+            const SizedBox(height: AppSpacing.md),
+
+            // Insights Teaser
+            _InsightsTeaserCard(date: period.to),
+            const SizedBox(height: AppSpacing.md),
+
+            // Concentric Activity Rings (3 rings)
+            AppCard(
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Activity Rings', style: AppTextStyles.titleSmall),
+                      TextButton(
+                        onPressed: () => context.push(AppConstants.routeActivityInsights),
+                        child: Text('View Details', style: AppTextStyles.labelSmall.copyWith(color: palette.primary)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ActivityRings(
+                    stepsProgress: summary.goalFraction(goal),
+                    caloriesProgress: (summary.totalCalories / 400.0).clamp(0.0, 1.0),
+                    activeTimeProgress: (summary.totalActiveMinutes / 30.0).clamp(0.0, 1.0),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Last 7 Days Context Chart
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,6 +397,22 @@ class ActivityDayView extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Daily Summary Card
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Daily Summary', style: AppTextStyles.titleSmall),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    '${ActivityFormat.steps(steps)} total walked on ${period.to.day} ${ActivityFormat.monthShort(period.to)}.',
+                    style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                  ),
+                ],
+              ),
+            ),
           ],
         );
       },
@@ -311,8 +422,6 @@ class ActivityDayView extends ConsumerWidget {
 
 // ── Week ──────────────────────────────────────────────────────────────
 
-/// Week total, average per day with data, per-day bars with the best day
-/// highlighted, and a per-day breakdown list.
 class ActivityWeekView extends ConsumerWidget {
   const ActivityWeekView({super.key, required this.period});
 
@@ -338,30 +447,37 @@ class ActivityWeekView extends ConsumerWidget {
                 previous: previous.totalSteps,
               );
 
-        return _PeriodBody(
-          summary: summary,
-          goal: goal,
-          delta: delta,
-          bars: [
-            for (final day in period.days)
-              ActivityBar(
-                label: ActivityFormat.weekdayInitial(day),
-                value: summary.stepsOn(day),
-                highlight:
-                    summary.bestDay != null &&
-                    _sameDay(summary.bestDay!.date, day),
-              ),
-          ],
-          showBarValues: true,
-          breakdown: [
-            for (final day in period.days.reversed)
-              _BreakdownRow(
-                label: ActivityFormat.weekdayShort(day),
-                sublabel: '${day.day} ${ActivityFormat.monthShort(day)}',
-                steps: summary.stepsOn(day),
-                hasData: summary.byDate.containsKey(day),
-                goal: goal,
-              ),
+        return Column(
+          children: [
+            _PeriodBody(
+              summary: summary,
+              goal: goal,
+              delta: delta,
+              bars: [
+                for (final day in period.days)
+                  ActivityBar(
+                    label: ActivityFormat.weekdayInitial(day),
+                    value: summary.stepsOn(day),
+                    highlight:
+                        summary.bestDay != null &&
+                        _sameDay(summary.bestDay!.date, day),
+                  ),
+              ],
+              showBarValues: true,
+              breakdown: [
+                for (final day in period.days.reversed)
+                  _BreakdownRow(
+                    label: ActivityFormat.weekdayShort(day),
+                    sublabel: '${day.day} ${ActivityFormat.monthShort(day)}',
+                    steps: summary.stepsOn(day),
+                    hasData: summary.byDate.containsKey(day),
+                    goal: goal,
+                    isBestDay: summary.bestDay != null && _sameDay(summary.bestDay!.date, day),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _InsightsTeaserCard(date: period.to),
           ],
         );
       },
@@ -371,8 +487,6 @@ class ActivityWeekView extends ConsumerWidget {
 
 // ── Month ─────────────────────────────────────────────────────────────
 
-/// Month total, average, per-day bars, goal progress against the derived
-/// monthly target, and a per-week breakdown.
 class ActivityMonthView extends ConsumerWidget {
   const ActivityMonthView({super.key, required this.period});
 
@@ -398,30 +512,37 @@ class ActivityMonthView extends ConsumerWidget {
                 previous: previous.totalSteps,
               );
 
-        return _PeriodBody(
-          summary: summary,
-          goal: goal,
-          delta: delta,
-          // Labelled every 5th day: 31 numbers would overlap into mush.
-          bars: [
-            for (final day in period.days)
-              ActivityBar(
-                label: day.day == 1 || day.day % 5 == 0 ? '${day.day}' : '',
-                value: summary.stepsOn(day),
-                highlight:
-                    summary.bestDay != null &&
-                    _sameDay(summary.bestDay!.date, day),
-              ),
-          ],
-          breakdown: [
-            for (final week in _weeksIn(period))
-              _BreakdownRow(
-                label: week.label,
-                sublabel: week.range,
-                steps: week.steps(summary),
-                hasData: week.hasData(summary),
-                goal: goal * week.dayCount,
-              ),
+        return Column(
+          children: [
+            _PeriodBody(
+              summary: summary,
+              goal: goal,
+              delta: delta,
+              bars: [
+                for (final day in period.days)
+                  ActivityBar(
+                    label: day.day == 1 || day.day % 5 == 0 ? '${day.day}' : '',
+                    value: summary.stepsOn(day),
+                    highlight:
+                        summary.bestDay != null &&
+                        _sameDay(summary.bestDay!.date, day),
+                  ),
+              ],
+              breakdown: [
+                for (final week in _weeksIn(period))
+                  _BreakdownRow(
+                    label: week.label,
+                    sublabel: week.range,
+                    steps: week.steps(summary),
+                    hasData: week.hasData(summary),
+                    goal: goal * week.dayCount,
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _MonthlyGoalModule(summary: summary, dailyGoal: goal),
+            const SizedBox(height: AppSpacing.md),
+            _InsightsTeaserCard(date: period.to),
           ],
         );
       },
@@ -429,7 +550,72 @@ class ActivityMonthView extends ConsumerWidget {
   }
 }
 
-/// Shared Week/Month layout: headline stats, chart, goal bar, breakdown.
+/// Monthly goal progress module for Month view.
+class _MonthlyGoalModule extends ConsumerWidget {
+  const _MonthlyGoalModule({required this.summary, required this.dailyGoal});
+
+  final ActivitySummary summary;
+  final int dailyGoal;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final goalAsync = ref.watch(userGoalProvider('monthly_steps'));
+
+    final target = goalAsync.when(
+      data: (data) => (data is Map && data['target_value'] != null)
+          ? (data['target_value'] as num).toInt()
+          : dailyGoal * summary.period.dayCount,
+      loading: () => dailyGoal * summary.period.dayCount,
+      error: (_, __) => dailyGoal * summary.period.dayCount,
+    );
+
+    final fraction = target <= 0 ? 0.0 : (summary.totalSteps / target).clamp(0.0, 1.0);
+    final percent = (fraction * 100).round();
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Monthly Goal Progress', style: AppTextStyles.titleSmall),
+              IconButton(
+                icon: const AppIcon(AppIcons.forward, size: 18),
+                onPressed: () => context.push(AppConstants.routeMonthlyGoalProgress),
+                tooltip: 'Goal Details',
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              SizedBox(
+                width: 56,
+                height: 56,
+                child: AppProgressRing(
+                  value: fraction,
+                  strokeWidth: 6,
+                  child: Text('$percent%', style: AppTextStyles.labelSmall),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: AppProgressBar(
+                  value: fraction,
+                  label: 'Target: ${ActivityFormat.stepsCompact(target)}',
+                  trailing: ActivityFormat.steps(summary.totalSteps),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shared Week/Month layout: headline stats, chart, goal bar, 4 metric tiles, breakdown.
 class _PeriodBody extends StatelessWidget {
   const _PeriodBody({
     required this.summary,
@@ -521,7 +707,7 @@ class _PeriodBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        _MetricTiles(summary: summary),
+        _FourMetricTiles(summary: summary),
         const SizedBox(height: AppSpacing.md),
         AppCard(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
@@ -540,22 +726,19 @@ class _BreakdownRow extends StatelessWidget {
     required this.steps,
     required this.hasData,
     required this.goal,
+    this.isBestDay = false,
   });
 
   final String label;
   final String sublabel;
   final int steps;
-
-  /// False when no row exists for this span at all — rendered as "—",
-  /// distinct from a real zero-step day.
   final bool hasData;
-
   final int goal;
+  final bool isBestDay;
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final met = hasData && goal > 0 && steps >= goal;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -565,15 +748,23 @@ class _BreakdownRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 64,
+            width: 72,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: AppTextStyles.titleSmall.copyWith(
-                    color: palette.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      label,
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    if (isBestDay) ...[
+                      const SizedBox(width: 4),
+                      AppIcon(AppIcons.star, size: 12, color: palette.primary),
+                    ],
+                  ],
                 ),
                 Text(
                   sublabel,
@@ -598,79 +789,71 @@ class _BreakdownRow extends StatelessWidget {
               hasData ? ActivityFormat.stepsCompact(steps) : '—',
               textAlign: TextAlign.right,
               style: AppTextStyles.labelMedium.copyWith(
-                color: hasData ? palette.textPrimary : palette.textDisabled,
+                color: palette.textPrimary,
               ),
             ),
           ),
-          if (met)
-            Padding(
-              padding: const EdgeInsets.only(left: AppSpacing.xs),
-              child: AppIcon(
-                AppIcons.checkCircle,
-                size: 15,
-                color: palette.primary,
-              ),
-            )
-          else
-            const SizedBox(width: 19),
         ],
       ),
     );
   }
 }
 
-/// A calendar week clipped to a month, for the Month view's breakdown.
-class _MonthWeek {
-  const _MonthWeek({
+class _WeekSpan {
+  const _WeekSpan({
     required this.label,
     required this.range,
-    required this.days,
+    required this.start,
+    required this.end,
   });
 
   final String label;
   final String range;
-  final List<DateTime> days;
+  final DateTime start;
+  final DateTime end;
 
-  int get dayCount => days.length;
+  int get dayCount => end.difference(start).inDays + 1;
 
-  int steps(ActivitySummary s) =>
-      days.fold(0, (sum, d) => sum + s.stepsOn(d));
-
-  bool hasData(ActivitySummary s) =>
-      days.any((d) => s.byDate.containsKey(d));
-}
-
-/// Splits [period] into its calendar weeks, each **clipped to the month**
-/// so the first and last are partial rather than spilling into the
-/// neighbouring month (whose steps belong to that month's totals).
-List<_MonthWeek> _weeksIn(ActivityPeriod period) {
-  final weeks = <_MonthWeek>[];
-  var cursor = period.from;
-  var index = 1;
-
-  while (!cursor.isAfter(period.to)) {
-    final weekEnd = cursor.add(Duration(days: 7 - cursor.weekday));
-    final clippedEnd = weekEnd.isAfter(period.to) ? period.to : weekEnd;
-    final days = <DateTime>[
-      for (
-        var d = cursor;
-        !d.isAfter(clippedEnd);
-        d = d.add(const Duration(days: 1))
-      )
-        d,
-    ];
-    weeks.add(
-      _MonthWeek(
-        label: 'Week $index',
-        range: '${cursor.day}–${clippedEnd.day}',
-        days: days,
-      ),
-    );
-    cursor = clippedEnd.add(const Duration(days: 1));
-    index++;
+  int steps(ActivitySummary summary) {
+    var sum = 0;
+    for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1))) {
+      sum += summary.stepsOn(d);
+    }
+    return sum;
   }
 
-  return weeks.reversed.toList();
+  bool hasData(ActivitySummary summary) {
+    for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1))) {
+      if (summary.byDate.containsKey(DateTime(d.year, d.month, d.day))) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+List<_WeekSpan> _weeksIn(ActivityPeriod period) {
+  final out = <_WeekSpan>[];
+  var start = period.from;
+  var weekIndex = 1;
+
+  while (!start.isAfter(period.to)) {
+    final daysLeftInWeek = 7 - (start.weekday - DateTime.monday);
+    var end = start.add(Duration(days: daysLeftInWeek - 1));
+    if (end.isAfter(period.to)) end = period.to;
+
+    out.add(_WeekSpan(
+      label: 'Week $weekIndex',
+      range: '${start.day}–${end.day} ${ActivityFormat.monthShort(start)}',
+      start: start,
+      end: end,
+    ));
+
+    weekIndex++;
+    start = end.add(const Duration(days: 1));
+  }
+
+  return out;
 }
 
 bool _sameDay(DateTime a, DateTime b) =>
@@ -680,28 +863,17 @@ class _ViewSkeleton extends StatelessWidget {
   const _ViewSkeleton();
 
   @override
-  Widget build(BuildContext context) => const Shimmer(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context) {
+    return const Column(
       children: [
-        SkeletonBox(height: 260, borderRadius: AppRadius.card),
+        SkeletonBox(height: 220),
         SizedBox(height: AppSpacing.md),
-        Row(
-          children: [
-            Expanded(
-              child: SkeletonBox(height: 96, borderRadius: AppRadius.card),
-            ),
-            SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: SkeletonBox(height: 96, borderRadius: AppRadius.card),
-            ),
-          ],
-        ),
+        SkeletonBox(height: 180),
         SizedBox(height: AppSpacing.md),
-        SkeletonBox(height: 200, borderRadius: AppRadius.card),
+        SkeletonBox(height: 120),
       ],
-    ),
-  );
+    );
+  }
 }
 
 class _ViewError extends StatelessWidget {
@@ -713,28 +885,26 @@ class _ViewError extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xxl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppIcon(AppIcons.error, size: 40, color: palette.danger),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            "Couldn't load your activity.",
-            style: AppTextStyles.titleMedium.copyWith(
-              color: palette.textPrimary,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+      child: Center(
+        child: Column(
+          children: [
+            AppIcon(AppIcons.error, size: 28, color: palette.textSecondary),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              "Couldn't load activity data",
+              style: AppTextStyles.titleSmall.copyWith(
+                color: palette.textPrimary,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AppButton(
-            label: 'Retry',
-            icon: AppIcons.refresh,
-            variant: AppButtonVariant.glass,
-            size: AppButtonSize.small,
-            onPressed: onRetry,
-          ),
-        ],
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: 'Retry',
+              size: AppButtonSize.small,
+              onPressed: onRetry,
+            ),
+          ],
+        ),
       ),
     );
   }

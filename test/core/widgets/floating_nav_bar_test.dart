@@ -14,8 +14,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _destinations = [
   FloatingNavBarDestination(icon: AppIcons.home, label: 'Home'),
+  FloatingNavBarDestination(icon: AppIcons.steps, label: 'Activity'),
   FloatingNavBarDestination(icon: AppIcons.treks, label: 'Treks'),
-  FloatingNavBarDestination(icon: AppIcons.challenges, label: 'Challenges'),
+  FloatingNavBarDestination(icon: AppIcons.group, label: 'Community'),
   FloatingNavBarDestination(icon: AppIcons.profile, label: 'Profile'),
 ];
 
@@ -47,11 +48,11 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.text('Challenges'));
-    expect(tapped, 2);
+    await tester.tap(find.text('Community'));
+    expect(tapped, 3);
 
     await tester.tap(find.text('Profile'));
-    expect(tapped, 3);
+    expect(tapped, 4);
   });
 
   testWidgets('the selected tab renders with a filled indicator, others without', (tester) async {

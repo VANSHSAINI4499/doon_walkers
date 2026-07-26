@@ -41,7 +41,9 @@ class ChallengeModel extends Challenge {
     required super.isActive,
     required super.createdAt,
     super.tiers,
+    super.pointValue,
   });
+
 
   factory ChallengeModel.fromJson(Map<String, dynamic> json) {
     final tierRows = (json['challenge_tiers'] as List?) ?? const [];
@@ -64,6 +66,10 @@ class ChallengeModel extends Challenge {
       tiers: tierRows
           .map((row) => ChallengeTierThresholdModel.fromJson(row as Map<String, dynamic>))
           .toList(),
+      // Phase 21: point_value added by 0038_challenge_enrollments.sql.
+      // Defaults to 50 for rows created before this migration.
+      pointValue: (json['point_value'] as num?)?.toInt() ?? 50,
     );
   }
+
 }

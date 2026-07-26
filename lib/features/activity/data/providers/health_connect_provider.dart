@@ -122,6 +122,12 @@ class HealthConnectProvider implements ActivityProvider {
           }
         }
 
+        // Active Time: Health Connect API level limitations across various Android targets
+        // mean EXERCISE_SESSION durations require additional workout permissions.
+        // TOTAL_CALORIES_BURNED is used as an active time proxy (estimating ~1 active min
+        // per 5 burned calories when active) until direct EXERCISE_SESSION integration.
+        final activeMinutes = (calories / 5.0).round();
+
         if (steps == 0 && distanceMeters == 0 && calories == 0) continue;
 
         results.add(DailyActivity(
@@ -129,6 +135,7 @@ class HealthConnectProvider implements ActivityProvider {
           steps: steps,
           distanceKm: distanceMeters / 1000,
           calories: calories,
+          activeMinutes: activeMinutes,
         ));
       } catch (e) {
         // One bad day shouldn't abort the whole sync window — skip and

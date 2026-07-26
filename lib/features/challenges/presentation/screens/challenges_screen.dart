@@ -5,11 +5,14 @@ import 'package:doon_walkers/features/activity/presentation/providers/activity_p
 import 'package:doon_walkers/features/activity/presentation/widgets/activity_permission_banner.dart';
 import 'package:doon_walkers/features/challenges/data/services/challenge_celebration_tracker.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge.dart';
+import 'package:doon_walkers/features/challenges/domain/entities/challenge_enrollment.dart';
 import 'package:doon_walkers/features/challenges/domain/entities/challenge_progress.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/challenge_admin_actions.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/challenge_card.dart';
+import 'package:doon_walkers/features/challenges/presentation/widgets/challenge_icon.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/explore_challenges_view.dart';
+import 'package:doon_walkers/features/challenges/presentation/widgets/level_badge.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/tier_celebration_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,25 +27,10 @@ enum _ChallengesView { mine, explore }
 /// (drafts included and marked, a per-challenge actions menu, an "Add
 /// Challenge" FAB).
 ///
-/// ## Redesign 2.0 Phase 12
-///
-/// Two changes: the presentation moves to the calm system (flat cards, no
-/// tier glow, light + dark), and the tab gains a **My Challenges /
-/// Explore** split — previously there was only the flat list, with no
-/// search and no way to narrow by metric. See [ExploreChallengesView].
-///
-/// **The celebration detection is untouched**: the `ref.listen` on live
-/// progress, the [isNewlyAchievedTier] diff against the persisted
-/// per-device baseline, and the queued overlay all behave exactly as
-/// before, and deliberately keep running regardless of which view is on
-/// screen — a tier earned while browsing Explore should still celebrate.
-///
-/// ## No points, no join
-///
-/// The reference for this phase showed points totals and Join buttons.
-/// Neither exists: the engine awards tiers, and active challenges apply to
-/// everyone with progress computed from activity data. Both are omitted
-/// rather than stubbed — see [ChallengeCard]'s doc.
+/// Phase 21 upgrades My Challenges from a flat list into a dashboard:
+/// My Progress banner (active enrollment count + streak + points),
+/// Enrolled Active Challenges list, Upcoming Challenges section, and
+/// a Challenge Leaderboard preview. The Explore tab is unchanged.
 class ChallengesScreen extends ConsumerStatefulWidget {
   const ChallengesScreen({super.key});
 
@@ -57,16 +45,13 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
   @override
   Widget build(BuildContext context) {
     final isAdmin = ref.watch(isAdminProvider);
-    final challengesProvider = isAdmin
-        ? adminAllChallengesProvider
-        : activeChallengesProvider;
+    final challengesProvider =
+        isAdmin ? adminAllChallengesProvider : activeChallengesProvider;
     final challengesAsync = ref.watch(challengesProvider);
     final progressAsync = ref.watch(myChallengeProgressProvider);
 
-    // Fires only on a real data change (a FutureProvider's value actually
-    // changing), never on a plain rebuild — see ChallengeCelebrationTracker
-    // for why that, combined with a persisted per-device baseline, keeps
-    // this from re-celebrating the same tier on every screen visit.
+    // Fires only on a real data change — see ChallengeCelebrationTracker
+    // for why this keeps from re-celebrating on every screen visit.
     ref.listen<AsyncValue<List<ChallengeProgress>>>(
       myChallengeProgressProvider,
       (previous, next) {
@@ -75,6 +60,20 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
         final challenges = ref.read(challengesProvider).valueOrNull;
         if (challenges == null) return;
         _detectAndCelebrate(challenges, progressList);
+      },
+    );
+
+    // Phase 21: also listen for challenge_completed points opportunities.
+    ref.listen<AsyncValue<List<ChallengeProgress>>>(
+      myChallengeProgressProvider,
+      (previous, next) {
+        final progressList = next.valueOrNull;
+        if (progressList == null) return;
+        final challenges = ref.read(challengesProvider).valueOrNull;
+        if (challenges == null) return;
+        final enrollments = ref.read(myEnrollmentsProvider).valueOrNull;
+        if (enrollments == null) return;
+        _maybeTriggerChallengeCompletedPoints(challenges, progressList, enrollments);
       },
     );
 
@@ -120,11 +119,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
             Expanded(
               child: switch (_view) {
                 _ChallengesView.mine => _MyChallengesView(
-                  challengesAsync: challengesAsync,
-                  challengesProvider: challengesProvider,
-                  progressAsync: progressAsync,
-                  isAdmin: isAdmin,
-                ),
+                    challengesAsync: challengesAsync,
+                    challengesProvider: challengesProvider,
+                    progressAsync: progressAsync,
+                    isAdmin: isAdmin,
+                  ),
                 _ChallengesView.explore => const ExploreChallengesView(),
               },
             ),
@@ -176,10 +175,71 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
     }
     _celebrationQueueRunning = false;
   }
+
+  /// Phase 21/23: for any challenge the user is enrolled in where they
+  /// have reached the top (platinum) tier, check the ledger and award
+  /// challenge_completed points once if not yet awarded. Fire-and-forget.
+  ///
+  /// "Completed" is defined as `currentTier == platinum` — the tier
+  /// engine has no separate 0–1 completion fraction (see
+  /// [ChallengeProgress]'s doc: it only exposes `currentValue` and
+  /// `currentTier`), so this reuses the existing tier data rather than
+  /// inventing a new field on that entity.
+  void _maybeTriggerChallengeCompletedPoints(
+    List<Challenge> challenges,
+    List<ChallengeProgress> progressList,
+    List<ChallengeEnrollment> enrollments,
+  ) {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final enrolledIds = enrollments.map((e) => e.challengeId).toSet();
+
+    for (final progress in progressList) {
+      if (!enrolledIds.contains(progress.challengeId)) continue;
+      if (progress.currentTier != ChallengeTier.platinum) continue;
+
+      Challenge? challenge;
+      for (final c in challenges) {
+        if (c.id == progress.challengeId) {
+          challenge = c;
+          break;
+        }
+      }
+      if (challenge == null) continue;
+
+      final challengeId = challenge.id;
+      final pointValue = challenge.pointValue;
+
+      () async {
+        try {
+          final supabase = Supabase.instance.client;
+          // Guard: check if challenge_completed already in ledger for this challenge
+          final existing = await supabase
+              .from('points_ledger')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('reason', 'challenge_completed')
+              .eq('reference_id', challengeId)
+              .limit(1);
+          if ((existing as List).isNotEmpty) return;
+
+          await supabase.rpc('award_points', params: {
+            'p_user_id': userId,
+            'p_points': pointValue,
+            'p_reason': 'challenge_completed',
+            'p_reference_id': challengeId,
+          });
+          debugPrint('ChallengesScreen: awarded challenge_completed pts ($pointValue) for $challengeId');
+        } catch (e) {
+          debugPrint('ChallengesScreen: challenge_completed award failed (non-fatal): $e');
+        }
+      }();
+    }
+  }
 }
 
-/// The tracking half: a summary header plus the challenges the viewer has
-/// progress on. Includes drafts for an admin.
+/// The tracking half: My Progress banner + enrolled challenges + upcoming.
 class _MyChallengesView extends ConsumerWidget {
   const _MyChallengesView({
     required this.challengesAsync,
@@ -204,10 +264,6 @@ class _MyChallengesView extends ConsumerWidget {
         );
       },
       data: (challenges) {
-        // Pull-to-refresh doubles as one of the three sync triggers
-        // (launch/resume/manual) — chained so the refresh spinner stays up
-        // until fresh activity data has actually landed, not just the
-        // challenge list itself.
         Future<void> onRefresh() {
           return ref
               .read(activitySyncControllerProvider.notifier)
@@ -215,6 +271,8 @@ class _MyChallengesView extends ConsumerWidget {
               .then((_) {
                 ref.invalidate(myChallengeProgressProvider);
                 ref.invalidate(myActivityStreakProvider);
+                ref.invalidate(myEnrollmentsProvider);
+                ref.invalidate(myUserPointsProvider);
                 return ref.refresh(challengesProvider.future);
               });
         }
@@ -235,37 +293,105 @@ class _MyChallengesView extends ConsumerWidget {
             p.challengeId: p,
         };
 
+        // Phase 21: build sections only for signed-in users.
+        final isSignedIn = ref.watch(isSignedInProvider);
+        final myEnrollmentsAsync = ref.watch(myEnrollmentsProvider);
+        final enrolledIds = myEnrollmentsAsync.valueOrNull
+                ?.map((e) => e.challengeId)
+                .toSet() ??
+            const <String>{};
+
+        // Split enrolled active vs all
+        final enrolledActiveChallenges = challenges
+            .where((c) => c.isActive && enrolledIds.contains(c.id))
+            .toList();
+
         return RefreshIndicator(
           onRefresh: onRefresh,
-          child: ListView.separated(
+          child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
               AppSpacing.lg,
               AppSpacing.md,
               AppSpacing.lg,
-              isAdmin ? 96 : AppSpacing.lg,
+              isAdmin ? 96 : AppSpacing.xxl,
             ),
-            // +1 for the summary header, which scrolls with the list rather
-            // than pinning above it — it is context, not chrome.
-            itemCount: challenges.length + 1,
-            separatorBuilder: (context, index) =>
-                const SizedBox(height: AppSpacing.md),
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _ChallengesSummary(activeCount: challenges.where((c) => c.isActive).length);
-              }
-              final challenge = challenges[index - 1];
-              return ChallengeCard(
-                challenge: challenge,
-                progress: progressByChallenge[challenge.id],
-                onTap: () => context.push(
-                  AppConstants.challengeDetailLocation(challenge.id),
+            children: [
+              // My Progress Banner — signed-in only
+              if (isSignedIn)
+                _MyProgressBanner(
+                  enrolledCount: enrolledActiveChallenges.length,
                 ),
-                adminActions: isAdmin
-                    ? ChallengeAdminActions(challenge: challenge)
-                    : null,
-              );
-            },
+              if (isSignedIn) const SizedBox(height: AppSpacing.xl),
+
+              // Enrolled Active Challenges
+              if (isSignedIn && enrolledActiveChallenges.isNotEmpty) ...[
+                Text(
+                  'Active Challenges',
+                  style: AppTextStyles.titleMedium
+                      .copyWith(color: AppPalette.of(context).textPrimary),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ...enrolledActiveChallenges.map(
+                  (challenge) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: ChallengeCard(
+                      challenge: challenge,
+                      progress: progressByChallenge[challenge.id],
+                      showMeta: true,
+                      showPoints: true,
+                      participantCount: ref
+                          .watch(challengeParticipantCountProvider(challenge.id))
+                          .valueOrNull,
+                      onTap: () => context.push(
+                        AppConstants.challengeDetailLocation(challenge.id),
+                      ),
+                      adminActions: isAdmin
+                          ? ChallengeAdminActions(challenge: challenge)
+                          : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+
+              // Streak motivational card (non-enrolled state or after enrolled)
+              if (isSignedIn) const _StreakMotivationCard(),
+              if (isSignedIn) const SizedBox(height: AppSpacing.xl),
+
+              // All challenges (admin or non-enrolled view)
+              if (isAdmin || !isSignedIn || enrolledActiveChallenges.isEmpty) ...[
+                Text(
+                  isAdmin ? 'All Challenges' : 'Browse Challenges',
+                  style: AppTextStyles.titleMedium
+                      .copyWith(color: AppPalette.of(context).textPrimary),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ...challenges.map(
+                  (challenge) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: ChallengeCard(
+                      challenge: challenge,
+                      progress: progressByChallenge[challenge.id],
+                      showMeta: true,
+                      showPoints: true,
+                      participantCount: ref
+                          .watch(challengeParticipantCountProvider(challenge.id))
+                          .valueOrNull,
+                      onTap: () => context.push(
+                        AppConstants.challengeDetailLocation(challenge.id),
+                      ),
+                      adminActions: isAdmin
+                          ? ChallengeAdminActions(challenge: challenge)
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+
+              // Upcoming Challenges section
+              const _UpcomingChallengesSection(),
+            ],
           ),
         );
       },
@@ -273,52 +399,293 @@ class _MyChallengesView extends ConsumerWidget {
   }
 }
 
-/// Header stats: how many challenges are live, and the viewer's current
-/// activity streak.
-///
-/// The streak comes from [myActivityStreakProvider] — computed client-side
-/// from the user's own `daily_activity_summary` rows, matching the
-/// engine's own rule. It is **not** `get_my_streak()`, which is the
-/// month-granular *trekking* streak shown on Profile; see
-/// `activity_streak.dart` for why there is no RPC for this one.
-///
-/// Hidden entirely for a guest: both numbers would be meaningless (a guest
-/// has no streak) and the tab already carries a sign-in prompt per card.
-class _ChallengesSummary extends ConsumerWidget {
-  const _ChallengesSummary({required this.activeCount});
+// ── My Progress Banner ────────────────────────────────────────────────────
 
-  final int activeCount;
+class _MyProgressBanner extends ConsumerWidget {
+  const _MyProgressBanner({required this.enrolledCount});
+
+  final int enrolledCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!ref.watch(isSignedInProvider)) return const SizedBox.shrink();
-
-    final streakAsync = ref.watch(myActivityStreakProvider);
     final palette = AppPalette.of(context);
+    final streakAsync = ref.watch(myActivityStreakProvider);
+    final pointsAsync = ref.watch(myUserPointsProvider);
+
+    final streak = streakAsync.valueOrNull ?? 0;
+    final totalPoints = pointsAsync.valueOrNull?.totalPoints ?? 0;
+    final level = pointsAsync.valueOrNull?.level ?? 1;
 
     return AppCard(
-      child: StatRow(
-        stats: [
-          StatDisplay(
-            value: '$activeCount',
-            label: activeCount == 1 ? 'challenge live' : 'challenges live',
-          ),
-          StatDisplay(
-            // An unresolved streak shows an em dash, not 0 — "0 days" and
-            // "still loading" mean very different things to someone who
-            // walked this morning.
-            value: streakAsync.maybeWhen(
-              data: (days) => '$days',
-              orElse: () => '—',
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          // Enrollment count ring
+          _EnrollmentRing(count: enrolledCount, palette: palette),
+          const SizedBox(width: AppSpacing.lg),
+          // Stats
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'My Progress',
+                      style: AppTextStyles.titleSmall
+                          .copyWith(color: palette.textPrimary),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    LevelBadge(level: level),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    _StatChip(
+                      icon: AppIcons.streak,
+                      label: '$streak day streak',
+                      color: streak > 0 ? palette.accent : palette.textSecondary,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _StatChip(
+                      icon: AppIcons.star,
+                      label: '$totalPoints pts',
+                      color: palette.primary,
+                    ),
+                  ],
+                ),
+              ],
             ),
-            label: 'day streak',
-            color: (streakAsync.valueOrNull ?? 0) > 0 ? palette.primary : null,
           ),
         ],
       ),
     );
   }
 }
+
+class _EnrollmentRing extends StatelessWidget {
+  const _EnrollmentRing({required this.count, required this.palette});
+
+  final int count;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: palette.primarySubtle,
+        border: Border.all(color: palette.primary.withValues(alpha: 0.3), width: 2),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$count',
+            style: AppTextStyles.statMedium.copyWith(color: palette.primary),
+          ),
+          Text(
+            count == 1 ? 'active' : 'active',
+            style: AppTextStyles.labelSmall.copyWith(
+              color: palette.primary,
+              fontSize: 9,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({required this.icon, required this.label, required this.color});
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppIcon(icon, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: AppTextStyles.labelSmall.copyWith(color: color),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Streak Motivation Card ────────────────────────────────────────────────
+
+class _StreakMotivationCard extends ConsumerWidget {
+  const _StreakMotivationCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final streak = ref.watch(myActivityStreakProvider).valueOrNull ?? 0;
+    if (streak == 0) return const SizedBox.shrink();
+
+    final message = switch (streak) {
+      1 => 'Great start — day 1! Keep it up tomorrow.',
+      2 || 3 => '$streak-day streak! Momentum is building.',
+      4 || 5 || 6 => '$streak days strong 🔥 — don\'t break it now!',
+      7 => '1 week streak! That\'s commitment.',
+      >= 30 => '$streak days — you\'re unstoppable!',
+      _ => '$streak-day streak! Stay consistent.',
+    };
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: palette.accentContainer,
+            ),
+            child: AppIcon(AppIcons.streak, size: 20, color: palette.accent),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTextStyles.bodyMedium.copyWith(color: palette.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Upcoming Challenges Section ───────────────────────────────────────────
+
+class _UpcomingChallengesSection extends ConsumerWidget {
+  const _UpcomingChallengesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final upcomingAsync = ref.watch(upcomingChallengesProvider);
+
+    return upcomingAsync.maybeWhen(
+      data: (upcoming) {
+        if (upcoming.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              'Upcoming',
+              style: AppTextStyles.titleMedium
+                  .copyWith(color: palette.textPrimary),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            ...upcoming.map((challenge) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: AppCard(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: palette.cardHigh,
+                          ),
+                          child: AppIcon(
+                            ChallengeIcon.forKey(challenge.icon),
+                            size: 18,
+                            color: palette.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                challenge.title,
+                                style: AppTextStyles.titleSmall
+                                    .copyWith(color: palette.textPrimary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (challenge.startDate != null)
+                                Text(
+                                  'Starts ${_formatDate(challenge.startDate!)}',
+                                  style: AppTextStyles.labelSmall
+                                      .copyWith(color: palette.textSecondary),
+                                ),
+                              if (ref.watch(challengeParticipantCountProvider(challenge.id)).valueOrNull
+                                  case final count?)
+                                Text(
+                                  count == 1 ? '1 already joined' : '$count already joined',
+                                  style: AppTextStyles.labelSmall
+                                      .copyWith(color: palette.textSecondary),
+                                ),
+                            ],
+                          ),
+                        ),
+                        _PointsPill(points: challenge.pointValue, palette: palette),
+                      ],
+                    ),
+                  ),
+                )),
+          ],
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}';
+  }
+}
+
+class _PointsPill extends StatelessWidget {
+  const _PointsPill({required this.points, required this.palette});
+
+  final int points;
+  final AppPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: palette.primarySubtle,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        '+$points pts',
+        style: AppTextStyles.labelSmall.copyWith(color: palette.primary),
+      ),
+    );
+  }
+}
+
+// ── Shared error / empty / skeleton ──────────────────────────────────────
 
 class _ChallengesError extends StatelessWidget {
   const _ChallengesError({required this.onRetry});
@@ -386,7 +753,9 @@ class _EmptyChallenges extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            isAdmin ? 'No challenges yet' : 'No challenges yet — check back soon',
+            isAdmin
+                ? 'No challenges yet'
+                : 'No challenges yet — check back soon',
             style: AppTextStyles.titleMedium.copyWith(
               color: palette.textPrimary,
             ),
@@ -408,19 +777,18 @@ class _EmptyChallenges extends StatelessWidget {
   }
 }
 
-/// Challenge-card-shaped placeholders while the list loads.
 class _ChallengeListSkeleton extends StatelessWidget {
   const _ChallengeListSkeleton();
 
   @override
   Widget build(BuildContext context) => const SkeletonList(
-    count: 4,
-    showImages: false,
-    padding: EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.md,
-      AppSpacing.lg,
-      AppSpacing.lg,
-    ),
-  );
+        count: 4,
+        showImages: false,
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+      );
 }

@@ -83,9 +83,9 @@ const _destinations = [
     route: AppConstants.routeTrekLibrary,
   ),
   _NavDestination(
-    label: 'Challenges',
-    icon: AppIcons.challenges,
-    route: AppConstants.routeChallenges,
+    label: 'Community',
+    icon: AppIcons.group,
+    route: AppConstants.routeCommunity,
   ),
   _NavDestination(
     label: 'Profile',
@@ -367,6 +367,11 @@ class _AppDrawer extends StatelessWidget {
                     icon: AppIcons.store,
                     label: 'Merchandise',
                     onTap: () => onSelect(AppConstants.routeMerchandise),
+                  ),
+                  _DrawerItem(
+                    icon: AppIcons.challenges,
+                    label: 'Challenges',
+                    onTap: () => onSelect(AppConstants.routeChallenges),
                   ),
                   _DrawerItem(
                     icon: AppIcons.info,

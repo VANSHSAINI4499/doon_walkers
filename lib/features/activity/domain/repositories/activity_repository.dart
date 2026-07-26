@@ -41,11 +41,33 @@ abstract class ActivityRepository {
   /// tracking member, as a whole percentage — or null when it cannot be
   /// said (fewer than 5 people tracked that month, or the caller has no
   /// data for it).
-  ///
-  /// Wraps `get_my_activity_percentile()` (0035_activity_percentile.sql),
-  /// which is SECURITY DEFINER and aggregate-only: it returns a single
-  /// integer and never exposes another member's rows. This is the ONLY
-  /// cross-user read in the activity feature — everything else is own-row
-  /// straight through RLS.
   Future<int?> fetchActivityPercentile(DateTime month);
+
+  /// How the caller's step total for a specific [date] ranks against other
+  /// members — wraps get_daily_activity_percentile RPC.
+  Future<int?> fetchDailyPercentile(DateTime date);
+
+  /// The day with the maximum step count in the given [year]/[month].
+  Future<DailyActivity?> fetchBestDay({required int year, required int month});
+
+  /// Count of days with steps > 0 in the given [year]/[month].
+  Future<int> fetchActiveDays({required int year, required int month});
+
+  /// Aggregates month activity into 4–5 weekly buckets.
+  Future<List<DailyActivity>> fetchWeeklyAggregates({
+    required int year,
+    required int month,
+  });
+
+  /// Monthly metric sums comparison: current vs prior month.
+  Future<Map<String, double>> fetchMonthComparison({
+    required int year,
+    required int month,
+  });
+
+  /// Fetches unlocked achievements for the signed-in user.
+  Future<List<dynamic>> fetchUserAchievements();
+
+  /// Gets or creates a personal goal for [goalType] ('daily_steps' | 'monthly_steps').
+  Future<dynamic> getOrCreateUserGoal(String goalType);
 }

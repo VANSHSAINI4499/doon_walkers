@@ -28,6 +28,7 @@ class ActivitySummary {
     required this.totalSteps,
     required this.totalDistanceKm,
     required this.totalCalories,
+    required this.totalActiveMinutes,
     required this.daysWithData,
     required this.activeDays,
     required this.bestDay,
@@ -41,6 +42,7 @@ class ActivitySummary {
   final int totalSteps;
   final double totalDistanceKm;
   final double totalCalories;
+  final int totalActiveMinutes;
 
   /// Days in the period that have a row at all.
   final int daysWithData;
@@ -89,26 +91,27 @@ class ActivitySummary {
     var totalSteps = 0;
     var totalDistance = 0.0;
     var totalCalories = 0.0;
+    var totalActiveMinutes = 0;
     var activeDays = 0;
     DailyActivity? best;
 
     for (final row in rows) {
       final date = DateTime(row.date.year, row.date.month, row.date.day);
       if (!period.contains(date)) continue;
-      // Last write wins on a duplicate date. The UNIQUE(user_id, date)
-      // constraint should prevent it; this just keeps totals from
-      // double-counting if a caller merges two fetches.
+      // Last write wins on a duplicate date.
       if (byDate.containsKey(date)) {
         final existing = byDate[date]!;
         totalSteps -= existing.steps;
         totalDistance -= existing.distanceKm;
         totalCalories -= existing.calories;
+        totalActiveMinutes -= existing.activeMinutes;
         if (existing.steps > 0) activeDays--;
       }
       byDate[date] = row;
       totalSteps += row.steps;
       totalDistance += row.distanceKm;
       totalCalories += row.calories;
+      totalActiveMinutes += row.activeMinutes;
       if (row.steps > 0) activeDays++;
       if (best == null || row.steps > best.steps) best = row;
     }
@@ -119,10 +122,9 @@ class ActivitySummary {
       totalSteps: totalSteps,
       totalDistanceKm: totalDistance,
       totalCalories: totalCalories,
+      totalActiveMinutes: totalActiveMinutes,
       daysWithData: byDate.length,
       activeDays: activeDays,
-      // A "best day" of 0 steps is not a best day — leave it null so the
-      // UI shows nothing rather than "Best day: Tuesday, 0 steps".
       bestDay: (best != null && best.steps > 0) ? best : null,
     );
   }

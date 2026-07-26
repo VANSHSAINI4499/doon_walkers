@@ -32,6 +32,7 @@ class AppConstants {
   static const String routeHome = '/';
   static const String routeTrekLibrary = '/trek-library';
   static const String routeProfile = '/profile';
+  static const String routeCommunity = '/community';
 
   /// Activity — the personal movement dashboard (Redesign 2.0, Phase 10
   /// creates the tab + route; Phase 11 fills in the real Day/Week/Month
@@ -50,6 +51,7 @@ class AppConstants {
   /// inherits that path's sign-in guard automatically rather than needing
   /// its own entry in `isProtectedRoute`.
   static const String routeActivityInsights = '$routeActivity/insights';
+  static const String routeMonthlyGoalProgress = '$routeActivity/goal-progress';
 
   // ── Drawer destinations (Redesign 2.0, Phase 10) ──────────────────
   // Thin screens over data the app already has: [routeAbout],
@@ -89,6 +91,16 @@ class AppConstants {
   static const String routeMyWishlist = '$routeProfile/wishlist';
   static const String routeMyEnquiries = '$routeProfile/enquiries';
   static const String routeMyRegistrations = '$routeProfile/registrations';
+
+  /// Full points ledger (Phase 22) — reached from Profile's points
+  /// summary card "View History" link. Registered top-level in
+  /// app_router.dart exactly like [routeSettings], NOT nested under the
+  /// Profile branch's own route tree — the phase brief calls this out
+  /// explicitly, and it matches [routeSettings]'s precedent for "a full
+  /// destination reached from a link on Profile". Router-level
+  /// auth-gated (added to `isProtectedRoute`), same treatment as
+  /// [routeChallengeHistory].
+  static const String routePointsHistory = '$routeProfile/points-history';
 
   /// First-launch intro carousel — top-level, outside the shell, shown
   /// at most once per device. See app_router.dart's `_buildRouter` for
@@ -357,12 +369,28 @@ class AppConstants {
   /// always all 4 tiers together; see the Challenge entity's doc.
   static const String tableChallengeTiers = 'challenge_tiers';
 
+  /// One row per (user, challenge) enrollment — Phase 21, 0038_challenge_
+  /// enrollments.sql. Authenticated SELECT for participant counts;
+  /// own-row INSERT/DELETE for the member; admin ALL.
+  static const String tableChallengeEnrollments = 'challenge_enrollments';
+
   /// One row per (user, calendar date) of synced fitness activity
   /// (0027_daily_activity_summary.sql) — Version 2, Challenges Module
   /// pivot. Own-row only, no admin visibility; see that migration's
   /// doc. This is what ActivitySyncService writes to and the challenge
   /// RPCs read from — see ActivityProvider's doc for the full pipeline.
   static const String tableDailyActivitySummary = 'daily_activity_summary';
+
+  /// Per-user points/level totals (0036_phase19_schema_foundations.sql) —
+  /// Phase 19. `level` is maintained server-side by `award_points()`/
+  /// `level_for_points()`; never recompute it client-side.
+  static const String tableUserPoints = 'user_points';
+
+  /// Append-only signed-points log (0036_phase19_schema_foundations.sql).
+  /// Own-row SELECT RLS already scopes reads to the caller, so Points
+  /// History (Phase 22) reads this directly rather than through an RPC —
+  /// same pattern as [tableDailyActivitySummary].
+  static const String tablePointsLedger = 'points_ledger';
 
   /// One row per trek, auto-created by a DB trigger on trek insert
   /// (0029_trek_checkin_qr.sql) — Phase QR-1. Admin-only SELECT, no
@@ -409,6 +437,7 @@ class AppConstants {
   /// Returns NULL when fewer than 5 members tracked that month (a
   /// k-anonymity floor) or when the caller has no data for it.
   static const String rpcGetMyActivityPercentile = 'get_my_activity_percentile';
+  static const String rpcGetDailyActivityPercentile = 'get_daily_activity_percentile';
 
   /// Ranks every leaderboard-visible user by their progress on ONE
   /// challenge (0025_leaderboard.sql) — Version 2, Phase C3. Takes a
@@ -419,6 +448,31 @@ class AppConstants {
   /// `show_on_leaderboard = TRUE` filter, not RLS. See
   /// ChallengeRepository.fetchLeaderboard's doc.
   static const String rpcGetChallengeLeaderboard = 'get_challenge_leaderboard';
+
+  /// Phase 21 (0038_challenge_enrollments.sql) — enrolls the signed-in
+  /// user in a challenge and awards a 10-pt welcome bonus.
+  static const String rpcEnrollInChallenge = 'enroll_in_challenge';
+
+  /// Phase 21 — removes the signed-in user's enrollment. Points are kept.
+  static const String rpcUnenrollFromChallenge = 'unenroll_from_challenge';
+
+  /// Phase 21 — returns the BIGINT count of enrolled users for a challenge.
+  static const String rpcGetChallengeParticipantCount =
+      'get_challenge_participant_count';
+
+  /// Phase 21 — returns top N enrolled participants ordered by live score,
+  /// with total_points and level from user_points for level badge display.
+  static const String rpcGetChallengeTopParticipants =
+      'get_challenge_top_participants';
+
+  /// Phase 22 (0039_points_history_and_enrollment_fix.sql) — the
+  /// signed-in caller's total_points/level plus how many points are
+  /// needed for the next level. `level_for_points()`/`points_for_level()`
+  /// are the ONE source of truth for the level ladder (extracted out of
+  /// `award_points()`); this RPC is how the client reads it instead of
+  /// hardcoding the ladder in Dart. Same no-parameter, auth.uid()-
+  /// internal security model as [rpcGetMyChallengeProgress].
+  static const String rpcGetMyPointsSummary = 'get_my_points_summary';
 
   // ── Supabase Storage buckets ─────────────────────────────────────
   static const String bucketTrekCovers = 'trek-covers';

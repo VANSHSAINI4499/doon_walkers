@@ -10,11 +10,13 @@ class DailyActivity {
   final int steps;
   final double distanceKm;
   final double calories;
+  final int activeMinutes;
 
   const DailyActivity({
     required this.date,
     required this.steps,
     required this.distanceKm,
     required this.calories,
+    this.activeMinutes = 0,
   });
 }

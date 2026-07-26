@@ -7,18 +7,30 @@ import 'package:doon_walkers/features/challenges/domain/entities/challenge_progr
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/challenge_admin_actions.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/challenge_icon.dart';
+import 'package:doon_walkers/features/challenges/presentation/widgets/challenge_meta_row.dart';
+import 'package:doon_walkers/features/challenges/presentation/widgets/join_challenge_button.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/tier_badge.dart';
+import 'package:doon_walkers/features/challenges/presentation/widgets/top_participants_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// Full challenge view — description, the metric's plain-language "how this
-/// is computed" explanation, and all 4 tiers with the user's current
-/// position marked.
+/// Full challenge view — description, participant count + point value,
+/// Join/Leave, the metric's plain-language "how this is computed"
+/// explanation, all 4 tiers with the user's current position marked, and
+/// (Phase 23) a Top Participants preview.
 ///
 /// Redesign Phase 4 restyles this onto the design system. The explanation
 /// *content* (metric/time-window/footnote strings), the tier
 /// reached/current logic, and the sign-in gating are all unchanged.
+///
+/// ## Phase 23: finishing Phase 21's unconsumed pieces
+///
+/// [JoinChallengeButton], [ChallengeMetaRow]'s participant-count/points
+/// chips, and [TopParticipantsSection] all existed as working
+/// widgets/providers/RPCs before this phase — nothing on this screen
+/// called any of them. This phase wires them in; it does not change what
+/// they compute.
 class ChallengeDetailScreen extends ConsumerWidget {
   const ChallengeDetailScreen({super.key, required this.challengeId});
 
@@ -178,6 +190,20 @@ class _ChallengeDetailBody extends ConsumerWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: AppSpacing.lg),
+              ChallengeMetaRow(
+                challenge: challenge,
+                participantCount: challenge.isActive
+                    ? ref
+                        .watch(challengeParticipantCountProvider(challenge.id))
+                        .valueOrNull
+                    : null,
+                pointValue: challenge.pointValue,
+              ),
+              if (challenge.isActive && isSignedIn) ...[
+                const SizedBox(height: AppSpacing.lg),
+                JoinChallengeButton(challenge: challenge),
+              ],
               const SizedBox(height: AppSpacing.xxl),
               _HowMeasured(challenge: challenge),
               const SizedBox(height: AppSpacing.xxl),
@@ -226,6 +252,12 @@ class _ChallengeDetailBody extends ConsumerWidget {
                     AppConstants.challengeLeaderboardLocation(challenge.id),
                   ),
                 ),
+              // Same gating as the leaderboard button just above — a
+              // draft challenge has no enrollments to show yet.
+              if (challenge.isActive) ...[
+                const SizedBox(height: AppSpacing.xxl),
+                TopParticipantsSection(challenge: challenge),
+              ],
               const SizedBox(height: AppSpacing.xl),
             ],
           ),

@@ -58,6 +58,20 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     ref.invalidate(activityPercentileProvider);
   }
 
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _period.from,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _period = ActivityPeriod.of(_granularity, picked);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSignedIn = ref.watch(isSignedInProvider);
@@ -66,6 +80,11 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
       appBar: AppBar(
         title: const Text('Activity'),
         actions: [
+          IconButton(
+            icon: const AppIcon(AppIcons.calendar),
+            tooltip: 'Jump to Date',
+            onPressed: _selectDate,
+          ),
           IconButton(
             icon: const AppIcon(AppIcons.insights),
             tooltip: 'Insights',

@@ -7,7 +7,8 @@ import 'package:doon_walkers/core/widgets/app_shell.dart';
 import 'package:doon_walkers/features/about/presentation/screens/about_screen.dart';
 import 'package:doon_walkers/features/about/presentation/screens/contact_screen.dart';
 import 'package:doon_walkers/features/about/presentation/screens/support_screen.dart';
-import 'package:doon_walkers/features/activity/presentation/screens/activity_insights_screen.dart';
+import 'package:doon_walkers/features/activity/presentation/screens/insights_screen.dart';
+import 'package:doon_walkers/features/activity/presentation/screens/monthly_goal_progress_screen.dart';
 import 'package:doon_walkers/features/activity/presentation/screens/activity_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:doon_walkers/features/auth/presentation/screens/phone_verification_screen.dart';
@@ -20,6 +21,7 @@ import 'package:doon_walkers/features/challenges/presentation/screens/challenges
 import 'package:doon_walkers/features/challenges/presentation/screens/my_challenge_achievements_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
+import 'package:doon_walkers/features/community/presentation/screens/community_screen.dart';
 import 'package:doon_walkers/features/design_demo/presentation/screens/design_system_demo_screen.dart';
 import 'package:doon_walkers/features/gallery/presentation/screens/trek_gallery_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
@@ -32,6 +34,7 @@ import 'package:doon_walkers/features/merchandise/presentation/screens/wishlist_
 import 'package:doon_walkers/features/notifications/presentation/screens/admin_send_notification_screen.dart';
 import 'package:doon_walkers/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:doon_walkers/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:doon_walkers/features/profile/presentation/screens/points_history_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registration_detail_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registrations_screen.dart';
@@ -323,6 +326,19 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       name: 'settings',
       builder: (context, state) => const SettingsScreen(),
     ),
+    // /profile/points-history — Phase 22. Top-level, NOT nested under the
+    // Profile branch's route tree, same treatment as /settings above:
+    // reached from a link on Profile, but registered here rather than
+    // inside the StatefulShellBranch further down. See
+    // AppConstants.routePointsHistory's doc.
+    GoRoute(
+      path: AppConstants.routePointsHistory,
+      name: 'points-history',
+      pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
+        key: state.pageKey,
+        child: const PointsHistoryScreen(),
+      ),
+    ),
     // /design-system — the Redesign Phase 1 component gallery. A
     // developer/design review surface, not linked from any user-facing
     // navigation and reads no data; kept in the tree so the foundation
@@ -383,6 +399,49 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       ],
     ),
 
+    // Top-level Challenges routes — reached via Drawer, Home shortcut,
+    // or Community > Leaderboard CTA. Fully registered and deep-linkable.
+    GoRoute(
+      path: AppConstants.routeChallenges,
+      name: 'challenges',
+      builder: (context, state) => const ChallengesScreen(),
+      routes: [
+        GoRoute(
+          path: 'history',
+          name: 'challenges-history',
+          builder: (context, state) => const MyChallengeAchievementsScreen(),
+        ),
+        GoRoute(
+          path: ':id',
+          name: 'challenge-detail',
+          builder: (context, state) => ChallengeDetailScreen(
+            challengeId: state.pathParameters['id']!,
+          ),
+          routes: [
+            GoRoute(
+              path: 'leaderboard',
+              name: 'challenge-leaderboard',
+              builder: (context, state) => ChallengeLeaderboardScreen(
+                challengeId: state.pathParameters['id']!,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+    GoRoute(
+      path: AppConstants.routeAdminChallengesNew,
+      name: 'admin-challenges-new',
+      builder: (context, state) => const AdminChallengeFormScreen(),
+    ),
+    GoRoute(
+      path: '${AppConstants.routeAdminChallenges}/:id/edit',
+      name: 'admin-challenges-edit',
+      builder: (context, state) => AdminChallengeFormScreen(
+        challengeId: state.pathParameters['id']!,
+      ),
+    ),
+
     // StatefulShellRoute for App Navigation Tabs & Drawer Screens
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
@@ -429,7 +488,16 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                   pageBuilder: (context, state) =>
                       AppTransitions.sharedAxisPage(
                         key: state.pageKey,
-                        child: const ActivityInsightsScreen(),
+                        child: const InsightsScreen(),
+                      ),
+                ),
+                GoRoute(
+                  path: 'goal-progress',
+                  name: 'activity-goal-progress',
+                  pageBuilder: (context, state) =>
+                      AppTransitions.sharedAxisPage(
+                        key: state.pageKey,
+                        child: const MonthlyGoalProgressScreen(),
                       ),
                 ),
               ],
@@ -531,74 +599,13 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
           ],
         ),
 
-        // Branch 3 — Challenges. Public tab for every role — see
-        // AppShell's top doc. Mirrors Trek Library's shape: one screen
-        // (ChallengesScreen) serves guest/member/admin alike, with
-        // admin's create/edit forms as sibling routes here rather than a
-        // separate admin-only tab (C1 originally gave Challenges its own
-        // admin-only tab because there was no public screen yet for
-        // admin controls to live inline on — now that this branch
-        // exists, that reasoning no longer applies).
+        // Branch 3 — Community
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: AppConstants.routeChallenges,
-              name: 'challenges',
-              builder: (context, state) => const ChallengesScreen(),
-              routes: [
-                // /challenges/history — declared BEFORE ':id', same
-                // reasoning as every other literal-segment-before-:id
-                // ordering in this file: without it, "history" would be
-                // captured as a challenge id instead.
-                GoRoute(
-                  path: 'history',
-                  name: 'challenges-history',
-                  builder: (context, state) => const MyChallengeAchievementsScreen(),
-                ),
-                // /challenges/:id — challenge detail, public (RLS gates
-                // draft visibility server-side, same as trek-detail).
-                GoRoute(
-                  path: ':id',
-                  name: 'challenge-detail',
-                  builder: (context, state) => ChallengeDetailScreen(
-                    challengeId: state.pathParameters['id']!,
-                  ),
-                  routes: [
-                    // /challenges/:id/leaderboard — Version 2, Phase C3.
-                    // Nested here (not its own top-level route) since it
-                    // only ever makes sense reached from one specific
-                    // challenge's detail page — see
-                    // ChallengeLeaderboardScreen's doc.
-                    GoRoute(
-                      path: 'leaderboard',
-                      name: 'challenge-leaderboard',
-                      builder: (context, state) => ChallengeLeaderboardScreen(
-                        challengeId: state.pathParameters['id']!,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            // Admin create/edit forms — full literal `/admin/challenges/...`
-            // paths carried over unchanged from C1 (AppConstants.
-            // routeAdminChallengesNew / adminChallengeEditLocation), as
-            // sibling top-level routes in THIS branch rather than nested
-            // under /challenges, so ChallengeAdminActions/the "Add
-            // Challenge" FAB (both already built in C1) needed zero
-            // changes. Still gated by the existing `_isAdminRoute`
-            // prefix check — no new guard function needed.
-            GoRoute(
-              path: AppConstants.routeAdminChallengesNew,
-              name: 'admin-challenges-new',
-              builder: (context, state) => const AdminChallengeFormScreen(),
-            ),
-            GoRoute(
-              path: '${AppConstants.routeAdminChallenges}/:id/edit',
-              name: 'admin-challenges-edit',
-              builder: (context, state) => AdminChallengeFormScreen(
-                challengeId: state.pathParameters['id']!,
-              ),
+              path: AppConstants.routeCommunity,
+              name: 'community',
+              builder: (context, state) => const CommunityScreen(),
             ),
           ],
         ),
@@ -829,6 +836,10 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    reached from a "View All" link, presupposing a signed-in
     //    session the same way the /profile page they're nested under
     //    already does.
+    //    /profile/points-history joins in Phase 22, same reasoning —
+    //    reached from Profile's points summary card, but registered
+    //    top-level (see the route constant's own doc) rather than
+    //    nested, so it needs its own explicit entry here.
     //    /activity joins this list in Redesign 2.0 Phase 10. It is a
     //    bottom tab visible to everyone (same as /profile), but
     //    everything it will ever show is the signed-in user's own
@@ -839,9 +850,11 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     final isProtectedRoute = location == AppConstants.routeProfile ||
         location == AppConstants.routeActivity ||
         location == AppConstants.routeActivityInsights ||
+        location == AppConstants.routeMonthlyGoalProgress ||
         location == AppConstants.routeMyWishlist ||
         location == AppConstants.routeMyEnquiries ||
         location == AppConstants.routeMyRegistrations ||
+        location == AppConstants.routePointsHistory ||
         location == AppConstants.routeNotifications ||
         location == AppConstants.routeChallengeHistory ||
         location == AppConstants.routePhoneVerification ||

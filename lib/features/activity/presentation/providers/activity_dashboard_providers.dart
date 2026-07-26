@@ -75,6 +75,59 @@ final activityPercentileProvider = FutureProvider.autoDispose
           .fetchActivityPercentile(month);
     }, name: 'activityPercentileProvider');
 
+/// Daily percentile provider.
+final dailyPercentileProvider = FutureProvider.autoDispose
+    .family<int?, DateTime>((ref, date) {
+      return ref
+          .watch(activityRepositoryProvider)
+          .fetchDailyPercentile(date);
+    }, name: 'dailyPercentileProvider');
+
+/// Best day provider for a given month.
+final bestDayProvider = FutureProvider.autoDispose
+    .family<DailyActivity?, DateTime>((ref, month) {
+      return ref
+          .watch(activityRepositoryProvider)
+          .fetchBestDay(year: month.year, month: month.month);
+    }, name: 'bestDayProvider');
+
+/// Active days count for a given month.
+final activeDaysProvider = FutureProvider.autoDispose
+    .family<int, DateTime>((ref, month) {
+      return ref
+          .watch(activityRepositoryProvider)
+          .fetchActiveDays(year: month.year, month: month.month);
+    }, name: 'activeDaysProvider');
+
+/// Weekly aggregates provider for a given month.
+final weeklyAggregatesProvider = FutureProvider.autoDispose
+    .family<List<DailyActivity>, DateTime>((ref, month) {
+      return ref
+          .watch(activityRepositoryProvider)
+          .fetchWeeklyAggregates(year: month.year, month: month.month);
+    }, name: 'weeklyAggregatesProvider');
+
+/// Month-over-month comparison metrics provider.
+final monthComparisonProvider = FutureProvider.autoDispose
+    .family<Map<String, double>, DateTime>((ref, month) {
+      return ref
+          .watch(activityRepositoryProvider)
+          .fetchMonthComparison(year: month.year, month: month.month);
+    }, name: 'monthComparisonProvider');
+
+/// Unlocked achievements provider.
+final userAchievementsProvider = FutureProvider.autoDispose((ref) {
+  return ref.watch(activityRepositoryProvider).fetchUserAchievements();
+}, name: 'userAchievementsProvider');
+
+/// User goal provider via Phase 19 RPC.
+final userGoalProvider = FutureProvider.autoDispose
+    .family<dynamic, String>((ref, goalType) {
+      return ref
+          .watch(activityRepositoryProvider)
+          .getOrCreateUserGoal(goalType);
+    }, name: 'userGoalProvider');
+
 /// Writes the user's daily step goal.
 ///
 /// Goes straight to `public.users` through the existing
@@ -112,11 +165,6 @@ class StepGoalController extends AsyncNotifier<void> {
     });
 
     if (success) {
-      // currentUserProvider streams the row, so the new goal arrives on
-      // its own — but every period summary's *percentage* is derived from
-      // the goal, and those are cached per period. Nothing to invalidate
-      // there (goalPercent is computed at read time), so only the user
-      // row matters and the stream handles it.
       ref.invalidate(currentUserProvider);
     }
     return success;
