@@ -5,10 +5,7 @@ import 'package:doon_walkers/features/community/domain/entities/community_leader
 import 'package:flutter/material.dart';
 
 class CommunityPodium extends StatelessWidget {
-  const CommunityPodium({
-    super.key,
-    required this.entries,
-  });
+  const CommunityPodium({super.key, required this.entries});
 
   /// Up to 3 top entries.
   final List<CommunityLeaderboardEntry> entries;
@@ -26,7 +23,9 @@ class CommunityPodium extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (second != null)
-          Expanded(child: _PodiumColumn(entry: second, position: 2, height: 110))
+          Expanded(
+            child: _PodiumColumn(entry: second, position: 2, height: 110),
+          )
         else
           const Spacer(),
         const SizedBox(width: AppSpacing.sm),
@@ -99,13 +98,14 @@ class _PodiumColumn extends StatelessWidget {
             color: palette.primarySubtle,
           ),
           child: ClipOval(
-            child: entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: entry.avatarUrl!,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => _Initials(entry.displayName),
-                  )
-                : _Initials(entry.displayName),
+            child:
+                entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
+                    ? CachedNetworkImage(
+                      imageUrl: entry.avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _Initials(entry.displayName),
+                    )
+                    : _Initials(entry.displayName),
           ),
         ),
         const SizedBox(height: 6),
@@ -144,16 +144,18 @@ class _PodiumColumn extends StatelessWidget {
         Container(
           height: height,
           decoration: BoxDecoration(
-            color: isFirst
-                ? palette.primary.withValues(alpha: 0.15)
-                : palette.cardHigh,
+            color:
+                isFirst
+                    ? palette.primary.withValues(alpha: 0.15)
+                    : palette.cardHigh,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(AppRadius.md),
             ),
             border: Border.all(
-              color: isFirst
-                  ? palette.primary.withValues(alpha: 0.3)
-                  : palette.border,
+              color:
+                  isFirst
+                      ? palette.primary.withValues(alpha: 0.3)
+                      : palette.border,
             ),
           ),
           child: Center(

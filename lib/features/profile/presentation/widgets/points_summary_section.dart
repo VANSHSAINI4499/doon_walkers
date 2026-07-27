@@ -23,18 +23,23 @@ class PointsSummarySection extends ConsumerWidget {
     final summaryAsync = ref.watch(myPointsSummaryProvider);
 
     return summaryAsync.when(
-      loading: () => const AppCard(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          child: SkeletonStatRow(),
-        ),
-      ),
+      loading:
+          () => const AppCard(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: SkeletonStatRow(),
+            ),
+          ),
       error: (error, stack) {
-        debugPrint('PointsSummarySection: failed to load points summary: $error');
+        debugPrint(
+          'PointsSummarySection: failed to load points summary: $error',
+        );
         return AppCard(
           child: Text(
             'Points unavailable right now.',
-            style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+            style: AppTextStyles.bodySmall.copyWith(
+              color: palette.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
         );
@@ -70,12 +75,14 @@ class PointsSummarySection extends ConsumerWidget {
               const SizedBox(height: AppSpacing.md),
               AppProgressBar(
                 value: summary.progressToNextLevel,
-                label: summary.isMaxLevel
-                    ? 'Top level reached'
-                    : 'Progress to Level ${summary.nextLevel}',
-                trailing: summary.isMaxLevel
-                    ? null
-                    : '${summary.pointsToNextLevel} to go',
+                label:
+                    summary.isMaxLevel
+                        ? 'Top level reached'
+                        : 'Progress to Level ${summary.nextLevel}',
+                trailing:
+                    summary.isMaxLevel
+                        ? null
+                        : '${summary.pointsToNextLevel} to go',
               ),
               const SizedBox(height: AppSpacing.sm),
               ViewAllButton(

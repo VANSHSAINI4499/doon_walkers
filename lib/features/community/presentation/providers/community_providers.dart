@@ -10,30 +10,32 @@ final communityRepositoryProvider = Provider<CommunityRepository>((ref) {
   return CommunityRepositoryImpl(supabase);
 });
 
-final communityLeaderboardProvider =
-    FutureProvider.family<List<CommunityLeaderboardEntry>, ({int limit, int offset})>(
-  (ref, query) async {
-    final repository = ref.watch(communityRepositoryProvider);
-    return repository.getCommunityLeaderboard(
-      limit: query.limit,
-      offset: query.offset,
-    );
-  },
-);
+final communityLeaderboardProvider = FutureProvider.family<
+  List<CommunityLeaderboardEntry>,
+  ({int limit, int offset})
+>((ref, query) async {
+  final repository = ref.watch(communityRepositoryProvider);
+  return repository.getCommunityLeaderboard(
+    limit: query.limit,
+    offset: query.offset,
+  );
+});
 
-final myCommunityRankProvider = FutureProvider<CommunityLeaderboardEntry?>((ref) async {
+final myCommunityRankProvider = FutureProvider<CommunityLeaderboardEntry?>((
+  ref,
+) async {
   final repository = ref.watch(communityRepositoryProvider);
   return repository.getMyCommunityRank();
 });
 
-final memberDirectoryProvider =
-    FutureProvider.family<List<MemberDirectoryEntry>, ({int limit, int offset, String? search})>(
-  (ref, query) async {
-    final repository = ref.watch(communityRepositoryProvider);
-    return repository.getMemberDirectory(
-      limit: query.limit,
-      offset: query.offset,
-      search: query.search,
-    );
-  },
-);
+final memberDirectoryProvider = FutureProvider.family<
+  List<MemberDirectoryEntry>,
+  ({int limit, int offset, String? search})
+>((ref, query) async {
+  final repository = ref.watch(communityRepositoryProvider);
+  return repository.getMemberDirectory(
+    limit: query.limit,
+    offset: query.offset,
+    search: query.search,
+  );
+});

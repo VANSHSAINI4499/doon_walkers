@@ -22,12 +22,15 @@ void main() {
       expect(payload.containsKey('is_visible'), isFalse);
     });
 
-    test('never sends user_name/user_avatar — the insert trigger owns those', () {
-      // on_comment_insert_populate_user overwrites whatever the client
-      // sends anyway; sending them would be misleading dead weight.
-      expect(payload.containsKey('user_name'), isFalse);
-      expect(payload.containsKey('user_avatar'), isFalse);
-    });
+    test(
+      'never sends user_name/user_avatar — the insert trigger owns those',
+      () {
+        // on_comment_insert_populate_user overwrites whatever the client
+        // sends anyway; sending them would be misleading dead weight.
+        expect(payload.containsKey('user_name'), isFalse);
+        expect(payload.containsKey('user_avatar'), isFalse);
+      },
+    );
   });
 
   group('CommentModel.fromJson', () {
@@ -56,20 +59,29 @@ void main() {
       expect(comment.trekTitle, isNull);
     });
 
-    test('parses the joined trek title when present (moderation queue shape)', () {
-      final json = {...fullJson, 'treks': {'title': 'Kedarkantha Trek'}};
-      expect(CommentModel.fromJson(json).trekTitle, 'Kedarkantha Trek');
-    });
+    test(
+      'parses the joined trek title when present (moderation queue shape)',
+      () {
+        final json = {
+          ...fullJson,
+          'treks': {'title': 'Kedarkantha Trek'},
+        };
+        expect(CommentModel.fromJson(json).trekTitle, 'Kedarkantha Trek');
+      },
+    );
 
     test('missing is_visible defaults to true, not false', () {
       final json = Map<String, dynamic>.from(fullJson)..remove('is_visible');
       expect(CommentModel.fromJson(json).isVisible, isTrue);
     });
 
-    test('a blank user_name falls back to a placeholder, not an empty string', () {
-      final json = {...fullJson, 'user_name': ''};
-      expect(CommentModel.fromJson(json).userName, 'Unknown member');
-    });
+    test(
+      'a blank user_name falls back to a placeholder, not an empty string',
+      () {
+        final json = {...fullJson, 'user_name': ''};
+        expect(CommentModel.fromJson(json).userName, 'Unknown member');
+      },
+    );
 
     test('a null user_avatar stays null (column is nullable)', () {
       final json = {...fullJson, 'user_avatar': null};

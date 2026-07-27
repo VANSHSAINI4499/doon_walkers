@@ -15,11 +15,11 @@ enum NotificationFilter {
   announcements;
 
   String get label => switch (this) {
-        NotificationFilter.all => 'All',
-        NotificationFilter.unread => 'Unread',
-        NotificationFilter.updates => 'Trek Updates',
-        NotificationFilter.announcements => 'Announcements',
-      };
+    NotificationFilter.all => 'All',
+    NotificationFilter.unread => 'Unread',
+    NotificationFilter.updates => 'Trek Updates',
+    NotificationFilter.announcements => 'Announcements',
+  };
 }
 
 final notificationsProvider = FutureProvider<List<NotificationItem>>(
@@ -35,12 +35,12 @@ final notificationReadTrackerProvider = Provider<NotificationReadTracker>(
 /// One-time local to DB migration service provider
 final notificationReadMigrationServiceProvider =
     Provider<NotificationReadMigrationService>((ref) {
-  return NotificationReadMigrationService(
-    prefs: ref.watch(sharedPreferencesProvider),
-    tracker: ref.watch(notificationReadTrackerProvider),
-    repository: ref.watch(notificationRepositoryProvider),
-  );
-});
+      return NotificationReadMigrationService(
+        prefs: ref.watch(sharedPreferencesProvider),
+        tracker: ref.watch(notificationReadTrackerProvider),
+        repository: ref.watch(notificationRepositoryProvider),
+      );
+    });
 
 /// Server-side read notification IDs
 final readNotificationIdsProvider = FutureProvider<Set<String>>((ref) async {
@@ -69,9 +69,9 @@ final notificationFilterProvider = StateProvider<NotificationFilter>(
 
 final notificationReadControllerProvider =
     AsyncNotifierProvider<NotificationReadController, void>(
-  NotificationReadController.new,
-  name: 'notificationReadControllerProvider',
-);
+      NotificationReadController.new,
+      name: 'notificationReadControllerProvider',
+    );
 
 class NotificationReadController extends AsyncNotifier<void> {
   @override
@@ -99,9 +99,9 @@ class NotificationReadController extends AsyncNotifier<void> {
 
 final notificationControllerProvider =
     AsyncNotifierProvider<NotificationController, void>(
-  NotificationController.new,
-  name: 'notificationControllerProvider',
-);
+      NotificationController.new,
+      name: 'notificationControllerProvider',
+    );
 
 class NotificationController extends AsyncNotifier<void> {
   @override

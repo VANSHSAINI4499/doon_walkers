@@ -30,7 +30,8 @@ class MyRegistrationsSection extends ConsumerWidget {
       title: 'My Registrations',
       icon: AppIcons.ticket,
       asyncItems: registrationsAsync,
-      itemBuilder: (registration) => MyRegistrationTile(registration: registration),
+      itemBuilder:
+          (registration) => MyRegistrationTile(registration: registration),
       onViewAll: () => context.push(AppConstants.routeMyRegistrations),
       onRetry: () => ref.invalidate(myRegistrationsPreviewProvider),
       errorMessage: 'Could not load your registrations.',
@@ -75,7 +76,8 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
-      builder: (sheetContext) => _CancellationReasonSheet(trekTitle: r.trekTitle),
+      builder:
+          (sheetContext) => _CancellationReasonSheet(trekTitle: r.trekTitle),
     );
 
     if (reason == null || !mounted) return;
@@ -90,7 +92,9 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          success ? 'Registration cancelled.' : 'Could not cancel your registration. Please try again.',
+          success
+              ? 'Registration cancelled.'
+              : 'Could not cancel your registration. Please try again.',
         ),
         backgroundColor: success ? null : palette.danger,
       ),
@@ -115,7 +119,9 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
               Expanded(
                 child: Text(
                   r.trekTitle,
-                  style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+                  style: AppTextStyles.titleSmall.copyWith(
+                    color: palette.textPrimary,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -124,7 +130,10 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
               // "nothing to verify" — per the Part C brief.
               if (r.involvedPayment) ...[
                 const SizedBox(width: AppSpacing.sm),
-                RegistrationStatusChip(status: r.paymentStatus, label: r.memberFacingStatusLabel),
+                RegistrationStatusChip(
+                  status: r.paymentStatus,
+                  label: r.memberFacingStatusLabel,
+                ),
               ],
             ],
           ),
@@ -147,7 +156,8 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
               // Only meaningful once the trek has actually happened — a
               // silent no-op for an upcoming/cancelled registration, since
               // checkedInAt can't be set yet either way.
-              if (group == RegistrationStatusGroup.completed && r.checkedInAt != null)
+              if (group == RegistrationStatusGroup.completed &&
+                  r.checkedInAt != null)
                 _MetaLine(
                   icon: AppIcons.verified,
                   text: 'Checked in',
@@ -160,24 +170,38 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
             const SizedBox(height: AppSpacing.sm),
             Align(
               alignment: Alignment.centerLeft,
-              child: _isPending
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                      child: SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger),
+              child:
+                  _isPending
+                      ? Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: palette.danger,
+                          ),
+                        ),
+                      )
+                      : TextButton.icon(
+                        onPressed: _confirmCancel,
+                        icon: AppIcon(
+                          AppIcons.close,
+                          size: 18,
+                          color: palette.danger,
+                        ),
+                        label: Text(
+                          'Cancel registration',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: palette.danger,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                        ),
                       ),
-                    )
-                  : TextButton.icon(
-                      onPressed: _confirmCancel,
-                      icon: AppIcon(AppIcons.close, size: 18, color: palette.danger),
-                      label: Text(
-                        'Cancel registration',
-                        style: AppTextStyles.labelMedium.copyWith(color: palette.danger),
-                      ),
-                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-                    ),
             ),
           ],
         ],
@@ -218,7 +242,8 @@ class _CancellationReasonSheet extends StatefulWidget {
   final String trekTitle;
 
   @override
-  State<_CancellationReasonSheet> createState() => _CancellationReasonSheetState();
+  State<_CancellationReasonSheet> createState() =>
+      _CancellationReasonSheetState();
 }
 
 class _CancellationReasonSheetState extends State<_CancellationReasonSheet> {
@@ -261,17 +286,26 @@ class _CancellationReasonSheetState extends State<_CancellationReasonSheet> {
             children: [
               Text(
                 'Cancel Registration?',
-                style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: palette.textPrimary,
+                ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'This will cancel your spot for "${widget.trekTitle}". This action is irreversible.',
-                style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: palette.textSecondary,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               ..._reasons.map((reason) {
                 return RadioListTile<String>(
-                  title: Text(reason, style: AppTextStyles.bodyMedium.copyWith(color: palette.textPrimary)),
+                  title: Text(
+                    reason,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: palette.textPrimary,
+                    ),
+                  ),
                   value: reason,
                   groupValue: _selectedReason,
                   onChanged: (val) {
@@ -318,17 +352,20 @@ class _CancellationReasonSheetState extends State<_CancellationReasonSheet> {
                     child: AppButton(
                       label: 'Yes, cancel spot',
                       variant: AppButtonVariant.danger,
-                      onPressed: _selectedReason == null
-                          ? null
-                          : () {
-                              if (isOther && !_formKey.currentState!.validate()) {
-                                return;
-                              }
-                              final finalReason = isOther
-                                  ? _textController.text.trim()
-                                  : _selectedReason!;
-                              Navigator.pop(context, finalReason);
-                            },
+                      onPressed:
+                          _selectedReason == null
+                              ? null
+                              : () {
+                                if (isOther &&
+                                    !_formKey.currentState!.validate()) {
+                                  return;
+                                }
+                                final finalReason =
+                                    isOther
+                                        ? _textController.text.trim()
+                                        : _selectedReason!;
+                                Navigator.pop(context, finalReason);
+                              },
                     ),
                   ),
                 ],

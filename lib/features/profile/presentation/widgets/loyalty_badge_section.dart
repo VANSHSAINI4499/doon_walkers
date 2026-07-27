@@ -70,8 +70,8 @@ class LoyaltyBadgeSection extends ConsumerWidget {
                       next == null
                           ? "You've reached the top of the ladder!"
                           : '${next.minAttended - attended} more trek'
-                                '${next.minAttended - attended == 1 ? '' : 's'} '
-                                'to ${next.name}',
+                              '${next.minAttended - attended == 1 ? '' : 's'} '
+                              'to ${next.name}',
                       style: AppTextStyles.bodySmall.copyWith(
                         color: palette.textSecondary,
                       ),

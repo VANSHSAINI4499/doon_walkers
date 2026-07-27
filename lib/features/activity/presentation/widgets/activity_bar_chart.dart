@@ -104,12 +104,13 @@ class ActivityBarChart extends StatelessWidget {
                     Expanded(
                       child: _Bar(
                         bar: bar,
-                        fraction: scale <= 0
-                            ? _minBarFraction
-                            : (bar.value / scale).clamp(
-                                _minBarFraction,
-                                1.0,
-                              ),
+                        fraction:
+                            scale <= 0
+                                ? _minBarFraction
+                                : (bar.value / scale).clamp(
+                                  _minBarFraction,
+                                  1.0,
+                                ),
                         palette: palette,
                         showValue: showValues,
                       ),
@@ -130,9 +131,10 @@ class ActivityBarChart extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.clip,
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: bar.emphasise
-                        ? palette.textPrimary
-                        : palette.textSecondary,
+                    color:
+                        bar.emphasise
+                            ? palette.textPrimary
+                            : palette.textSecondary,
                   ),
                 ),
               ),
@@ -184,21 +186,23 @@ class _Bar extends StatelessWidget {
             tween: Tween(begin: 0, end: fraction),
             duration: AppMotion.slow,
             curve: AppMotion.emphasized,
-            builder: (context, value, _) => FractionallySizedBox(
-              heightFactor: value.clamp(0.0, 1.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: fill,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(4),
+            builder:
+                (context, value, _) => FractionallySizedBox(
+                  heightFactor: value.clamp(0.0, 1.0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: fill,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(4),
+                      ),
+                      border:
+                          bar.emphasise
+                              ? Border.all(color: palette.primary, width: 1.5)
+                              : null,
+                    ),
+                    child: const SizedBox.expand(),
                   ),
-                  border: bar.emphasise
-                      ? Border.all(color: palette.primary, width: 1.5)
-                      : null,
                 ),
-                child: const SizedBox.expand(),
-              ),
-            ),
           ),
         ],
       ),

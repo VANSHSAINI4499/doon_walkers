@@ -30,10 +30,11 @@ Future<ExploreFilterResult?> showExploreFilterSheet(
   return showModalBottomSheet<ExploreFilterResult>(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _ExploreFilterSheet(
-      initialMetrics: initialMetrics,
-      initialDuration: initialDuration,
-    ),
+    builder:
+        (context) => _ExploreFilterSheet(
+          initialMetrics: initialMetrics,
+          initialDuration: initialDuration,
+        ),
   );
 }
 
@@ -59,15 +60,16 @@ class _ExploreFilterSheet extends StatefulWidget {
 
 class _ExploreFilterSheetState extends State<_ExploreFilterSheet> {
   late Set<ChallengeMetricFilter> _metrics = {...widget.initialMetrics};
-  late RangeValues _duration = widget.initialDuration == null
-      ? RangeValues(
-          _minDurationDays.toDouble(),
-          _maxDurationDays.toDouble(),
-        )
-      : RangeValues(
-          widget.initialDuration!.minDays.toDouble(),
-          widget.initialDuration!.maxDays.toDouble(),
-        );
+  late RangeValues _duration =
+      widget.initialDuration == null
+          ? RangeValues(
+            _minDurationDays.toDouble(),
+            _maxDurationDays.toDouble(),
+          )
+          : RangeValues(
+            widget.initialDuration!.minDays.toDouble(),
+            widget.initialDuration!.maxDays.toDouble(),
+          );
 
   bool get _isFullRange =>
       _duration.start <= _minDurationDays && _duration.end >= _maxDurationDays;
@@ -92,12 +94,13 @@ class _ExploreFilterSheetState extends State<_ExploreFilterSheet> {
     Navigator.of(context).pop(
       ExploreFilterResult(
         metrics: _metrics,
-        duration: _isFullRange
-            ? null
-            : ChallengeDurationRange(
-                minDays: _duration.start.round(),
-                maxDays: _duration.end.round(),
-              ),
+        duration:
+            _isFullRange
+                ? null
+                : ChallengeDurationRange(
+                  minDays: _duration.start.round(),
+                  maxDays: _duration.end.round(),
+                ),
       ),
     );
   }
@@ -139,13 +142,18 @@ class _ExploreFilterSheetState extends State<_ExploreFilterSheet> {
                     ),
                   ),
                 ),
-                TextButton(onPressed: _clearAll, child: const Text('Clear all')),
+                TextButton(
+                  onPressed: _clearAll,
+                  child: const Text('Clear all'),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
               'What it measures',
-              style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+              style: AppTextStyles.titleSmall.copyWith(
+                color: palette.textPrimary,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             Wrap(
@@ -163,14 +171,18 @@ class _ExploreFilterSheetState extends State<_ExploreFilterSheet> {
             const SizedBox(height: AppSpacing.xl),
             Text(
               'Duration',
-              style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+              style: AppTextStyles.titleSmall.copyWith(
+                color: palette.textPrimary,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
               _isFullRange
                   ? 'Any length (challenges with no fixed length always match)'
                   : '${_duration.start.round()}–${_duration.end.round()} days',
-              style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: palette.textSecondary,
+              ),
             ),
             RangeSlider(
               values: _duration,
@@ -228,7 +240,9 @@ class _FilterChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? palette.primarySubtle : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: selected ? palette.primary : palette.border),
+            border: Border.all(
+              color: selected ? palette.primary : palette.border,
+            ),
           ),
           child: Text(
             label,

@@ -27,7 +27,8 @@ class ActivityPeriodNavigator extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final today = now ?? DateTime.now();
-    final canGoForward = !period.isCurrent(today) && !period.next.isFuture(today);
+    final canGoForward =
+        !period.isCurrent(today) && !period.next.isFuture(today);
 
     return Row(
       children: [

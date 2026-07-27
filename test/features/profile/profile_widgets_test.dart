@@ -22,22 +22,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-UserModel _user({required UserRole role, bool showOnLeaderboard = true}) => UserModel(
-  id: 'u1',
-  name: 'Asha',
-  email: 'asha@example.com',
-  role: role,
-  createdAt: DateTime(2026, 1, 1),
-  showOnLeaderboard: showOnLeaderboard,
-);
+UserModel _user({required UserRole role, bool showOnLeaderboard = true}) =>
+    UserModel(
+      id: 'u1',
+      name: 'Asha',
+      email: 'asha@example.com',
+      role: role,
+      createdAt: DateTime(2026, 1, 1),
+      showOnLeaderboard: showOnLeaderboard,
+    );
 
-Widget _host(Widget child, {required List<Override> overrides}) => ProviderScope(
-  overrides: overrides,
-  child: MaterialApp(
-    theme: AppTheme.dark,
-    home: Scaffold(body: child),
-  ),
-);
+Widget _host(Widget child, {required List<Override> overrides}) =>
+    ProviderScope(
+      overrides: overrides,
+      child: MaterialApp(theme: AppTheme.dark, home: Scaffold(body: child)),
+    );
 
 /// Settings brings its own Scaffold and needs a signed-in session for the
 /// Privacy/Activity sections to render, plus a real (mocked)
@@ -74,38 +73,50 @@ Future<Widget> _settingsHost({
 
 void main() {
   group('Admin-only entry points (gating preserved)', () {
-    testWidgets('Send Notification shows for an admin, hidden for a member', (tester) async {
-      await tester.pumpWidget(_host(
-        const AdminSendNotificationCard(),
-        overrides: [isAdminProvider.overrideWith((ref) => true)],
-      ));
+    testWidgets('Send Notification shows for an admin, hidden for a member', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const AdminSendNotificationCard(),
+          overrides: [isAdminProvider.overrideWith((ref) => true)],
+        ),
+      );
       await tester.pump();
       expect(find.text('Send Notification'), findsOneWidget);
 
       // Fully tear down before re-mounting under a fresh ProviderScope,
       // so the new isAdmin=false override actually takes effect.
       await tester.pumpWidget(const SizedBox());
-      await tester.pumpWidget(_host(
-        const AdminSendNotificationCard(),
-        overrides: [isAdminProvider.overrideWith((ref) => false)],
-      ));
+      await tester.pumpWidget(
+        _host(
+          const AdminSendNotificationCard(),
+          overrides: [isAdminProvider.overrideWith((ref) => false)],
+        ),
+      );
       await tester.pump();
       expect(find.text('Send Notification'), findsNothing);
     });
 
-    testWidgets('Merch Inquiries shows for an admin, hidden for a member', (tester) async {
-      await tester.pumpWidget(_host(
-        const AdminMerchInquiriesCard(),
-        overrides: [isAdminProvider.overrideWith((ref) => true)],
-      ));
+    testWidgets('Merch Inquiries shows for an admin, hidden for a member', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const AdminMerchInquiriesCard(),
+          overrides: [isAdminProvider.overrideWith((ref) => true)],
+        ),
+      );
       await tester.pump();
       expect(find.text('Merchandise Inquiries'), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
-      await tester.pumpWidget(_host(
-        const AdminMerchInquiriesCard(),
-        overrides: [isAdminProvider.overrideWith((ref) => false)],
-      ));
+      await tester.pumpWidget(
+        _host(
+          const AdminMerchInquiriesCard(),
+          overrides: [isAdminProvider.overrideWith((ref) => false)],
+        ),
+      );
       await tester.pump();
       expect(find.text('Merchandise Inquiries'), findsNothing);
     });
@@ -120,7 +131,9 @@ void main() {
       expect(sw.value, isTrue);
     });
 
-    testWidgets('reflects showOnLeaderboard = false (opted out)', (tester) async {
+    testWidgets('reflects showOnLeaderboard = false (opted out)', (
+      tester,
+    ) async {
       await tester.pumpWidget(await _settingsHost(showOnLeaderboard: false));
       await tester.pump();
       final sw = tester.widget<Switch>(find.byType(Switch));

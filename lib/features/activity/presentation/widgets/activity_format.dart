@@ -8,25 +8,49 @@ import 'package:doon_walkers/features/activity/domain/services/activity_period.d
 /// formats rather than real localisation.
 abstract final class ActivityFormat {
   static const _months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   static const _monthsShort = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   static const _weekdays = [
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday',
-    'Friday', 'Saturday', 'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
   ];
 
   /// Single letter for a chart axis. Deliberately not unique (Tuesday and
   /// Thursday both give "T") — that is the accepted convention for a
   /// 7-column axis where position already disambiguates.
-  static String weekdayInitial(DateTime date) =>
-      _weekdays[date.weekday - 1][0];
+  static String weekdayInitial(DateTime date) => _weekdays[date.weekday - 1][0];
 
   static String weekdayShort(DateTime date) =>
       _weekdays[date.weekday - 1].substring(0, 3);
@@ -52,9 +76,7 @@ abstract final class ActivityFormat {
         if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
         // Omit the year for the current year — "12 Mar" is less cluttered
         // and the year is only informative when it is not this one.
-        return d.year == today.year
-            ? '${d.day} ${monthShort(d)}'
-            : dayShort(d);
+        return d.year == today.year ? '${d.day} ${monthShort(d)}' : dayShort(d);
 
       case ActivityGranularity.week:
         if (period.contains(today)) return 'This week';
@@ -70,9 +92,7 @@ abstract final class ActivityFormat {
       case ActivityGranularity.month:
         if (period.contains(today)) return 'This month';
         final m = _months[period.from.month - 1];
-        return period.from.year == today.year
-            ? m
-            : '$m ${period.from.year}';
+        return period.from.year == today.year ? m : '$m ${period.from.year}';
     }
   }
 
@@ -104,8 +124,7 @@ abstract final class ActivityFormat {
   static String calories(double kcal) => '${kcal.round()} kcal';
 
   /// A signed percentage for a delta: "+12%", "-8%", "0%".
-  static String delta(int percent) =>
-      percent > 0 ? '+$percent%' : '$percent%';
+  static String delta(int percent) => percent > 0 ? '+$percent%' : '$percent%';
 
   static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 }

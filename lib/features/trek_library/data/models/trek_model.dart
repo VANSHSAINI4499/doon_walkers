@@ -38,15 +38,17 @@ class TrekModel extends Trek {
       googleMapLink: json['google_map_link'] as String?,
       coverImage: json['cover_image'] as String?,
       isPublished: json['is_published'] as bool? ?? false,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'] as String)
+              : DateTime.now(),
       // Postgres `date` comes back as an ISO date string ("2026-08-15"),
       // parseable directly by DateTime.parse — no time component to worry
       // about since the column has none.
-      trekDate: json['trek_date'] != null
-          ? DateTime.parse(json['trek_date'] as String)
-          : null,
+      trekDate:
+          json['trek_date'] != null
+              ? DateTime.parse(json['trek_date'] as String)
+              : null,
       // NOT NULL DEFAULT 0 in the schema, but Postgres numeric arrives as
       // a String or num depending on driver — handle both defensively.
       registrationFee: switch (json['registration_fee']) {
@@ -55,7 +57,9 @@ class TrekModel extends Trek {
         final Object v => double.tryParse(v.toString()) ?? 0,
       },
       paymentQrCode: json['payment_qr_code'] as String?,
-      trekStartTime: TrekStartTime.fromDbString(json['trek_start_time'] as String?),
+      trekStartTime: TrekStartTime.fromDbString(
+        json['trek_start_time'] as String?,
+      ),
       maxParticipants: (json['max_participants'] as num?)?.toInt(),
     );
   }

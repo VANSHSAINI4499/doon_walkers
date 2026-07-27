@@ -73,9 +73,15 @@ class ActivitySyncService {
       }
 
       final now = DateTime.now();
-      final start = DateTime(now.year, now.month, now.day)
-          .subtract(const Duration(days: _lookbackDays - 1));
-      final activity = await _provider.readDailyActivity(start: start, end: now);
+      final start = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(const Duration(days: _lookbackDays - 1));
+      final activity = await _provider.readDailyActivity(
+        start: start,
+        end: now,
+      );
 
       await _repository.upsertDailyActivity(activity);
       return ActivitySyncOutcome.success;

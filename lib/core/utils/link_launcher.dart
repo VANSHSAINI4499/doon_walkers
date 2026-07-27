@@ -26,7 +26,7 @@ Future<void> openExternalLink(BuildContext context, String urlString) async {
 }
 
 void _showFallback(BuildContext context, String urlString) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Could not open link: $urlString')),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('Could not open link: $urlString')));
 }

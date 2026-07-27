@@ -21,9 +21,7 @@ class CommunityScreen extends ConsumerWidget {
     final isSignedIn = ref.watch(isSignedInProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Community'),
-      ),
+      appBar: AppBar(title: const Text('Community')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -59,8 +57,9 @@ class _LeaderboardPreviewSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
-    final leaderboardAsync =
-        ref.watch(communityLeaderboardProvider((limit: 10, offset: 0)));
+    final leaderboardAsync = ref.watch(
+      communityLeaderboardProvider((limit: 10, offset: 0)),
+    );
     final myRankAsync = ref.watch(myCommunityRankProvider);
     final isSignedIn = ref.watch(isSignedInProvider);
 
@@ -86,10 +85,11 @@ class _LeaderboardPreviewSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         leaderboardAsync.when(
           loading: () => const _SectionSkeleton(),
-          error: (err, stack) => Text(
-            'Could not load leaderboard.',
-            style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
-          ),
+          error:
+              (err, stack) => Text(
+                'Could not load leaderboard.',
+                style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+              ),
           data: (entries) {
             if (entries.isEmpty) {
               return AppCard(
@@ -143,13 +143,14 @@ class _LeaderboardPreviewSection extends ConsumerWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        onTap: () => showMemberDetailSheet(
-                          context: context,
-                          displayName: entry.displayName,
-                          avatarUrl: entry.avatarUrl,
-                          level: entry.level,
-                          totalPoints: entry.totalPoints,
-                        ),
+                        onTap:
+                            () => showMemberDetailSheet(
+                              context: context,
+                              displayName: entry.displayName,
+                              avatarUrl: entry.avatarUrl,
+                              level: entry.level,
+                              totalPoints: entry.totalPoints,
+                            ),
                       ),
                   ],
                   if (isSignedIn) ...[
@@ -164,8 +165,7 @@ class _LeaderboardPreviewSection extends ConsumerWidget {
                           ),
                           decoration: BoxDecoration(
                             color: palette.primarySubtle,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.card),
+                            borderRadius: BorderRadius.circular(AppRadius.card),
                             border: Border.all(color: palette.primary),
                           ),
                           child: Row(
@@ -212,8 +212,9 @@ class _MembersPreviewSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
-    final membersAsync =
-        ref.watch(memberDirectoryProvider((limit: 8, offset: 0, search: null)));
+    final membersAsync = ref.watch(
+      memberDirectoryProvider((limit: 8, offset: 0, search: null)),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -237,10 +238,11 @@ class _MembersPreviewSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         membersAsync.when(
           loading: () => const _SectionSkeleton(),
-          error: (err, stack) => Text(
-            'Could not load members.',
-            style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
-          ),
+          error:
+              (err, stack) => Text(
+                'Could not load members.',
+                style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+              ),
           data: (members) {
             if (members.isEmpty) {
               return AppCard(
@@ -263,8 +265,8 @@ class _MembersPreviewSection extends ConsumerWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: members.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(width: AppSpacing.md),
+                separatorBuilder:
+                    (context, index) => const SizedBox(width: AppSpacing.md),
                 itemBuilder: (context, index) {
                   final member = members[index];
                   return _MemberChip(member: member);
@@ -288,14 +290,15 @@ class _MemberChip extends StatelessWidget {
     final palette = AppPalette.of(context);
 
     return InkWell(
-      onTap: () => showMemberDetailSheet(
-        context: context,
-        displayName: member.displayName,
-        avatarUrl: member.avatarUrl,
-        level: member.level,
-        totalPoints: member.totalPoints,
-        createdAt: member.createdAt,
-      ),
+      onTap:
+          () => showMemberDetailSheet(
+            context: context,
+            displayName: member.displayName,
+            avatarUrl: member.avatarUrl,
+            level: member.level,
+            totalPoints: member.totalPoints,
+            createdAt: member.createdAt,
+          ),
       borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         width: 90,
@@ -316,13 +319,15 @@ class _MemberChip extends StatelessWidget {
                 color: palette.primarySubtle,
               ),
               child: ClipOval(
-                child: member.avatarUrl != null && member.avatarUrl!.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: member.avatarUrl!,
-                        fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => _Initials(member.displayName),
-                      )
-                    : _Initials(member.displayName),
+                child:
+                    member.avatarUrl != null && member.avatarUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                          imageUrl: member.avatarUrl!,
+                          fit: BoxFit.cover,
+                          errorWidget:
+                              (_, __, ___) => _Initials(member.displayName),
+                        )
+                        : _Initials(member.displayName),
               ),
             ),
             const SizedBox(height: 6),
@@ -417,9 +422,10 @@ class _GuestCommunityBanner extends StatelessWidget {
           AppButton(
             label: 'Sign in',
             size: AppButtonSize.small,
-            onPressed: () => context.push(
-              '${AppConstants.routeSignIn}?redirectTo=${Uri.encodeComponent(AppConstants.routeCommunity)}',
-            ),
+            onPressed:
+                () => context.push(
+                  '${AppConstants.routeSignIn}?redirectTo=${Uri.encodeComponent(AppConstants.routeCommunity)}',
+                ),
           ),
         ],
       ),

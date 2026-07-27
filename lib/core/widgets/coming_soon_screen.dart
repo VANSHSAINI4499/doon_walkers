@@ -35,11 +35,7 @@ class ComingSoonScreen extends StatelessWidget {
                     color: AppColors.primaryLight.withAlpha(30),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    icon,
-                    size: 48,
-                    color: AppColors.primary,
-                  ),
+                  child: Icon(icon, size: 48, color: AppColors.primary),
                 ),
                 const SizedBox(height: 24),
 

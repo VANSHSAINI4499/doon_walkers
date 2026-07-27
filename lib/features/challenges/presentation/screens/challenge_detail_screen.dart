@@ -46,9 +46,11 @@ class ChallengeDetailScreen extends ConsumerWidget {
         title: const Text('Challenge'),
         actions: [
           challengeAsync.maybeWhen(
-            data: (challenge) => isAdmin && challenge != null
-                ? ChallengeAdminActions(challenge: challenge)
-                : const SizedBox.shrink(),
+            data:
+                (challenge) =>
+                    isAdmin && challenge != null
+                        ? ChallengeAdminActions(challenge: challenge)
+                        : const SizedBox.shrink(),
             orElse: () => const SizedBox.shrink(),
           ),
         ],
@@ -57,7 +59,9 @@ class ChallengeDetailScreen extends ConsumerWidget {
         child: challengeAsync.when(
           loading: () => const _ChallengeDetailSkeleton(),
           error: (error, stack) {
-            debugPrint('ChallengeDetailScreen: failed to load challenge $challengeId: $error');
+            debugPrint(
+              'ChallengeDetailScreen: failed to load challenge $challengeId: $error',
+            );
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -81,8 +85,10 @@ class ChallengeDetailScreen extends ConsumerWidget {
                       icon: AppIcons.refresh,
                       variant: AppButtonVariant.glass,
                       size: AppButtonSize.small,
-                      onPressed: () =>
-                          ref.invalidate(challengeByIdProvider(challengeId)),
+                      onPressed:
+                          () => ref.invalidate(
+                            challengeByIdProvider(challengeId),
+                          ),
                     ),
                   ],
                 ),
@@ -92,7 +98,10 @@ class ChallengeDetailScreen extends ConsumerWidget {
           data: (challenge) {
             if (challenge == null) {
               return Center(
-                child: Text('Challenge not found.', style: AppTextStyles.titleMedium),
+                child: Text(
+                  'Challenge not found.',
+                  style: AppTextStyles.titleMedium,
+                ),
               );
             }
             return _ChallengeDetailBody(challenge: challenge);
@@ -113,9 +122,12 @@ class _ChallengeDetailBody extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final isSignedIn = ref.watch(isSignedInProvider);
     final progressAsync = ref.watch(myChallengeProgressProvider);
-    final participantCount = challenge.isActive
-        ? ref.watch(challengeParticipantCountProvider(challenge.id)).valueOrNull
-        : null;
+    final participantCount =
+        challenge.isActive
+            ? ref
+                .watch(challengeParticipantCountProvider(challenge.id))
+                .valueOrNull
+            : null;
 
     ChallengeProgress? myProgress;
     for (final p in progressAsync.valueOrNull ?? const <ChallengeProgress>[]) {
@@ -170,7 +182,10 @@ class _ChallengeDetailBody extends ConsumerWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: palette.accentContainer,
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -192,7 +207,10 @@ class _ChallengeDetailBody extends ConsumerWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: palette.gold.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -200,7 +218,11 @@ class _ChallengeDetailBody extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        AppIcon(AppIcons.trending, size: 14, color: palette.gold),
+                        AppIcon(
+                          AppIcons.trending,
+                          size: 14,
+                          color: palette.gold,
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           'Popular Challenge',
@@ -237,7 +259,11 @@ class _ChallengeDetailBody extends ConsumerWidget {
               const SizedBox(height: AppSpacing.xxl),
               Row(
                 children: [
-                  AppIcon(AppIcons.medal, size: 18, color: palette.textSecondary),
+                  AppIcon(
+                    AppIcons.medal,
+                    size: 18,
+                    color: palette.textSecondary,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     'Tiers',
@@ -257,9 +283,12 @@ class _ChallengeDetailBody extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: _TierRow(
                     tier: threshold.tier,
-                    thresholdLabel: challenge.metric.formatValue(threshold.thresholdValue),
+                    thresholdLabel: challenge.metric.formatValue(
+                      threshold.thresholdValue,
+                    ),
                     isCurrent: isSignedIn && currentTier == threshold.tier,
-                    isReached: isSignedIn &&
+                    isReached:
+                        isSignedIn &&
                         currentTier != null &&
                         ChallengeTier.values.indexOf(threshold.tier) <=
                             ChallengeTier.values.indexOf(currentTier),
@@ -276,9 +305,10 @@ class _ChallengeDetailBody extends ConsumerWidget {
                   icon: AppIcons.leaderboard,
                   variant: AppButtonVariant.glass,
                   fullWidth: true,
-                  onPressed: () => context.push(
-                    AppConstants.challengeLeaderboardLocation(challenge.id),
-                  ),
+                  onPressed:
+                      () => context.push(
+                        AppConstants.challengeLeaderboardLocation(challenge.id),
+                      ),
                 ),
               // Same gating as the leaderboard button just above — a
               // draft challenge has no enrollments to show yet.
@@ -360,8 +390,18 @@ class _HowMeasured extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -377,11 +417,12 @@ class _SignInForProgressBanner extends StatelessWidget {
     final palette = AppPalette.of(context);
     return AppCard(
       borderColor: palette.primary.withValues(alpha: 0.45),
-      onTap: () => AuthGuard.requireAuth(
-        context,
-        returnPath: AppConstants.challengeDetailLocation(challenge.id),
-        onAuthenticated: () {},
-      ),
+      onTap:
+          () => AuthGuard.requireAuth(
+            context,
+            returnPath: AppConstants.challengeDetailLocation(challenge.id),
+            onAuthenticated: () {},
+          ),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
@@ -431,9 +472,8 @@ class _TierRow extends StatelessWidget {
                 Text(
                   tier.label,
                   style: AppTextStyles.titleSmall.copyWith(
-                    color: isReached
-                        ? palette.textPrimary
-                        : palette.textDisabled,
+                    color:
+                        isReached ? palette.textPrimary : palette.textDisabled,
                   ),
                 ),
                 Text(

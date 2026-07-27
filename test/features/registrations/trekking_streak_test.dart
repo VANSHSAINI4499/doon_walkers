@@ -24,11 +24,17 @@ void main() {
 
   group('TrekkingStreak.isActive', () {
     test('a positive current streak is active', () {
-      expect(const TrekkingStreak(currentMonths: 1, longestMonths: 3).isActive, isTrue);
+      expect(
+        const TrekkingStreak(currentMonths: 1, longestMonths: 3).isActive,
+        isTrue,
+      );
     });
 
     test('a broken streak (current 0) is not active, even with history', () {
-      expect(const TrekkingStreak(currentMonths: 0, longestMonths: 3).isActive, isFalse);
+      expect(
+        const TrekkingStreak(currentMonths: 0, longestMonths: 3).isActive,
+        isFalse,
+      );
     });
 
     test('TrekkingStreak.zero is not active', () {

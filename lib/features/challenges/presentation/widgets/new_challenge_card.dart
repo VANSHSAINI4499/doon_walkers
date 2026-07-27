@@ -12,7 +12,11 @@ import 'package:flutter/material.dart';
 /// one of the newest (the section itself is `challenges.take(4)` off
 /// `created_at DESC`), so the tag needs no separate freshness cutoff.
 class NewChallengeCard extends StatelessWidget {
-  const NewChallengeCard({super.key, required this.challenge, required this.onTap});
+  const NewChallengeCard({
+    super.key,
+    required this.challenge,
+    required this.onTap,
+  });
 
   final Challenge challenge;
   final VoidCallback onTap;
@@ -44,7 +48,10 @@ class NewChallengeCard extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: palette.accentContainer,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -62,14 +69,18 @@ class NewChallengeCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             challenge.title,
-            style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+            style: AppTextStyles.titleSmall.copyWith(
+              color: palette.textPrimary,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             '+${challenge.pointValue} pts',
-            style: AppTextStyles.labelSmall.copyWith(color: palette.textSecondary),
+            style: AppTextStyles.labelSmall.copyWith(
+              color: palette.textSecondary,
+            ),
           ),
         ],
       ),

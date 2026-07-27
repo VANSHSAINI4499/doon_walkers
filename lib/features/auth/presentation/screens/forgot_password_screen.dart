@@ -8,7 +8,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -25,9 +26,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await ref.read(authControllerProvider.notifier).sendPasswordResetEmail(
-          _emailController.text,
-        );
+    await ref
+        .read(authControllerProvider.notifier)
+        .sendPasswordResetEmail(_emailController.text);
     if (mounted && !ref.read(authControllerProvider).hasError) {
       setState(() {
         _emailSent = true;
@@ -44,7 +45,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to send reset link: ${_cleanErrorMessage(error)}'),
+              content: Text(
+                'Failed to send reset link: ${_cleanErrorMessage(error)}',
+              ),
               backgroundColor: AppColors.danger,
             ),
           );
@@ -53,16 +56,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reset Password'),
-      ),
+      appBar: AppBar(title: const Text('Reset Password')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.xxl),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
-              child: _emailSent ? _buildSuccessView() : _buildFormView(authState),
+              child:
+                  _emailSent ? _buildSuccessView() : _buildFormView(authState),
             ),
           ),
         ),

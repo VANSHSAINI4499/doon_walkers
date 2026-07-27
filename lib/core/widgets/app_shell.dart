@@ -242,11 +242,12 @@ class _AppShellState extends ConsumerState<AppShell>
           // colour), so this is additive rather than a restyle.
           const _NotificationBellAction(),
           Builder(
-            builder: (ctx) => IconButton(
-              icon: const AppIcon(AppIcons.menu),
-              tooltip: 'More',
-              onPressed: () => Scaffold.of(ctx).openEndDrawer(),
-            ),
+            builder:
+                (ctx) => IconButton(
+                  icon: const AppIcon(AppIcons.menu),
+                  tooltip: 'More',
+                  onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+                ),
           ),
         ],
       ),
@@ -259,9 +260,13 @@ class _AppShellState extends ConsumerState<AppShell>
       bottomNavigationBar: FloatingNavBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: _onTabSelected,
-        destinations: _destinations
-            .map((d) => FloatingNavBarDestination(icon: d.icon, label: d.label))
-            .toList(),
+        destinations:
+            _destinations
+                .map(
+                  (d) =>
+                      FloatingNavBarDestination(icon: d.icon, label: d.label),
+                )
+                .toList(),
       ),
 
       body: widget.navigationShell,
@@ -285,8 +290,7 @@ class _NotificationBellAction extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
-    final unread =
-        ref.watch(unreadNotificationCountProvider).valueOrNull ?? 0;
+    final unread = ref.watch(unreadNotificationCountProvider).valueOrNull ?? 0;
 
     return IconButton(
       tooltip: unread > 0 ? 'Notifications ($unread unread)' : 'Notifications',
@@ -406,20 +410,23 @@ class _AppDrawer extends StatelessWidget {
                     _DrawerItem(
                       icon: AppIcons.registrations,
                       label: 'Registrations',
-                      onTap: () =>
-                          onSelect(AppConstants.routeAdminTrekRegistrations),
+                      onTap:
+                          () => onSelect(
+                            AppConstants.routeAdminTrekRegistrations,
+                          ),
                     ),
                     _DrawerItem(
                       icon: AppIcons.store,
                       label: 'Merchandise Inquiries',
-                      onTap: () =>
-                          onSelect(AppConstants.routeAdminMerchInquiries),
+                      onTap:
+                          () => onSelect(AppConstants.routeAdminMerchInquiries),
                     ),
                     _DrawerItem(
                       icon: AppIcons.announce,
                       label: 'Send Notification',
-                      onTap: () =>
-                          onSelect(AppConstants.routeAdminSendNotification),
+                      onTap:
+                          () =>
+                              onSelect(AppConstants.routeAdminSendNotification),
                     ),
                   ],
                 ],

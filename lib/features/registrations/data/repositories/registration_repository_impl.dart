@@ -11,7 +11,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-
 /// Riverpod provider exposing the implementation of [RegistrationRepository].
 final registrationRepositoryProvider = Provider<RegistrationRepository>(
   (ref) => RegistrationRepositoryImpl(ref.watch(supabaseClientProvider)),
@@ -26,7 +25,8 @@ final registrationRepositoryProvider = Provider<RegistrationRepository>(
 /// filtered: `users_select_own_or_admin` and `treks_select` both
 /// short-circuit on `is_admin()`, which is SECURITY DEFINER so it reads
 /// `users` outside RLS without recursion.
-const _selectWithJoins = '*, users(name, email, phone), treks(title, trek_date)';
+const _selectWithJoins =
+    '*, users(name, email, phone), treks(title, trek_date)';
 
 /// Postgres unique-violation SQLSTATE — raised by `UNIQUE(trek_id, user_id)`.
 const _uniqueViolation = '23505';
@@ -45,10 +45,14 @@ const _checkinErrorReasons = {
   'DWC06': TrekCheckinFailureReason.alreadyCheckedIn,
 };
 
-String _checkinFailureMessage(TrekCheckinFailureReason reason) => switch (reason) {
-      TrekCheckinFailureReason.notRegistered => "You're not registered for this trek.",
-      TrekCheckinFailureReason.invalidToken => "This QR code isn't valid for this trek.",
-      TrekCheckinFailureReason.notScheduled => 'Check-in is not available for this trek.',
+String _checkinFailureMessage(TrekCheckinFailureReason reason) =>
+    switch (reason) {
+      TrekCheckinFailureReason.notRegistered =>
+        "You're not registered for this trek.",
+      TrekCheckinFailureReason.invalidToken =>
+        "This QR code isn't valid for this trek.",
+      TrekCheckinFailureReason.notScheduled =>
+        'Check-in is not available for this trek.',
       TrekCheckinFailureReason.windowNotOpen => "Check-in hasn't opened yet.",
       TrekCheckinFailureReason.windowClosed => 'Check-in window has closed.',
       TrekCheckinFailureReason.alreadyCheckedIn => "You're already checked in.",
@@ -86,11 +90,12 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
 
   @override
   Future<Registration?> fetchRegistrationById(String id) async {
-    final row = await _supabase
-        .from(AppConstants.tableRegistrations)
-        .select(_selectWithJoins)
-        .eq('id', id)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableRegistrations)
+            .select(_selectWithJoins)
+            .eq('id', id)
+            .maybeSingle();
     if (row == null) return null;
     return RegistrationModel.fromJson(row);
   }
@@ -140,12 +145,13 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
 
   @override
   Future<Registration?> fetchMyRegistrationForTrek(String trekId) async {
-    final row = await _supabase
-        .from(AppConstants.tableRegistrations)
-        .select(_selectWithJoins)
-        .eq('user_id', _currentUserId)
-        .eq('trek_id', trekId)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableRegistrations)
+            .select(_selectWithJoins)
+            .eq('user_id', _currentUserId)
+            .eq('trek_id', trekId)
+            .maybeSingle();
     if (row == null) return null;
     return RegistrationModel.fromJson(row);
   }
@@ -159,18 +165,21 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
     String? medicalNotes,
   }) async {
     try {
-      final row = await _supabase
-          .from(AppConstants.tableRegistrations)
-          .insert(RegistrationModel.toInsertJson(
-            trekId: trekId,
-            userId: _currentUserId,
-            age: age,
-            gender: gender,
-            emergencyContact: emergencyContact,
-            medicalNotes: medicalNotes,
-          ))
-          .select(_selectWithJoins)
-          .single();
+      final row =
+          await _supabase
+              .from(AppConstants.tableRegistrations)
+              .insert(
+                RegistrationModel.toInsertJson(
+                  trekId: trekId,
+                  userId: _currentUserId,
+                  age: age,
+                  gender: gender,
+                  emergencyContact: emergencyContact,
+                  medicalNotes: medicalNotes,
+                ),
+              )
+              .select(_selectWithJoins)
+              .single();
       return RegistrationModel.fromJson(row);
     } on PostgrestException catch (error) {
       // UNIQUE(trek_id, user_id) — translate to a domain exception here
@@ -189,14 +198,18 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
   }
 
   @override
-  Future<Registration> cancelRegistration({required String id, required String reason}) async {
-    final row = await _supabase.rpc(
-      'cancel_trek_registration',
-      params: {
-        'p_registration_id': id,
-        'p_reason': reason,
-      },
-    ).select(_selectWithJoins).single();
+  Future<Registration> cancelRegistration({
+    required String id,
+    required String reason,
+  }) async {
+    final row =
+        await _supabase
+            .rpc(
+              'cancel_trek_registration',
+              params: {'p_registration_id': id, 'p_reason': reason},
+            )
+            .select(_selectWithJoins)
+            .single();
 
     return RegistrationModel.fromJson(row);
   }
@@ -205,7 +218,8 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
   Future<void> updatePaymentStatus(String id, PaymentStatus status) async {
     await _supabase
         .from(AppConstants.tableRegistrations)
-        .update({'payment_status': status.toDbString()}).eq('id', id);
+        .update({'payment_status': status.toDbString()})
+        .eq('id', id);
   }
 
   @override
@@ -224,16 +238,24 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
 
     await _supabase.storage
         .from(AppConstants.bucketPaymentProofs)
-        .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: false),
+        );
 
     return path;
   }
 
   @override
-  Future<void> setPaymentScreenshotPath(String registrationId, String path) async {
+  Future<void> setPaymentScreenshotPath(
+    String registrationId,
+    String path,
+  ) async {
     await _supabase
         .from(AppConstants.tableRegistrations)
-        .update({'payment_screenshot_url': path}).eq('id', registrationId);
+        .update({'payment_screenshot_url': path})
+        .eq('id', registrationId);
   }
 
   @override
@@ -274,14 +296,19 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
       // is SECURITY DEFINER and idempotent-safe for ledger inserts.
       final uid = _supabase.auth.currentUser?.id;
       if (uid != null) {
-        _supabase.rpc('award_points', params: {
-          'p_user_id': uid,
-          'p_points': 100,
-          'p_reason': 'trek_checkin',
-          'p_reference_id': trekId,
-        }).catchError((e) {
-          debugPrint('verifyCheckin: award_points failed (non-fatal): $e');
-        });
+        _supabase
+            .rpc(
+              'award_points',
+              params: {
+                'p_user_id': uid,
+                'p_points': 100,
+                'p_reason': 'trek_checkin',
+                'p_reference_id': trekId,
+              },
+            )
+            .catchError((e) {
+              debugPrint('verifyCheckin: award_points failed (non-fatal): $e');
+            });
       }
 
       return checkedInAt;
@@ -294,4 +321,3 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
     }
   }
 }
-

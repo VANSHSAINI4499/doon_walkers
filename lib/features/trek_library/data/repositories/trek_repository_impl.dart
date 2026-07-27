@@ -41,11 +41,12 @@ class TrekRepositoryImpl implements TrekRepository {
 
   @override
   Future<Trek?> fetchTrekById(String id) async {
-    final row = await _supabase
-        .from(AppConstants.tableTreks)
-        .select()
-        .eq('id', id)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableTreks)
+            .select()
+            .eq('id', id)
+            .maybeSingle();
     if (row == null) return null;
     return TrekModel.fromJson(row);
   }
@@ -66,25 +67,28 @@ class TrekRepositoryImpl implements TrekRepository {
     double registrationFee = 0,
     int? maxParticipants,
   }) async {
-    final row = await _supabase
-        .from(AppConstants.tableTreks)
-        .insert(_writablePayload(
-          title: title,
-          description: description,
-          difficulty: difficulty,
-          distanceKm: distanceKm,
-          durationDays: durationDays,
-          altitudeM: altitudeM,
-          bestSeason: bestSeason,
-          thingsToCarry: thingsToCarry,
-          googleMapLink: googleMapLink,
-          trekDate: trekDate,
-          trekStartTime: trekStartTime,
-          registrationFee: registrationFee,
-          maxParticipants: maxParticipants,
-        ))
-        .select()
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableTreks)
+            .insert(
+              _writablePayload(
+                title: title,
+                description: description,
+                difficulty: difficulty,
+                distanceKm: distanceKm,
+                durationDays: durationDays,
+                altitudeM: altitudeM,
+                bestSeason: bestSeason,
+                thingsToCarry: thingsToCarry,
+                googleMapLink: googleMapLink,
+                trekDate: trekDate,
+                trekStartTime: trekStartTime,
+                registrationFee: registrationFee,
+                maxParticipants: maxParticipants,
+              ),
+            )
+            .select()
+            .single();
     // is_published isn't in the insert payload — it defaults to FALSE at
     // the DB level (0001_baseline_schema.sql), so every new trek starts
     // as a draft until explicitly published.
@@ -110,21 +114,23 @@ class TrekRepositoryImpl implements TrekRepository {
   }) async {
     await _supabase
         .from(AppConstants.tableTreks)
-        .update(_writablePayload(
-          title: title,
-          description: description,
-          difficulty: difficulty,
-          distanceKm: distanceKm,
-          durationDays: durationDays,
-          altitudeM: altitudeM,
-          bestSeason: bestSeason,
-          thingsToCarry: thingsToCarry,
-          googleMapLink: googleMapLink,
-          trekDate: trekDate,
-          trekStartTime: trekStartTime,
-          registrationFee: registrationFee,
-          maxParticipants: maxParticipants,
-        ))
+        .update(
+          _writablePayload(
+            title: title,
+            description: description,
+            difficulty: difficulty,
+            distanceKm: distanceKm,
+            durationDays: durationDays,
+            altitudeM: altitudeM,
+            bestSeason: bestSeason,
+            thingsToCarry: thingsToCarry,
+            googleMapLink: googleMapLink,
+            trekDate: trekDate,
+            trekStartTime: trekStartTime,
+            registrationFee: registrationFee,
+            maxParticipants: maxParticipants,
+          ),
+        )
         .eq('id', id);
   }
 
@@ -135,16 +141,19 @@ class TrekRepositoryImpl implements TrekRepository {
     // first. Best-effort: a failed cleanup shouldn't block deleting the
     // trek itself, it just leaves an orphaned file at worst.
     try {
-      final row = await _supabase
-          .from(AppConstants.tableTreks)
-          .select('cover_image')
-          .eq('id', id)
-          .maybeSingle();
+      final row =
+          await _supabase
+              .from(AppConstants.tableTreks)
+              .select('cover_image')
+              .eq('id', id)
+              .maybeSingle();
       final coverImage = row?['cover_image'] as String?;
       if (coverImage != null) {
         final path = _extractObjectPath(coverImage);
         if (path != null) {
-          await _supabase.storage.from(AppConstants.bucketTrekCovers).remove([path]);
+          await _supabase.storage.from(AppConstants.bucketTrekCovers).remove([
+            path,
+          ]);
         }
       }
     } catch (_) {
@@ -158,7 +167,8 @@ class TrekRepositoryImpl implements TrekRepository {
   Future<void> setPublished(String id, bool isPublished) async {
     await _supabase
         .from(AppConstants.tableTreks)
-        .update({'is_published': isPublished}).eq('id', id);
+        .update({'is_published': isPublished})
+        .eq('id', id);
   }
 
   @override
@@ -171,19 +181,28 @@ class TrekRepositoryImpl implements TrekRepository {
     // Always a fresh path, never an overwrite — reusing the same path
     // on replacement risks the browser/CDN serving a stale cached image
     // at an unchanged URL.
-    final path = '$trekId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+    final path =
+        '$trekId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
     await _supabase.storage
         .from(AppConstants.bucketTrekCovers)
-        .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: false),
+        );
 
-    final newUrl = _supabase.storage.from(AppConstants.bucketTrekCovers).getPublicUrl(path);
+    final newUrl = _supabase.storage
+        .from(AppConstants.bucketTrekCovers)
+        .getPublicUrl(path);
 
     if (previousImageUrl != null) {
       try {
         final oldPath = _extractObjectPath(previousImageUrl);
         if (oldPath != null) {
-          await _supabase.storage.from(AppConstants.bucketTrekCovers).remove([oldPath]);
+          await _supabase.storage.from(AppConstants.bucketTrekCovers).remove([
+            oldPath,
+          ]);
         }
       } catch (_) {
         // Same reasoning as deleteTrek — don't fail a successful upload
@@ -193,7 +212,8 @@ class TrekRepositoryImpl implements TrekRepository {
 
     await _supabase
         .from(AppConstants.tableTreks)
-        .update({'cover_image': newUrl}).eq('id', trekId);
+        .update({'cover_image': newUrl})
+        .eq('id', trekId);
 
     return newUrl;
   }
@@ -208,19 +228,28 @@ class TrekRepositoryImpl implements TrekRepository {
     // Same public trek-covers bucket as uploadCoverImage, under a
     // `qr-codes/` prefix so the two purposes don't collide or get
     // visually mixed up when browsing the bucket directly.
-    final path = 'qr-codes/$trekId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+    final path =
+        'qr-codes/$trekId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
     await _supabase.storage
         .from(AppConstants.bucketTrekCovers)
-        .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: false),
+        );
 
-    final newUrl = _supabase.storage.from(AppConstants.bucketTrekCovers).getPublicUrl(path);
+    final newUrl = _supabase.storage
+        .from(AppConstants.bucketTrekCovers)
+        .getPublicUrl(path);
 
     if (previousImageUrl != null) {
       try {
         final oldPath = _extractObjectPath(previousImageUrl);
         if (oldPath != null) {
-          await _supabase.storage.from(AppConstants.bucketTrekCovers).remove([oldPath]);
+          await _supabase.storage.from(AppConstants.bucketTrekCovers).remove([
+            oldPath,
+          ]);
         }
       } catch (_) {
         // Same reasoning as uploadCoverImage — don't fail a successful
@@ -230,18 +259,20 @@ class TrekRepositoryImpl implements TrekRepository {
 
     await _supabase
         .from(AppConstants.tableTreks)
-        .update({'payment_qr_code': newUrl}).eq('id', trekId);
+        .update({'payment_qr_code': newUrl})
+        .eq('id', trekId);
 
     return newUrl;
   }
 
   @override
   Future<String?> fetchCheckinToken(String trekId) async {
-    final row = await _supabase
-        .from(AppConstants.tableTrekCheckinTokens)
-        .select('token')
-        .eq('trek_id', trekId)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableTrekCheckinTokens)
+            .select('token')
+            .eq('trek_id', trekId)
+            .maybeSingle();
     return row?['token'] as String?;
   }
 
@@ -282,11 +313,12 @@ class TrekRepositoryImpl implements TrekRepository {
       // Postgres `date` accepts a plain "YYYY-MM-DD" string; slicing off
       // the time avoids sending timezone-dependent instant data for a
       // column that only ever stores a calendar day.
-      'trek_date': trekDate == null
-          ? null
-          : '${trekDate.year.toString().padLeft(4, '0')}-'
-              '${trekDate.month.toString().padLeft(2, '0')}-'
-              '${trekDate.day.toString().padLeft(2, '0')}',
+      'trek_date':
+          trekDate == null
+              ? null
+              : '${trekDate.year.toString().padLeft(4, '0')}-'
+                  '${trekDate.month.toString().padLeft(2, '0')}-'
+                  '${trekDate.day.toString().padLeft(2, '0')}',
       // Postgres `time` accepts a plain "HH:mm:ss" string, same reasoning
       // as trek_date above — no timezone to carry for a bare time of day.
       'trek_start_time': trekStartTime?.toDbString(),

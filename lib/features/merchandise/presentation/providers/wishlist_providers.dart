@@ -15,35 +15,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Watches [authStateChangesProvider] so signing out (or switching
 /// accounts) refetches rather than leaving the previous user's list
 /// cached on screen — mirrors [myRegistrationsProvider] exactly.
-final myWishlistPreviewProvider = FutureProvider.autoDispose<List<WishlistItem>>(
-  (ref) {
-    ref.watch(authStateChangesProvider);
-    return ref.watch(wishlistRepositoryProvider).fetchMyWishlist(limit: 3);
-  },
-  name: 'myWishlistPreviewProvider',
-);
+final myWishlistPreviewProvider =
+    FutureProvider.autoDispose<List<WishlistItem>>((ref) {
+      ref.watch(authStateChangesProvider);
+      return ref.watch(wishlistRepositoryProvider).fetchMyWishlist(limit: 3);
+    }, name: 'myWishlistPreviewProvider');
 
 /// Whether the signed-in user has [productId] wishlisted — drives the
 /// Product Detail toggle button's initial state. Mirrors
 /// `myRegistrationForTrekProvider`'s shape: returns `false` for a
 /// guest rather than throwing, since the button itself (not this
 /// lookup) is what hands a guest off to [AuthGuard].
-final isProductWishlistedProvider = FutureProvider.autoDispose.family<bool, String>(
-  (ref, productId) async {
-    ref.watch(authStateChangesProvider);
-    final supabase = ref.watch(supabaseClientProvider);
-    if (supabase.auth.currentUser == null) return false;
-    return ref.watch(wishlistRepositoryProvider).isWishlisted(productId);
-  },
-  name: 'isProductWishlistedProvider',
-);
+final isProductWishlistedProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, productId) async {
+      ref.watch(authStateChangesProvider);
+      final supabase = ref.watch(supabaseClientProvider);
+      if (supabase.auth.currentUser == null) return false;
+      return ref.watch(wishlistRepositoryProvider).isWishlisted(productId);
+    }, name: 'isProductWishlistedProvider');
 
 /// Riverpod AsyncNotifier managing wishlist mutations (add, remove).
 /// Mirrors RegistrationController's shape.
-final wishlistControllerProvider = AsyncNotifierProvider<WishlistController, void>(
-  WishlistController.new,
-  name: 'wishlistControllerProvider',
-);
+final wishlistControllerProvider =
+    AsyncNotifierProvider<WishlistController, void>(
+      WishlistController.new,
+      name: 'wishlistControllerProvider',
+    );
 
 class WishlistController extends AsyncNotifier<void> {
   @override

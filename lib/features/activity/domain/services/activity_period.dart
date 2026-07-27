@@ -165,6 +165,5 @@ class ActivityPeriod {
   int get hashCode => Object.hash(granularity, from, to);
 
   @override
-  String toString() =>
-      'ActivityPeriod(${granularity.name}, $from..$to)';
+  String toString() => 'ActivityPeriod(${granularity.name}, $from..$to)';
 }

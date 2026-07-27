@@ -64,11 +64,12 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
 
   @override
   Future<Challenge?> fetchChallengeById(String id) async {
-    final row = await _supabase
-        .from(AppConstants.tableChallenges)
-        .select(_fullChallengeSelect)
-        .eq('id', id)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableChallenges)
+            .select(_fullChallengeSelect)
+            .eq('id', id)
+            .maybeSingle();
     if (row == null) return null;
     return ChallengeModel.fromJson(row);
   }
@@ -85,29 +86,36 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
     required Map<ChallengeTier, double> tierThresholds,
     int pointValue = 50,
   }) async {
-    final row = await _supabase
-        .from(AppConstants.tableChallenges)
-        .insert(_writablePayload(
-          title: title,
-          description: description,
-          metric: metric,
-          timeWindow: timeWindow,
-          startDate: startDate,
-          endDate: endDate,
-          icon: icon,
-          pointValue: pointValue,
-        ))
-        .select()
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableChallenges)
+            .insert(
+              _writablePayload(
+                title: title,
+                description: description,
+                metric: metric,
+                timeWindow: timeWindow,
+                startDate: startDate,
+                endDate: endDate,
+                icon: icon,
+                pointValue: pointValue,
+              ),
+            )
+            .select()
+            .single();
     final challengeId = row['id'] as String;
 
-    await _supabase.from(AppConstants.tableChallengeTiers).insert(
+    await _supabase
+        .from(AppConstants.tableChallengeTiers)
+        .insert(
           tierThresholds.entries
-              .map((e) => {
-                    'challenge_id': challengeId,
-                    'tier': e.key.toDbString(),
-                    'threshold_value': e.value,
-                  })
+              .map(
+                (e) => {
+                  'challenge_id': challengeId,
+                  'tier': e.key.toDbString(),
+                  'threshold_value': e.value,
+                },
+              )
               .toList(),
         );
 
@@ -131,25 +139,31 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
   }) async {
     await _supabase
         .from(AppConstants.tableChallenges)
-        .update(_writablePayload(
-          title: title,
-          description: description,
-          metric: metric,
-          timeWindow: timeWindow,
-          startDate: startDate,
-          endDate: endDate,
-          icon: icon,
-          pointValue: pointValue,
-        ))
+        .update(
+          _writablePayload(
+            title: title,
+            description: description,
+            metric: metric,
+            timeWindow: timeWindow,
+            startDate: startDate,
+            endDate: endDate,
+            icon: icon,
+            pointValue: pointValue,
+          ),
+        )
         .eq('id', id);
 
-    await _supabase.from(AppConstants.tableChallengeTiers).upsert(
+    await _supabase
+        .from(AppConstants.tableChallengeTiers)
+        .upsert(
           tierThresholds.entries
-              .map((e) => {
-                    'challenge_id': id,
-                    'tier': e.key.toDbString(),
-                    'threshold_value': e.value,
-                  })
+              .map(
+                (e) => {
+                  'challenge_id': id,
+                  'tier': e.key.toDbString(),
+                  'threshold_value': e.value,
+                },
+              )
               .toList(),
           onConflict: 'challenge_id,tier',
         );
@@ -167,14 +181,17 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
   Future<void> setActive(String id, bool isActive) async {
     await _supabase
         .from(AppConstants.tableChallenges)
-        .update({'is_active': isActive}).eq('id', id);
+        .update({'is_active': isActive})
+        .eq('id', id);
   }
 
   @override
   Future<List<ChallengeProgress>> fetchMyProgress() async {
     final rows = await _supabase.rpc(AppConstants.rpcGetMyChallengeProgress);
     return (rows as List)
-        .map((row) => ChallengeProgressModel.fromJson(row as Map<String, dynamic>))
+        .map(
+          (row) => ChallengeProgressModel.fromJson(row as Map<String, dynamic>),
+        )
         .toList();
   }
 
@@ -182,7 +199,11 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
   Future<List<ChallengeTierAchievement>> fetchMyTierHistory() async {
     final rows = await _supabase.rpc(AppConstants.rpcGetMyChallengeTierHistory);
     return (rows as List)
-        .map((row) => ChallengeTierAchievementModel.fromJson(row as Map<String, dynamic>))
+        .map(
+          (row) => ChallengeTierAchievementModel.fromJson(
+            row as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
@@ -193,7 +214,9 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
       params: {'p_challenge_id': challengeId},
     );
     return (rows as List)
-        .map((row) => LeaderboardEntryModel.fromJson(row as Map<String, dynamic>))
+        .map(
+          (row) => LeaderboardEntryModel.fromJson(row as Map<String, dynamic>),
+        )
         .toList();
   }
 
@@ -223,12 +246,13 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
   Future<bool> isEnrolled(String challengeId) async {
     final uid = _currentUserId;
     if (uid == null) return false;
-    final row = await _supabase
-        .from(AppConstants.tableChallengeEnrollments)
-        .select('id')
-        .eq('challenge_id', challengeId)
-        .eq('user_id', uid)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableChallengeEnrollments)
+            .select('id')
+            .eq('challenge_id', challengeId)
+            .eq('user_id', uid)
+            .maybeSingle();
     return row != null;
   }
 
@@ -242,7 +266,10 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
         .eq('user_id', uid)
         .order('enrolled_at', ascending: false);
     return (rows as List)
-        .map((row) => ChallengeEnrollmentModel.fromJson(row as Map<String, dynamic>))
+        .map(
+          (row) =>
+              ChallengeEnrollmentModel.fromJson(row as Map<String, dynamic>),
+        )
         .toList();
   }
 
@@ -262,13 +289,14 @@ class ChallengeRepositoryImpl implements ChallengeRepository {
   }) async {
     final rows = await _supabase.rpc(
       AppConstants.rpcGetChallengeTopParticipants,
-      params: {
-        'p_challenge_id': challengeId,
-        'p_limit': limit,
-      },
+      params: {'p_challenge_id': challengeId, 'p_limit': limit},
     );
     return (rows as List)
-        .map((row) => ChallengeTopParticipantModel.fromJson(row as Map<String, dynamic>))
+        .map(
+          (row) => ChallengeTopParticipantModel.fromJson(
+            row as Map<String, dynamic>,
+          ),
+        )
         .toList();
   }
 
@@ -396,12 +424,15 @@ class _SupabaseChallengeCompletionAwardGateway
     int points,
   ) async {
     try {
-      await _supabase.rpc('award_points', params: {
-        'p_user_id': userId,
-        'p_points': points,
-        'p_reason': 'challenge_completed',
-        'p_reference_id': challengeId,
-      });
+      await _supabase.rpc(
+        'award_points',
+        params: {
+          'p_user_id': userId,
+          'p_points': points,
+          'p_reason': 'challenge_completed',
+          'p_reference_id': challengeId,
+        },
+      );
     } catch (e) {
       debugPrint(
         'ChallengeRepositoryImpl: challenge_completed award failed for '
@@ -411,4 +442,3 @@ class _SupabaseChallengeCompletionAwardGateway
     }
   }
 }
-

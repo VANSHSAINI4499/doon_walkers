@@ -33,7 +33,8 @@ class PointsLedgerTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: isPositive ? palette.primarySubtle : palette.dangerContainer,
+              color:
+                  isPositive ? palette.primarySubtle : palette.dangerContainer,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: AppIcon(

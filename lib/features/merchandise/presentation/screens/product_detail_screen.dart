@@ -44,12 +44,13 @@ class ProductDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: productAsync.when(
         loading: () => const _ProductDetailSkeleton(),
-        error: (error, stack) => _DetailMessage(
-          icon: AppIcons.error,
-          title: 'Could not load this product.',
-          actionLabel: 'Retry',
-          onAction: () => ref.invalidate(productByIdProvider(productId)),
-        ),
+        error:
+            (error, stack) => _DetailMessage(
+              icon: AppIcons.error,
+              title: 'Could not load this product.',
+              actionLabel: 'Retry',
+              onAction: () => ref.invalidate(productByIdProvider(productId)),
+            ),
         data: (product) {
           if (product == null) {
             return const _DetailMessage(
@@ -70,7 +71,12 @@ class ProductDetailScreen extends ConsumerWidget {
 }
 
 class _DetailMessage extends StatelessWidget {
-  const _DetailMessage({required this.icon, required this.title, this.actionLabel, this.onAction});
+  const _DetailMessage({
+    required this.icon,
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+  });
 
   final IconData icon;
   final String title;
@@ -89,7 +95,11 @@ class _DetailMessage extends StatelessWidget {
             children: [
               AppIcon(icon, size: 48, color: palette.textDisabled),
               const SizedBox(height: AppSpacing.lg),
-              Text(title, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+              Text(
+                title,
+                style: AppTextStyles.titleMedium,
+                textAlign: TextAlign.center,
+              ),
               if (actionLabel != null && onAction != null) ...[
                 const SizedBox(height: AppSpacing.lg),
                 PremiumButton(
@@ -105,7 +115,11 @@ class _DetailMessage extends StatelessWidget {
                 icon: AppIcons.back,
                 variant: PremiumButtonVariant.ghost,
                 size: PremiumButtonSize.small,
-                onPressed: () => Navigator.of(context).canPop() ? Navigator.of(context).pop() : null,
+                onPressed:
+                    () =>
+                        Navigator.of(context).canPop()
+                            ? Navigator.of(context).pop()
+                            : null,
               ),
             ],
           ),
@@ -145,11 +159,16 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
     if (widget.openBuyForm && !widget.isAdmin) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
-        final submitted = await showMerchInquiryFormSheet(context, product: widget.product);
+        final submitted = await showMerchInquiryFormSheet(
+          context,
+          product: widget.product,
+        );
         if (submitted == true && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Thanks! We'll be in touch to arrange payment and pickup."),
+              content: Text(
+                "Thanks! We'll be in touch to arrange payment and pickup.",
+              ),
             ),
           );
         }
@@ -178,7 +197,8 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
                 product: product,
                 iconColor: palette.textPrimary,
                 onDeleted: () {
-                  if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+                  if (Navigator.of(context).canPop())
+                    Navigator.of(context).pop();
                 },
               ),
           ],
@@ -190,14 +210,17 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
                   tag: AppHeroTags.productImage(product.id),
                   fromRadius: 0,
                   toRadius: 0,
-                  child: (coverImage == null || coverImage.isEmpty)
-                      ? const _CoverFallback(icon: AppIcons.bag)
-                      : Image.network(
-                          coverImage,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stack) =>
-                              const _CoverFallback(icon: AppIcons.imageBroken),
-                        ),
+                  child:
+                      (coverImage == null || coverImage.isEmpty)
+                          ? const _CoverFallback(icon: AppIcons.bag)
+                          : Image.network(
+                            coverImage,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stack) => const _CoverFallback(
+                                  icon: AppIcons.imageBroken,
+                                ),
+                          ),
                 ),
                 DecoratedBox(
                   decoration: BoxDecoration(
@@ -235,13 +258,19 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(product.name, style: AppTextStyles.headlineSmall),
+                          child: Text(
+                            product.name,
+                            style: AppTextStyles.headlineSmall,
+                          ),
                         ),
                         // Admins manage the catalog, they don't wishlist
                         // from it — same convention as the Buy Now CTA.
                         if (!isAdmin) ...[
                           const SizedBox(width: AppSpacing.md),
-                          WishlistButton(productId: product.id, autoAdd: widget.openWishlist),
+                          WishlistButton(
+                            productId: product.id,
+                            autoAdd: widget.openWishlist,
+                          ),
                         ],
                       ],
                     ),
@@ -257,25 +286,41 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
                     const SizedBox(height: AppSpacing.lg),
                     Text(
                       _formatPrice(product.price),
-                      style: AppTextStyles.tinted(AppTextStyles.headlineMedium, palette.primary),
+                      style: AppTextStyles.tinted(
+                        AppTextStyles.headlineMedium,
+                        palette.primary,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xxl),
 
                     if (product.hasVariants) ...[
-                      const SectionTitle(title: 'Available Sizes', icon: AppIcons.distance),
+                      const SectionTitle(
+                        title: 'Available Sizes',
+                        icon: AppIcons.distance,
+                      ),
                       const SizedBox(height: AppSpacing.md),
                       Wrap(
                         spacing: AppSpacing.sm,
                         runSpacing: AppSpacing.sm,
-                        children: product.variants.map((v) => _SizeChip(variant: v)).toList(),
+                        children:
+                            product.variants
+                                .map((v) => _SizeChip(variant: v))
+                                .toList(),
                       ),
                       const SizedBox(height: AppSpacing.xxl),
                     ],
 
                     if (product.description.trim().isNotEmpty) ...[
-                      SectionTitle(title: 'Description', icon: AppIcons.book, accent: palette.secondary),
+                      SectionTitle(
+                        title: 'Description',
+                        icon: AppIcons.book,
+                        accent: palette.secondary,
+                      ),
                       const SizedBox(height: AppSpacing.md),
-                      Text(product.description, style: AppTextStyles.secondary(AppTextStyles.bodyLarge)),
+                      Text(
+                        product.description,
+                        style: AppTextStyles.secondary(AppTextStyles.bodyLarge),
+                      ),
                       const SizedBox(height: AppSpacing.xxl),
                     ],
 
@@ -288,7 +333,11 @@ class _ProductDetailBodyState extends ConsumerState<_ProductDetailBody> {
 
                     const Divider(),
                     const SizedBox(height: AppSpacing.xl),
-                    SectionTitle(title: 'Photos', icon: AppIcons.photo, accent: palette.accent),
+                    SectionTitle(
+                      title: 'Photos',
+                      icon: AppIcons.photo,
+                      accent: palette.accent,
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     ProductImagesSection(
                       productId: product.id,
@@ -319,10 +368,10 @@ class _CoverFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.cardHigh,
+      decoration: BoxDecoration(color: palette.cardHigh),
+      child: Center(
+        child: AppIcon(AppIcons.bag, size: 64, color: palette.textDisabled),
       ),
-      child: Center(child: AppIcon(AppIcons.bag, size: 64, color: palette.textDisabled)),
     );
   }
 }
@@ -336,7 +385,10 @@ class _DraftBanner extends StatelessWidget {
     return AppCard(
       borderColor: palette.gold.withValues(alpha: 0.5),
       color: palette.gold.withValues(alpha: 0.08),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Row(
         children: [
           AppIcon(AppIcons.editNote, size: 18, color: palette.gold),
@@ -344,7 +396,10 @@ class _DraftBanner extends StatelessWidget {
           Expanded(
             child: Text(
               'Draft — not visible to members yet.',
-              style: AppTextStyles.tinted(AppTextStyles.labelMedium, palette.gold),
+              style: AppTextStyles.tinted(
+                AppTextStyles.labelMedium,
+                palette.gold,
+              ),
             ),
           ),
         ],
@@ -364,9 +419,13 @@ class _SizeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final inStock = variant.isInStock;
-    final color = inStock ? palette.border : palette.danger.withValues(alpha: 0.5);
+    final color =
+        inStock ? palette.border : palette.danger.withValues(alpha: 0.5);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
@@ -404,9 +463,17 @@ class _ProductDetailSkeleton extends StatelessWidget {
                 SizedBox(height: AppSpacing.lg),
                 Row(
                   children: [
-                    SkeletonBox(width: 80, height: 24, borderRadius: AppRadius.pill),
+                    SkeletonBox(
+                      width: 80,
+                      height: 24,
+                      borderRadius: AppRadius.pill,
+                    ),
                     SizedBox(width: AppSpacing.sm),
-                    SkeletonBox(width: 90, height: 24, borderRadius: AppRadius.pill),
+                    SkeletonBox(
+                      width: 90,
+                      height: 24,
+                      borderRadius: AppRadius.pill,
+                    ),
                   ],
                 ),
                 SizedBox(height: AppSpacing.lg),

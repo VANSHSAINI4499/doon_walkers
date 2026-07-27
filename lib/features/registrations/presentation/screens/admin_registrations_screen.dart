@@ -29,7 +29,9 @@ class AdminRegistrationsScreen extends ConsumerWidget {
         child: registrationsAsync.when(
           loading: () => const _RegistrationsSkeleton(),
           error: (error, stack) {
-            debugPrint('AdminRegistrationsScreen: failed to load registrations: $error');
+            debugPrint(
+              'AdminRegistrationsScreen: failed to load registrations: $error',
+            );
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -57,7 +59,8 @@ class AdminRegistrationsScreen extends ConsumerWidget {
             );
           },
           data: (registrations) {
-            Future<void> onRefresh() => ref.refresh(allRegistrationsProvider.future);
+            Future<void> onRefresh() =>
+                ref.refresh(allRegistrationsProvider.future);
 
             if (registrations.isEmpty) {
               return RefreshIndicator(
@@ -73,9 +76,15 @@ class AdminRegistrationsScreen extends ConsumerWidget {
               onRefresh: onRefresh,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                ),
                 itemCount: registrations.length,
-                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+                separatorBuilder:
+                    (context, index) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
                   final registration = registrations[index];
                   return AppReveal(
@@ -85,9 +94,12 @@ class AdminRegistrationsScreen extends ConsumerWidget {
                       // Sensitive fields (age/gender/emergency contact/
                       // medical notes) live behind this tap rather than in
                       // the list — see AdminRegistrationDetailScreen.
-                      onTap: () => context.push(
-                        AppConstants.adminRegistrationDetailLocation(registration.id),
-                      ),
+                      onTap:
+                          () => context.push(
+                            AppConstants.adminRegistrationDetailLocation(
+                              registration.id,
+                            ),
+                          ),
                     ),
                   );
                 },
@@ -118,7 +130,11 @@ class _EmptyRegistrations extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
             ),
-            child: AppIcon(AppIcons.registrations, size: 48, color: palette.primary),
+            child: AppIcon(
+              AppIcons.registrations,
+              size: 48,
+              color: palette.primary,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
@@ -149,27 +165,32 @@ class _RegistrationsSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: 4,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 180, height: 16),
-              SizedBox(height: AppSpacing.sm),
-              SkeletonBox(width: 140, height: 10),
-              SizedBox(height: AppSpacing.md),
-              SkeletonBox(width: 220, height: 44, borderRadius: AppRadius.sm),
-            ],
-          ),
-        ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder:
+            (context, index) => Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(width: 180, height: 16),
+                  SizedBox(height: AppSpacing.sm),
+                  SkeletonBox(width: 140, height: 10),
+                  SizedBox(height: AppSpacing.md),
+                  SkeletonBox(
+                    width: 220,
+                    height: 44,
+                    borderRadius: AppRadius.sm,
+                  ),
+                ],
+              ),
+            ),
       ),
     );
   }
 }
-

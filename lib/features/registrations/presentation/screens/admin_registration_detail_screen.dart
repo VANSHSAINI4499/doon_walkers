@@ -16,14 +16,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// gates in the router. `registrations_select` independently returns
 /// nothing here for a non-admin viewing someone else's row.
 class AdminRegistrationDetailScreen extends ConsumerWidget {
-  const AdminRegistrationDetailScreen({super.key, required this.registrationId});
+  const AdminRegistrationDetailScreen({
+    super.key,
+    required this.registrationId,
+  });
 
   final String registrationId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
-    final registrationAsync = ref.watch(registrationByIdProvider(registrationId));
+    final registrationAsync = ref.watch(
+      registrationByIdProvider(registrationId),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Registration')),
@@ -31,7 +36,9 @@ class AdminRegistrationDetailScreen extends ConsumerWidget {
         child: registrationAsync.when(
           loading: () => const _DetailSkeleton(),
           error: (error, stack) {
-            debugPrint('AdminRegistrationDetailScreen: failed to load $registrationId: $error');
+            debugPrint(
+              'AdminRegistrationDetailScreen: failed to load $registrationId: $error',
+            );
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -51,7 +58,10 @@ class AdminRegistrationDetailScreen extends ConsumerWidget {
                       icon: AppIcons.refresh,
                       variant: PremiumButtonVariant.glass,
                       size: PremiumButtonSize.small,
-                      onPressed: () => ref.invalidate(registrationByIdProvider(registrationId)),
+                      onPressed:
+                          () => ref.invalidate(
+                            registrationByIdProvider(registrationId),
+                          ),
                     ),
                   ],
                 ),
@@ -97,17 +107,17 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
 
     final palette = AppPalette.of(context);
     setState(() => _isSaving = true);
-    final success = await ref.read(registrationControllerProvider.notifier).setPaymentStatus(
-          id: r.id,
-          trekId: r.trekId,
-          status: status,
-        );
+    final success = await ref
+        .read(registrationControllerProvider.notifier)
+        .setPaymentStatus(id: r.id, trekId: r.trekId, status: status);
     if (!mounted) return;
     setState(() => _isSaving = false);
 
     if (!success) {
       final error = ref.read(registrationControllerProvider).error;
-      debugPrint('AdminRegistrationDetail: payment_status update failed: $error');
+      debugPrint(
+        'AdminRegistrationDetail: payment_status update failed: $error',
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
@@ -155,8 +165,16 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    _Field(icon: AppIcons.treks, label: 'Trek', value: r.trekTitle),
-                    _Field(icon: AppIcons.email, label: 'Email', value: r.userEmail),
+                    _Field(
+                      icon: AppIcons.treks,
+                      label: 'Trek',
+                      value: r.trekTitle,
+                    ),
+                    _Field(
+                      icon: AppIcons.email,
+                      label: 'Email',
+                      value: r.userEmail,
+                    ),
                     _Field(
                       icon: AppIcons.call,
                       label: 'Phone',
@@ -188,10 +206,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
               const SizedBox(height: AppSpacing.xl),
 
               // ── Sensitive registrant detail ─────────────────────
-              Text(
-                'Registrant Details',
-                style: AppTextStyles.titleSmall,
-              ),
+              Text('Registrant Details', style: AppTextStyles.titleSmall),
               const SizedBox(height: AppSpacing.sm),
               AppCard(
                 child: Column(
@@ -228,20 +243,14 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
 
               // ── Payment proof (only for paid-trek registrations) ─
               if (r.paymentScreenshotUrl != null) ...[
-                Text(
-                  'Payment Proof',
-                  style: AppTextStyles.titleSmall,
-                ),
+                Text('Payment Proof', style: AppTextStyles.titleSmall),
                 const SizedBox(height: AppSpacing.sm),
                 _PaymentProofCard(path: r.paymentScreenshotUrl!),
                 const SizedBox(height: AppSpacing.xl),
               ],
 
               // ── Admin-only payment control ──────────────────────
-              Text(
-                'Payment Status',
-                style: AppTextStyles.titleSmall,
-              ),
+              Text('Payment Status', style: AppTextStyles.titleSmall),
               const SizedBox(height: AppSpacing.sm),
               AppCard(
                 child: Column(
@@ -249,15 +258,24 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                   children: [
                     DropdownButtonFormField<PaymentStatus>(
                       value: r.paymentStatus,
-                      decoration: const InputDecoration(labelText: 'Payment status'),
-                      items: PaymentStatus.values
-                          .map((s) => DropdownMenuItem(value: s, child: Text(s.label)))
-                          .toList(),
-                      onChanged: _isSaving
-                          ? null
-                          : (value) {
-                              if (value != null) _updateStatus(value);
-                            },
+                      decoration: const InputDecoration(
+                        labelText: 'Payment status',
+                      ),
+                      items:
+                          PaymentStatus.values
+                              .map(
+                                (s) => DropdownMenuItem(
+                                  value: s,
+                                  child: Text(s.label),
+                                ),
+                              )
+                              .toList(),
+                      onChanged:
+                          _isSaving
+                              ? null
+                              : (value) {
+                                if (value != null) _updateStatus(value);
+                              },
                     ),
                     const SizedBox(height: AppSpacing.md),
                     if (_isSaving)
@@ -298,10 +316,11 @@ class _PaymentProofCard extends ConsumerWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       child: signedUrlAsync.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        loading:
+            () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
+              child: Center(child: CircularProgressIndicator()),
+            ),
         error: (error, stack) {
           debugPrint('_PaymentProofCard: failed to sign $path: $error');
           return Padding(
@@ -321,28 +340,33 @@ class _PaymentProofCard extends ConsumerWidget {
                   icon: AppIcons.refresh,
                   variant: PremiumButtonVariant.ghost,
                   size: PremiumButtonSize.small,
-                  onPressed: () => ref.invalidate(paymentProofSignedUrlProvider(path)),
+                  onPressed:
+                      () => ref.invalidate(paymentProofSignedUrlProvider(path)),
                 ),
               ],
             ),
           );
         },
-        data: (signedUrl) => InteractiveViewer(
-          child: Image.network(
-            signedUrl,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stack) => Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                children: [
-                  AppIcon(AppIcons.imageBroken, color: palette.danger),
-                  const SizedBox(width: AppSpacing.md),
-                  const Expanded(child: Text('Could not display the screenshot.')),
-                ],
+        data:
+            (signedUrl) => InteractiveViewer(
+              child: Image.network(
+                signedUrl,
+                fit: BoxFit.contain,
+                errorBuilder:
+                    (context, error, stack) => Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Row(
+                        children: [
+                          AppIcon(AppIcons.imageBroken, color: palette.danger),
+                          const SizedBox(width: AppSpacing.md),
+                          const Expanded(
+                            child: Text('Could not display the screenshot.'),
+                          ),
+                        ],
+                      ),
+                    ),
               ),
             ),
-          ),
-        ),
       ),
     );
   }

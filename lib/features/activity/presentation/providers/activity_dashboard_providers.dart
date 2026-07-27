@@ -79,9 +79,7 @@ final activityPercentileProvider = FutureProvider.autoDispose
 /// Daily percentile provider.
 final dailyPercentileProvider = FutureProvider.autoDispose
     .family<int?, DateTime>((ref, date) {
-      return ref
-          .watch(activityRepositoryProvider)
-          .fetchDailyPercentile(date);
+      return ref.watch(activityRepositoryProvider).fetchDailyPercentile(date);
     }, name: 'dailyPercentileProvider');
 
 /// Best day provider for a given month.
@@ -93,12 +91,14 @@ final bestDayProvider = FutureProvider.autoDispose
     }, name: 'bestDayProvider');
 
 /// Active days count for a given month.
-final activeDaysProvider = FutureProvider.autoDispose
-    .family<int, DateTime>((ref, month) {
-      return ref
-          .watch(activityRepositoryProvider)
-          .fetchActiveDays(year: month.year, month: month.month);
-    }, name: 'activeDaysProvider');
+final activeDaysProvider = FutureProvider.autoDispose.family<int, DateTime>((
+  ref,
+  month,
+) {
+  return ref
+      .watch(activityRepositoryProvider)
+      .fetchActiveDays(year: month.year, month: month.month);
+}, name: 'activeDaysProvider');
 
 /// Weekly aggregates provider for a given month.
 final weeklyAggregatesProvider = FutureProvider.autoDispose
@@ -117,26 +117,26 @@ final monthComparisonProvider = FutureProvider.autoDispose
     }, name: 'monthComparisonProvider');
 
 /// Unlocked achievements provider.
-final userAchievementsProvider = FutureProvider.autoDispose<List<UserAchievement>>((ref) {
-  return ref.watch(activityRepositoryProvider).fetchUserAchievements();
-}, name: 'userAchievementsProvider');
+final userAchievementsProvider =
+    FutureProvider.autoDispose<List<UserAchievement>>((ref) {
+      return ref.watch(activityRepositoryProvider).fetchUserAchievements();
+    }, name: 'userAchievementsProvider');
 
 /// Unlocked achievements via RPC (supporting milestones & platinums)
-final myAchievementsProvider = FutureProvider.autoDispose.family<List<UserAchievement>, ({int limit, int offset})>((ref, args) {
-  return ref.watch(activityRepositoryProvider).fetchMyAchievements(
-        limit: args.limit,
-        offset: args.offset,
-      );
-}, name: 'myAchievementsProvider');
-
-
-/// User goal provider via Phase 19 RPC.
-final userGoalProvider = FutureProvider.autoDispose
-    .family<dynamic, String>((ref, goalType) {
+final myAchievementsProvider = FutureProvider.autoDispose
+    .family<List<UserAchievement>, ({int limit, int offset})>((ref, args) {
       return ref
           .watch(activityRepositoryProvider)
-          .getOrCreateUserGoal(goalType);
-    }, name: 'userGoalProvider');
+          .fetchMyAchievements(limit: args.limit, offset: args.offset);
+    }, name: 'myAchievementsProvider');
+
+/// User goal provider via Phase 19 RPC.
+final userGoalProvider = FutureProvider.autoDispose.family<dynamic, String>((
+  ref,
+  goalType,
+) {
+  return ref.watch(activityRepositoryProvider).getOrCreateUserGoal(goalType);
+}, name: 'userGoalProvider');
 
 /// Writes the user's daily step goal.
 ///

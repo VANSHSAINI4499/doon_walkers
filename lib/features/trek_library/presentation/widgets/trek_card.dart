@@ -62,7 +62,8 @@ class TrekCard extends ConsumerWidget {
       borderRadius: AppRadius.card,
       // A tinted hairline marks an upcoming trek — the calm replacement
       // for the glow this card used to cast for the same signal.
-      borderColor: trek.isUpcoming ? palette.primary.withValues(alpha: 0.4) : null,
+      borderColor:
+          trek.isUpcoming ? palette.primary.withValues(alpha: 0.4) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -76,13 +77,16 @@ class TrekCard extends ConsumerWidget {
                   tag: AppHeroTags.trekCover(trek.id),
                   fromRadius: AppRadius.card,
                   toRadius: 0,
-                  child: (coverImage == null || coverImage.isEmpty)
-                      ? const _CoverPlaceholder()
-                      : Image.network(
-                          coverImage,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stack) => const _CoverPlaceholder(),
-                        ),
+                  child:
+                      (coverImage == null || coverImage.isEmpty)
+                          ? const _CoverPlaceholder()
+                          : Image.network(
+                            coverImage,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stack) =>
+                                    const _CoverPlaceholder(),
+                          ),
                 ),
                 // A soft top-down scrim so light overlays (draft marker,
                 // admin menu) stay legible over a bright photo.
@@ -243,11 +247,22 @@ class TrekCard extends ConsumerWidget {
     );
   }
 
-  String _formatDistance(double km) => km % 1 == 0 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
+  String _formatDistance(double km) =>
+      km % 1 == 0 ? km.toStringAsFixed(0) : km.toStringAsFixed(1);
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   String _formatDate(DateTime dt) => '${dt.day} ${_months[dt.month - 1]}';
@@ -262,7 +277,11 @@ class _CoverPlaceholder extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(color: palette.cardHigh),
       child: Center(
-        child: AppIcon(AppIcons.landscape, size: 40, color: palette.textDisabled),
+        child: AppIcon(
+          AppIcons.landscape,
+          size: 40,
+          color: palette.textDisabled,
+        ),
       ),
     );
   }
@@ -285,7 +304,10 @@ class _CardBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -295,7 +317,10 @@ class _CardBadge extends StatelessWidget {
         children: [
           AppIcon(icon, size: 12, color: foreground),
           const SizedBox(width: AppSpacing.xs),
-          Text(label, style: AppTextStyles.labelSmall.copyWith(color: foreground)),
+          Text(
+            label,
+            style: AppTextStyles.labelSmall.copyWith(color: foreground),
+          ),
         ],
       ),
     );
@@ -313,7 +338,10 @@ class _FactChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
         color: palette.cardHigh,
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -325,7 +353,9 @@ class _FactChip extends StatelessWidget {
           const SizedBox(width: AppSpacing.xs),
           Text(
             label,
-            style: AppTextStyles.labelSmall.copyWith(color: palette.textPrimary),
+            style: AppTextStyles.labelSmall.copyWith(
+              color: palette.textPrimary,
+            ),
           ),
         ],
       ),

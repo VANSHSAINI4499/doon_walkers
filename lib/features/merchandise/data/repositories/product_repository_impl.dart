@@ -46,11 +46,12 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<Product?> fetchProductById(String id) async {
-    final row = await _supabase
-        .from(AppConstants.tableProducts)
-        .select(_fullProductSelect)
-        .eq('id', id)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableProducts)
+            .select(_fullProductSelect)
+            .eq('id', id)
+            .maybeSingle();
     if (row == null) return null;
     return ProductModel.fromJson(row);
   }
@@ -63,17 +64,20 @@ class ProductRepositoryImpl implements ProductRepository {
     required ProductCategory category,
     required int stockQuantity,
   }) async {
-    final row = await _supabase
-        .from(AppConstants.tableProducts)
-        .insert(_writablePayload(
-          name: name,
-          description: description,
-          price: price,
-          category: category,
-          stockQuantity: stockQuantity,
-        ))
-        .select()
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableProducts)
+            .insert(
+              _writablePayload(
+                name: name,
+                description: description,
+                price: price,
+                category: category,
+                stockQuantity: stockQuantity,
+              ),
+            )
+            .select()
+            .single();
     // is_active isn't in the insert payload — it defaults to FALSE at
     // the DB level, so every new product starts as a draft. No
     // variants/images yet either — a fresh row parses to empty lists.
@@ -91,13 +95,15 @@ class ProductRepositoryImpl implements ProductRepository {
   }) async {
     await _supabase
         .from(AppConstants.tableProducts)
-        .update(_writablePayload(
-          name: name,
-          description: description,
-          price: price,
-          category: category,
-          stockQuantity: stockQuantity,
-        ))
+        .update(
+          _writablePayload(
+            name: name,
+            description: description,
+            price: price,
+            category: category,
+            stockQuantity: stockQuantity,
+          ),
+        )
         .eq('id', id);
   }
 
@@ -112,12 +118,15 @@ class ProductRepositoryImpl implements ProductRepository {
           .from(AppConstants.tableProductImages)
           .select('image_url')
           .eq('product_id', id);
-      final paths = imageRows
-          .map((row) => _extractObjectPath(row['image_url'] as String))
-          .whereType<String>()
-          .toList();
+      final paths =
+          imageRows
+              .map((row) => _extractObjectPath(row['image_url'] as String))
+              .whereType<String>()
+              .toList();
       if (paths.isNotEmpty) {
-        await _supabase.storage.from(AppConstants.bucketMerchImages).remove(paths);
+        await _supabase.storage
+            .from(AppConstants.bucketMerchImages)
+            .remove(paths);
       }
     } catch (_) {
       // Orphaned files at worst — not worth failing the delete over.
@@ -132,7 +141,8 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> setActive(String id, bool isActive) async {
     await _supabase
         .from(AppConstants.tableProducts)
-        .update({'is_active': isActive}).eq('id', id);
+        .update({'is_active': isActive})
+        .eq('id', id);
   }
 
   @override
@@ -141,15 +151,16 @@ class ProductRepositoryImpl implements ProductRepository {
     required String size,
     required int stockQuantity,
   }) async {
-    final row = await _supabase
-        .from(AppConstants.tableProductVariants)
-        .insert({
-          'product_id': productId,
-          'size': size,
-          'stock_quantity': stockQuantity,
-        })
-        .select()
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableProductVariants)
+            .insert({
+              'product_id': productId,
+              'size': size,
+              'stock_quantity': stockQuantity,
+            })
+            .select()
+            .single();
     return ProductVariantModel.fromJson(row);
   }
 
@@ -160,12 +171,16 @@ class ProductRepositoryImpl implements ProductRepository {
   }) async {
     await _supabase
         .from(AppConstants.tableProductVariants)
-        .update({'stock_quantity': stockQuantity}).eq('id', variantId);
+        .update({'stock_quantity': stockQuantity})
+        .eq('id', variantId);
   }
 
   @override
   Future<void> deleteVariant(String variantId) async {
-    await _supabase.from(AppConstants.tableProductVariants).delete().eq('id', variantId);
+    await _supabase
+        .from(AppConstants.tableProductVariants)
+        .delete()
+        .eq('id', variantId);
   }
 
   @override
@@ -177,22 +192,27 @@ class ProductRepositoryImpl implements ProductRepository {
     // Always a fresh path, never an overwrite — same reasoning as trek
     // cover/gallery uploads (avoids serving a stale cached image at an
     // unchanged URL).
-    final path = '$productId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+    final path =
+        '$productId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
     await _supabase.storage
         .from(AppConstants.bucketMerchImages)
-        .uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+        .uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: false),
+        );
 
-    final url = _supabase.storage.from(AppConstants.bucketMerchImages).getPublicUrl(path);
+    final url = _supabase.storage
+        .from(AppConstants.bucketMerchImages)
+        .getPublicUrl(path);
 
-    final row = await _supabase
-        .from(AppConstants.tableProductImages)
-        .insert({
-          'product_id': productId,
-          'image_url': url,
-        })
-        .select()
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableProductImages)
+            .insert({'product_id': productId, 'image_url': url})
+            .select()
+            .single();
 
     return ProductImageModel.fromJson(row);
   }
@@ -200,16 +220,19 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<void> deleteImage(String id) async {
     try {
-      final row = await _supabase
-          .from(AppConstants.tableProductImages)
-          .select('image_url')
-          .eq('id', id)
-          .maybeSingle();
+      final row =
+          await _supabase
+              .from(AppConstants.tableProductImages)
+              .select('image_url')
+              .eq('id', id)
+              .maybeSingle();
       final imageUrl = row?['image_url'] as String?;
       if (imageUrl != null) {
         final path = _extractObjectPath(imageUrl);
         if (path != null) {
-          await _supabase.storage.from(AppConstants.bucketMerchImages).remove([path]);
+          await _supabase.storage.from(AppConstants.bucketMerchImages).remove([
+            path,
+          ]);
         }
       }
     } catch (_) {

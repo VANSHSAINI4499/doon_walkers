@@ -13,9 +13,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('Not authenticated');
 
-    await _supabase.rpc('update_profile', params: {
-      'p_display_name': name.trim(),
-    });
+    await _supabase.rpc(
+      'update_profile',
+      params: {'p_display_name': name.trim()},
+    );
   }
 
   @override
@@ -32,26 +33,31 @@ class ProfileRepositoryImpl implements ProfileRepository {
       format: CompressFormat.jpeg,
     );
 
-    final uploadBytes = compressedBytes.isNotEmpty ? compressedBytes : imageBytes;
+    final uploadBytes =
+        compressedBytes.isNotEmpty ? compressedBytes : imageBytes;
     final path = '${user.id}/avatar.jpg';
 
     // Upload to avatars bucket with upsert = true
-    await _supabase.storage.from('avatars').uploadBinary(
-      path,
-      uploadBytes,
-      fileOptions: const FileOptions(
-        upsert: true,
-        contentType: 'image/jpeg',
-      ),
-    );
+    await _supabase.storage
+        .from('avatars')
+        .uploadBinary(
+          path,
+          uploadBytes,
+          fileOptions: const FileOptions(
+            upsert: true,
+            contentType: 'image/jpeg',
+          ),
+        );
 
     final publicUrl = _supabase.storage.from('avatars').getPublicUrl(path);
     // Append a timestamp parameter to bust network cache when image is re-uploaded
-    final cacheBustedUrl = '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+    final cacheBustedUrl =
+        '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
 
-    await _supabase.rpc('update_profile', params: {
-      'p_avatar_url': cacheBustedUrl,
-    });
+    await _supabase.rpc(
+      'update_profile',
+      params: {'p_avatar_url': cacheBustedUrl},
+    );
 
     return cacheBustedUrl;
   }
@@ -61,8 +67,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('Not authenticated');
 
-    await _supabase.rpc('update_profile', params: {
-      'p_clear_avatar': true,
-    });
+    await _supabase.rpc('update_profile', params: {'p_clear_avatar': true});
   }
 }

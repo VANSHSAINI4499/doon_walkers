@@ -102,16 +102,18 @@ class _ConcentricRingsPainter extends CustomPainter {
   }) {
     if (radius <= 0) return;
 
-    final trackPaint = Paint()
-      ..color = trackColor
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
+    final trackPaint =
+        Paint()
+          ..color = trackColor
+          ..strokeWidth = strokeWidth
+          ..style = PaintingStyle.stroke;
 
-    final fillPaint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+    final fillPaint =
+        Paint()
+          ..color = color
+          ..strokeWidth = strokeWidth
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, trackPaint);
 

@@ -60,7 +60,8 @@ class MediaUploadTask {
       status == MediaUploadStatus.cancelled;
 
   bool get isActive =>
-      status == MediaUploadStatus.compressing || status == MediaUploadStatus.uploading;
+      status == MediaUploadStatus.compressing ||
+      status == MediaUploadStatus.uploading;
 
   MediaUploadTask copyWith({
     CancelToken? cancelToken,

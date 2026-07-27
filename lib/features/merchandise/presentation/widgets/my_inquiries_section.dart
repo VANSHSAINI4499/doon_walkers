@@ -48,7 +48,8 @@ class MyInquiryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sizeLabel = inquiry.variantSize != null ? ' · Size ${inquiry.variantSize}' : '';
+    final sizeLabel =
+        inquiry.variantSize != null ? ' · Size ${inquiry.variantSize}' : '';
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),

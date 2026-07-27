@@ -61,15 +61,16 @@ class SettingsBackedPage extends ConsumerWidget {
             ),
           );
         },
-        data: (settings) => Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: builder(context, settings),
+        data:
+            (settings) => Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: builder(context, settings),
+                ),
+              ),
             ),
-          ),
-        ),
       ),
     );
   }

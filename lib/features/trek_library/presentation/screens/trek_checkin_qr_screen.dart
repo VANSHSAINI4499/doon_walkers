@@ -30,7 +30,8 @@ class TrekCheckinQrScreen extends ConsumerWidget {
   _CheckinWindowStatus _windowStatus(Trek trek) {
     final date = trek.trekDate;
     final startTime = trek.trekStartTime;
-    if (date == null || startTime == null) return _CheckinWindowStatus.notScheduled;
+    if (date == null || startTime == null)
+      return _CheckinWindowStatus.notScheduled;
 
     final start = startTime.onDate(date);
     final now = DateTime.now();
@@ -52,20 +53,23 @@ class TrekCheckinQrScreen extends ConsumerWidget {
       body: SafeArea(
         child: trekAsync.when(
           loading: () => const AdminFormLoadingSkeleton(),
-          error: (error, stack) => AdminFormErrorState(
-            message: 'Could not load this trek.',
-            onRetry: () => ref.invalidate(trekByIdProvider(trekId)),
-          ),
+          error:
+              (error, stack) => AdminFormErrorState(
+                message: 'Could not load this trek.',
+                onRetry: () => ref.invalidate(trekByIdProvider(trekId)),
+              ),
           data: (trek) {
             if (trek == null) {
               return const Center(child: Text('Trek not found.'));
             }
             return tokenAsync.when(
               loading: () => const AdminFormLoadingSkeleton(),
-              error: (error, stack) => AdminFormErrorState(
-                message: 'Could not load the check-in QR.',
-                onRetry: () => ref.invalidate(trekCheckinTokenProvider(trekId)),
-              ),
+              error:
+                  (error, stack) => AdminFormErrorState(
+                    message: 'Could not load the check-in QR.',
+                    onRetry:
+                        () => ref.invalidate(trekCheckinTokenProvider(trekId)),
+                  ),
               data: (token) {
                 if (token == null) {
                   // Admin-only RLS returns zero rows for anyone else, and
@@ -76,7 +80,9 @@ class TrekCheckinQrScreen extends ConsumerWidget {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(AppSpacing.xxl),
-                      child: Text('No check-in QR is available for this trek yet.'),
+                      child: Text(
+                        'No check-in QR is available for this trek yet.',
+                      ),
                     ),
                   );
                 }
@@ -100,7 +106,11 @@ class TrekCheckinQrScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(trek.title, style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+              Text(
+                trek.title,
+                style: AppTextStyles.titleLarge,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: AppSpacing.xxl),
 
               AppCard(
@@ -142,7 +152,9 @@ class _StatusBanner extends StatelessWidget {
   final _CheckinWindowStatus status;
   final Trek trek;
 
-  ({Color color, IconData icon, String title, String subtitle}) _content(BuildContext context) {
+  ({Color color, IconData icon, String title, String subtitle}) _content(
+    BuildContext context,
+  ) {
     final palette = AppPalette.of(context);
     switch (status) {
       case _CheckinWindowStatus.notScheduled:
@@ -154,12 +166,15 @@ class _StatusBanner extends StatelessWidget {
         );
       case _CheckinWindowStatus.notYetOpen:
         final start = trek.trekStartTime!.onDate(trek.trekDate!);
-        final opensAt = start.subtract(const Duration(hours: _checkinWindowHours));
+        final opensAt = start.subtract(
+          const Duration(hours: _checkinWindowHours),
+        );
         return (
           color: palette.gold,
           icon: AppIcons.schedule,
           title: 'Not open yet',
-          subtitle: 'Opens ${_formatDateTime(opensAt)} '
+          subtitle:
+              'Opens ${_formatDateTime(opensAt)} '
               '($_checkinWindowHours hours before the trek starts).',
         );
       case _CheckinWindowStatus.open:
@@ -174,15 +189,26 @@ class _StatusBanner extends StatelessWidget {
           color: palette.danger,
           icon: AppIcons.eventBusy,
           title: 'Check-in window closed',
-          subtitle: 'More than $_checkinWindowHours hours have passed since the trek started.',
+          subtitle:
+              'More than $_checkinWindowHours hours have passed since the trek started.',
         );
     }
   }
 
   String _formatDateTime(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final period = dt.hour < 12 ? 'AM' : 'PM';
@@ -209,9 +235,18 @@ class _StatusBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(c.title, style: AppTextStyles.tinted(AppTextStyles.titleSmall, c.color)),
+                Text(
+                  c.title,
+                  style: AppTextStyles.tinted(
+                    AppTextStyles.titleSmall,
+                    c.color,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.xs),
-                Text(c.subtitle, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                Text(
+                  c.subtitle,
+                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                ),
               ],
             ),
           ),

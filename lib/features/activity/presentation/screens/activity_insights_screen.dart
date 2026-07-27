@@ -43,8 +43,7 @@ class ActivityInsightsScreen extends ConsumerWidget {
           error: (error, stack) {
             debugPrint('ActivityInsightsScreen: failed to load: $error');
             return _InsightsError(
-              onRetry: () =>
-                  ref.invalidate(activitySummaryProvider(thisMonth)),
+              onRetry: () => ref.invalidate(activitySummaryProvider(thisMonth)),
             );
           },
           data: (current) {
@@ -79,18 +78,20 @@ class _InsightsBody extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final goal = ref.watch(dailyStepGoalProvider);
 
-    final stepsDelta = previous == null
-        ? null
-        : percentChange(
-            current: current.totalSteps,
-            previous: previous!.totalSteps,
-          );
-    final avgDelta = previous == null
-        ? null
-        : percentChange(
-            current: current.averageSteps,
-            previous: previous!.averageSteps,
-          );
+    final stepsDelta =
+        previous == null
+            ? null
+            : percentChange(
+              current: current.totalSteps,
+              previous: previous!.totalSteps,
+            );
+    final avgDelta =
+        previous == null
+            ? null
+            : percentChange(
+              current: current.averageSteps,
+              previous: previous!.averageSteps,
+            );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -160,12 +161,13 @@ class _InsightsBody extends ConsumerWidget {
                 icon: AppIcons.distance,
                 value: ActivityFormat.distance(current.totalDistanceKm),
                 label: 'distance',
-                delta: previous == null
-                    ? null
-                    : percentChange(
-                        current: current.totalDistanceKm.round(),
-                        previous: previous!.totalDistanceKm.round(),
-                      ),
+                delta:
+                    previous == null
+                        ? null
+                        : percentChange(
+                          current: current.totalDistanceKm.round(),
+                          previous: previous!.totalDistanceKm.round(),
+                        ),
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -174,12 +176,13 @@ class _InsightsBody extends ConsumerWidget {
                 icon: AppIcons.calories,
                 value: ActivityFormat.calories(current.totalCalories),
                 label: 'burned',
-                delta: previous == null
-                    ? null
-                    : percentChange(
-                        current: current.totalCalories.round(),
-                        previous: previous!.totalCalories.round(),
-                      ),
+                delta:
+                    previous == null
+                        ? null
+                        : percentChange(
+                          current: current.totalCalories.round(),
+                          previous: previous!.totalCalories.round(),
+                        ),
               ),
             ),
           ],
@@ -339,9 +342,7 @@ class _HighlightTile extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             value,
-            style: AppTextStyles.statSmall.copyWith(
-              color: palette.textPrimary,
-            ),
+            style: AppTextStyles.statSmall.copyWith(color: palette.textPrimary),
           ),
           const SizedBox(height: 2),
           Text(
@@ -399,9 +400,8 @@ class _ConsistencyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final daysMetGoal = summary.byDate.values
-        .where((d) => d.steps >= goal)
-        .length;
+    final daysMetGoal =
+        summary.byDate.values.where((d) => d.steps >= goal).length;
     final dayCount = summary.period.dayCount;
 
     return AppCard(

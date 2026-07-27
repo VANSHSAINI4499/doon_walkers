@@ -25,11 +25,11 @@ enum PaymentStatus {
 
   /// Human-readable label for the admin roster and the member's own list.
   String get label => switch (this) {
-        PaymentStatus.pending => 'Pending',
-        PaymentStatus.paid => 'Paid',
-        PaymentStatus.refunded => 'Refunded',
-        PaymentStatus.cancelled => 'Cancelled',
-      };
+    PaymentStatus.pending => 'Pending',
+    PaymentStatus.paid => 'Paid',
+    PaymentStatus.refunded => 'Refunded',
+    PaymentStatus.cancelled => 'Cancelled',
+  };
 }
 
 /// Maps to the `gender_type` enum in Postgres
@@ -47,26 +47,26 @@ enum GenderType {
   preferNotToSay;
 
   static GenderType? fromString(String? value) => switch (value) {
-        'male' => GenderType.male,
-        'female' => GenderType.female,
-        'other' => GenderType.other,
-        'prefer_not_to_say' => GenderType.preferNotToSay,
-        _ => null, // column is nullable — absent stays absent
-      };
+    'male' => GenderType.male,
+    'female' => GenderType.female,
+    'other' => GenderType.other,
+    'prefer_not_to_say' => GenderType.preferNotToSay,
+    _ => null, // column is nullable — absent stays absent
+  };
 
   String toDbString() => switch (this) {
-        GenderType.male => 'male',
-        GenderType.female => 'female',
-        GenderType.other => 'other',
-        GenderType.preferNotToSay => 'prefer_not_to_say',
-      };
+    GenderType.male => 'male',
+    GenderType.female => 'female',
+    GenderType.other => 'other',
+    GenderType.preferNotToSay => 'prefer_not_to_say',
+  };
 
   String get label => switch (this) {
-        GenderType.male => 'Male',
-        GenderType.female => 'Female',
-        GenderType.other => 'Other',
-        GenderType.preferNotToSay => 'Prefer not to say',
-      };
+    GenderType.male => 'Male',
+    GenderType.female => 'Female',
+    GenderType.other => 'Other',
+    GenderType.preferNotToSay => 'Prefer not to say',
+  };
 }
 
 /// Core domain representation of a row in `public.registrations`,
@@ -175,7 +175,9 @@ class Registration {
   /// the payment you already made". Every other status uses the same
   /// label admin sees — cosmetic label change only, not a new status.
   String get memberFacingStatusLabel =>
-      paymentStatus == PaymentStatus.pending ? 'Pending Verification' : paymentStatus.label;
+      paymentStatus == PaymentStatus.pending
+          ? 'Pending Verification'
+          : paymentStatus.label;
 }
 
 /// Thrown when an insert violates `UNIQUE(trek_id, user_id)` — i.e. the
@@ -221,7 +223,8 @@ class TrekRegistrationClosedException implements Exception {
   const TrekRegistrationClosedException();
 
   @override
-  String toString() => 'Registration is closed — this trek has already taken place.';
+  String toString() =>
+      'Registration is closed — this trek has already taken place.';
 }
 
 /// Why `verify_trek_checkin` (Phase QR-2, 0030_trek_checkin_verify.sql)

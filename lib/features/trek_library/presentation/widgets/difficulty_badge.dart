@@ -10,7 +10,11 @@ import 'package:flutter/material.dart';
 /// flat, dual-tone pill: a soft fill in the difficulty colour, no border
 /// glow — reads at a glance without competing with the card's own hairline.
 class DifficultyBadge extends StatelessWidget {
-  const DifficultyBadge({super.key, required this.difficulty, this.dense = false});
+  const DifficultyBadge({
+    super.key,
+    required this.difficulty,
+    this.dense = false,
+  });
 
   final TrekDifficulty difficulty;
   final bool dense;
@@ -41,9 +45,10 @@ class DifficultyBadge extends StatelessWidget {
           SizedBox(width: dense ? 4 : AppSpacing.xs),
           Text(
             difficulty.label,
-            style:
-                (dense ? AppTextStyles.labelSmall : AppTextStyles.labelMedium)
-                    .copyWith(color: color),
+            style: (dense
+                    ? AppTextStyles.labelSmall
+                    : AppTextStyles.labelMedium)
+                .copyWith(color: color),
           ),
         ],
       ),

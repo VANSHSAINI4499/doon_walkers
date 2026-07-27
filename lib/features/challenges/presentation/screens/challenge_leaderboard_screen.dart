@@ -25,22 +25,32 @@ class ChallengeLeaderboardScreen extends ConsumerWidget {
     final challengeAsync = ref.watch(challengeByIdProvider(challengeId));
 
     return challengeAsync.when(
-      loading: () => Scaffold(
-        appBar: AppBar(title: const Text('Leaderboard')),
-        body: const _LeaderboardSkeleton(),
-      ),
+      loading:
+          () => Scaffold(
+            appBar: AppBar(title: const Text('Leaderboard')),
+            body: const _LeaderboardSkeleton(),
+          ),
       error: (error, stack) {
-        debugPrint('ChallengeLeaderboardScreen: failed to load challenge $challengeId: $error');
+        debugPrint(
+          'ChallengeLeaderboardScreen: failed to load challenge $challengeId: $error',
+        );
         return Scaffold(
           appBar: AppBar(title: const Text('Leaderboard')),
-          body: _LeaderboardError(onRetry: () => ref.invalidate(challengeByIdProvider(challengeId))),
+          body: _LeaderboardError(
+            onRetry: () => ref.invalidate(challengeByIdProvider(challengeId)),
+          ),
         );
       },
       data: (challenge) {
         if (challenge == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Leaderboard')),
-            body: Center(child: Text('Challenge not found.', style: AppTextStyles.titleMedium)),
+            body: Center(
+              child: Text(
+                'Challenge not found.',
+                style: AppTextStyles.titleMedium,
+              ),
+            ),
           );
         }
         return _LeaderboardBody(challenge: challenge);
@@ -56,7 +66,9 @@ class _LeaderboardBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final leaderboardAsync = ref.watch(challengeLeaderboardProvider(challenge.id));
+    final leaderboardAsync = ref.watch(
+      challengeLeaderboardProvider(challenge.id),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text('${challenge.title} — Leaderboard')),
@@ -64,8 +76,15 @@ class _LeaderboardBody extends ConsumerWidget {
         child: leaderboardAsync.when(
           loading: () => const _LeaderboardSkeleton(),
           error: (error, stack) {
-            debugPrint('ChallengeLeaderboardScreen: failed to load leaderboard: $error');
-            return _LeaderboardError(onRetry: () => ref.invalidate(challengeLeaderboardProvider(challenge.id)));
+            debugPrint(
+              'ChallengeLeaderboardScreen: failed to load leaderboard: $error',
+            );
+            return _LeaderboardError(
+              onRetry:
+                  () => ref.invalidate(
+                    challengeLeaderboardProvider(challenge.id),
+                  ),
+            );
           },
           data: (entries) {
             if (entries.isEmpty) {
@@ -78,11 +97,16 @@ class _LeaderboardBody extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: entries.length,
-              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-              itemBuilder: (context, index) => AppReveal(
-                index: index.clamp(0, 8),
-                child: _LeaderboardRow(entry: entries[index], challenge: challenge),
-              ),
+              separatorBuilder:
+                  (context, index) => const SizedBox(height: AppSpacing.md),
+              itemBuilder:
+                  (context, index) => AppReveal(
+                    index: index.clamp(0, 8),
+                    child: _LeaderboardRow(
+                      entry: entries[index],
+                      challenge: challenge,
+                    ),
+                  ),
             );
           },
         ),
@@ -131,14 +155,19 @@ class _LeaderboardRow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: rankColor.withValues(alpha: isTopThree ? 0.18 : 0.1),
-              border: Border.all(color: rankColor.withValues(alpha: isTopThree ? 0.5 : 0.25)),
+              border: Border.all(
+                color: rankColor.withValues(alpha: isTopThree ? 0.5 : 0.25),
+              ),
             ),
-            child: isTopThree
-                ? AppIcon(AppIcons.medal, size: 20, color: rankColor)
-                : Text(
-                    '${entry.rank}',
-                    style: AppTextStyles.titleSmall.copyWith(color: rankColor),
-                  ),
+            child:
+                isTopThree
+                    ? AppIcon(AppIcons.medal, size: 20, color: rankColor)
+                    : Text(
+                      '${entry.rank}',
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: rankColor,
+                      ),
+                    ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -276,24 +305,29 @@ class _LeaderboardSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: 6,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-          child: const Row(
-            children: [
-              SkeletonCircle(size: 40),
-              SizedBox(width: AppSpacing.md),
-              Expanded(child: SkeletonBox(height: 14)),
-              SizedBox(width: AppSpacing.md),
-              SkeletonBox(width: 60, height: 16),
-            ],
-          ),
-        ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder:
+            (context, index) => Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
+              ),
+              child: const Row(
+                children: [
+                  SkeletonCircle(size: 40),
+                  SizedBox(width: AppSpacing.md),
+                  Expanded(child: SkeletonBox(height: 14)),
+                  SizedBox(width: AppSpacing.md),
+                  SkeletonBox(width: 60, height: 16),
+                ],
+              ),
+            ),
       ),
     );
   }

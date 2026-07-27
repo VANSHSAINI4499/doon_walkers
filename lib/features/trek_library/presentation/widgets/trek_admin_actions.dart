@@ -70,28 +70,29 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete trek?'),
-        content: Text(
-          'This permanently deletes "${widget.trek.title}", including its '
-          'cover image. This cannot be undone.',
-        ),
-        actions: [
-          PremiumButton(
-            label: 'Cancel',
-            variant: PremiumButtonVariant.glass,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Delete trek?'),
+            content: Text(
+              'This permanently deletes "${widget.trek.title}", including its '
+              'cover image. This cannot be undone.',
+            ),
+            actions: [
+              PremiumButton(
+                label: 'Cancel',
+                variant: PremiumButtonVariant.glass,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+              ),
+              PremiumButton(
+                label: 'Delete',
+                icon: AppIcons.delete,
+                variant: PremiumButtonVariant.danger,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+            ],
           ),
-          PremiumButton(
-            label: 'Delete',
-            icon: AppIcons.delete,
-            variant: PremiumButtonVariant.danger,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true || !mounted) return;
@@ -149,14 +150,20 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
         child: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: palette.primary),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: palette.primary,
+          ),
         ),
       );
     }
 
     return PopupMenuButton<String>(
       tooltip: 'Admin actions',
-      icon: AppIcon(AppIcons.more, color: widget.iconColor ?? palette.textPrimary),
+      icon: AppIcon(
+        AppIcons.more,
+        color: widget.iconColor ?? palette.textPrimary,
+      ),
       onSelected: (value) {
         switch (value) {
           case 'edit':
@@ -169,28 +176,36 @@ class _TrekAdminActionsState extends ConsumerState<TrekAdminActions> {
             _confirmDelete();
         }
       },
-      itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 'edit',
-          child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
-        ),
-        // Phase QR-1 — admin-only Display Check-in QR screen.
-        const PopupMenuItem(
-          value: 'checkin-qr',
-          child: _MenuRow(icon: AppIcons.qr, label: 'Check-in QR'),
-        ),
-        PopupMenuItem(
-          value: 'toggle',
-          child: _MenuRow(
-            icon: widget.trek.isPublished ? AppIcons.hidden : AppIcons.visible,
-            label: widget.trek.isPublished ? 'Unpublish' : 'Publish',
-          ),
-        ),
-        PopupMenuItem(
-          value: 'delete',
-          child: _MenuRow(icon: AppIcons.delete, label: 'Delete', color: palette.danger),
-        ),
-      ],
+      itemBuilder:
+          (context) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
+            ),
+            // Phase QR-1 — admin-only Display Check-in QR screen.
+            const PopupMenuItem(
+              value: 'checkin-qr',
+              child: _MenuRow(icon: AppIcons.qr, label: 'Check-in QR'),
+            ),
+            PopupMenuItem(
+              value: 'toggle',
+              child: _MenuRow(
+                icon:
+                    widget.trek.isPublished
+                        ? AppIcons.hidden
+                        : AppIcons.visible,
+                label: widget.trek.isPublished ? 'Unpublish' : 'Publish',
+              ),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: _MenuRow(
+                icon: AppIcons.delete,
+                label: 'Delete',
+                color: palette.danger,
+              ),
+            ),
+          ],
     );
   }
 }
@@ -210,7 +225,10 @@ class _MenuRow extends StatelessWidget {
       children: [
         AppIcon(icon, size: 20, color: tint),
         const SizedBox(width: AppSpacing.md),
-        Text(label, style: AppTextStyles.tinted(AppTextStyles.bodyMedium, tint)),
+        Text(
+          label,
+          style: AppTextStyles.tinted(AppTextStyles.bodyMedium, tint),
+        ),
       ],
     );
   }

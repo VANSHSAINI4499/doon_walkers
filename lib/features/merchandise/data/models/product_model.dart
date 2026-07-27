@@ -35,9 +35,10 @@ class ProductImageModel extends ProductImage {
       id: json['id'] as String,
       productId: json['product_id'] as String,
       imageUrl: (json['image_url'] as String?) ?? '',
-      uploadedAt: json['uploaded_at'] != null
-          ? DateTime.parse(json['uploaded_at'] as String)
-          : DateTime.now(),
+      uploadedAt:
+          json['uploaded_at'] != null
+              ? DateTime.parse(json['uploaded_at'] as String)
+              : DateTime.now(),
     );
   }
 }
@@ -64,12 +65,15 @@ class ProductModel extends Product {
     final variantRows = (json['product_variants'] as List?) ?? const [];
     final imageRows = (json['product_images'] as List?) ?? const [];
 
-    final images = imageRows
-        .map((row) => ProductImageModel.fromJson(row as Map<String, dynamic>))
-        .toList()
-      // Oldest first — see Product.coverImageUrl's doc for why this
-      // ordering matters (stable thumbnail regardless of fetch order).
-      ..sort((a, b) => a.uploadedAt.compareTo(b.uploadedAt));
+    final images =
+        imageRows
+            .map(
+              (row) => ProductImageModel.fromJson(row as Map<String, dynamic>),
+            )
+            .toList()
+          // Oldest first — see Product.coverImageUrl's doc for why this
+          // ordering matters (stable thumbnail regardless of fetch order).
+          ..sort((a, b) => a.uploadedAt.compareTo(b.uploadedAt));
 
     return ProductModel(
       id: json['id'] as String,
@@ -86,12 +90,17 @@ class ProductModel extends Product {
       category: ProductCategory.fromString(json['category'] as String?),
       stockQuantity: (json['stock_quantity'] as num?)?.toInt() ?? 0,
       isActive: json['is_active'] as bool? ?? false,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
-      variants: variantRows
-          .map((row) => ProductVariantModel.fromJson(row as Map<String, dynamic>))
-          .toList(),
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'] as String)
+              : DateTime.now(),
+      variants:
+          variantRows
+              .map(
+                (row) =>
+                    ProductVariantModel.fromJson(row as Map<String, dynamic>),
+              )
+              .toList(),
       images: images,
     );
   }

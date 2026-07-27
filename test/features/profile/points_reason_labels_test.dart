@@ -20,10 +20,13 @@ void main() {
       }
     });
 
-    test('an unmapped reason falls back to a generic label, never the raw enum', () {
-      final label = PointsReasonLabels.labelFor('some_future_reason_v2');
-      expect(label, isNot('some_future_reason_v2'));
-      expect(label.contains('_'), isFalse);
-    });
+    test(
+      'an unmapped reason falls back to a generic label, never the raw enum',
+      () {
+        final label = PointsReasonLabels.labelFor('some_future_reason_v2');
+        expect(label, isNot('some_future_reason_v2'));
+        expect(label.contains('_'), isFalse);
+      },
+    );
   });
 }

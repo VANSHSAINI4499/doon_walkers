@@ -35,7 +35,9 @@ class MyRegistrationsPage {
 /// pattern for this exact need in this codebase. `autoDispose` since
 /// the screen is visited transiently.
 final myRegistrationsPaginationProvider = AsyncNotifierProvider.autoDispose<
-    MyRegistrationsPaginationController, MyRegistrationsPage>(
+  MyRegistrationsPaginationController,
+  MyRegistrationsPage
+>(
   MyRegistrationsPaginationController.new,
   name: 'myRegistrationsPaginationProvider',
 );
@@ -50,7 +52,10 @@ class MyRegistrationsPaginationController
     final items = await ref
         .watch(registrationRepositoryProvider)
         .fetchMyRegistrationsPage(page: 0, pageSize: myRegistrationsPageSize);
-    return MyRegistrationsPage(items: items, hasMore: items.length == myRegistrationsPageSize);
+    return MyRegistrationsPage(
+      items: items,
+      hasMore: items.length == myRegistrationsPageSize,
+    );
   }
 
   Future<void> loadMore() async {
@@ -62,7 +67,10 @@ class MyRegistrationsPaginationController
     try {
       final next = await ref
           .read(registrationRepositoryProvider)
-          .fetchMyRegistrationsPage(page: nextPage, pageSize: myRegistrationsPageSize);
+          .fetchMyRegistrationsPage(
+            page: nextPage,
+            pageSize: myRegistrationsPageSize,
+          );
       _page = nextPage;
       state = AsyncData(
         MyRegistrationsPage(

@@ -56,8 +56,9 @@ GoRouter _buildTestRouter({required String initialLocation}) {
     initialLocation: initialLocation,
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
+        builder:
+            (context, state, navigationShell) =>
+                AppShell(navigationShell: navigationShell),
         branches: [
           branch(AppConstants.routeHome, 'HomeBody'),
           branch(AppConstants.routeActivity, 'ActivityBody'),

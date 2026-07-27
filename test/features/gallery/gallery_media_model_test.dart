@@ -38,7 +38,8 @@ void main() {
     final fullJson = {
       'id': 'media-1',
       'trek_id': 'trek-1',
-      'media_url': 'https://project.supabase.co/storage/v1/object/public/trek-gallery/trek-1/1.jpg',
+      'media_url':
+          'https://project.supabase.co/storage/v1/object/public/trek-gallery/trek-1/1.jpg',
       'media_type': 'photo',
       'caption': 'Sunrise from base camp',
       'uploaded_at': '2026-07-19T21:10:54.000Z',
@@ -59,7 +60,8 @@ void main() {
       final media = GalleryMediaModel.fromJson({
         'id': 'media-2',
         'trek_id': 'trek-1',
-        'media_url': 'https://project.supabase.co/storage/v1/object/public/trek-gallery/trek-1/2.mp4',
+        'media_url':
+            'https://project.supabase.co/storage/v1/object/public/trek-gallery/trek-1/2.mp4',
         'media_type': 'video',
         'uploaded_at': '2026-07-19T21:10:54.000Z',
       });

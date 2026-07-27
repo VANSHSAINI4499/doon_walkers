@@ -60,22 +60,27 @@ class _AuthTextFieldState extends State<AuthTextField> {
         hintText: widget.hint,
         prefixIcon: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: AppIcon(widget.prefixIcon, size: 20, color: AppColors.textSecondary),
+          child: AppIcon(
+            widget.prefixIcon,
+            size: 20,
+            color: AppColors.textSecondary,
+          ),
         ),
-        suffixIcon: widget.isPassword
-            ? IconButton(
-                icon: AppIcon(
-                  _obscureText ? AppIcons.hidden : AppIcons.visible,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscureText = !_obscureText;
-                  });
-                },
-              )
-            : null,
+        suffixIcon:
+            widget.isPassword
+                ? IconButton(
+                  icon: AppIcon(
+                    _obscureText ? AppIcons.hidden : AppIcons.visible,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
+                : null,
       ),
     );
   }

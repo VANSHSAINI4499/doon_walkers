@@ -33,7 +33,8 @@ bool isNewlyAchievedTier({
   required ChallengeTier? current,
 }) {
   if (!hadBaseline || current == null) return false;
-  final previousRank = previous == null ? -1 : ChallengeTier.values.indexOf(previous);
+  final previousRank =
+      previous == null ? -1 : ChallengeTier.values.indexOf(previous);
   final currentRank = ChallengeTier.values.indexOf(current);
   return currentRank > previousRank;
 }
@@ -59,7 +60,8 @@ class ChallengeCelebrationTracker {
   /// (never checked at all), which is what [hasBaseline] tests for.
   static const _noneSentinel = 'none';
 
-  String _key(String userId, String challengeId) => 'challenge_tier_seen_${userId}_$challengeId';
+  String _key(String userId, String challengeId) =>
+      'challenge_tier_seen_${userId}_$challengeId';
 
   bool hasBaseline(String userId, String challengeId) =>
       _prefs.containsKey(_key(userId, challengeId));
@@ -73,7 +75,14 @@ class ChallengeCelebrationTracker {
     return null;
   }
 
-  Future<void> markSeen(String userId, String challengeId, ChallengeTier? tier) {
-    return _prefs.setString(_key(userId, challengeId), tier?.name ?? _noneSentinel);
+  Future<void> markSeen(
+    String userId,
+    String challengeId,
+    ChallengeTier? tier,
+  ) {
+    return _prefs.setString(
+      _key(userId, challengeId),
+      tier?.name ?? _noneSentinel,
+    );
   }
 }

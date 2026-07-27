@@ -151,9 +151,7 @@ class ProfileScreen extends ConsumerWidget {
                         index: i.clamp(0, 8),
                         child: Padding(
                           padding: EdgeInsets.only(
-                            bottom: i == blocks.length - 1
-                                ? 0
-                                : AppSpacing.lg,
+                            bottom: i == blocks.length - 1 ? 0 : AppSpacing.lg,
                           ),
                           child: blocks[i],
                         ),
@@ -177,8 +175,18 @@ class _ProfileHeader extends ConsumerWidget {
   final UserEntity user;
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   @override
@@ -212,42 +220,48 @@ class _ProfileHeader extends ConsumerWidget {
                     border: Border.all(color: palette.border, width: 2),
                   ),
                   child: ClipOval(
-                    child: hasAvatar
-                        ? CachedNetworkImage(
-                            imageUrl: user.avatarUrl!,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: palette.surface,
-                              child: Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: palette.primary,
+                    child:
+                        hasAvatar
+                            ? CachedNetworkImage(
+                              imageUrl: user.avatarUrl!,
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              placeholder:
+                                  (context, url) => Container(
+                                    color: palette.surface,
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: palette.primary,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Center(
+                              errorWidget:
+                                  (context, url, error) => Center(
+                                    child: Text(
+                                      user.name.isNotEmpty
+                                          ? user.name[0].toUpperCase()
+                                          : '?',
+                                      style: AppTextStyles.displaySmall
+                                          .copyWith(color: palette.primary),
+                                    ),
+                                  ),
+                            )
+                            : Center(
                               child: Text(
-                                user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                                user.name.isNotEmpty
+                                    ? user.name[0].toUpperCase()
+                                    : '?',
                                 style: AppTextStyles.displaySmall.copyWith(
                                   color: palette.primary,
                                 ),
                               ),
                             ),
-                          )
-                        : Center(
-                            child: Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                              style: AppTextStyles.displaySmall.copyWith(
-                                color: palette.primary,
-                              ),
-                            ),
-                          ),
                   ),
                 ),
                 if (isUploading)
@@ -278,9 +292,11 @@ class _ProfileHeader extends ConsumerWidget {
                     elevation: 2,
                     child: InkWell(
                       customBorder: const CircleBorder(),
-                      onTap: isUploading
-                          ? null
-                          : () => _showAvatarOptionsSheet(context, ref, user),
+                      onTap:
+                          isUploading
+                              ? null
+                              : () =>
+                                  _showAvatarOptionsSheet(context, ref, user),
                       child: Padding(
                         padding: const EdgeInsets.all(6),
                         child: AppIcon(
@@ -313,7 +329,11 @@ class _ProfileHeader extends ConsumerWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               IconButton(
-                icon: AppIcon(AppIcons.edit, size: 18, color: palette.textSecondary),
+                icon: AppIcon(
+                  AppIcons.edit,
+                  size: 18,
+                  color: palette.textSecondary,
+                ),
                 tooltip: 'Edit name',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -354,123 +374,139 @@ class _ProfileHeader extends ConsumerWidget {
   }
 
   void _showAvatarOptionsSheet(
-      BuildContext context, WidgetRef ref, UserEntity user) {
+    BuildContext context,
+    WidgetRef ref,
+    UserEntity user,
+  ) {
     final palette = AppPalette.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: palette.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: AppIcon(AppIcons.photo, color: palette.primary),
-              title: Text('Choose from gallery', style: AppTextStyles.titleMedium),
-              onTap: () async {
-                Navigator.of(context).pop();
-                final success = await ref
-                    .read(profileControllerProvider.notifier)
-                    .uploadAvatarFromGallery();
-                if (!success && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content:
-                          const Text('Failed to upload photo. Please try again.'),
-                      backgroundColor: palette.danger,
-                    ),
-                  );
-                }
-              },
-            ),
-            if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
-              ListTile(
-                leading: AppIcon(AppIcons.delete, color: palette.danger),
-                title: Text('Remove photo',
-                    style: AppTextStyles.titleMedium
-                        .copyWith(color: palette.danger)),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  final success = await ref
-                      .read(profileControllerProvider.notifier)
-                      .removeAvatar();
-                  if (!success && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Failed to remove photo.'),
-                        backgroundColor: palette.danger,
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: AppIcon(AppIcons.photo, color: palette.primary),
+                  title: Text(
+                    'Choose from gallery',
+                    style: AppTextStyles.titleMedium,
+                  ),
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    final success =
+                        await ref
+                            .read(profileControllerProvider.notifier)
+                            .uploadAvatarFromGallery();
+                    if (!success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                            'Failed to upload photo. Please try again.',
+                          ),
+                          backgroundColor: palette.danger,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
+                  ListTile(
+                    leading: AppIcon(AppIcons.delete, color: palette.danger),
+                    title: Text(
+                      'Remove photo',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: palette.danger,
                       ),
-                    );
-                  }
-                },
-              ),
-          ],
-        ),
-      ),
+                    ),
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      final success =
+                          await ref
+                              .read(profileControllerProvider.notifier)
+                              .removeAvatar();
+                      if (!success && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Failed to remove photo.'),
+                            backgroundColor: palette.danger,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+              ],
+            ),
+          ),
     );
   }
 
   void _showEditNameDialog(
-      BuildContext context, WidgetRef ref, String currentName) {
+    BuildContext context,
+    WidgetRef ref,
+    String currentName,
+  ) {
     final controller = TextEditingController(text: currentName);
     final formKey = GlobalKey<FormState>();
     final palette = AppPalette.of(context);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Display Name'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            autofocus: true,
-            maxLength: 50,
-            decoration: const InputDecoration(
-              labelText: 'Display Name',
-              hintText: 'Enter your name',
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Edit Display Name'),
+            content: Form(
+              key: formKey,
+              child: TextFormField(
+                controller: controller,
+                autofocus: true,
+                maxLength: 50,
+                decoration: const InputDecoration(
+                  labelText: 'Display Name',
+                  hintText: 'Enter your name',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Name cannot be empty';
+                  }
+                  if (value.trim().length > 50) {
+                    return 'Must be 50 characters or less';
+                  }
+                  return null;
+                },
+              ),
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Name cannot be empty';
-              }
-              if (value.trim().length > 50) {
-                return 'Must be 50 characters or less';
-              }
-              return null;
-            },
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  if (formKey.currentState?.validate() ?? false) {
+                    final newName = controller.text.trim();
+                    Navigator.of(context).pop();
+                    final success = await ref
+                        .read(profileControllerProvider.notifier)
+                        .updateDisplayName(newName);
+                    if (!success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Failed to update display name.'),
+                          backgroundColor: palette.danger,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (formKey.currentState?.validate() ?? false) {
-                final newName = controller.text.trim();
-                Navigator.of(context).pop();
-                final success = await ref
-                    .read(profileControllerProvider.notifier)
-                    .updateDisplayName(newName);
-                if (!success && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Failed to update display name.'),
-                      backgroundColor: palette.danger,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
     );
   }
 }

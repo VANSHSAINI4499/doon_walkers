@@ -23,27 +23,32 @@ class RegistrationModel {
       id: json['id'] as String,
       trekId: json['trek_id'] as String,
       userId: json['user_id'] as String,
-      paymentStatus: PaymentStatus.fromString(json['payment_status'] as String?),
+      paymentStatus: PaymentStatus.fromString(
+        json['payment_status'] as String?,
+      ),
       createdAt: DateTime.parse(json['created_at'] as String),
       age: (json['age'] as num?)?.toInt(),
       gender: GenderType.fromString(json['gender'] as String?),
       emergencyContact: _emptyToNull(json['emergency_contact'] as String?),
       medicalNotes: _emptyToNull(json['medical_notes'] as String?),
       cancellationReason: json['cancellation_reason'] as String?,
-      cancelledAt: json['cancelled_at'] != null
-          ? DateTime.parse(json['cancelled_at'] as String)
-          : null,
+      cancelledAt:
+          json['cancelled_at'] != null
+              ? DateTime.parse(json['cancelled_at'] as String)
+              : null,
       userName: (user?['name'] as String?) ?? 'Unknown member',
       userEmail: (user?['email'] as String?) ?? '—',
       userPhone: _emptyToNull(user?['phone'] as String?),
       trekTitle: (trek?['title'] as String?) ?? 'Unknown trek',
       paymentScreenshotUrl: json['payment_screenshot_url'] as String?,
-      trekDate: trek?['trek_date'] != null
-          ? DateTime.parse(trek!['trek_date'] as String)
-          : null,
-      checkedInAt: json['checked_in_at'] != null
-          ? DateTime.parse(json['checked_in_at'] as String)
-          : null,
+      trekDate:
+          trek?['trek_date'] != null
+              ? DateTime.parse(trek!['trek_date'] as String)
+              : null,
+      checkedInAt:
+          json['checked_in_at'] != null
+              ? DateTime.parse(json['checked_in_at'] as String)
+              : null,
     );
   }
 

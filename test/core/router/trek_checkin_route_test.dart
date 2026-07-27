@@ -12,7 +12,9 @@ void main() {
     test('matches the check-in scanner for any trek id', () {
       expect(isTrekCheckinRoute('/trek-library/abc-123/check-in'), isTrue);
       expect(
-        isTrekCheckinRoute('/trek-library/7f3c1e2a-0b5d-4a8e-9f21-3c5d7e9a1b4f/check-in'),
+        isTrekCheckinRoute(
+          '/trek-library/7f3c1e2a-0b5d-4a8e-9f21-3c5d7e9a1b4f/check-in',
+        ),
         isTrue,
       );
     });

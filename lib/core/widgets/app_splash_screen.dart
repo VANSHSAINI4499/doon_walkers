@@ -34,7 +34,8 @@ class AppSplashScreen extends StatefulWidget {
   State<AppSplashScreen> createState() => _AppSplashScreenState();
 }
 
-class _AppSplashScreenState extends State<AppSplashScreen> with SingleTickerProviderStateMixin {
+class _AppSplashScreenState extends State<AppSplashScreen>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: AppMotion.pulse,
@@ -50,9 +51,7 @@ class _AppSplashScreenState extends State<AppSplashScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return Container(
-      decoration: BoxDecoration(
-        color: palette.background,
-      ),
+      decoration: BoxDecoration(color: palette.background),
       child: Center(
         child: AnimatedBuilder(
           animation: _controller,
@@ -73,7 +72,11 @@ class _AppSplashScreenState extends State<AppSplashScreen> with SingleTickerProv
                       width: 2,
                     ),
                   ),
-                  child: AppIcon(AppIcons.hiking, color: palette.onPrimary, size: 44),
+                  child: AppIcon(
+                    AppIcons.hiking,
+                    color: palette.onPrimary,
+                    size: 44,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 Text(AppConstants.appName, style: AppTextStyles.headlineMedium),

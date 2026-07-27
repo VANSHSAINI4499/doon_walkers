@@ -38,7 +38,9 @@ class JoinChallengeButton extends ConsumerWidget {
       return _EndedButton();
     }
 
-    final enrolledAsync = ref.watch(challengeEnrollmentStatusProvider(challenge.id));
+    final enrolledAsync = ref.watch(
+      challengeEnrollmentStatusProvider(challenge.id),
+    );
     final controller = ref.watch(enrollmentControllerProvider.notifier);
     final isLoading = ref.watch(enrollmentControllerProvider).isLoading;
 
@@ -78,24 +80,25 @@ class JoinChallengeButton extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Leave challenge?'),
-        content: const Text(
-          'Your progress and earned points are kept. '
-          'You can re-join at any time.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Leave challenge?'),
+            content: const Text(
+              'Your progress and earned points are kept. '
+              'You can re-join at any time.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: palette.danger),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Leave'),
+              ),
+            ],
           ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: palette.danger),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Leave'),
-          ),
-        ],
-      ),
     );
     if (confirmed == true) {
       await controller.unenroll(challenge.id);
@@ -142,18 +145,21 @@ class _LeaveButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.button),
         ),
       ),
-      icon: isLoading
-          ? SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: palette.danger,
-              ),
-            )
-          : AppIcon(AppIcons.close, size: 16, color: palette.danger),
-      label: Text('Leave Challenge',
-          style: AppTextStyles.labelLarge.copyWith(color: palette.danger)),
+      icon:
+          isLoading
+              ? SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: palette.danger,
+                ),
+              )
+              : AppIcon(AppIcons.close, size: 16, color: palette.danger),
+      label: Text(
+        'Leave Challenge',
+        style: AppTextStyles.labelLarge.copyWith(color: palette.danger),
+      ),
       onPressed: isLoading ? null : onPressed,
     );
   }

@@ -23,7 +23,8 @@ class AdminTrekFormScreen extends ConsumerStatefulWidget {
   bool get isEdit => trekId != null;
 
   @override
-  ConsumerState<AdminTrekFormScreen> createState() => _AdminTrekFormScreenState();
+  ConsumerState<AdminTrekFormScreen> createState() =>
+      _AdminTrekFormScreenState();
 }
 
 class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
@@ -75,7 +76,8 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     if (_prefilled) return;
     _titleController.text = trek.title;
     _descriptionController.text = trek.description;
-    _distanceController.text = trek.distanceKm == null ? '' : _trimZero(trek.distanceKm!);
+    _distanceController.text =
+        trek.distanceKm == null ? '' : _trimZero(trek.distanceKm!);
     _durationController.text = trek.durationDays?.toString() ?? '';
     _altitudeController.text = trek.altitudeM?.toString() ?? '';
     _bestSeasonController.text = trek.bestSeason ?? '';
@@ -92,12 +94,23 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _prefilled = true;
   }
 
-  String _trimZero(double v) => v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
+  String _trimZero(double v) =>
+      v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -117,12 +130,18 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
   }
 
   Future<void> _pickTrekStartTime() async {
-    final initial = _trekStartTime == null
-        ? const TimeOfDay(hour: 6, minute: 0)
-        : TimeOfDay(hour: _trekStartTime!.hour, minute: _trekStartTime!.minute);
+    final initial =
+        _trekStartTime == null
+            ? const TimeOfDay(hour: 6, minute: 0)
+            : TimeOfDay(
+              hour: _trekStartTime!.hour,
+              minute: _trekStartTime!.minute,
+            );
     final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked != null) {
-      setState(() => _trekStartTime = TrekStartTime(picked.hour, picked.minute));
+      setState(
+        () => _trekStartTime = TrekStartTime(picked.hour, picked.minute),
+      );
     }
   }
 
@@ -200,8 +219,10 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     }
   }
 
-  double? _parseOrNullDouble(String text) => text.trim().isEmpty ? null : double.tryParse(text.trim());
-  int? _parseOrNullInt(String text) => text.trim().isEmpty ? null : int.tryParse(text.trim());
+  double? _parseOrNullDouble(String text) =>
+      text.trim().isEmpty ? null : double.tryParse(text.trim());
+  int? _parseOrNullInt(String text) =>
+      text.trim().isEmpty ? null : int.tryParse(text.trim());
   String? _emptyToNull(String text) => text.trim().isEmpty ? null : text.trim();
 
   String _cleanError(Object error) {
@@ -230,12 +251,15 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     if (widget.isEdit) {
       final trekAsync = ref.watch(trekByIdProvider(widget.trekId!));
       return trekAsync.when(
-        loading: () => Scaffold(
-          appBar: AppBar(title: const Text('Edit Trek')),
-          body: const AdminFormLoadingSkeleton(showImage: true),
-        ),
+        loading:
+            () => Scaffold(
+              appBar: AppBar(title: const Text('Edit Trek')),
+              body: const AdminFormLoadingSkeleton(showImage: true),
+            ),
         error: (error, stack) {
-          debugPrint('AdminTrekFormScreen: failed to load trek ${widget.trekId}: $error');
+          debugPrint(
+            'AdminTrekFormScreen: failed to load trek ${widget.trekId}: $error',
+          );
           return Scaffold(
             appBar: AppBar(title: const Text('Edit Trek')),
             body: AdminFormErrorState(
@@ -264,8 +288,17 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     final isSaving = ref.watch(trekAdminControllerProvider).isLoading;
     final int confirmedCount;
     if (widget.trekId != null) {
-      final registrations = ref.watch(registrationsForTrekProvider(widget.trekId!)).valueOrNull ?? [];
-      confirmedCount = registrations.where((r) => r.paymentStatus == PaymentStatus.paid || r.paymentStatus == PaymentStatus.pending).length;
+      final registrations =
+          ref.watch(registrationsForTrekProvider(widget.trekId!)).valueOrNull ??
+          [];
+      confirmedCount =
+          registrations
+              .where(
+                (r) =>
+                    r.paymentStatus == PaymentStatus.paid ||
+                    r.paymentStatus == PaymentStatus.pending,
+              )
+              .length;
     } else {
       confirmedCount = 0;
     }
@@ -308,33 +341,50 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                               const SizedBox(height: AppSpacing.md),
                               TextFormField(
                                 controller: _titleController,
-                                decoration: const InputDecoration(labelText: 'Title'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Title',
+                                ),
                                 textInputAction: TextInputAction.next,
-                                validator: (value) => (value == null || value.trim().isEmpty)
-                                    ? 'Please enter a title'
-                                    : null,
+                                validator:
+                                    (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                            ? 'Please enter a title'
+                                            : null,
                               ),
                               const SizedBox(height: AppSpacing.lg),
 
                               TextFormField(
                                 controller: _descriptionController,
-                                decoration: const InputDecoration(labelText: 'Description'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Description',
+                                ),
                                 maxLines: 4,
                                 textInputAction: TextInputAction.newline,
-                                validator: (value) => (value == null || value.trim().isEmpty)
-                                    ? 'Please enter a description'
-                                    : null,
+                                validator:
+                                    (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                            ? 'Please enter a description'
+                                            : null,
                               ),
                               const SizedBox(height: AppSpacing.lg),
 
                               DropdownButtonFormField<TrekDifficulty>(
                                 value: _difficulty,
-                                decoration: const InputDecoration(labelText: 'Difficulty'),
-                                items: TrekDifficulty.values
-                                    .map((d) => DropdownMenuItem(value: d, child: Text(d.label)))
-                                    .toList(),
+                                decoration: const InputDecoration(
+                                  labelText: 'Difficulty',
+                                ),
+                                items:
+                                    TrekDifficulty.values
+                                        .map(
+                                          (d) => DropdownMenuItem(
+                                            value: d,
+                                            child: Text(d.label),
+                                          ),
+                                        )
+                                        .toList(),
                                 onChanged: (value) {
-                                  if (value != null) setState(() => _difficulty = value);
+                                  if (value != null)
+                                    setState(() => _difficulty = value);
                                 },
                               ),
                               const SizedBox(height: AppSpacing.lg),
@@ -344,26 +394,43 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                                   Expanded(
                                     child: TextFormField(
                                       controller: _distanceController,
-                                      decoration: const InputDecoration(labelText: 'Distance (km)'),
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      validator: (value) => (value != null &&
-                                              value.trim().isNotEmpty &&
-                                              double.tryParse(value.trim()) == null)
-                                          ? 'Invalid number'
-                                          : null,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Distance (km)',
+                                      ),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                      validator:
+                                          (value) =>
+                                              (value != null &&
+                                                      value.trim().isNotEmpty &&
+                                                      double.tryParse(
+                                                            value.trim(),
+                                                          ) ==
+                                                          null)
+                                                  ? 'Invalid number'
+                                                  : null,
                                     ),
                                   ),
                                   const SizedBox(width: AppSpacing.md),
                                   Expanded(
                                     child: TextFormField(
                                       controller: _durationController,
-                                      decoration: const InputDecoration(labelText: 'Duration (days)'),
+                                      decoration: const InputDecoration(
+                                        labelText: 'Duration (days)',
+                                      ),
                                       keyboardType: TextInputType.number,
-                                      validator: (value) => (value != null &&
-                                              value.trim().isNotEmpty &&
-                                              int.tryParse(value.trim()) == null)
-                                          ? 'Invalid number'
-                                          : null,
+                                      validator:
+                                          (value) =>
+                                              (value != null &&
+                                                      value.trim().isNotEmpty &&
+                                                      int.tryParse(
+                                                            value.trim(),
+                                                          ) ==
+                                                          null)
+                                                  ? 'Invalid number'
+                                                  : null,
                                     ),
                                   ),
                                 ],
@@ -372,20 +439,34 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
 
                               InkWell(
                                 onTap: _pickTrekDate,
-                                borderRadius: BorderRadius.circular(AppRadius.button),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.button,
+                                ),
                                 child: InputDecorator(
                                   decoration: InputDecoration(
                                     labelText: 'Trek date (optional)',
-                                    suffixIcon: _trekDate == null
-                                        ? const AppIcon(AppIcons.calendar, size: 20)
-                                        : IconButton(
-                                            icon: const AppIcon(AppIcons.close, size: 20),
-                                            tooltip: 'Clear date',
-                                            onPressed: () => setState(() => _trekDate = null),
-                                          ),
+                                    suffixIcon:
+                                        _trekDate == null
+                                            ? const AppIcon(
+                                              AppIcons.calendar,
+                                              size: 20,
+                                            )
+                                            : IconButton(
+                                              icon: const AppIcon(
+                                                AppIcons.close,
+                                                size: 20,
+                                              ),
+                                              tooltip: 'Clear date',
+                                              onPressed:
+                                                  () => setState(
+                                                    () => _trekDate = null,
+                                                  ),
+                                            ),
                                   ),
                                   child: Text(
-                                    _trekDate == null ? 'Not scheduled yet' : _formatDate(_trekDate!),
+                                    _trekDate == null
+                                        ? 'Not scheduled yet'
+                                        : _formatDate(_trekDate!),
                                     style: AppTextStyles.bodyLarge,
                                   ),
                                 ),
@@ -397,20 +478,34 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                               // check-in QR's open/closed window.
                               InkWell(
                                 onTap: _pickTrekStartTime,
-                                borderRadius: BorderRadius.circular(AppRadius.button),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.button,
+                                ),
                                 child: InputDecorator(
                                   decoration: InputDecoration(
                                     labelText: 'Trek start time (optional)',
-                                    suffixIcon: _trekStartTime == null
-                                        ? const AppIcon(AppIcons.schedule, size: 20)
-                                        : IconButton(
-                                            icon: const AppIcon(AppIcons.close, size: 20),
-                                            tooltip: 'Clear start time',
-                                            onPressed: () => setState(() => _trekStartTime = null),
-                                          ),
+                                    suffixIcon:
+                                        _trekStartTime == null
+                                            ? const AppIcon(
+                                              AppIcons.schedule,
+                                              size: 20,
+                                            )
+                                            : IconButton(
+                                              icon: const AppIcon(
+                                                AppIcons.close,
+                                                size: 20,
+                                              ),
+                                              tooltip: 'Clear start time',
+                                              onPressed:
+                                                  () => setState(
+                                                    () => _trekStartTime = null,
+                                                  ),
+                                            ),
                                   ),
                                   child: Text(
-                                    _trekStartTime == null ? 'Not set' : _trekStartTime!.label,
+                                    _trekStartTime == null
+                                        ? 'Not set'
+                                        : _trekStartTime!.label,
                                     style: AppTextStyles.bodyLarge,
                                   ),
                                 ),
@@ -422,13 +517,20 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                                   Expanded(
                                     child: TextFormField(
                                       controller: _altitudeController,
-                                      decoration: const InputDecoration(labelText: 'Max altitude (m)'),
+                                      decoration: const InputDecoration(
+                                        labelText: 'Max altitude (m)',
+                                      ),
                                       keyboardType: TextInputType.number,
-                                      validator: (value) => (value != null &&
-                                              value.trim().isNotEmpty &&
-                                              int.tryParse(value.trim()) == null)
-                                          ? 'Invalid number'
-                                          : null,
+                                      validator:
+                                          (value) =>
+                                              (value != null &&
+                                                      value.trim().isNotEmpty &&
+                                                      int.tryParse(
+                                                            value.trim(),
+                                                          ) ==
+                                                          null)
+                                                  ? 'Invalid number'
+                                                  : null,
                                     ),
                                   ),
                                   const SizedBox(width: AppSpacing.md),
@@ -447,7 +549,9 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
 
                               TextFormField(
                                 controller: _thingsToCarryController,
-                                decoration: const InputDecoration(labelText: 'Things to carry'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Things to carry',
+                                ),
                                 maxLines: 3,
                               ),
                               const SizedBox(height: AppSpacing.lg),
@@ -466,26 +570,36 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
 
                               const AdminFormSectionLabel(
                                 'Registration',
-                                subtitle: 'Set a fee to require a payment QR code for members.',
+                                subtitle:
+                                    'Set a fee to require a payment QR code for members.',
                               ),
                               const SizedBox(height: AppSpacing.md),
                               TextFormField(
                                 controller: _feeController,
                                 decoration: const InputDecoration(
                                   labelText: 'Registration fee (₹)',
-                                  hintText: '0 = free, no payment step for members',
+                                  hintText:
+                                      '0 = free, no payment step for members',
                                 ),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                                 validator: (value) {
                                   final text = value?.trim() ?? '';
                                   if (text.isEmpty) return null; // treated as 0
                                   final parsed = double.tryParse(text);
                                   if (parsed == null) return 'Invalid number';
-                                  if (parsed < 0) return 'Fee can\'t be negative';
+                                  if (parsed < 0)
+                                    return 'Fee can\'t be negative';
                                   return null;
                                 },
                                 onChanged: (value) {
-                                  setState(() => _registrationFee = double.tryParse(value.trim()) ?? 0);
+                                  setState(
+                                    () =>
+                                        _registrationFee =
+                                            double.tryParse(value.trim()) ?? 0,
+                                  );
                                 },
                               ),
                               const SizedBox(height: AppSpacing.lg),
@@ -495,15 +609,18 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                                 decoration: InputDecoration(
                                   labelText: 'Max participants (optional)',
                                   hintText: 'e.g. 20',
-                                  helperText: widget.isEdit
-                                      ? '$confirmedCount current confirmed registrations'
-                                      : null,
+                                  helperText:
+                                      widget.isEdit
+                                          ? '$confirmedCount current confirmed registrations'
+                                          : null,
                                 ),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
-                                  if (value == null || value.trim().isEmpty) return null;
+                                  if (value == null || value.trim().isEmpty)
+                                    return null;
                                   final val = int.tryParse(value.trim());
-                                  if (val == null || val < 1) return 'Must be 1 or greater';
+                                  if (val == null || val < 1)
+                                    return 'Must be 1 or greater';
                                   if (widget.isEdit && val < confirmedCount) {
                                     return 'Must be >= current headcount ($confirmedCount)';
                                   }

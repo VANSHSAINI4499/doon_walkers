@@ -37,7 +37,9 @@ class AdminTrekRegistrationsScreen extends ConsumerWidget {
         child: registrationsAsync.when(
           loading: () => const _TrekRegistrationsSkeleton(),
           error: (error, stack) {
-            debugPrint('AdminTrekRegistrationsScreen: failed to load registrations: $error');
+            debugPrint(
+              'AdminTrekRegistrationsScreen: failed to load registrations: $error',
+            );
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -57,7 +59,10 @@ class AdminTrekRegistrationsScreen extends ConsumerWidget {
                       icon: AppIcons.refresh,
                       variant: PremiumButtonVariant.glass,
                       size: PremiumButtonSize.small,
-                      onPressed: () => ref.invalidate(registrationsForTrekProvider(trekId)),
+                      onPressed:
+                          () => ref.invalidate(
+                            registrationsForTrekProvider(trekId),
+                          ),
                     ),
                   ],
                 ),
@@ -82,9 +87,15 @@ class AdminTrekRegistrationsScreen extends ConsumerWidget {
               onRefresh: onRefresh,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                ),
                 itemCount: registrations.length,
-                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+                separatorBuilder:
+                    (context, index) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
                   final registration = registrations[index];
                   return AppReveal(
@@ -96,12 +107,13 @@ class AdminTrekRegistrationsScreen extends ConsumerWidget {
                       // adminRegistrationDetailLocation — see that
                       // constant's doc for why pushing the flat roster's
                       // path here would switch tabs and misplace "back".
-                      onTap: () => context.push(
-                        AppConstants.adminTrekRegistrationsDetailLocation(
-                          trekId,
-                          registration.id,
-                        ),
-                      ),
+                      onTap:
+                          () => context.push(
+                            AppConstants.adminTrekRegistrationsDetailLocation(
+                              trekId,
+                              registration.id,
+                            ),
+                          ),
                     ),
                   );
                 },
@@ -132,7 +144,11 @@ class _EmptyTrekRegistrations extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
             ),
-            child: AppIcon(AppIcons.registrations, size: 48, color: palette.primary),
+            child: AppIcon(
+              AppIcons.registrations,
+              size: 48,
+              color: palette.primary,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
@@ -163,25 +179,31 @@ class _TrekRegistrationsSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: 4,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 180, height: 16),
-              SizedBox(height: AppSpacing.sm),
-              SkeletonBox(width: 140, height: 10),
-              SizedBox(height: AppSpacing.md),
-              SkeletonBox(width: 220, height: 44, borderRadius: AppRadius.sm),
-            ],
-          ),
-        ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder:
+            (context, index) => Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(width: 180, height: 16),
+                  SizedBox(height: AppSpacing.sm),
+                  SkeletonBox(width: 140, height: 10),
+                  SizedBox(height: AppSpacing.md),
+                  SkeletonBox(
+                    width: 220,
+                    height: 44,
+                    borderRadius: AppRadius.sm,
+                  ),
+                ],
+              ),
+            ),
       ),
     );
   }

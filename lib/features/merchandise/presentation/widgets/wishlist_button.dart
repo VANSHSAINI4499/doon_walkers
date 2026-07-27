@@ -16,7 +16,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// remove control). The toggle behaviour, the guarded round-trip, and the
 /// auto-add are unchanged.
 class WishlistButton extends ConsumerStatefulWidget {
-  const WishlistButton({super.key, required this.productId, this.autoAdd = false});
+  const WishlistButton({
+    super.key,
+    required this.productId,
+    this.autoAdd = false,
+  });
 
   final String productId;
 
@@ -42,20 +46,24 @@ class _WishlistButtonState extends ConsumerState<WishlistButton> {
   Future<void> _add() async {
     if (!mounted || _isPending) return;
     setState(() => _isPending = true);
-    final success = await ref.read(wishlistControllerProvider.notifier).add(widget.productId);
+    final success = await ref
+        .read(wishlistControllerProvider.notifier)
+        .add(widget.productId);
     if (!mounted) return;
     setState(() => _isPending = false);
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Added to your wishlist.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Added to your wishlist.')));
     }
   }
 
   Future<void> _remove() async {
     setState(() => _isPending = true);
-    final success = await ref.read(wishlistControllerProvider.notifier).remove(widget.productId);
+    final success = await ref
+        .read(wishlistControllerProvider.notifier)
+        .remove(widget.productId);
     if (!mounted) return;
     setState(() => _isPending = false);
 
@@ -73,7 +81,8 @@ class _WishlistButtonState extends ConsumerState<WishlistButton> {
     }
     AuthGuard.requireAuth(
       context,
-      returnPath: '${AppConstants.merchandiseDetailLocation(widget.productId)}?wishlist=1',
+      returnPath:
+          '${AppConstants.merchandiseDetailLocation(widget.productId)}?wishlist=1',
       onAuthenticated: _add,
     );
   }
@@ -81,22 +90,37 @@ class _WishlistButtonState extends ConsumerState<WishlistButton> {
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final wishlistedAsync = ref.watch(isProductWishlistedProvider(widget.productId));
+    final wishlistedAsync = ref.watch(
+      isProductWishlistedProvider(widget.productId),
+    );
     final isWishlisted = wishlistedAsync.valueOrNull ?? false;
 
     if (_isPending || wishlistedAsync.isLoading) {
       return Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger)),
+        child: SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: palette.danger,
+          ),
+        ),
       );
     }
 
     return Container(
       decoration: BoxDecoration(
-        color: isWishlisted ? palette.danger.withValues(alpha: 0.14) : palette.card,
+        color:
+            isWishlisted
+                ? palette.danger.withValues(alpha: 0.14)
+                : palette.card,
         shape: BoxShape.circle,
         border: Border.all(
-          color: isWishlisted ? palette.danger.withValues(alpha: 0.4) : palette.border,
+          color:
+              isWishlisted
+                  ? palette.danger.withValues(alpha: 0.4)
+                  : palette.border,
         ),
       ),
       child: IconButton(

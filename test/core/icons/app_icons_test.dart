@@ -1,51 +1,38 @@
-// Verifies the two hard invariants of the redesign icon set:
-//   1. every AppIcons entry is Material Symbols **Rounded** (not
-//      outlined or sharp), and
-//   2. AppIcon renders them **filled**.
-//
-// A typo like `Symbols.home` (outlined) instead of `Symbols.home_rounded`
-// produces no visible error at a call site — the icon just quietly draws
-// in the wrong style. This test is the guard against that.
-
 import 'package:doon_walkers/core/icons/app_icons.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AppIcons', () {
-    test('every icon resolves to the MaterialSymbolsRounded font', () {
+    test('every icon resolves to a valid Lucide icon', () {
       for (final entry in AppIcons.all.entries) {
         expect(
           entry.value.fontFamily,
-          AppIcons.fontFamily,
-          reason: 'AppIcons.${entry.key} is not a Rounded symbol — it '
-              'resolves to ${entry.value.fontFamily}. Use '
-              'Symbols.<name>_rounded.',
+          'Lucide',
+          reason: 'AppIcons.${entry.key} does not resolve to Lucide font.',
         );
       }
     });
 
-    test('every icon is provided by the material_symbols_icons package', () {
+    test('every icon is provided by the lucide_icons_flutter package', () {
       for (final entry in AppIcons.all.entries) {
         expect(
           entry.value.fontPackage,
-          'material_symbols_icons',
-          reason: 'AppIcons.${entry.key} is not from the Material Symbols '
-              'package.',
+          'lucide_icons_flutter',
+          reason:
+              'AppIcons.${entry.key} is not from the lucide_icons_flutter package.',
         );
       }
     });
 
     test('the vocabulary has no duplicate names', () {
-      // The map literal itself would silently drop duplicate keys, so a
-      // count check here catches an accidental repeated entry.
       final names = AppIcons.all.keys.toList();
       expect(names.length, names.toSet().length);
     });
   });
 
   group('AppIcon', () {
-    testWidgets('renders filled by default (FILL axis = 1)', (tester) async {
+    testWidgets('renders Lucide Icon correctly', (tester) async {
       await tester.pumpWidget(
         const Directionality(
           textDirection: TextDirection.ltr,
@@ -54,7 +41,6 @@ void main() {
       );
 
       final icon = tester.widget<Icon>(find.byType(Icon));
-      expect(icon.fill, 1);
       expect(icon.icon, AppIcons.home);
     });
 

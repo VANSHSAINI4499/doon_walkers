@@ -6,12 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 /// [trekDate] (nullable — omitted entirely, matching how an
 /// unscheduled row actually arrives from Postgres).
 Trek _trekWithDate(String id, DateTime? date) => TrekModel.fromJson({
-      'id': id,
-      'title': id,
-      'is_published': true,
-      'created_at': '2026-01-01T00:00:00.000Z',
-      if (date != null) 'trek_date': date.toIso8601String().split('T').first,
-    });
+  'id': id,
+  'title': id,
+  'is_published': true,
+  'created_at': '2026-01-01T00:00:00.000Z',
+  if (date != null) 'trek_date': date.toIso8601String().split('T').first,
+});
 
 void main() {
   group('TrekDifficulty', () {
@@ -21,10 +21,13 @@ void main() {
       }
     });
 
-    test('unknown or null values fall back to moderate (matches DB default)', () {
-      expect(TrekDifficulty.fromString('legendary'), TrekDifficulty.moderate);
-      expect(TrekDifficulty.fromString(null), TrekDifficulty.moderate);
-    });
+    test(
+      'unknown or null values fall back to moderate (matches DB default)',
+      () {
+        expect(TrekDifficulty.fromString('legendary'), TrekDifficulty.moderate);
+        expect(TrekDifficulty.fromString(null), TrekDifficulty.moderate);
+      },
+    );
   });
 
   group('TrekModel.fromJson', () {
@@ -39,7 +42,8 @@ void main() {
       'best_season': 'Dec – Apr',
       'things_to_carry': 'Warm jacket, trekking shoes',
       'google_map_link': 'https://maps.app.goo.gl/example',
-      'cover_image': 'https://project.supabase.co/storage/v1/object/public/trek-covers/trek-1/1.jpg',
+      'cover_image':
+          'https://project.supabase.co/storage/v1/object/public/trek-covers/trek-1/1.jpg',
       'is_published': true,
       'created_at': '2026-01-15T10:00:00.000Z',
     };
@@ -109,13 +113,19 @@ void main() {
     });
 
     test('a future date is upcoming, not completed', () {
-      final trek = _trekWithDate('trek-x', DateTime.now().add(const Duration(days: 10)));
+      final trek = _trekWithDate(
+        'trek-x',
+        DateTime.now().add(const Duration(days: 10)),
+      );
       expect(trek.isUpcoming, isTrue);
       expect(trek.isCompleted, isFalse);
     });
 
     test('a past date is completed, not upcoming', () {
-      final trek = _trekWithDate('trek-x', DateTime.now().subtract(const Duration(days: 10)));
+      final trek = _trekWithDate(
+        'trek-x',
+        DateTime.now().subtract(const Duration(days: 10)),
+      );
       expect(trek.isUpcoming, isFalse);
       expect(trek.isCompleted, isTrue);
     });
@@ -139,7 +149,11 @@ void main() {
       final nearUpcoming = _trekWithDate('near', daysFromNow(2));
       final midUpcoming = _trekWithDate('mid', daysFromNow(10));
 
-      final sorted = sortTreksForLibrary([farUpcoming, nearUpcoming, midUpcoming]);
+      final sorted = sortTreksForLibrary([
+        farUpcoming,
+        nearUpcoming,
+        midUpcoming,
+      ]);
 
       expect(sorted.map((t) => t.id), ['near', 'mid', 'far']);
     });
@@ -154,36 +168,52 @@ void main() {
       expect(sorted.map((t) => t.id), ['recent', 'middling', 'long-ago']);
     });
 
-    test('unscheduled treks sort after every dated trek, upcoming or completed', () {
-      final upcoming = _trekWithDate('upcoming', daysFromNow(5));
-      final completed = _trekWithDate('completed', daysFromNow(-5));
-      final unscheduledA = _trekWithDate('unscheduled-a', null);
-      final unscheduledB = _trekWithDate('unscheduled-b', null);
+    test(
+      'unscheduled treks sort after every dated trek, upcoming or completed',
+      () {
+        final upcoming = _trekWithDate('upcoming', daysFromNow(5));
+        final completed = _trekWithDate('completed', daysFromNow(-5));
+        final unscheduledA = _trekWithDate('unscheduled-a', null);
+        final unscheduledB = _trekWithDate('unscheduled-b', null);
 
-      final sorted = sortTreksForLibrary([unscheduledA, completed, unscheduledB, upcoming]);
+        final sorted = sortTreksForLibrary([
+          unscheduledA,
+          completed,
+          unscheduledB,
+          upcoming,
+        ]);
 
-      expect(sorted.map((t) => t.id), ['upcoming', 'completed', 'unscheduled-a', 'unscheduled-b']);
-    });
+        expect(sorted.map((t) => t.id), [
+          'upcoming',
+          'completed',
+          'unscheduled-a',
+          'unscheduled-b',
+        ]);
+      },
+    );
 
-    test('full mix: upcoming (ascending), then completed (descending), then unscheduled', () {
-      final treks = [
-        _trekWithDate('completed-old', daysFromNow(-40)),
-        _trekWithDate('unscheduled', null),
-        _trekWithDate('upcoming-far', daysFromNow(30)),
-        _trekWithDate('completed-recent', daysFromNow(-3)),
-        _trekWithDate('upcoming-near', daysFromNow(1)),
-      ];
+    test(
+      'full mix: upcoming (ascending), then completed (descending), then unscheduled',
+      () {
+        final treks = [
+          _trekWithDate('completed-old', daysFromNow(-40)),
+          _trekWithDate('unscheduled', null),
+          _trekWithDate('upcoming-far', daysFromNow(30)),
+          _trekWithDate('completed-recent', daysFromNow(-3)),
+          _trekWithDate('upcoming-near', daysFromNow(1)),
+        ];
 
-      final sorted = sortTreksForLibrary(treks);
+        final sorted = sortTreksForLibrary(treks);
 
-      expect(sorted.map((t) => t.id), [
-        'upcoming-near',
-        'upcoming-far',
-        'completed-recent',
-        'completed-old',
-        'unscheduled',
-      ]);
-    });
+        expect(sorted.map((t) => t.id), [
+          'upcoming-near',
+          'upcoming-far',
+          'completed-recent',
+          'completed-old',
+          'unscheduled',
+        ]);
+      },
+    );
 
     test('an empty list stays empty', () {
       expect(sortTreksForLibrary([]), isEmpty);

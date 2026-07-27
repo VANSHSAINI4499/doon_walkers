@@ -30,19 +30,20 @@ class DeviceTokenRepositoryImpl implements DeviceTokenRepository {
     final userId = _currentUserId;
     debugPrint('[Push] upsertToken: user_id=$userId, fcm_token=$fcmToken');
     try {
-      await _supabase.from(AppConstants.tableDeviceTokens).upsert(
-        {
-          'user_id': userId,
-          'fcm_token': fcmToken,
-          'platform': 'android',
-          'updated_at': DateTime.now().toIso8601String(),
-        },
-        onConflict: 'fcm_token',
+      await _supabase.from(AppConstants.tableDeviceTokens).upsert({
+        'user_id': userId,
+        'fcm_token': fcmToken,
+        'platform': 'android',
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'fcm_token');
+      debugPrint(
+        '[Push] upsertToken: Supabase upsert call returned without error',
       );
-      debugPrint('[Push] upsertToken: Supabase upsert call returned without error');
     } on PostgrestException catch (e) {
-      debugPrint('[Push] upsertToken: PostgrestException code=${e.code}, '
-          'message=${e.message}, details=${e.details}, hint=${e.hint}');
+      debugPrint(
+        '[Push] upsertToken: PostgrestException code=${e.code}, '
+        'message=${e.message}, details=${e.details}, hint=${e.hint}',
+      );
       rethrow;
     } catch (e) {
       debugPrint('[Push] upsertToken: unexpected error: $e');
@@ -54,11 +55,18 @@ class DeviceTokenRepositoryImpl implements DeviceTokenRepository {
   Future<void> removeToken(String fcmToken) async {
     debugPrint('[Push] removeToken: fcm_token=$fcmToken');
     try {
-      await _supabase.from(AppConstants.tableDeviceTokens).delete().eq('fcm_token', fcmToken);
-      debugPrint('[Push] removeToken: Supabase delete call returned without error');
+      await _supabase
+          .from(AppConstants.tableDeviceTokens)
+          .delete()
+          .eq('fcm_token', fcmToken);
+      debugPrint(
+        '[Push] removeToken: Supabase delete call returned without error',
+      );
     } on PostgrestException catch (e) {
-      debugPrint('[Push] removeToken: PostgrestException code=${e.code}, '
-          'message=${e.message}, details=${e.details}, hint=${e.hint}');
+      debugPrint(
+        '[Push] removeToken: PostgrestException code=${e.code}, '
+        'message=${e.message}, details=${e.details}, hint=${e.hint}',
+      );
       rethrow;
     } catch (e) {
       debugPrint('[Push] removeToken: unexpected error: $e');

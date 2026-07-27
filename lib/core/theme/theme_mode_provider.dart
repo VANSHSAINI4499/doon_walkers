@@ -24,13 +24,14 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
   /// stored preference at a different mode.
   static const String prefsKey = 'theme_mode';
 
-  static ThemeMode _read(SharedPreferences prefs) =>
-      switch (prefs.getString(prefsKey)) {
-        'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
-        // Covers both an explicit 'system' and a missing/corrupt value.
-        _ => ThemeMode.system,
-      };
+  static ThemeMode _read(SharedPreferences prefs) => switch (prefs.getString(
+    prefsKey,
+  )) {
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    // Covers both an explicit 'system' and a missing/corrupt value.
+    _ => ThemeMode.system,
+  };
 
   static String _encode(ThemeMode mode) => switch (mode) {
     ThemeMode.light => 'light',
@@ -51,8 +52,7 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
 }
 
 /// The active [ThemeMode]. Feed this to `MaterialApp.themeMode`.
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeController, ThemeMode>(
-      (ref) => ThemeModeController(ref.watch(sharedPreferencesProvider)),
-      name: 'themeModeProvider',
-    );
+final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>(
+  (ref) => ThemeModeController(ref.watch(sharedPreferencesProvider)),
+  name: 'themeModeProvider',
+);

@@ -26,8 +26,7 @@ class HomeScreen extends ConsumerWidget {
       ref.refresh(activitySummaryProvider(today).future),
       ref.refresh(myEnrollmentsProvider.future),
       ref.refresh(activeChallengesProvider.future),
-      ref.refresh(
-          communityLeaderboardProvider((limit: 3, offset: 0)).future),
+      ref.refresh(communityLeaderboardProvider((limit: 3, offset: 0)).future),
       ref.refresh(publishedTreksProvider.future),
     ]);
   }
@@ -85,9 +84,10 @@ class _GreetingAndWeatherRow extends ConsumerWidget {
     final weatherAsync = ref.watch(weatherProvider);
 
     final name = user?.name.isNotEmpty == true ? user!.name : null;
-    final greetingText = name != null
-        ? '${_getTimeAwareGreeting()},\n$name 👋'
-        : 'Welcome to\nDoonWalkers 👋';
+    final greetingText =
+        name != null
+            ? '${_getTimeAwareGreeting()},\n$name 👋'
+            : 'Welcome to\nDoonWalkers 👋';
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -261,16 +261,21 @@ class _TodayStepsCard extends ConsumerWidget {
                             ),
                           );
                         },
-                        loading: () => const Shimmer(
-                          child: SkeletonBox(
-                              width: 80, height: 28, borderRadius: AppRadius.xs),
-                        ),
-                        error: (_, __) => Text(
-                          '0',
-                          style: AppTextStyles.headlineMedium.copyWith(
-                            color: palette.textPrimary,
-                          ),
-                        ),
+                        loading:
+                            () => const Shimmer(
+                              child: SkeletonBox(
+                                width: 80,
+                                height: 28,
+                                borderRadius: AppRadius.xs,
+                              ),
+                            ),
+                        error:
+                            (_, __) => Text(
+                              '0',
+                              style: AppTextStyles.headlineMedium.copyWith(
+                                color: palette.textPrimary,
+                              ),
+                            ),
                       )
                     else
                       Text(
@@ -293,9 +298,10 @@ class _TodayStepsCard extends ConsumerWidget {
                 final progress = (steps / goal).clamp(0.0, 1.0);
                 final remaining = goal - steps;
 
-                final motivational = remaining <= 0
-                    ? 'Goal reached! 🎉'
-                    : '$remaining steps to your daily goal ($goal)';
+                final motivational =
+                    remaining <= 0
+                        ? 'Goal reached! 🎉'
+                        : '$remaining steps to your daily goal ($goal)';
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,29 +387,43 @@ class _ActiveChallengesSection extends ConsumerWidget {
           )
         else
           enrollmentsAsync.when(
-            loading: () => const Shimmer(
-              child: SkeletonBox(height: 100, borderRadius: AppRadius.card),
-            ),
-            error: (_, __) => Text(
-              'Could not load challenges.',
-              style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
-            ),
+            loading:
+                () => const Shimmer(
+                  child: SkeletonBox(height: 100, borderRadius: AppRadius.card),
+                ),
+            error:
+                (_, __) => Text(
+                  'Could not load challenges.',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: palette.danger,
+                  ),
+                ),
             data: (enrollments) {
               final enrolledIds = enrollments.map((e) => e.challengeId).toSet();
 
               return challengesAsync.when(
-                loading: () => const Shimmer(
-                  child: SkeletonBox(height: 100, borderRadius: AppRadius.card),
-                ),
-                error: (_, __) => Text(
-                  'Could not load challenges.',
-                  style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
-                ),
+                loading:
+                    () => const Shimmer(
+                      child: SkeletonBox(
+                        height: 100,
+                        borderRadius: AppRadius.card,
+                      ),
+                    ),
+                error:
+                    (_, __) => Text(
+                      'Could not load challenges.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: palette.danger,
+                      ),
+                    ),
                 data: (allChallenges) {
-                  final activeEnrolled = allChallenges
-                      .where((c) => c.isActive && enrolledIds.contains(c.id))
-                      .take(3)
-                      .toList();
+                  final activeEnrolled =
+                      allChallenges
+                          .where(
+                            (c) => c.isActive && enrolledIds.contains(c.id),
+                          )
+                          .take(3)
+                          .toList();
 
                   if (activeEnrolled.isEmpty) {
                     return AppCard(
@@ -412,7 +432,10 @@ class _ActiveChallengesSection extends ConsumerWidget {
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         child: Row(
                           children: [
-                            AppIcon(AppIcons.challenges, color: palette.primary),
+                            AppIcon(
+                              AppIcons.challenges,
+                              color: palette.primary,
+                            ),
                             const SizedBox(width: AppSpacing.md),
                             Expanded(
                               child: Text(
@@ -422,8 +445,10 @@ class _ActiveChallengesSection extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                            AppIcon(AppIcons.chevronRight,
-                                color: palette.textSecondary),
+                            AppIcon(
+                              AppIcons.chevronRight,
+                              color: palette.textSecondary,
+                            ),
                           ],
                         ),
                       ),
@@ -435,8 +460,9 @@ class _ActiveChallengesSection extends ConsumerWidget {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: activeEnrolled.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: AppSpacing.md),
+                      separatorBuilder:
+                          (context, index) =>
+                              const SizedBox(width: AppSpacing.md),
                       itemBuilder: (context, index) {
                         final challenge = activeEnrolled[index];
                         return Container(
@@ -468,8 +494,9 @@ class _ActiveChallengesSection extends ConsumerWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: palette.primarySubtle,
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.xs),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xs,
+                                      ),
                                     ),
                                     child: Text(
                                       '+${challenge.pointValue} pts',
@@ -503,8 +530,9 @@ class _CommunityStripSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
-    final leaderboardAsync =
-        ref.watch(communityLeaderboardProvider((limit: 3, offset: 0)));
+    final leaderboardAsync = ref.watch(
+      communityLeaderboardProvider((limit: 3, offset: 0)),
+    );
     final myRankAsync = ref.watch(myCommunityRankProvider);
     final isSignedIn = ref.watch(isSignedInProvider);
 
@@ -529,13 +557,15 @@ class _CommunityStripSection extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         leaderboardAsync.when(
-          loading: () => const Shimmer(
-            child: SkeletonBox(height: 90, borderRadius: AppRadius.card),
-          ),
-          error: (_, __) => Text(
-            'Could not load community strip.',
-            style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
-          ),
+          loading:
+              () => const Shimmer(
+                child: SkeletonBox(height: 90, borderRadius: AppRadius.card),
+              ),
+          error:
+              (_, __) => Text(
+                'Could not load community strip.',
+                style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+              ),
           data: (top3) {
             if (top3.isEmpty) {
               return AppCard(
@@ -561,66 +591,73 @@ class _CommunityStripSection extends ConsumerWidget {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: top3.map((entry) {
-                        return InkWell(
-                          onTap: () => showMemberDetailSheet(
-                            context: context,
-                            displayName: entry.displayName,
-                            avatarUrl: entry.avatarUrl,
-                            level: entry.level,
-                            totalPoints: entry.totalPoints,
-                          ),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: palette.primarySubtle,
-                                  border: Border.all(color: palette.border),
-                                ),
-                                child: ClipOval(
-                                  child: entry.avatarUrl != null &&
-                                          entry.avatarUrl!.isNotEmpty
-                                      ? CachedNetworkImage(
-                                          imageUrl: entry.avatarUrl!,
-                                          fit: BoxFit.cover,
-                                          errorWidget: (_, __, ___) =>
-                                              _Initials(entry.displayName),
-                                        )
-                                      : _Initials(entry.displayName),
-                                ),
+                      children:
+                          top3.map((entry) {
+                            return InkWell(
+                              onTap:
+                                  () => showMemberDetailSheet(
+                                    context: context,
+                                    displayName: entry.displayName,
+                                    avatarUrl: entry.avatarUrl,
+                                    level: entry.level,
+                                    totalPoints: entry.totalPoints,
+                                  ),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: palette.primarySubtle,
+                                      border: Border.all(color: palette.border),
+                                    ),
+                                    child: ClipOval(
+                                      child:
+                                          entry.avatarUrl != null &&
+                                                  entry.avatarUrl!.isNotEmpty
+                                              ? CachedNetworkImage(
+                                                imageUrl: entry.avatarUrl!,
+                                                fit: BoxFit.cover,
+                                                errorWidget:
+                                                    (_, __, ___) => _Initials(
+                                                      entry.displayName,
+                                                    ),
+                                              )
+                                              : _Initials(entry.displayName),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    entry.displayName,
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: palette.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  LevelBadge(level: entry.level),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                entry.displayName,
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: palette.textPrimary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              LevelBadge(level: entry.level),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          }).toList(),
                     ),
                     if (isSignedIn) ...[
                       const SizedBox(height: AppSpacing.md),
                       const Divider(),
                       const SizedBox(height: AppSpacing.xs),
                       myRankAsync.when(
-                        data: (myEntry) => myEntry != null
-                            ? Text(
-                                'Your Rank: #${myEntry.rank} · ${myEntry.totalPoints} pts',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: palette.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                        data:
+                            (myEntry) =>
+                                myEntry != null
+                                    ? Text(
+                                      'Your Rank: #${myEntry.rank} · ${myEntry.totalPoints} pts',
+                                      style: AppTextStyles.labelMedium.copyWith(
+                                        color: palette.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                    : const SizedBox.shrink(),
                         loading: () => const SizedBox.shrink(),
                         error: (_, __) => const SizedBox.shrink(),
                       ),
@@ -666,13 +703,15 @@ class _ExploreTreksSection extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         treksAsync.when(
-          loading: () => const Shimmer(
-            child: SkeletonBox(height: 200, borderRadius: AppRadius.card),
-          ),
-          error: (_, __) => Text(
-            'Could not load treks.',
-            style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
-          ),
+          loading:
+              () => const Shimmer(
+                child: SkeletonBox(height: 200, borderRadius: AppRadius.card),
+              ),
+          error:
+              (_, __) => Text(
+                'Could not load treks.',
+                style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+              ),
           data: (treks) {
             if (treks.isEmpty) {
               return AppCard(
@@ -734,20 +773,25 @@ class _HomeTrekCard extends ConsumerWidget {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.card),
               ),
-              child: trek.coverImage != null && trek.coverImage!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: trek.coverImage!,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => Container(
+              child:
+                  trek.coverImage != null && trek.coverImage!.isNotEmpty
+                      ? CachedNetworkImage(
+                        imageUrl: trek.coverImage!,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorWidget:
+                            (_, __, ___) => Container(
+                              color: palette.primarySubtle,
+                              child: Icon(
+                                Icons.terrain,
+                                color: palette.primary,
+                              ),
+                            ),
+                      )
+                      : Container(
                         color: palette.primarySubtle,
                         child: Icon(Icons.terrain, color: palette.primary),
                       ),
-                    )
-                  : Container(
-                      color: palette.primarySubtle,
-                      child: Icon(Icons.terrain, color: palette.primary),
-                    ),
             ),
           ),
           Padding(

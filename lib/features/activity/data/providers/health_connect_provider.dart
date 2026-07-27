@@ -44,7 +44,9 @@ class HealthConnectProvider implements ActivityProvider {
     await _ensureConfigured();
     try {
       final available = await _health.isHealthConnectAvailable();
-      return available ? ActivityAvailability.available : ActivityAvailability.unavailable;
+      return available
+          ? ActivityAvailability.available
+          : ActivityAvailability.unavailable;
     } catch (e) {
       debugPrint('HealthConnectProvider: checkAvailability failed: $e');
       return ActivityAvailability.unavailable;
@@ -55,7 +57,10 @@ class HealthConnectProvider implements ActivityProvider {
   Future<bool> hasPermission() async {
     await _ensureConfigured();
     try {
-      final hasSteps = await _health.hasPermissions(_types, permissions: _permissions);
+      final hasSteps = await _health.hasPermissions(
+        _types,
+        permissions: _permissions,
+      );
       return hasSteps ?? false;
     } catch (e) {
       debugPrint('HealthConnectProvider: hasPermission failed: $e');
@@ -75,7 +80,10 @@ class HealthConnectProvider implements ActivityProvider {
       final activityStatus = await Permission.activityRecognition.request();
       if (!activityStatus.isGranted) return false;
 
-      return await _health.requestAuthorization(_types, permissions: _permissions);
+      return await _health.requestAuthorization(
+        _types,
+        permissions: _permissions,
+      );
     } catch (e) {
       debugPrint('HealthConnectProvider: requestPermission failed: $e');
       return false;
@@ -95,17 +103,23 @@ class HealthConnectProvider implements ActivityProvider {
     // loop is what turns that into the per-calendar-day rows
     // daily_activity_summary needs (UNIQUE(user_id, date)), rather than
     // one big multi-day blob this app would have to re-split itself.
-    for (var day = DateTime(start.year, start.month, start.day);
-        !day.isAfter(DateTime(end.year, end.month, end.day));
-        day = day.add(const Duration(days: 1))) {
+    for (
+      var day = DateTime(start.year, start.month, start.day);
+      !day.isAfter(DateTime(end.year, end.month, end.day));
+      day = day.add(const Duration(days: 1))
+    ) {
       final dayStart = day;
       final dayEnd = day.add(const Duration(days: 1));
 
       try {
-        final steps = await _health.getTotalStepsInInterval(dayStart, dayEnd) ?? 0;
+        final steps =
+            await _health.getTotalStepsInInterval(dayStart, dayEnd) ?? 0;
 
         final distanceAndCalories = await _health.getHealthDataFromTypes(
-          types: const [HealthDataType.DISTANCE_DELTA, HealthDataType.TOTAL_CALORIES_BURNED],
+          types: const [
+            HealthDataType.DISTANCE_DELTA,
+            HealthDataType.TOTAL_CALORIES_BURNED,
+          ],
           startTime: dayStart,
           endTime: dayEnd,
         );
@@ -130,18 +144,22 @@ class HealthConnectProvider implements ActivityProvider {
 
         if (steps == 0 && distanceMeters == 0 && calories == 0) continue;
 
-        results.add(DailyActivity(
-          date: day,
-          steps: steps,
-          distanceKm: distanceMeters / 1000,
-          calories: calories,
-          activeMinutes: activeMinutes,
-        ));
+        results.add(
+          DailyActivity(
+            date: day,
+            steps: steps,
+            distanceKm: distanceMeters / 1000,
+            calories: calories,
+            activeMinutes: activeMinutes,
+          ),
+        );
       } catch (e) {
         // One bad day shouldn't abort the whole sync window — skip and
         // let the rest of the range still sync; the failed day just
         // gets picked up again on the next sync.
-        debugPrint('HealthConnectProvider: failed to read ${day.toIso8601String()}: $e');
+        debugPrint(
+          'HealthConnectProvider: failed to read ${day.toIso8601String()}: $e',
+        );
       }
     }
 

@@ -53,7 +53,9 @@ class _MyEnquiriesScreenState extends ConsumerState<MyEnquiriesScreen> {
 
   List<MerchInquiry> _filter(List<MerchInquiry> items) {
     if (_query.isEmpty) return items;
-    return items.where((item) => item.productName.toLowerCase().contains(_query)).toList();
+    return items
+        .where((item) => item.productName.toLowerCase().contains(_query))
+        .toList();
   }
 
   @override
@@ -65,18 +67,29 @@ class _MyEnquiriesScreenState extends ConsumerState<MyEnquiriesScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-            child: ListSearchField(controller: _searchController, hint: 'Search your inquiries'),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
+            child: ListSearchField(
+              controller: _searchController,
+              hint: 'Search your inquiries',
+            ),
           ),
           Expanded(
             child: pageAsync.when(
               loading: () => const ListScreenSkeleton(),
-              error: (error, stack) => ListScreenError(
-                message: 'Could not load your inquiries.',
-                onRetry: () => ref.invalidate(myInquiriesPaginationProvider),
-              ),
+              error:
+                  (error, stack) => ListScreenError(
+                    message: 'Could not load your inquiries.',
+                    onRetry:
+                        () => ref.invalidate(myInquiriesPaginationProvider),
+                  ),
               data: (page) {
-                Future<void> onRefresh() => ref.refresh(myInquiriesPaginationProvider.future);
+                Future<void> onRefresh() =>
+                    ref.refresh(myInquiriesPaginationProvider.future);
 
                 final filtered = _filter(page.items);
                 if (filtered.isEmpty) {
@@ -87,9 +100,10 @@ class _MyEnquiriesScreenState extends ConsumerState<MyEnquiriesScreen> {
                       children: [
                         ListScreenEmpty(
                           icon: AppIcons.bag,
-                          message: _query.isNotEmpty
-                              ? 'No inquiries match "$_query".'
-                              : 'You haven\'t sent any "Buy Now" inquiries yet.',
+                          message:
+                              _query.isNotEmpty
+                                  ? 'No inquiries match "$_query".'
+                                  : 'You haven\'t sent any "Buy Now" inquiries yet.',
                         ),
                       ],
                     ),

@@ -29,7 +29,9 @@ class MyChallengeAchievementsScreen extends ConsumerWidget {
         child: historyAsync.when(
           loading: () => const _AchievementsSkeleton(),
           error: (error, stack) {
-            debugPrint('MyChallengeAchievementsScreen: failed to load history: $error');
+            debugPrint(
+              'MyChallengeAchievementsScreen: failed to load history: $error',
+            );
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -42,7 +44,11 @@ class MyChallengeAchievementsScreen extends ConsumerWidget {
                       color: AppPalette.of(context).danger,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    Text('Could not load your achievements.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+                    Text(
+                      'Could not load your achievements.',
+                      style: AppTextStyles.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: AppSpacing.xl),
                     AppButton(
                       label: 'Retry',
@@ -64,7 +70,8 @@ class MyChallengeAchievementsScreen extends ConsumerWidget {
               );
             }
 
-            final challenges = challengesAsync.valueOrNull ?? const <Challenge>[];
+            final challenges =
+                challengesAsync.valueOrNull ?? const <Challenge>[];
             Challenge? challengeFor(String id) {
               for (final c in challenges) {
                 if (c.id == id) return c;
@@ -72,13 +79,15 @@ class MyChallengeAchievementsScreen extends ConsumerWidget {
               return null;
             }
 
-            final sorted = [...history]..sort((a, b) => b.achievedAt.compareTo(a.achievedAt));
+            final sorted = [...history]
+              ..sort((a, b) => b.achievedAt.compareTo(a.achievedAt));
 
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: sorted.length,
-              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+              separatorBuilder:
+                  (context, index) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 final achievement = sorted[index];
                 return AppReveal(
@@ -122,7 +131,11 @@ class _EmptyAchievements extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('No tiers reached yet', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+          Text(
+            'No tiers reached yet',
+            style: AppTextStyles.titleLarge,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Attend a trek and check back — your progress builds automatically.',
@@ -187,8 +200,18 @@ class _AchievementTile extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -205,31 +228,33 @@ class _AchievementsSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: 5,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-          child: const Row(
-            children: [
-              SkeletonCircle(size: 44),
-              SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonBox(width: 180, height: 14),
-                    SizedBox(height: AppSpacing.sm),
-                    SkeletonBox(width: 100, height: 10),
-                  ],
-                ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder:
+            (context, index) => Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
               ),
-            ],
-          ),
-        ),
+              child: const Row(
+                children: [
+                  SkeletonCircle(size: 44),
+                  SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 180, height: 14),
+                        SizedBox(height: AppSpacing.sm),
+                        SkeletonBox(width: 100, height: 10),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
       ),
     );
   }

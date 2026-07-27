@@ -33,15 +33,12 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) => SettingsBackedPage(
     title: 'About',
     builder: (context, settings) {
-      final orgName = settings.orgName.isEmpty
-          ? AppConstants.orgName
-          : settings.orgName;
-      final orgCity = settings.orgCity.isEmpty
-          ? AppConstants.orgCity
-          : settings.orgCity;
-      final orgState = settings.orgState.isEmpty
-          ? AppConstants.orgState
-          : settings.orgState;
+      final orgName =
+          settings.orgName.isEmpty ? AppConstants.orgName : settings.orgName;
+      final orgCity =
+          settings.orgCity.isEmpty ? AppConstants.orgCity : settings.orgCity;
+      final orgState =
+          settings.orgState.isEmpty ? AppConstants.orgState : settings.orgState;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

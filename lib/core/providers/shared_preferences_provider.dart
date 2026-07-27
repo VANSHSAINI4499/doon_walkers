@@ -10,6 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// is a programming error (deliberately throws rather than returning a
 /// stub), not a state this app is ever meant to reach.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
-  (ref) => throw UnimplementedError('sharedPreferencesProvider must be overridden in main()'),
+  (ref) =>
+      throw UnimplementedError(
+        'sharedPreferencesProvider must be overridden in main()',
+      ),
   name: 'sharedPreferencesProvider',
 );

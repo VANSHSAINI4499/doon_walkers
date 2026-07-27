@@ -6,7 +6,11 @@ import 'package:flutter/material.dart';
 /// catalog has no legitimate need for exact inventory counts, so this only
 /// ever renders the boolean. Restyled onto the design system's pill.
 class StockStatusBadge extends StatelessWidget {
-  const StockStatusBadge({super.key, required this.isInStock, this.dense = false});
+  const StockStatusBadge({
+    super.key,
+    required this.isInStock,
+    this.dense = false,
+  });
 
   final bool isInStock;
   final bool dense;
@@ -15,7 +19,10 @@ class StockStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final color = isInStock ? palette.primary : palette.danger;
-    final bgSubtle = isInStock ? palette.primarySubtle : palette.danger.withValues(alpha: 0.14);
+    final bgSubtle =
+        isInStock
+            ? palette.primarySubtle
+            : palette.danger.withValues(alpha: 0.14);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: dense ? AppSpacing.sm : AppSpacing.md,

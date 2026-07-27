@@ -50,15 +50,17 @@ class PhoneVerificationState {
 /// for its own transient-error tolerance) is what keeps it visible.
 final phoneVerificationControllerProvider =
     AsyncNotifierProvider<PhoneVerificationController, PhoneVerificationState>(
-  PhoneVerificationController.new,
-  name: 'phoneVerificationControllerProvider',
-);
+      PhoneVerificationController.new,
+      name: 'phoneVerificationControllerProvider',
+    );
 
-class PhoneVerificationController extends AsyncNotifier<PhoneVerificationState> {
+class PhoneVerificationController
+    extends AsyncNotifier<PhoneVerificationState> {
   @override
   FutureOr<PhoneVerificationState> build() => const PhoneVerificationState();
 
-  PhoneVerificationRepository get _repository => ref.read(phoneVerificationRepositoryProvider);
+  PhoneVerificationRepository get _repository =>
+      ref.read(phoneVerificationRepositoryProvider);
 
   /// Prefills the phone field before the first send — called once by the
   /// screen with the user's existing `public.users.phone`, if any.
@@ -74,7 +76,9 @@ class PhoneVerificationController extends AsyncNotifier<PhoneVerificationState> 
   /// [verifyOtp]. Returns false once the OTP step is showing.
   Future<bool> sendOtp(String phone) async {
     final base = state.valueOrNull ?? const PhoneVerificationState();
-    state = const AsyncLoading<PhoneVerificationState>().copyWithPrevious(state);
+    state = const AsyncLoading<PhoneVerificationState>().copyWithPrevious(
+      state,
+    );
     try {
       final result = await _repository.sendOtp(phone);
       switch (result) {
@@ -84,12 +88,19 @@ class PhoneVerificationController extends AsyncNotifier<PhoneVerificationState> 
           return true;
         case SendOtpCodeSent(:final reqId):
           state = AsyncData(
-            base.copyWith(step: PhoneVerificationStep.enterOtp, phone: phone, reqId: reqId),
+            base.copyWith(
+              step: PhoneVerificationStep.enterOtp,
+              phone: phone,
+              reqId: reqId,
+            ),
           );
           return false;
       }
     } catch (e, st) {
-      state = AsyncError<PhoneVerificationState>(e, st).copyWithPrevious(AsyncData(base));
+      state = AsyncError<PhoneVerificationState>(
+        e,
+        st,
+      ).copyWithPrevious(AsyncData(base));
       return false;
     }
   }
@@ -97,12 +108,17 @@ class PhoneVerificationController extends AsyncNotifier<PhoneVerificationState> 
   Future<void> retryOtp() async {
     final base = state.valueOrNull ?? const PhoneVerificationState();
     if (base.reqId.isEmpty) return;
-    state = const AsyncLoading<PhoneVerificationState>().copyWithPrevious(state);
+    state = const AsyncLoading<PhoneVerificationState>().copyWithPrevious(
+      state,
+    );
     try {
       await _repository.retryOtp(base.reqId);
       state = AsyncData(base);
     } catch (e, st) {
-      state = AsyncError<PhoneVerificationState>(e, st).copyWithPrevious(AsyncData(base));
+      state = AsyncError<PhoneVerificationState>(
+        e,
+        st,
+      ).copyWithPrevious(AsyncData(base));
     }
   }
 
@@ -112,14 +128,22 @@ class PhoneVerificationController extends AsyncNotifier<PhoneVerificationState> 
   /// app_router.dart) take over from there.
   Future<bool> verifyOtp(String otp) async {
     final base = state.valueOrNull ?? const PhoneVerificationState();
-    state = const AsyncLoading<PhoneVerificationState>().copyWithPrevious(state);
+    state = const AsyncLoading<PhoneVerificationState>().copyWithPrevious(
+      state,
+    );
     try {
-      final accessToken = await _repository.verifyOtp(reqId: base.reqId, otp: otp);
+      final accessToken = await _repository.verifyOtp(
+        reqId: base.reqId,
+        otp: otp,
+      );
       await _repository.confirmVerification(accessToken);
       state = AsyncData(base);
       return true;
     } catch (e, st) {
-      state = AsyncError<PhoneVerificationState>(e, st).copyWithPrevious(AsyncData(base));
+      state = AsyncError<PhoneVerificationState>(
+        e,
+        st,
+      ).copyWithPrevious(AsyncData(base));
       return false;
     }
   }
@@ -129,6 +153,8 @@ class PhoneVerificationController extends AsyncNotifier<PhoneVerificationState> 
   /// [sendOtp], which would fire an actual send request.
   void resetToPhoneStep() {
     final base = state.valueOrNull ?? const PhoneVerificationState();
-    state = AsyncData(base.copyWith(step: PhoneVerificationStep.enterPhone, reqId: ''));
+    state = AsyncData(
+      base.copyWith(step: PhoneVerificationStep.enterPhone, reqId: ''),
+    );
   }
 }

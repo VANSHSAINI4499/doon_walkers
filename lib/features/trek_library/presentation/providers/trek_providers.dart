@@ -17,13 +17,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///
 /// [sortTreksForLibrary] runs here rather than in the repository, which
 /// stays a plain data-access layer — ordering is a presentation rule.
-final publishedTreksProvider = FutureProvider<List<Trek>>(
-  (ref) async {
-    final treks = await ref.watch(trekRepositoryProvider).fetchPublishedTreks();
-    return sortTreksForLibrary(treks);
-  },
-  name: 'publishedTreksProvider',
-);
+final publishedTreksProvider = FutureProvider<List<Trek>>((ref) async {
+  final treks = await ref.watch(trekRepositoryProvider).fetchPublishedTreks();
+  return sortTreksForLibrary(treks);
+}, name: 'publishedTreksProvider');
 
 /// All treks (published + draft) — admin trek list only. RLS returns
 /// draft rows only when the caller is actually an admin; anyone else
@@ -32,13 +29,10 @@ final publishedTreksProvider = FutureProvider<List<Trek>>(
 /// One-shot fetch — same reasoning as [publishedTreksProvider]. Same
 /// [sortTreksForLibrary] ordering as the public list, so an admin's view
 /// doesn't reshuffle relative to what members see.
-final adminAllTreksProvider = FutureProvider<List<Trek>>(
-  (ref) async {
-    final treks = await ref.watch(trekRepositoryProvider).fetchAllTreks();
-    return sortTreksForLibrary(treks);
-  },
-  name: 'adminAllTreksProvider',
-);
+final adminAllTreksProvider = FutureProvider<List<Trek>>((ref) async {
+  final treks = await ref.watch(trekRepositoryProvider).fetchAllTreks();
+  return sortTreksForLibrary(treks);
+}, name: 'adminAllTreksProvider');
 
 /// A single trek by id, for the Trek Detail screen. `autoDispose` since
 /// detail pages are visited transiently — no reason to keep every trek
@@ -54,10 +48,12 @@ final trekByIdProvider = FutureProvider.autoDispose.family<Trek?, String>(
 /// the trek has no token row yet and when the caller isn't an admin
 /// (RLS makes those indistinguishable) — see
 /// [TrekRepository.fetchCheckinToken]'s doc.
-final trekCheckinTokenProvider = FutureProvider.autoDispose.family<String?, String>(
-  (ref, trekId) => ref.watch(trekRepositoryProvider).fetchCheckinToken(trekId),
-  name: 'trekCheckinTokenProvider',
-);
+final trekCheckinTokenProvider = FutureProvider.autoDispose
+    .family<String?, String>(
+      (ref, trekId) =>
+          ref.watch(trekRepositoryProvider).fetchCheckinToken(trekId),
+      name: 'trekCheckinTokenProvider',
+    );
 
 /// Thrown when a trek row was created/updated successfully but its
 /// cover image or QR code image failed to upload — distinct from a
@@ -75,10 +71,11 @@ class TrekImageUploadException implements Exception {
 /// delete, publish toggle). Mirrors AuthController's shape: [state] is
 /// shared loading/error status across all actions; each method also
 /// returns its own result so callers don't have to read state.value.
-final trekAdminControllerProvider = AsyncNotifierProvider<TrekAdminController, void>(
-  TrekAdminController.new,
-  name: 'trekAdminControllerProvider',
-);
+final trekAdminControllerProvider =
+    AsyncNotifierProvider<TrekAdminController, void>(
+      TrekAdminController.new,
+      name: 'trekAdminControllerProvider',
+    );
 
 class TrekAdminController extends AsyncNotifier<void> {
   @override
@@ -269,6 +266,9 @@ class TrekAdminController extends AsyncNotifier<void> {
 }
 
 /// Spots remaining provider (Phase 26)
-final trekSpotsLeftProvider = FutureProvider.autoDispose.family<int?, String>((ref, trekId) {
+final trekSpotsLeftProvider = FutureProvider.autoDispose.family<int?, String>((
+  ref,
+  trekId,
+) {
   return ref.watch(trekRepositoryProvider).fetchSpotsLeft(trekId);
 }, name: 'trekSpotsLeftProvider');

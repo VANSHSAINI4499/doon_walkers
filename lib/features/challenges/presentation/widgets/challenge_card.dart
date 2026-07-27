@@ -79,9 +79,10 @@ class ChallengeCard extends ConsumerWidget {
       // A tinted hairline is what marks a card as "you hold a tier here" —
       // the calm replacement for the tier-coloured glow this card used to
       // cast.
-      borderColor: currentTier != null
-          ? TierBadge.colorFor(currentTier).withValues(alpha: 0.5)
-          : null,
+      borderColor:
+          currentTier != null
+              ? TierBadge.colorFor(currentTier).withValues(alpha: 0.5)
+              : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

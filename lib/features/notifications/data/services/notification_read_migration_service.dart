@@ -13,9 +13,9 @@ class NotificationReadMigrationService {
     required SharedPreferences prefs,
     required NotificationReadTracker tracker,
     required NotificationRepository repository,
-  })  : _prefs = prefs,
-        _tracker = tracker,
-        _repository = repository;
+  }) : _prefs = prefs,
+       _tracker = tracker,
+       _repository = repository;
 
   /// Performs a one-time migration of local SharedPreferences read IDs
   /// into the server-side `notification_reads` table.

@@ -74,7 +74,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
         if (challenges == null) return;
         final enrollments = ref.read(myEnrollmentsProvider).valueOrNull;
         if (enrollments == null) return;
-        _maybeTriggerChallengeCompletedPoints(challenges, progressList, enrollments);
+        _maybeTriggerChallengeCompletedPoints(
+          challenges,
+          progressList,
+          enrollments,
+        );
       },
     );
 
@@ -89,14 +93,15 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
           ),
         ],
       ),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton.extended(
-              onPressed: () =>
-                  context.push(AppConstants.routeAdminChallengesNew),
-              icon: const AppIcon(AppIcons.add, size: 20),
-              label: const Text('Add Challenge'),
-            )
-          : null,
+      floatingActionButton:
+          isAdmin
+              ? FloatingActionButton.extended(
+                onPressed:
+                    () => context.push(AppConstants.routeAdminChallengesNew),
+                icon: const AppIcon(AppIcons.add, size: 20),
+                label: const Text('Add Challenge'),
+              )
+              : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -120,11 +125,11 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
             Expanded(
               child: switch (_view) {
                 _ChallengesView.mine => _MyChallengesView(
-                    challengesAsync: challengesAsync,
-                    challengesProvider: challengesProvider,
-                    progressAsync: progressAsync,
-                    isAdmin: isAdmin,
-                  ),
+                  challengesAsync: challengesAsync,
+                  challengesProvider: challengesProvider,
+                  progressAsync: progressAsync,
+                  isAdmin: isAdmin,
+                ),
                 _ChallengesView.explore => const ExploreChallengesView(),
               },
             ),
@@ -201,7 +206,9 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
 
-    ref.read(challengeRepositoryProvider).maybeAwardChallengeCompletedPoints(
+    ref
+        .read(challengeRepositoryProvider)
+        .maybeAwardChallengeCompletedPoints(
           userId: userId,
           challenges: challenges,
           progressList: progressList,
@@ -236,16 +243,15 @@ class _MyChallengesView extends ConsumerWidget {
       },
       data: (challenges) {
         Future<void> onRefresh() {
-          return ref
-              .read(activitySyncControllerProvider.notifier)
-              .sync()
-              .then((_) {
-                ref.invalidate(myChallengeProgressProvider);
-                ref.invalidate(myActivityStreakProvider);
-                ref.invalidate(myEnrollmentsProvider);
-                ref.invalidate(myUserPointsProvider);
-                return ref.refresh(challengesProvider.future);
-              });
+          return ref.read(activitySyncControllerProvider.notifier).sync().then((
+            _,
+          ) {
+            ref.invalidate(myChallengeProgressProvider);
+            ref.invalidate(myActivityStreakProvider);
+            ref.invalidate(myEnrollmentsProvider);
+            ref.invalidate(myUserPointsProvider);
+            return ref.refresh(challengesProvider.future);
+          });
         }
 
         if (challenges.isEmpty) {
@@ -267,15 +273,15 @@ class _MyChallengesView extends ConsumerWidget {
         // Phase 21: build sections only for signed-in users.
         final isSignedIn = ref.watch(isSignedInProvider);
         final myEnrollmentsAsync = ref.watch(myEnrollmentsProvider);
-        final enrolledIds = myEnrollmentsAsync.valueOrNull
-                ?.map((e) => e.challengeId)
-                .toSet() ??
+        final enrolledIds =
+            myEnrollmentsAsync.valueOrNull?.map((e) => e.challengeId).toSet() ??
             const <String>{};
 
         // Split enrolled active vs all
-        final enrolledActiveChallenges = challenges
-            .where((c) => c.isActive && enrolledIds.contains(c.id))
-            .toList();
+        final enrolledActiveChallenges =
+            challenges
+                .where((c) => c.isActive && enrolledIds.contains(c.id))
+                .toList();
 
         return RefreshIndicator(
           onRefresh: onRefresh,
@@ -299,8 +305,9 @@ class _MyChallengesView extends ConsumerWidget {
               if (isSignedIn && enrolledActiveChallenges.isNotEmpty) ...[
                 Text(
                   'Active Challenges',
-                  style: AppTextStyles.titleMedium
-                      .copyWith(color: AppPalette.of(context).textPrimary),
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: AppPalette.of(context).textPrimary,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 ...enrolledActiveChallenges.map(
@@ -311,15 +318,20 @@ class _MyChallengesView extends ConsumerWidget {
                       progress: progressByChallenge[challenge.id],
                       showMeta: true,
                       showPoints: true,
-                      participantCount: ref
-                          .watch(challengeParticipantCountProvider(challenge.id))
-                          .valueOrNull,
-                      onTap: () => context.push(
-                        AppConstants.challengeDetailLocation(challenge.id),
-                      ),
-                      adminActions: isAdmin
-                          ? ChallengeAdminActions(challenge: challenge)
-                          : null,
+                      participantCount:
+                          ref
+                              .watch(
+                                challengeParticipantCountProvider(challenge.id),
+                              )
+                              .valueOrNull,
+                      onTap:
+                          () => context.push(
+                            AppConstants.challengeDetailLocation(challenge.id),
+                          ),
+                      adminActions:
+                          isAdmin
+                              ? ChallengeAdminActions(challenge: challenge)
+                              : null,
                     ),
                   ),
                 ),
@@ -331,11 +343,14 @@ class _MyChallengesView extends ConsumerWidget {
               if (isSignedIn) const SizedBox(height: AppSpacing.xl),
 
               // All challenges (admin or non-enrolled view)
-              if (isAdmin || !isSignedIn || enrolledActiveChallenges.isEmpty) ...[
+              if (isAdmin ||
+                  !isSignedIn ||
+                  enrolledActiveChallenges.isEmpty) ...[
                 Text(
                   isAdmin ? 'All Challenges' : 'Browse Challenges',
-                  style: AppTextStyles.titleMedium
-                      .copyWith(color: AppPalette.of(context).textPrimary),
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: AppPalette.of(context).textPrimary,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 ...challenges.map(
@@ -346,15 +361,20 @@ class _MyChallengesView extends ConsumerWidget {
                       progress: progressByChallenge[challenge.id],
                       showMeta: true,
                       showPoints: true,
-                      participantCount: ref
-                          .watch(challengeParticipantCountProvider(challenge.id))
-                          .valueOrNull,
-                      onTap: () => context.push(
-                        AppConstants.challengeDetailLocation(challenge.id),
-                      ),
-                      adminActions: isAdmin
-                          ? ChallengeAdminActions(challenge: challenge)
-                          : null,
+                      participantCount:
+                          ref
+                              .watch(
+                                challengeParticipantCountProvider(challenge.id),
+                              )
+                              .valueOrNull,
+                      onTap:
+                          () => context.push(
+                            AppConstants.challengeDetailLocation(challenge.id),
+                          ),
+                      adminActions:
+                          isAdmin
+                              ? ChallengeAdminActions(challenge: challenge)
+                              : null,
                     ),
                   ),
                 ),
@@ -403,8 +423,9 @@ class _MyProgressBanner extends ConsumerWidget {
                   children: [
                     Text(
                       'My Progress',
-                      style: AppTextStyles.titleSmall
-                          .copyWith(color: palette.textPrimary),
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: palette.textPrimary,
+                      ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     LevelBadge(level: level),
@@ -416,7 +437,8 @@ class _MyProgressBanner extends ConsumerWidget {
                     _StatChip(
                       icon: AppIcons.streak,
                       label: '$streak day streak',
-                      color: streak > 0 ? palette.accent : palette.textSecondary,
+                      color:
+                          streak > 0 ? palette.accent : palette.textSecondary,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     _StatChip(
@@ -449,7 +471,10 @@ class _EnrollmentRing extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: palette.primarySubtle,
-        border: Border.all(color: palette.primary.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: palette.primary.withValues(alpha: 0.3),
+          width: 2,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -472,7 +497,11 @@ class _EnrollmentRing extends StatelessWidget {
 }
 
 class _StatChip extends StatelessWidget {
-  const _StatChip({required this.icon, required this.label, required this.color});
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   final IconData icon;
   final String label;
@@ -485,10 +514,7 @@ class _StatChip extends StatelessWidget {
       children: [
         AppIcon(icon, size: 13, color: color),
         const SizedBox(width: 3),
-        Text(
-          label,
-          style: AppTextStyles.labelSmall.copyWith(color: color),
-        ),
+        Text(label, style: AppTextStyles.labelSmall.copyWith(color: color)),
       ],
     );
   }
@@ -531,7 +557,9 @@ class _StreakMotivationCard extends ConsumerWidget {
           Expanded(
             child: Text(
               message,
-              style: AppTextStyles.bodyMedium.copyWith(color: palette.textPrimary),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: palette.textPrimary,
+              ),
             ),
           ),
         ],
@@ -559,62 +587,79 @@ class _UpcomingChallengesSection extends ConsumerWidget {
             const SizedBox(height: AppSpacing.xl),
             Text(
               'Upcoming',
-              style: AppTextStyles.titleMedium
-                  .copyWith(color: palette.textPrimary),
+              style: AppTextStyles.titleMedium.copyWith(
+                color: palette.textPrimary,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
-            ...upcoming.map((challenge) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: AppCard(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: palette.cardHigh,
-                          ),
-                          child: AppIcon(
-                            ChallengeIcon.forKey(challenge.icon),
-                            size: 18,
-                            color: palette.textSecondary,
-                          ),
+            ...upcoming.map(
+              (challenge) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: AppCard(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: palette.cardHigh,
                         ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                challenge.title,
-                                style: AppTextStyles.titleSmall
-                                    .copyWith(color: palette.textPrimary),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        child: AppIcon(
+                          ChallengeIcon.forKey(challenge.icon),
+                          size: 18,
+                          color: palette.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              challenge.title,
+                              style: AppTextStyles.titleSmall.copyWith(
+                                color: palette.textPrimary,
                               ),
-                              if (challenge.startDate != null)
-                                Text(
-                                  'Starts ${_formatDate(challenge.startDate!)}',
-                                  style: AppTextStyles.labelSmall
-                                      .copyWith(color: palette.textSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (challenge.startDate != null)
+                              Text(
+                                'Starts ${_formatDate(challenge.startDate!)}',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: palette.textSecondary,
                                 ),
-                              if (ref.watch(challengeParticipantCountProvider(challenge.id)).valueOrNull
-                                  case final count?)
-                                Text(
-                                  count == 1 ? '1 already joined' : '$count already joined',
-                                  style: AppTextStyles.labelSmall
-                                      .copyWith(color: palette.textSecondary),
+                              ),
+                            if (ref
+                                    .watch(
+                                      challengeParticipantCountProvider(
+                                        challenge.id,
+                                      ),
+                                    )
+                                    .valueOrNull
+                                case final count?)
+                              Text(
+                                count == 1
+                                    ? '1 already joined'
+                                    : '$count already joined',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: palette.textSecondary,
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
-                        _PointsPill(points: challenge.pointValue, palette: palette),
-                      ],
-                    ),
+                      ),
+                      _PointsPill(
+                        points: challenge.pointValue,
+                        palette: palette,
+                      ),
+                    ],
                   ),
-                )),
+                ),
+              ),
+            ),
           ],
         );
       },
@@ -624,8 +669,18 @@ class _UpcomingChallengesSection extends ConsumerWidget {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}';
   }
@@ -753,13 +808,13 @@ class _ChallengeListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SkeletonList(
-        count: 4,
-        showImages: false,
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.lg,
-        ),
-      );
+    count: 4,
+    showImages: false,
+    padding: EdgeInsets.fromLTRB(
+      AppSpacing.lg,
+      AppSpacing.md,
+      AppSpacing.lg,
+      AppSpacing.lg,
+    ),
+  );
 }

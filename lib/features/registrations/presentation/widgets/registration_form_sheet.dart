@@ -26,7 +26,10 @@ import 'package:image_picker/image_picker.dart';
 /// logic is unchanged: the age CHECK-mirroring validator, the explicit
 /// gender check, the paid-trek screenshot-required guard, the submit path,
 /// and the error mapping.
-Future<bool?> showRegistrationFormSheet(BuildContext context, {required Trek trek}) {
+Future<bool?> showRegistrationFormSheet(
+  BuildContext context, {
+  required Trek trek,
+}) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -42,10 +45,12 @@ class _RegistrationFormSheet extends ConsumerStatefulWidget {
   final Trek trek;
 
   @override
-  ConsumerState<_RegistrationFormSheet> createState() => _RegistrationFormSheetState();
+  ConsumerState<_RegistrationFormSheet> createState() =>
+      _RegistrationFormSheetState();
 }
 
-class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> {
+class _RegistrationFormSheetState
+    extends ConsumerState<_RegistrationFormSheet> {
   final _formKey = GlobalKey<FormState>();
   final _ageController = TextEditingController();
   final _emergencyContactController = TextEditingController();
@@ -98,7 +103,9 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
     if (!_allowedScreenshotExtensions.contains(extension)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please choose a JPG, PNG, or WEBP image.')),
+          const SnackBar(
+            content: Text('Please choose a JPG, PNG, or WEBP image.'),
+          ),
         );
       }
       return;
@@ -134,7 +141,9 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
     }
 
     final medicalNotes = _medicalNotesController.text.trim();
-    final created = await ref.read(registrationControllerProvider.notifier).register(
+    final created = await ref
+        .read(registrationControllerProvider.notifier)
+        .register(
           trek: widget.trek,
           age: int.parse(_ageController.text.trim()),
           gender: gender,
@@ -169,7 +178,10 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
     final isSaving = ref.watch(registrationControllerProvider).isLoading;
 
     final palette = AppPalette.of(context);
-    ref.listen<AsyncValue<void>>(registrationControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<void>>(registrationControllerProvider, (
+      previous,
+      next,
+    ) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +195,9 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
     });
 
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
@@ -205,7 +219,11 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                       color: palette.primary,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: AppIcon(AppIcons.hiking, size: 20, color: palette.onPrimary),
+                    child: AppIcon(
+                      AppIcons.hiking,
+                      size: 20,
+                      color: palette.onPrimary,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -213,11 +231,16 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Register for this trek', style: AppTextStyles.titleLarge),
+                        Text(
+                          'Register for this trek',
+                          style: AppTextStyles.titleLarge,
+                        ),
                         const SizedBox(height: 2),
                         Text(
                           widget.trek.title,
-                          style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                          style: AppTextStyles.secondary(
+                            AppTextStyles.bodyMedium,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -240,9 +263,13 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
               DropdownButtonFormField<GenderType>(
                 value: _gender,
                 decoration: const InputDecoration(labelText: 'Gender'),
-                items: GenderType.values
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g.label)))
-                    .toList(),
+                items:
+                    GenderType.values
+                        .map(
+                          (g) =>
+                              DropdownMenuItem(value: g, child: Text(g.label)),
+                        )
+                        .toList(),
                 onChanged: (value) => setState(() => _gender = value),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -254,9 +281,11 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                   hintText: 'Name and phone number',
                 ),
                 textInputAction: TextInputAction.next,
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Please provide an emergency contact'
-                    : null,
+                validator:
+                    (value) =>
+                        (value == null || value.trim().isEmpty)
+                            ? 'Please provide an emergency contact'
+                            : null,
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -264,7 +293,8 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
                 controller: _medicalNotesController,
                 decoration: const InputDecoration(
                   labelText: 'Medical notes (optional)',
-                  hintText: 'Allergies, conditions, medication — anything the trek lead should know',
+                  hintText:
+                      'Allergies, conditions, medication — anything the trek lead should know',
                 ),
                 maxLines: 3,
               ),
@@ -272,7 +302,11 @@ class _RegistrationFormSheetState extends ConsumerState<_RegistrationFormSheet> 
 
               Row(
                 children: [
-                  AppIcon(AppIcons.lock, size: 14, color: palette.textSecondary),
+                  AppIcon(
+                    AppIcons.lock,
+                    size: 14,
+                    color: palette.textSecondary,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
@@ -356,10 +390,16 @@ class _PaymentSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Registration fee', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                    Text(
+                      'Registration fee',
+                      style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                    ),
                     Text(
                       '₹${_formatFee(fee)}',
-                      style: AppTextStyles.tinted(AppTextStyles.statSmall, palette.gold),
+                      style: AppTextStyles.tinted(
+                        AppTextStyles.statSmall,
+                        palette.gold,
+                      ),
                     ),
                   ],
                 ),
@@ -369,7 +409,10 @@ class _PaymentSection extends StatelessWidget {
 
           if (qrCodeUrl != null && qrCodeUrl!.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.lg),
-            Text('Scan to pay', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+            Text(
+              'Scan to pay',
+              style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+            ),
             const SizedBox(height: AppSpacing.sm),
             Center(
               child: ClipRRect(
@@ -378,20 +421,27 @@ class _PaymentSection extends StatelessWidget {
                   qrCodeUrl!,
                   height: 220,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stack) => Container(
-                    height: 120,
-                    width: 120,
-                    alignment: Alignment.center,
-                    color: palette.cardHigh,
-                    child: AppIcon(AppIcons.imageBroken, color: palette.textDisabled),
-                  ),
+                  errorBuilder:
+                      (context, error, stack) => Container(
+                        height: 120,
+                        width: 120,
+                        alignment: Alignment.center,
+                        color: palette.cardHigh,
+                        child: AppIcon(
+                          AppIcons.imageBroken,
+                          color: palette.textDisabled,
+                        ),
+                      ),
                 ),
               ),
             ),
           ],
 
           const SizedBox(height: AppSpacing.lg),
-          Text('Upload payment screenshot', style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+          Text(
+            'Upload payment screenshot',
+            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+          ),
           const SizedBox(height: AppSpacing.sm),
           Pressable(
             onTap: onPickScreenshot,
@@ -408,28 +458,42 @@ class _PaymentSection extends StatelessWidget {
                   width: showRequiredError ? 2 : 1,
                 ),
               ),
-              child: screenshotBytes != null
-                  ? Image.memory(screenshotBytes!, fit: BoxFit.cover, width: double.infinity)
-                  : Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AppIcon(AppIcons.addPhoto, size: 32, color: palette.textSecondary),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            'Tap to add your payment screenshot',
-                            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
-                          ),
-                        ],
+              child:
+                  screenshotBytes != null
+                      ? Image.memory(
+                        screenshotBytes!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      )
+                      : Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppIcon(
+                              AppIcons.addPhoto,
+                              size: 32,
+                              color: palette.textSecondary,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Text(
+                              'Tap to add your payment screenshot',
+                              style: AppTextStyles.secondary(
+                                AppTextStyles.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
             ),
           ),
           if (showRequiredError) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(
               'Please upload proof of payment before confirming.',
-              style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger),
+              style: AppTextStyles.tinted(
+                AppTextStyles.bodySmall,
+                palette.danger,
+              ),
             ),
           ],
         ],

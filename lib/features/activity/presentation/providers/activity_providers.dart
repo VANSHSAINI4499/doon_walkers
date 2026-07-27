@@ -64,10 +64,11 @@ final lastActivitySyncProvider = FutureProvider<DateTime?>(
 /// task remains a valid future nice-to-have for extra freshness, not
 /// implemented in this pass — see this phase's report for why it was
 /// deliberately deferred rather than silently skipped.
-final activitySyncControllerProvider = AsyncNotifierProvider<ActivitySyncController, ActivitySyncOutcome?>(
-  ActivitySyncController.new,
-  name: 'activitySyncControllerProvider',
-);
+final activitySyncControllerProvider =
+    AsyncNotifierProvider<ActivitySyncController, ActivitySyncOutcome?>(
+      ActivitySyncController.new,
+      name: 'activitySyncControllerProvider',
+    );
 
 class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
   @override
@@ -75,7 +76,9 @@ class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
 
   Future<ActivitySyncOutcome?> sync() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(activitySyncServiceProvider).sync());
+    state = await AsyncValue.guard(
+      () => ref.read(activitySyncServiceProvider).sync(),
+    );
 
     if (state.valueOrNull == ActivitySyncOutcome.success) {
       // Fresh activity data changes everything downstream: challenge
@@ -98,25 +101,22 @@ class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
 /// "app launch, already signed in" and "just signed in." Watched once
 /// from DoonWalkersApp, same pattern as pushTokenSyncProvider; nothing
 /// ever reads its (meaningless) value.
-final activityLaunchSyncProvider = Provider<void>(
-  (ref) {
-    ref.listen<AsyncValue<AuthState>>(
-      authStateChangesProvider,
-      (previous, next) {
-        final event = next.valueOrNull?.event;
-        final hasUser = Supabase.instance.client.auth.currentUser != null;
-        if (hasUser &&
-            (event == AuthChangeEvent.initialSession ||
-                event == AuthChangeEvent.signedIn ||
-                event == AuthChangeEvent.tokenRefreshed)) {
-          ref.read(activitySyncControllerProvider.notifier).sync();
-        }
-      },
-      // Same reasoning as pushTokenSyncProvider: without this, a
-      // session already restored from disk before this listener
-      // attaches means the initialSession event is never seen.
-      fireImmediately: true,
-    );
-  },
-  name: 'activityLaunchSyncProvider',
-);
+final activityLaunchSyncProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<AuthState>>(
+    authStateChangesProvider,
+    (previous, next) {
+      final event = next.valueOrNull?.event;
+      final hasUser = Supabase.instance.client.auth.currentUser != null;
+      if (hasUser &&
+          (event == AuthChangeEvent.initialSession ||
+              event == AuthChangeEvent.signedIn ||
+              event == AuthChangeEvent.tokenRefreshed)) {
+        ref.read(activitySyncControllerProvider.notifier).sync();
+      }
+    },
+    // Same reasoning as pushTokenSyncProvider: without this, a
+    // session already restored from disk before this listener
+    // attaches means the initialSession event is never seen.
+    fireImmediately: true,
+  );
+}, name: 'activityLaunchSyncProvider');

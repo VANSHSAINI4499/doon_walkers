@@ -11,17 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 /// Fixed "now" — 26 July 2026, 14:00 local.
 final _now = DateTime(2026, 7, 26, 14);
 
-NotificationItem _item(
-  String id,
-  DateTime createdAt, {
-  String? targetUserId,
-}) => NotificationItem(
-  id: id,
-  title: 'T$id',
-  body: 'B$id',
-  createdAt: createdAt,
-  targetUserId: targetUserId,
-);
+NotificationItem _item(String id, DateTime createdAt, {String? targetUserId}) =>
+    NotificationItem(
+      id: id,
+      title: 'T$id',
+      body: 'B$id',
+      createdAt: createdAt,
+      targetUserId: targetUserId,
+    );
 
 List<String> _idsIn(List<NotificationGroup> groups, NotificationDayGroup g) =>
     groups

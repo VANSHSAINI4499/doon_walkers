@@ -45,7 +45,11 @@ Future<void> _pumpCard(
           body: SingleChildScrollView(
             child: SizedBox(
               width: 320,
-              child: TrekCard(trek: trek, onTap: () {}, adminActions: adminActions),
+              child: TrekCard(
+                trek: trek,
+                onTap: () {},
+                adminActions: adminActions,
+              ),
             ),
           ),
         ),
@@ -60,7 +64,9 @@ DateTime get _yesterday => DateTime.now().subtract(const Duration(days: 2));
 
 void main() {
   group('TrekCard markers', () {
-    testWidgets('non-admin view of a draft shows no Draft marker', (tester) async {
+    testWidgets('non-admin view of a draft shows no Draft marker', (
+      tester,
+    ) async {
       // A non-admin never receives an unpublished trek in practice (RLS),
       // but the card must not render the draft marker without adminActions.
       await _pumpCard(tester, _trek(published: false, date: _tomorrow));
@@ -76,7 +82,9 @@ void main() {
       expect(find.text('Draft'), findsOneWidget);
     });
 
-    testWidgets('admin view of a published trek shows no Draft marker', (tester) async {
+    testWidgets('admin view of a published trek shows no Draft marker', (
+      tester,
+    ) async {
       await _pumpCard(
         tester,
         _trek(published: true, date: _tomorrow),
@@ -100,8 +108,13 @@ void main() {
       expect(find.text('Upcoming'), findsNothing);
     });
 
-    testWidgets('description excerpt renders when present, absent when blank', (tester) async {
-      await _pumpCard(tester, _trek(published: true, date: null, description: 'A snowy ridge walk.'));
+    testWidgets('description excerpt renders when present, absent when blank', (
+      tester,
+    ) async {
+      await _pumpCard(
+        tester,
+        _trek(published: true, date: null, description: 'A snowy ridge walk.'),
+      );
       expect(find.text('A snowy ridge walk.'), findsOneWidget);
     });
   });
@@ -110,7 +123,10 @@ void main() {
     testWidgets('shows the real trek date as a fact chip', (tester) async {
       // Phase 15 adds this — the card previously showed distance/duration
       // but never the scheduled date, even though Trek Detail always has.
-      await _pumpCard(tester, _trek(published: true, date: DateTime(2026, 8, 15)));
+      await _pumpCard(
+        tester,
+        _trek(published: true, date: DateTime(2026, 8, 15)),
+      );
       expect(find.text('15 Aug'), findsOneWidget);
     });
 
@@ -118,18 +134,30 @@ void main() {
       await _pumpCard(tester, _trek(published: true, date: null));
       // No fact row should render at all with nothing to put in it.
       expect(
-        find.byWidgetPredicate((w) => w is AppIcon && w.icon == AppIcons.calendar),
+        find.byWidgetPredicate(
+          (w) => w is AppIcon && w.icon == AppIcons.calendar,
+        ),
         findsNothing,
       );
     });
 
-    testWidgets('never paints a BackdropFilter — glass is retired', (tester) async {
-      await _pumpCard(tester, _trek(published: true, date: DateTime(2026, 8, 15)));
+    testWidgets('never paints a BackdropFilter — glass is retired', (
+      tester,
+    ) async {
+      await _pumpCard(
+        tester,
+        _trek(published: true, date: DateTime(2026, 8, 15)),
+      );
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
-    testWidgets('GlassCard typedef still constructs the same card', (tester) async {
-      await _pumpCard(tester, _trek(published: true, date: DateTime(2026, 8, 15)));
+    testWidgets('GlassCard typedef still constructs the same card', (
+      tester,
+    ) async {
+      await _pumpCard(
+        tester,
+        _trek(published: true, date: DateTime(2026, 8, 15)),
+      );
       expect(find.byType(AppCard), findsOneWidget);
     });
 

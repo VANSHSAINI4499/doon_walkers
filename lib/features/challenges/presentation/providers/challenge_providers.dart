@@ -27,10 +27,12 @@ final activeChallengesProvider = FutureProvider<List<Challenge>>(
 );
 
 /// A single challenge by id, for the admin edit form and detail screen.
-final challengeByIdProvider = FutureProvider.autoDispose.family<Challenge?, String>(
-  (ref, id) => ref.watch(challengeRepositoryProvider).fetchChallengeById(id),
-  name: 'challengeByIdProvider',
-);
+final challengeByIdProvider = FutureProvider.autoDispose
+    .family<Challenge?, String>(
+      (ref, id) =>
+          ref.watch(challengeRepositoryProvider).fetchChallengeById(id),
+      name: 'challengeByIdProvider',
+    );
 
 /// The signed-in user's own progress across every active challenge.
 final myChallengeProgressProvider = FutureProvider<List<ChallengeProgress>>(
@@ -55,17 +57,21 @@ final myActivityStreakProvider = FutureProvider<int>((ref) async {
   );
 }, name: 'myActivityStreakProvider');
 
-final challengeCelebrationTrackerProvider = Provider<ChallengeCelebrationTracker>(
-  (ref) => ChallengeCelebrationTracker(ref.watch(sharedPreferencesProvider)),
-  name: 'challengeCelebrationTrackerProvider',
-);
+final challengeCelebrationTrackerProvider =
+    Provider<ChallengeCelebrationTracker>(
+      (ref) =>
+          ChallengeCelebrationTracker(ref.watch(sharedPreferencesProvider)),
+      name: 'challengeCelebrationTrackerProvider',
+    );
 
 /// One challenge's leaderboard. `autoDispose` since the leaderboard
 /// screen is visited transiently.
-final challengeLeaderboardProvider = FutureProvider.autoDispose.family<List<LeaderboardEntry>, String>(
-  (ref, challengeId) => ref.watch(challengeRepositoryProvider).fetchLeaderboard(challengeId),
-  name: 'challengeLeaderboardProvider',
-);
+final challengeLeaderboardProvider = FutureProvider.autoDispose
+    .family<List<LeaderboardEntry>, String>(
+      (ref, challengeId) =>
+          ref.watch(challengeRepositoryProvider).fetchLeaderboard(challengeId),
+      name: 'challengeLeaderboardProvider',
+    );
 
 // ── Phase 21: Enrollment providers ───────────────────────────────────────
 
@@ -76,28 +82,30 @@ final myEnrollmentsProvider = FutureProvider<List<ChallengeEnrollment>>(
 );
 
 /// Whether the signed-in user is enrolled in a specific challenge.
-final challengeEnrollmentStatusProvider =
-    FutureProvider.autoDispose.family<bool, String>(
-  (ref, challengeId) =>
-      ref.watch(challengeRepositoryProvider).isEnrolled(challengeId),
-  name: 'challengeEnrollmentStatusProvider',
-);
+final challengeEnrollmentStatusProvider = FutureProvider.autoDispose
+    .family<bool, String>(
+      (ref, challengeId) =>
+          ref.watch(challengeRepositoryProvider).isEnrolled(challengeId),
+      name: 'challengeEnrollmentStatusProvider',
+    );
 
 /// Participant count for a challenge. autoDispose — detail screen only.
-final challengeParticipantCountProvider =
-    FutureProvider.autoDispose.family<int, String>(
-  (ref, challengeId) =>
-      ref.watch(challengeRepositoryProvider).fetchParticipantCount(challengeId),
-  name: 'challengeParticipantCountProvider',
-);
+final challengeParticipantCountProvider = FutureProvider.autoDispose
+    .family<int, String>(
+      (ref, challengeId) => ref
+          .watch(challengeRepositoryProvider)
+          .fetchParticipantCount(challengeId),
+      name: 'challengeParticipantCountProvider',
+    );
 
 /// Top participants for a challenge. autoDispose — detail screen only.
-final challengeTopParticipantsProvider =
-    FutureProvider.autoDispose.family<List<ChallengeTopParticipant>, String>(
-  (ref, challengeId) =>
-      ref.watch(challengeRepositoryProvider).fetchTopParticipants(challengeId),
-  name: 'challengeTopParticipantsProvider',
-);
+final challengeTopParticipantsProvider = FutureProvider.autoDispose
+    .family<List<ChallengeTopParticipant>, String>(
+      (ref, challengeId) => ref
+          .watch(challengeRepositoryProvider)
+          .fetchTopParticipants(challengeId),
+      name: 'challengeTopParticipantsProvider',
+    );
 
 /// Upcoming challenges (start_date > today, up to 3).
 final upcomingChallengesProvider = FutureProvider<List<Challenge>>(
@@ -113,32 +121,33 @@ final popularChallengesProvider = FutureProvider<List<Challenge>>(
 
 /// The signed-in user's total_points and level from user_points table.
 /// Returns (0, 1) for a guest or when no points row exists yet.
-final myUserPointsProvider = FutureProvider<({int totalPoints, int level})>(
-  (ref) async {
-    final uid = ref.watch(supabaseClientProvider).auth.currentUser?.id;
-    if (uid == null) return (totalPoints: 0, level: 1);
-    final row = await ref
-        .watch(supabaseClientProvider)
-        .from('user_points')
-        .select('total_points, level')
-        .eq('user_id', uid)
-        .maybeSingle();
-    if (row == null) return (totalPoints: 0, level: 1);
-    return (
-      totalPoints: (row['total_points'] as num?)?.toInt() ?? 0,
-      level: (row['level'] as num?)?.toInt() ?? 1,
-    );
-  },
-  name: 'myUserPointsProvider',
-);
+final myUserPointsProvider = FutureProvider<({int totalPoints, int level})>((
+  ref,
+) async {
+  final uid = ref.watch(supabaseClientProvider).auth.currentUser?.id;
+  if (uid == null) return (totalPoints: 0, level: 1);
+  final row =
+      await ref
+          .watch(supabaseClientProvider)
+          .from('user_points')
+          .select('total_points, level')
+          .eq('user_id', uid)
+          .maybeSingle();
+  if (row == null) return (totalPoints: 0, level: 1);
+  return (
+    totalPoints: (row['total_points'] as num?)?.toInt() ?? 0,
+    level: (row['level'] as num?)?.toInt() ?? 1,
+  );
+}, name: 'myUserPointsProvider');
 
 // ── Phase 21: Admin controller ────────────────────────────────────────────
 
 /// AsyncNotifier managing admin challenge mutations.
-final challengeAdminControllerProvider = AsyncNotifierProvider<ChallengeAdminController, void>(
-  ChallengeAdminController.new,
-  name: 'challengeAdminControllerProvider',
-);
+final challengeAdminControllerProvider =
+    AsyncNotifierProvider<ChallengeAdminController, void>(
+      ChallengeAdminController.new,
+      name: 'challengeAdminControllerProvider',
+    );
 
 class ChallengeAdminController extends AsyncNotifier<void> {
   @override
@@ -158,7 +167,9 @@ class ChallengeAdminController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     Challenge? created;
     state = await AsyncValue.guard(() async {
-      created = await ref.read(challengeRepositoryProvider).createChallenge(
+      created = await ref
+          .read(challengeRepositoryProvider)
+          .createChallenge(
             title: title,
             description: description,
             metric: metric,
@@ -189,7 +200,9 @@ class ChallengeAdminController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
-      await ref.read(challengeRepositoryProvider).updateChallenge(
+      await ref
+          .read(challengeRepositoryProvider)
+          .updateChallenge(
             id: id,
             title: title,
             description: description,
@@ -242,9 +255,9 @@ class ChallengeAdminController extends AsyncNotifier<void> {
 /// Invalidates enrollment status and my-enrollments on success.
 final enrollmentControllerProvider =
     AsyncNotifierProvider<EnrollmentController, void>(
-  EnrollmentController.new,
-  name: 'enrollmentControllerProvider',
-);
+      EnrollmentController.new,
+      name: 'enrollmentControllerProvider',
+    );
 
 class EnrollmentController extends AsyncNotifier<void> {
   @override
@@ -254,7 +267,9 @@ class EnrollmentController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
-      await ref.read(challengeRepositoryProvider).enrollInChallenge(challengeId);
+      await ref
+          .read(challengeRepositoryProvider)
+          .enrollInChallenge(challengeId);
       success = true;
     });
     if (success) {
@@ -270,7 +285,9 @@ class EnrollmentController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
-      await ref.read(challengeRepositoryProvider).unenrollFromChallenge(challengeId);
+      await ref
+          .read(challengeRepositoryProvider)
+          .unenrollFromChallenge(challengeId);
       success = true;
     });
     if (success) {

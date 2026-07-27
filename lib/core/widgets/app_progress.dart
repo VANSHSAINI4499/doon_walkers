@@ -89,29 +89,30 @@ class AppProgressBar extends StatelessWidget {
           tween: Tween(begin: 0, end: clamped),
           duration: duration,
           curve: AppMotion.emphasized,
-          builder: (context, v, _) => ClipRRect(
-            borderRadius: BorderRadius.circular(height),
-            child: SizedBox(
-              height: height,
-              child: Stack(
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: trackColor ?? palette.cardHigh,
-                    ),
-                    child: const SizedBox.expand(),
+          builder:
+              (context, v, _) => ClipRRect(
+                borderRadius: BorderRadius.circular(height),
+                child: SizedBox(
+                  height: height,
+                  child: Stack(
+                    children: [
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: trackColor ?? palette.cardHigh,
+                        ),
+                        child: const SizedBox.expand(),
+                      ),
+                      FractionallySizedBox(
+                        widthFactor: v,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(color: fill),
+                          child: const SizedBox.expand(),
+                        ),
+                      ),
+                    ],
                   ),
-                  FractionallySizedBox(
-                    widthFactor: v,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(color: fill),
-                      child: const SizedBox.expand(),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
         ),
       ],
     );
@@ -171,15 +172,16 @@ class AppProgressRing extends StatelessWidget {
         tween: Tween(begin: 0, end: clamped),
         duration: duration,
         curve: AppMotion.emphasized,
-        builder: (context, v, child) => CustomPaint(
-          painter: _RingPainter(
-            value: v,
-            color: color ?? palette.primary,
-            trackColor: trackColor ?? palette.cardHigh,
-            strokeWidth: strokeWidth,
-          ),
-          child: Center(child: child),
-        ),
+        builder:
+            (context, v, child) => CustomPaint(
+              painter: _RingPainter(
+                value: v,
+                color: color ?? palette.primary,
+                trackColor: trackColor ?? palette.cardHigh,
+                strokeWidth: strokeWidth,
+              ),
+              child: Center(child: child),
+            ),
         child: child,
       ),
     );
@@ -205,18 +207,20 @@ class _RingPainter extends CustomPainter {
     final center = rect.center;
     final radius = (math.min(size.width, size.height) - strokeWidth) / 2;
 
-    final track = Paint()
-      ..color = trackColor
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
+    final track =
+        Paint()
+          ..color = trackColor
+          ..strokeWidth = strokeWidth
+          ..style = PaintingStyle.stroke;
 
-    final fill = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke
-      // Rounded caps so a small value reads as a soft tick rather than a
-      // sharp wedge — the same softness as every corner in the system.
-      ..strokeCap = StrokeCap.round;
+    final fill =
+        Paint()
+          ..color = color
+          ..strokeWidth = strokeWidth
+          ..style = PaintingStyle.stroke
+          // Rounded caps so a small value reads as a soft tick rather than a
+          // sharp wedge — the same softness as every corner in the system.
+          ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, track);
 

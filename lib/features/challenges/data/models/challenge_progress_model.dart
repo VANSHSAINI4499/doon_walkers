@@ -24,12 +24,13 @@ class ChallengeProgressModel extends ChallengeProgress {
       // ChallengeTier.fromString here since that defaults unknown/null
       // to bronze, which would be wrong here (would wrongly claim
       // "bronze achieved" for someone at 0 progress).
-      currentTier: json['current_tier'] != null
-          ? ChallengeTier.values.firstWhere(
-              (t) => t.name == json['current_tier'],
-              orElse: () => ChallengeTier.bronze,
-            )
-          : null,
+      currentTier:
+          json['current_tier'] != null
+              ? ChallengeTier.values.firstWhere(
+                (t) => t.name == json['current_tier'],
+                orElse: () => ChallengeTier.bronze,
+              )
+              : null,
     );
   }
 }

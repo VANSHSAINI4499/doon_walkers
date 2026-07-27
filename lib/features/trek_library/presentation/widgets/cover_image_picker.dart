@@ -50,7 +50,9 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
     if (!_allowedExtensions.contains(extension)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please choose a JPG, PNG, or WEBP image.')),
+          const SnackBar(
+            content: Text('Please choose a JPG, PNG, or WEBP image.'),
+          ),
         );
       }
       return;
@@ -132,7 +134,10 @@ class _CoverImagePickerState extends State<CoverImagePicker> {
           AppIcon(AppIcons.addPhoto, size: 32, color: palette.textDisabled),
           if (showHint) ...[
             const SizedBox(height: AppSpacing.sm),
-            Text(widget.hintText, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+            Text(
+              widget.hintText,
+              style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+            ),
           ],
         ],
       ),

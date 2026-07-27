@@ -33,18 +33,23 @@ class ProductImagesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdmin = ref.watch(isAdminProvider);
 
-    final addButton = isAdmin
-        ? Align(
-            alignment: Alignment.centerLeft,
-            child: PremiumButton(
-              label: 'Add Photo',
-              icon: AppIcons.addPhoto,
-              variant: PremiumButtonVariant.glass,
-              size: PremiumButtonSize.small,
-              onPressed: () => showProductImageUploadSheet(context, productId: productId),
-            ),
-          )
-        : null;
+    final addButton =
+        isAdmin
+            ? Align(
+              alignment: Alignment.centerLeft,
+              child: PremiumButton(
+                label: 'Add Photo',
+                icon: AppIcons.addPhoto,
+                variant: PremiumButtonVariant.glass,
+                size: PremiumButtonSize.small,
+                onPressed:
+                    () => showProductImageUploadSheet(
+                      context,
+                      productId: productId,
+                    ),
+              ),
+            )
+            : null;
 
     if (images.isEmpty) {
       final palette = AppPalette.of(context);
@@ -90,15 +95,21 @@ class ProductImagesSection extends ConsumerWidget {
           itemBuilder: (context, index) {
             final image = images[index];
             return isAdmin
-                ? ProductImageAdminOverlay(image: image, productName: productName)
+                ? ProductImageAdminOverlay(
+                  image: image,
+                  productName: productName,
+                )
                 : ProductImageThumbnail(
-                    imageUrl: image.imageUrl,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => PhotoViewerScreen(imageUrl: image.imageUrl),
+                  imageUrl: image.imageUrl,
+                  onTap:
+                      () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  PhotoViewerScreen(imageUrl: image.imageUrl),
+                        ),
                       ),
-                    ),
-                  );
+                );
           },
         ),
         if (addButton != null) ...[

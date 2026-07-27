@@ -28,7 +28,10 @@ class CumulativeStepsChart extends StatelessWidget {
       FlSpot(5, totalSteps.toDouble()),
     ];
 
-    final maxY = math.max(targetSteps.toDouble(), (totalSteps * 1.2).toDouble());
+    final maxY = math.max(
+      targetSteps.toDouble(),
+      (totalSteps * 1.2).toDouble(),
+    );
 
     return AspectRatio(
       aspectRatio: 2.2,

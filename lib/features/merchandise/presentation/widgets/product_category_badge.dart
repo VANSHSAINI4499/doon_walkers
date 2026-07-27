@@ -7,7 +7,11 @@ import 'package:flutter/material.dart';
 /// difficulty, so there's no meaningful colour-per-value). Restyled onto
 /// the design system's pill.
 class ProductCategoryBadge extends StatelessWidget {
-  const ProductCategoryBadge({super.key, required this.category, this.dense = false});
+  const ProductCategoryBadge({
+    super.key,
+    required this.category,
+    this.dense = false,
+  });
 
   final ProductCategory category;
   final bool dense;

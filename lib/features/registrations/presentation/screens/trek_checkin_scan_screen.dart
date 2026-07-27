@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:permission_handler/permission_handler.dart' show openAppSettings;
+import 'package:permission_handler/permission_handler.dart'
+    show openAppSettings;
 
 /// Member-facing check-in QR scanner (Phase QR-2) — reached from the
 /// "Check In" entry point on Trek Detail
@@ -27,11 +28,14 @@ class TrekCheckinScanScreen extends ConsumerStatefulWidget {
   final String trekId;
 
   @override
-  ConsumerState<TrekCheckinScanScreen> createState() => _TrekCheckinScanScreenState();
+  ConsumerState<TrekCheckinScanScreen> createState() =>
+      _TrekCheckinScanScreenState();
 }
 
 class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
-  final _controller = MobileScannerController(formats: const [BarcodeFormat.qrCode]);
+  final _controller = MobileScannerController(
+    formats: const [BarcodeFormat.qrCode],
+  );
 
   /// True from the moment a scan is captured until the RPC call
   /// resolves — guards against the camera firing `onDetect` several
@@ -97,9 +101,13 @@ class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Check In')),
       body: SafeArea(
-        child: _checkedInAt != null
-            ? _SuccessState(checkedInAt: _checkedInAt!, onDone: () => context.pop())
-            : _buildScanner(context),
+        child:
+            _checkedInAt != null
+                ? _SuccessState(
+                  checkedInAt: _checkedInAt!,
+                  onDone: () => context.pop(),
+                )
+                : _buildScanner(context),
       ),
     );
   }
@@ -120,13 +128,19 @@ class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
           bottom: 0,
           child: Container(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl, AppSpacing.xxxl, AppSpacing.xl, AppSpacing.xl,
+              AppSpacing.xl,
+              AppSpacing.xxxl,
+              AppSpacing.xl,
+              AppSpacing.xl,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [palette.background, palette.background.withValues(alpha: 0)],
+                colors: [
+                  palette.background,
+                  palette.background.withValues(alpha: 0),
+                ],
               ),
             ),
             child: Column(
@@ -134,7 +148,10 @@ class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
               children: [
                 Text(
                   'Point your camera at the check-in QR code',
-                  style: AppTextStyles.tinted(AppTextStyles.bodyMedium, palette.textPrimary),
+                  style: AppTextStyles.tinted(
+                    AppTextStyles.bodyMedium,
+                    palette.textPrimary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 if (_submitting) ...[
@@ -142,7 +159,10 @@ class _TrekCheckinScanScreenState extends ConsumerState<TrekCheckinScanScreen> {
                   SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: palette.primary),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: palette.primary,
+                    ),
                   ),
                 ],
                 if (_error != null) ...[
@@ -184,9 +204,16 @@ class _SuccessState extends StatelessWidget {
             children: [
               AppIcon(AppIcons.checkCircle, size: 48, color: palette.primary),
               const SizedBox(height: AppSpacing.lg),
-              Text("You're checked in!", style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+              Text(
+                "You're checked in!",
+                style: AppTextStyles.titleLarge,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: AppSpacing.sm),
-              Text(_formatTime(checkedInAt), style: AppTextStyles.secondary(AppTextStyles.bodyMedium)),
+              Text(
+                _formatTime(checkedInAt),
+                style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+              ),
               const SizedBox(height: AppSpacing.xl),
               PremiumButton(label: 'Done', fullWidth: true, onPressed: onDone),
             ],
@@ -206,7 +233,10 @@ class _ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: palette.danger.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -220,7 +250,10 @@ class _ErrorBanner extends StatelessWidget {
           Flexible(
             child: Text(
               message,
-              style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger),
+              style: AppTextStyles.tinted(
+                AppTextStyles.bodySmall,
+                palette.danger,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -240,7 +273,8 @@ class _CameraError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final isPermissionDenied = error.errorCode == MobileScannerErrorCode.permissionDenied;
+    final isPermissionDenied =
+        error.errorCode == MobileScannerErrorCode.permissionDenied;
     return ColoredBox(
       color: palette.background,
       child: Center(

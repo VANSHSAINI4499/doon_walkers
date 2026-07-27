@@ -113,7 +113,8 @@ class Product {
   /// to non-admin UI as an exact number (see the product card/detail
   /// screens), only this yes/no, to avoid handing out inventory counts
   /// to anyone browsing the catalog.
-  bool get isInStock => hasVariants ? variants.any((v) => v.isInStock) : stockQuantity > 0;
+  bool get isInStock =>
+      hasVariants ? variants.any((v) => v.isInStock) : stockQuantity > 0;
 
   /// The catalog-card/detail-hero thumbnail — the oldest uploaded photo,
   /// or `null` if none have been added yet (shows a placeholder icon).

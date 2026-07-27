@@ -11,8 +11,8 @@ import 'package:go_router/go_router.dart';
 /// state independently of the others as rows are added/removed.
 class _VariantRow {
   _VariantRow({String size = '', int stock = 0})
-      : sizeController = TextEditingController(text: size),
-        stockController = TextEditingController(text: stock.toString());
+    : sizeController = TextEditingController(text: size),
+      stockController = TextEditingController(text: stock.toString());
 
   final TextEditingController sizeController;
   final TextEditingController stockController;
@@ -41,10 +41,12 @@ class AdminProductFormScreen extends ConsumerStatefulWidget {
   bool get isEdit => productId != null;
 
   @override
-  ConsumerState<AdminProductFormScreen> createState() => _AdminProductFormScreenState();
+  ConsumerState<AdminProductFormScreen> createState() =>
+      _AdminProductFormScreenState();
 }
 
-class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen> {
+class _AdminProductFormScreenState
+    extends ConsumerState<AdminProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -78,12 +80,15 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
     _category = product.category;
     _existingVariants = product.variants;
     for (final variant in product.variants) {
-      _variantRows.add(_VariantRow(size: variant.size, stock: variant.stockQuantity));
+      _variantRows.add(
+        _VariantRow(size: variant.size, stock: variant.stockQuantity),
+      );
     }
     _prefilled = true;
   }
 
-  String _trimZero(double v) => v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
+  String _trimZero(double v) =>
+      v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
 
   void _addVariantRow() => setState(() => _variantRows.add(_VariantRow()));
 
@@ -125,9 +130,9 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
 
     final duplicateError = _validateVariantRows();
     if (duplicateError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(duplicateError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(duplicateError)));
       return;
     }
 
@@ -177,7 +182,10 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(productAdminControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<void>>(productAdminControllerProvider, (
+      previous,
+      next,
+    ) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -193,17 +201,21 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
     if (widget.isEdit) {
       final productAsync = ref.watch(productByIdProvider(widget.productId!));
       return productAsync.when(
-        loading: () => Scaffold(
-          appBar: AppBar(title: const Text('Edit Product')),
-          body: const AdminFormLoadingSkeleton(),
-        ),
+        loading:
+            () => Scaffold(
+              appBar: AppBar(title: const Text('Edit Product')),
+              body: const AdminFormLoadingSkeleton(),
+            ),
         error: (error, stack) {
-          debugPrint('AdminProductFormScreen: failed to load product ${widget.productId}: $error');
+          debugPrint(
+            'AdminProductFormScreen: failed to load product ${widget.productId}: $error',
+          );
           return Scaffold(
             appBar: AppBar(title: const Text('Edit Product')),
             body: AdminFormErrorState(
               message: 'Could not load this product.',
-              onRetry: () => ref.invalidate(productByIdProvider(widget.productId!)),
+              onRetry:
+                  () => ref.invalidate(productByIdProvider(widget.productId!)),
             ),
           );
         },
@@ -252,17 +264,23 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
                               const SizedBox(height: AppSpacing.md),
                               TextFormField(
                                 controller: _nameController,
-                                decoration: const InputDecoration(labelText: 'Name'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Name',
+                                ),
                                 textInputAction: TextInputAction.next,
-                                validator: (value) => (value == null || value.trim().isEmpty)
-                                    ? 'Please enter a name'
-                                    : null,
+                                validator:
+                                    (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                            ? 'Please enter a name'
+                                            : null,
                               ),
                               const SizedBox(height: AppSpacing.lg),
 
                               TextFormField(
                                 controller: _descriptionController,
-                                decoration: const InputDecoration(labelText: 'Description'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Description',
+                                ),
                                 maxLines: 4,
                                 textInputAction: TextInputAction.newline,
                               ),
@@ -270,26 +288,42 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
 
                               DropdownButtonFormField<ProductCategory>(
                                 value: _category,
-                                decoration: const InputDecoration(labelText: 'Category'),
-                                items: ProductCategory.values
-                                    .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
-                                    .toList(),
+                                decoration: const InputDecoration(
+                                  labelText: 'Category',
+                                ),
+                                items:
+                                    ProductCategory.values
+                                        .map(
+                                          (c) => DropdownMenuItem(
+                                            value: c,
+                                            child: Text(c.label),
+                                          ),
+                                        )
+                                        .toList(),
                                 onChanged: (value) {
-                                  if (value != null) setState(() => _category = value);
+                                  if (value != null)
+                                    setState(() => _category = value);
                                 },
                               ),
                               const SizedBox(height: AppSpacing.lg),
 
                               TextFormField(
                                 controller: _priceController,
-                                decoration: const InputDecoration(labelText: 'Price (₹)'),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: const InputDecoration(
+                                  labelText: 'Price (₹)',
+                                ),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                                 validator: (value) {
                                   final text = value?.trim() ?? '';
-                                  if (text.isEmpty) return 'Please enter a price';
+                                  if (text.isEmpty)
+                                    return 'Please enter a price';
                                   final parsed = double.tryParse(text);
                                   if (parsed == null) return 'Invalid number';
-                                  if (parsed < 0) return 'Price can\'t be negative';
+                                  if (parsed < 0)
+                                    return 'Price can\'t be negative';
                                   return null;
                                 },
                               ),
@@ -308,13 +342,16 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
                                   controller: _stockController,
                                   decoration: const InputDecoration(
                                     labelText: 'Stock',
-                                    hintText: 'Leave sizes empty below if this product has no sizes',
+                                    hintText:
+                                        'Leave sizes empty below if this product has no sizes',
                                   ),
                                   keyboardType: TextInputType.number,
                                   validator: (value) {
                                     final text = value?.trim() ?? '';
-                                    if (text.isEmpty) return null; // treated as 0
-                                    if (int.tryParse(text) == null) return 'Invalid number';
+                                    if (text.isEmpty)
+                                      return null; // treated as 0
+                                    if (int.tryParse(text) == null)
+                                      return 'Invalid number';
                                     return null;
                                   },
                                 ),
@@ -325,7 +362,11 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
 
                               Row(
                                 children: [
-                                  const Expanded(child: AdminFormSectionLabel('Sizes (optional)')),
+                                  const Expanded(
+                                    child: AdminFormSectionLabel(
+                                      'Sizes (optional)',
+                                    ),
+                                  ),
                                   TextButton.icon(
                                     onPressed: _addVariantRow,
                                     icon: const AppIcon(AppIcons.add, size: 18),
@@ -337,34 +378,47 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
                                 const SizedBox(height: AppSpacing.xs),
                                 Text(
                                   'Stock is tracked per size below; the flat Stock field above is ignored.',
-                                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                                  style: AppTextStyles.secondary(
+                                    AppTextStyles.bodySmall,
+                                  ),
                                 ),
                               ],
                               const SizedBox(height: AppSpacing.md),
                               for (var i = 0; i < _variantRows.length; i++)
                                 Padding(
-                                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.md,
+                                  ),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         flex: 3,
                                         child: TextFormField(
-                                          controller: _variantRows[i].sizeController,
-                                          decoration: const InputDecoration(labelText: 'Size'),
+                                          controller:
+                                              _variantRows[i].sizeController,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Size',
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: AppSpacing.md),
                                       Expanded(
                                         flex: 2,
                                         child: TextFormField(
-                                          controller: _variantRows[i].stockController,
-                                          decoration: const InputDecoration(labelText: 'Stock'),
+                                          controller:
+                                              _variantRows[i].stockController,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Stock',
+                                          ),
                                           keyboardType: TextInputType.number,
                                         ),
                                       ),
                                       IconButton(
                                         onPressed: () => _removeVariantRow(i),
-                                        icon: const AppIcon(AppIcons.close, size: 20),
+                                        icon: const AppIcon(
+                                          AppIcons.close,
+                                          size: 20,
+                                        ),
                                         tooltip: 'Remove size',
                                       ),
                                     ],
@@ -379,7 +433,8 @@ class _AdminProductFormScreenState extends ConsumerState<AdminProductFormScreen>
 
                     AdminFormActions(
                       isSaving: isSaving,
-                      saveLabel: widget.isEdit ? 'Save Changes' : 'Create Product',
+                      saveLabel:
+                          widget.isEdit ? 'Save Changes' : 'Create Product',
                       onSave: _submit,
                       onCancel: () => context.pop(),
                     ),

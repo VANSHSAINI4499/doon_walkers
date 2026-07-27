@@ -19,7 +19,8 @@ class AdminBlocklistScreen extends ConsumerStatefulWidget {
   const AdminBlocklistScreen({super.key});
 
   @override
-  ConsumerState<AdminBlocklistScreen> createState() => _AdminBlocklistScreenState();
+  ConsumerState<AdminBlocklistScreen> createState() =>
+      _AdminBlocklistScreenState();
 }
 
 class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
@@ -37,8 +38,9 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
     final term = _controller.text.trim();
     if (term.isEmpty) return;
 
-    final success =
-        await ref.read(commentControllerProvider.notifier).addBlocklistTerm(term);
+    final success = await ref
+        .read(commentControllerProvider.notifier)
+        .addBlocklistTerm(term);
     if (!mounted) return;
 
     if (success) {
@@ -51,7 +53,9 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
     final error = ref.read(commentControllerProvider).error;
     debugPrint('AdminBlocklistScreen: failed to add "$term": $error');
     final message =
-        error is DuplicateBlocklistTermException ? error.toString() : 'Could not add that term.';
+        error is DuplicateBlocklistTermException
+            ? error.toString()
+            : 'Could not add that term.';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: palette.danger),
     );
@@ -59,7 +63,9 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
 
   Future<void> _remove(String term) async {
     final palette = AppPalette.of(context);
-    final success = await ref.read(commentControllerProvider.notifier).removeBlocklistTerm(term);
+    final success = await ref
+        .read(commentControllerProvider.notifier)
+        .removeBlocklistTerm(term);
     if (!mounted || success) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -122,9 +128,12 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: termsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading:
+                      () => const Center(child: CircularProgressIndicator()),
                   error: (error, stack) {
-                    debugPrint('AdminBlocklistScreen: failed to load terms: $error');
+                    debugPrint(
+                      'AdminBlocklistScreen: failed to load terms: $error',
+                    );
                     return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -139,7 +148,8 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
                             icon: AppIcons.refresh,
                             variant: PremiumButtonVariant.glass,
                             size: PremiumButtonSize.small,
-                            onPressed: () => ref.invalidate(commentBlocklistProvider),
+                            onPressed:
+                                () => ref.invalidate(commentBlocklistProvider),
                           ),
                         ],
                       ),
@@ -150,26 +160,41 @@ class _AdminBlocklistScreenState extends ConsumerState<AdminBlocklistScreen> {
                       return Center(
                         child: Text(
                           'No terms yet.',
-                          style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                          style: AppTextStyles.secondary(
+                            AppTextStyles.bodyMedium,
+                          ),
                         ),
                       );
                     }
                     return ListView.separated(
                       itemCount: terms.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.xs),
+                      separatorBuilder:
+                          (context, index) =>
+                              const SizedBox(height: AppSpacing.xs),
                       itemBuilder: (context, index) {
                         final term = terms[index];
                         return AppCard(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.xs,
+                          ),
                           child: Row(
                             children: [
                               Expanded(
-                                child: Text(term, style: AppTextStyles.bodyMedium),
+                                child: Text(
+                                  term,
+                                  style: AppTextStyles.bodyMedium,
+                                ),
                               ),
                               IconButton(
-                                icon: AppIcon(AppIcons.close, size: 18, color: palette.textSecondary),
+                                icon: AppIcon(
+                                  AppIcons.close,
+                                  size: 18,
+                                  color: palette.textSecondary,
+                                ),
                                 tooltip: 'Remove',
-                                onPressed: isSaving ? null : () => _remove(term),
+                                onPressed:
+                                    isSaving ? null : () => _remove(term),
                               ),
                             ],
                           ),

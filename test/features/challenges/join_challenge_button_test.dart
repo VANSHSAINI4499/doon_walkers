@@ -15,17 +15,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Challenge _challenge({ChallengeTimeWindow timeWindow = ChallengeTimeWindow.daily, DateTime? endDate}) =>
-    Challenge(
-      id: 'c1',
-      title: 'Step It Up',
-      description: '',
-      metric: ChallengeMetric.dailySteps,
-      timeWindow: timeWindow,
-      endDate: endDate,
-      isActive: true,
-      createdAt: DateTime(2026, 1, 1),
-    );
+Challenge _challenge({
+  ChallengeTimeWindow timeWindow = ChallengeTimeWindow.daily,
+  DateTime? endDate,
+}) => Challenge(
+  id: 'c1',
+  title: 'Step It Up',
+  description: '',
+  metric: ChallengeMetric.dailySteps,
+  timeWindow: timeWindow,
+  endDate: endDate,
+  isActive: true,
+  createdAt: DateTime(2026, 1, 1),
+);
 
 class _FakeEnrollmentController extends EnrollmentController {
   bool enrollCalled = false;
@@ -59,7 +61,9 @@ Future<_FakeEnrollmentController> _pump(
     ProviderScope(
       overrides: [
         isSignedInProvider.overrideWith((ref) => signedIn),
-        challengeEnrollmentStatusProvider(challenge.id).overrideWith((ref) async => enrolled),
+        challengeEnrollmentStatusProvider(
+          challenge.id,
+        ).overrideWith((ref) async => enrolled),
         enrollmentControllerProvider.overrideWith(() => fake),
       ],
       child: MaterialApp(
@@ -87,72 +91,87 @@ void main() {
       expect(find.text('Join Challenge'), findsNothing);
     });
 
-    testWidgets('an ended (past end date) custom-range challenge shows Challenge Ended, disabled', (
-      tester,
-    ) async {
-      await _pump(
-        tester,
-        challenge: _challenge(
-          timeWindow: ChallengeTimeWindow.customRange,
-          endDate: DateTime.now().subtract(const Duration(days: 5)),
-        ),
-        // Even a currently-enrolled user sees Ended, not Leave — the
-        // ended check short-circuits before the enrollment status is
-        // even read.
-        enrolled: true,
-      );
-      expect(find.text('Challenge Ended'), findsOneWidget);
-      expect(find.text('Leave Challenge'), findsNothing);
+    testWidgets(
+      'an ended (past end date) custom-range challenge shows Challenge Ended, disabled',
+      (tester) async {
+        await _pump(
+          tester,
+          challenge: _challenge(
+            timeWindow: ChallengeTimeWindow.customRange,
+            endDate: DateTime.now().subtract(const Duration(days: 5)),
+          ),
+          // Even a currently-enrolled user sees Ended, not Leave — the
+          // ended check short-circuits before the enrollment status is
+          // even read.
+          enrolled: true,
+        );
+        expect(find.text('Challenge Ended'), findsOneWidget);
+        expect(find.text('Leave Challenge'), findsNothing);
 
-      // OutlinedButton.icon builds a private OutlinedButton subclass, so
-      // byType(OutlinedButton) wouldn't match it — check structurally
-      // via the predicate instead.
-      final disabled = find.byWidgetPredicate(
-        (w) => w is OutlinedButton && w.onPressed == null,
-      );
-      expect(disabled, findsOneWidget);
-    });
+        // OutlinedButton.icon builds a private OutlinedButton subclass, so
+        // byType(OutlinedButton) wouldn't match it — check structurally
+        // via the predicate instead.
+        final disabled = find.byWidgetPredicate(
+          (w) => w is OutlinedButton && w.onPressed == null,
+        );
+        expect(disabled, findsOneWidget);
+      },
+    );
 
-    testWidgets('an active custom-range challenge (future end date) is not ended', (tester) async {
-      await _pump(
-        tester,
-        challenge: _challenge(
-          timeWindow: ChallengeTimeWindow.customRange,
-          endDate: DateTime.now().add(const Duration(days: 5)),
-        ),
-        enrolled: false,
-      );
-      expect(find.text('Join Challenge'), findsOneWidget);
-      expect(find.text('Challenge Ended'), findsNothing);
-    });
+    testWidgets(
+      'an active custom-range challenge (future end date) is not ended',
+      (tester) async {
+        await _pump(
+          tester,
+          challenge: _challenge(
+            timeWindow: ChallengeTimeWindow.customRange,
+            endDate: DateTime.now().add(const Duration(days: 5)),
+          ),
+          enrolled: false,
+        );
+        expect(find.text('Join Challenge'), findsOneWidget);
+        expect(find.text('Challenge Ended'), findsNothing);
+      },
+    );
 
     testWidgets('tapping Join calls the enrollment controller', (tester) async {
-      final fake = await _pump(tester, challenge: _challenge(), enrolled: false);
+      final fake = await _pump(
+        tester,
+        challenge: _challenge(),
+        enrolled: false,
+      );
       await tester.tap(find.text('Join Challenge'));
       await tester.pump();
       expect(fake.enrollCalled, isTrue);
       expect(fake.unenrollCalled, isFalse);
     });
 
-    testWidgets('tapping Leave asks for confirmation before calling the controller', (
+    testWidgets(
+      'tapping Leave asks for confirmation before calling the controller',
+      (tester) async {
+        final fake = await _pump(
+          tester,
+          challenge: _challenge(),
+          enrolled: true,
+        );
+
+        await tester.tap(find.text('Leave Challenge'));
+        await tester.pumpAndSettle();
+
+        // The confirm dialog is up; the controller must not have fired yet.
+        expect(find.text('Leave challenge?'), findsOneWidget);
+        expect(fake.unenrollCalled, isFalse);
+
+        await tester.tap(find.text('Leave'));
+        await tester.pumpAndSettle();
+
+        expect(fake.unenrollCalled, isTrue);
+      },
+    );
+
+    testWidgets('cancelling the Leave dialog does not call the controller', (
       tester,
     ) async {
-      final fake = await _pump(tester, challenge: _challenge(), enrolled: true);
-
-      await tester.tap(find.text('Leave Challenge'));
-      await tester.pumpAndSettle();
-
-      // The confirm dialog is up; the controller must not have fired yet.
-      expect(find.text('Leave challenge?'), findsOneWidget);
-      expect(fake.unenrollCalled, isFalse);
-
-      await tester.tap(find.text('Leave'));
-      await tester.pumpAndSettle();
-
-      expect(fake.unenrollCalled, isTrue);
-    });
-
-    testWidgets('cancelling the Leave dialog does not call the controller', (tester) async {
       final fake = await _pump(tester, challenge: _challenge(), enrolled: true);
 
       await tester.tap(find.text('Leave Challenge'));

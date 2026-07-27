@@ -24,8 +24,14 @@ class _HowItWorksSheet extends StatelessWidget {
     ('Join a challenge', '+10 pts, once per challenge'),
     ('Hit your daily step goal', '+25 pts, once per day'),
     ('Check in to a trek', '+100 pts'),
-    ('Complete a challenge (reach Platinum)', "+ that challenge's own point value"),
-    ('Levels', 'Your total points decide your level — shown as the badge next to your name'),
+    (
+      'Complete a challenge (reach Platinum)',
+      "+ that challenge's own point value",
+    ),
+    (
+      'Levels',
+      'Your total points decide your level — shown as the badge next to your name',
+    ),
   ];
 
   @override

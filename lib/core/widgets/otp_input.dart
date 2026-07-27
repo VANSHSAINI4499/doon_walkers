@@ -246,7 +246,10 @@ class _OTPDigitBoxState extends State<_OTPDigitBox> {
       decoration: BoxDecoration(
         color: _focused ? palette.cardHigh : palette.card,
         borderRadius: AppRadius.all(AppRadius.sm),
-        border: Border.all(color: _borderColor(palette), width: _focused || widget.hasError ? 2 : 1),
+        border: Border.all(
+          color: _borderColor(palette),
+          width: _focused || widget.hasError ? 2 : 1,
+        ),
       ),
       child: Focus(
         onKeyEvent: (node, event) {

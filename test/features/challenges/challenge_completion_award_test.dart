@@ -20,7 +20,10 @@ class _FakeGateway implements ChallengeCompletionAwardGateway {
   });
 
   @override
-  Future<bool> hasAwardedChallengeCompleted(String userId, String challengeId) async {
+  Future<bool> hasAwardedChallengeCompleted(
+    String userId,
+    String challengeId,
+  ) async {
     if (throwOnHasAwarded) throw Exception('boom');
     return alreadyAwardedChallengeIds.contains(challengeId);
   }
@@ -50,25 +53,37 @@ ChallengeProgress _progress({
   String challengeId = 'c1',
   ChallengeTier? tier,
   double value = 100,
-}) => ChallengeProgress(challengeId: challengeId, currentValue: value, currentTier: tier);
+}) => ChallengeProgress(
+  challengeId: challengeId,
+  currentValue: value,
+  currentTier: tier,
+);
 
 void main() {
   group('triggerChallengeCompletedPointsAward', () {
-    test('awards once when enrolled, platinum, and never awarded before', () async {
-      final gateway = _FakeGateway();
-      await triggerChallengeCompletedPointsAward(
-        userId: 'u1',
-        challenges: [_challenge()],
-        progressList: [_progress(tier: ChallengeTier.platinum)],
-        enrolledChallengeIds: {'c1'},
-        gateway: gateway,
-      );
+    test(
+      'awards once when enrolled, platinum, and never awarded before',
+      () async {
+        final gateway = _FakeGateway();
+        await triggerChallengeCompletedPointsAward(
+          userId: 'u1',
+          challenges: [_challenge()],
+          progressList: [_progress(tier: ChallengeTier.platinum)],
+          enrolledChallengeIds: {'c1'},
+          gateway: gateway,
+        );
 
-      expect(gateway.awardCalls, [('u1', 'c1', 75)]);
-    });
+        expect(gateway.awardCalls, [('u1', 'c1', 75)]);
+      },
+    );
 
     test('does NOT award when currentTier is below platinum', () async {
-      for (final tier in [ChallengeTier.bronze, ChallengeTier.silver, ChallengeTier.gold, null]) {
+      for (final tier in [
+        ChallengeTier.bronze,
+        ChallengeTier.silver,
+        ChallengeTier.gold,
+        null,
+      ]) {
         final gateway = _FakeGateway();
         await triggerChallengeCompletedPointsAward(
           userId: 'u1',
@@ -77,74 +92,96 @@ void main() {
           enrolledChallengeIds: {'c1'},
           gateway: gateway,
         );
-        expect(gateway.awardCalls, isEmpty, reason: 'tier=$tier should not award');
+        expect(
+          gateway.awardCalls,
+          isEmpty,
+          reason: 'tier=$tier should not award',
+        );
       }
     });
 
-    test('does NOT award when the user is not enrolled, even at platinum', () async {
-      final gateway = _FakeGateway();
-      await triggerChallengeCompletedPointsAward(
-        userId: 'u1',
-        challenges: [_challenge()],
-        progressList: [_progress(tier: ChallengeTier.platinum)],
-        enrolledChallengeIds: const {}, // not enrolled in c1
-        gateway: gateway,
-      );
-      expect(gateway.awardCalls, isEmpty);
-    });
+    test(
+      'does NOT award when the user is not enrolled, even at platinum',
+      () async {
+        final gateway = _FakeGateway();
+        await triggerChallengeCompletedPointsAward(
+          userId: 'u1',
+          challenges: [_challenge()],
+          progressList: [_progress(tier: ChallengeTier.platinum)],
+          enrolledChallengeIds: const {}, // not enrolled in c1
+          gateway: gateway,
+        );
+        expect(gateway.awardCalls, isEmpty);
+      },
+    );
 
-    test('does NOT award when a challenge_completed ledger entry already exists', () async {
-      final gateway = _FakeGateway(alreadyAwardedChallengeIds: {'c1'});
-      await triggerChallengeCompletedPointsAward(
-        userId: 'u1',
-        challenges: [_challenge()],
-        progressList: [_progress(tier: ChallengeTier.platinum)],
-        enrolledChallengeIds: {'c1'},
-        gateway: gateway,
-      );
-      expect(gateway.awardCalls, isEmpty);
-    });
-
-    test('a ledger-check failure is swallowed, not propagated, and does not award', () async {
-      final gateway = _FakeGateway(throwOnHasAwarded: true);
-      await expectLater(
-        triggerChallengeCompletedPointsAward(
+    test(
+      'does NOT award when a challenge_completed ledger entry already exists',
+      () async {
+        final gateway = _FakeGateway(alreadyAwardedChallengeIds: {'c1'});
+        await triggerChallengeCompletedPointsAward(
           userId: 'u1',
           challenges: [_challenge()],
           progressList: [_progress(tier: ChallengeTier.platinum)],
           enrolledChallengeIds: {'c1'},
           gateway: gateway,
-        ),
-        completes,
-      );
-      expect(gateway.awardCalls, isEmpty);
-    });
+        );
+        expect(gateway.awardCalls, isEmpty);
+      },
+    );
 
-    test('checks each qualifying challenge independently — one already-awarded does not block another', () async {
-      final gateway = _FakeGateway(alreadyAwardedChallengeIds: {'c1'});
-      await triggerChallengeCompletedPointsAward(
-        userId: 'u1',
-        challenges: [_challenge(id: 'c1', pointValue: 50), _challenge(id: 'c2', pointValue: 75)],
-        progressList: [
-          _progress(challengeId: 'c1', tier: ChallengeTier.platinum),
-          _progress(challengeId: 'c2', tier: ChallengeTier.platinum),
-        ],
-        enrolledChallengeIds: {'c1', 'c2'},
-        gateway: gateway,
-      );
-      expect(gateway.awardCalls, [('u1', 'c2', 75)]);
-    });
+    test(
+      'a ledger-check failure is swallowed, not propagated, and does not award',
+      () async {
+        final gateway = _FakeGateway(throwOnHasAwarded: true);
+        await expectLater(
+          triggerChallengeCompletedPointsAward(
+            userId: 'u1',
+            challenges: [_challenge()],
+            progressList: [_progress(tier: ChallengeTier.platinum)],
+            enrolledChallengeIds: {'c1'},
+            gateway: gateway,
+          ),
+          completes,
+        );
+        expect(gateway.awardCalls, isEmpty);
+      },
+    );
 
-    test('ignores progress rows for challenges not present in the challenges list', () async {
-      final gateway = _FakeGateway();
-      await triggerChallengeCompletedPointsAward(
-        userId: 'u1',
-        challenges: const [], // c1 missing entirely
-        progressList: [_progress(tier: ChallengeTier.platinum)],
-        enrolledChallengeIds: {'c1'},
-        gateway: gateway,
-      );
-      expect(gateway.awardCalls, isEmpty);
-    });
+    test(
+      'checks each qualifying challenge independently — one already-awarded does not block another',
+      () async {
+        final gateway = _FakeGateway(alreadyAwardedChallengeIds: {'c1'});
+        await triggerChallengeCompletedPointsAward(
+          userId: 'u1',
+          challenges: [
+            _challenge(id: 'c1', pointValue: 50),
+            _challenge(id: 'c2', pointValue: 75),
+          ],
+          progressList: [
+            _progress(challengeId: 'c1', tier: ChallengeTier.platinum),
+            _progress(challengeId: 'c2', tier: ChallengeTier.platinum),
+          ],
+          enrolledChallengeIds: {'c1', 'c2'},
+          gateway: gateway,
+        );
+        expect(gateway.awardCalls, [('u1', 'c2', 75)]);
+      },
+    );
+
+    test(
+      'ignores progress rows for challenges not present in the challenges list',
+      () async {
+        final gateway = _FakeGateway();
+        await triggerChallengeCompletedPointsAward(
+          userId: 'u1',
+          challenges: const [], // c1 missing entirely
+          progressList: [_progress(tier: ChallengeTier.platinum)],
+          enrolledChallengeIds: {'c1'},
+          gateway: gateway,
+        );
+        expect(gateway.awardCalls, isEmpty);
+      },
+    );
   });
 }

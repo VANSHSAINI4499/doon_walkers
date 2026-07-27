@@ -42,7 +42,8 @@ class TrekLibraryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAdmin = ref.watch(isAdminProvider);
-    final treksProvider = isAdmin ? adminAllTreksProvider : publishedTreksProvider;
+    final treksProvider =
+        isAdmin ? adminAllTreksProvider : publishedTreksProvider;
     final treksAsync = ref.watch(treksProvider);
 
     return Scaffold(
@@ -50,25 +51,28 @@ class TrekLibraryScreen extends ConsumerWidget {
         title: const Text('Trek Library'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_month),
+            icon: const AppIcon(AppIcons.calendar),
             tooltip: 'Trek Calendar',
             onPressed: () => context.push('/treks/calendar'),
           ),
         ],
       ),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton.extended(
-              onPressed: () => context.push(AppConstants.routeTrekNew),
-              icon: const AppIcon(AppIcons.add, size: 20),
-              label: const Text('Add Trek'),
-            )
-          : null,
+      floatingActionButton:
+          isAdmin
+              ? FloatingActionButton.extended(
+                onPressed: () => context.push(AppConstants.routeTrekNew),
+                icon: const AppIcon(AppIcons.add, size: 20),
+                label: const Text('Add Trek'),
+              )
+              : null,
       body: SafeArea(
         child: treksAsync.when(
           loading: () => const _TrekGridSkeleton(),
           error: (error, stack) {
             debugPrint('TrekLibraryScreen: failed to load treks: $error');
-            return _TrekLibraryError(onRetry: () => ref.invalidate(treksProvider));
+            return _TrekLibraryError(
+              onRetry: () => ref.invalidate(treksProvider),
+            );
           },
           data: (treks) {
             Future<void> onRefresh() => ref.refresh(treksProvider.future);
@@ -101,9 +105,10 @@ class TrekLibraryScreen extends ConsumerWidget {
                   AppSpacing.lg,
                   isAdmin ? 96 : AppSpacing.lg,
                 ),
-                gridDelegate: const SliverSimpleGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 340,
-                ),
+                gridDelegate:
+                    const SliverSimpleGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 340,
+                    ),
                 mainAxisSpacing: AppSpacing.lg,
                 crossAxisSpacing: AppSpacing.lg,
                 itemCount: treks.length,
@@ -113,8 +118,12 @@ class TrekLibraryScreen extends ConsumerWidget {
                     index: index.clamp(0, 8),
                     child: TrekCard(
                       trek: trek,
-                      onTap: () => context.push(AppConstants.trekDetailLocation(trek.id)),
-                      adminActions: isAdmin ? TrekAdminActions(trek: trek) : null,
+                      onTap:
+                          () => context.push(
+                            AppConstants.trekDetailLocation(trek.id),
+                          ),
+                      adminActions:
+                          isAdmin ? TrekAdminActions(trek: trek) : null,
                     ),
                   );
                 },
@@ -145,7 +154,9 @@ class _TrekLibraryError extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               'Could not load treks.',
-              style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+              style: AppTextStyles.titleMedium.copyWith(
+                color: palette.textPrimary,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -179,13 +190,18 @@ class _EmptyTrekLibrary extends StatelessWidget {
           Container(
             width: 72,
             height: 72,
-            decoration: BoxDecoration(color: palette.primarySubtle, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: palette.primarySubtle,
+              shape: BoxShape.circle,
+            ),
             child: AppIcon(AppIcons.hiking, size: 32, color: palette.primary),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
             isAdmin ? 'No treks yet' : 'No treks published yet',
-            style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+            style: AppTextStyles.titleMedium.copyWith(
+              color: palette.textPrimary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -193,7 +209,9 @@ class _EmptyTrekLibrary extends StatelessWidget {
             isAdmin
                 ? 'Tap "Add Trek" to create the first one.'
                 : 'Check back soon — new treks are on the way.',
-            style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: palette.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -220,17 +238,21 @@ class _TrekGridSkeleton extends StatelessWidget {
         mainAxisSpacing: AppSpacing.lg,
         crossAxisSpacing: AppSpacing.lg,
         itemCount: _imageHeights.length,
-        itemBuilder: (context, index) => _TrekCardSkeleton(
-          imageHeight: _imageHeights[index],
-          showDescription: index.isEven,
-        ),
+        itemBuilder:
+            (context, index) => _TrekCardSkeleton(
+              imageHeight: _imageHeights[index],
+              showDescription: index.isEven,
+            ),
       ),
     );
   }
 }
 
 class _TrekCardSkeleton extends StatelessWidget {
-  const _TrekCardSkeleton({required this.imageHeight, required this.showDescription});
+  const _TrekCardSkeleton({
+    required this.imageHeight,
+    required this.showDescription,
+  });
 
   final double imageHeight;
   final bool showDescription;
@@ -264,9 +286,17 @@ class _TrekCardSkeleton extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 const Row(
                   children: [
-                    SkeletonBox(width: 56, height: 24, borderRadius: AppRadius.sm),
+                    SkeletonBox(
+                      width: 56,
+                      height: 24,
+                      borderRadius: AppRadius.sm,
+                    ),
                     SizedBox(width: AppSpacing.sm),
-                    SkeletonBox(width: 56, height: 24, borderRadius: AppRadius.sm),
+                    SkeletonBox(
+                      width: 56,
+                      height: 24,
+                      borderRadius: AppRadius.sm,
+                    ),
                   ],
                 ),
               ],

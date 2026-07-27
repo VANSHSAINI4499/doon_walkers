@@ -63,7 +63,8 @@ enum ChallengeMetric {
     'daily_distance_km' => ChallengeMetric.dailyDistanceKm,
     'calories_burned' => ChallengeMetric.caloriesBurned,
     'active_streak_days' => ChallengeMetric.activeStreakDays,
-    _ => ChallengeMetric.dailySteps, // column is NOT NULL; arbitrary safe fallback
+    _ =>
+      ChallengeMetric.dailySteps, // column is NOT NULL; arbitrary safe fallback
   };
 
   String toDbString() => switch (this) {
@@ -96,7 +97,8 @@ enum ChallengeMetric {
   String get explanation => switch (this) {
     ChallengeMetric.totalDistanceKm =>
       'Based on the total distance of every trek you\'ve attended.',
-    ChallengeMetric.trekCount => 'Based on the number of treks you\'ve attended.',
+    ChallengeMetric.trekCount =>
+      'Based on the number of treks you\'ve attended.',
     ChallengeMetric.dailySteps ||
     ChallengeMetric.weeklySteps ||
     ChallengeMetric.monthlySteps =>
@@ -140,8 +142,9 @@ enum ChallengeMetric {
     ChallengeMetric.trekCount => value.toStringAsFixed(0),
     ChallengeMetric.totalDistanceKm || ChallengeMetric.dailyDistanceKm =>
       '${value % 1 == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(2)} km',
-    ChallengeMetric.dailySteps || ChallengeMetric.weeklySteps || ChallengeMetric.monthlySteps =>
-      '${value.toStringAsFixed(0)} steps',
+    ChallengeMetric.dailySteps ||
+    ChallengeMetric.weeklySteps ||
+    ChallengeMetric.monthlySteps => '${value.toStringAsFixed(0)} steps',
     ChallengeMetric.caloriesBurned => '${value.toStringAsFixed(0)} kcal',
     ChallengeMetric.activeStreakDays =>
       '${value.toStringAsFixed(0)} day${value == 1 ? '' : 's'}',
@@ -195,8 +198,10 @@ enum ChallengeTimeWindow {
   /// carry them.
   String get explanation => switch (this) {
     ChallengeTimeWindow.allTime => 'Counts everything you\'ve ever recorded.',
-    ChallengeTimeWindow.monthly => 'Only counts activity from the current calendar month.',
-    ChallengeTimeWindow.weekly => 'Only counts activity from the current week (Monday to Sunday).',
+    ChallengeTimeWindow.monthly =>
+      'Only counts activity from the current calendar month.',
+    ChallengeTimeWindow.weekly =>
+      'Only counts activity from the current week (Monday to Sunday).',
     ChallengeTimeWindow.daily => 'Only counts activity from today.',
     ChallengeTimeWindow.customRange =>
       'Only counts activity within this challenge\'s date range.',
@@ -313,9 +318,11 @@ class Challenge {
   /// what order they came back from the query in.
   List<ChallengeTierThreshold> get tiersAscending {
     final sorted = [...tiers];
-    sorted.sort((a, b) => ChallengeTier.values.indexOf(a.tier).compareTo(
-          ChallengeTier.values.indexOf(b.tier),
-        ));
+    sorted.sort(
+      (a, b) => ChallengeTier.values
+          .indexOf(a.tier)
+          .compareTo(ChallengeTier.values.indexOf(b.tier)),
+    );
     return sorted;
   }
 

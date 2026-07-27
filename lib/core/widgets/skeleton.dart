@@ -115,21 +115,22 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, child) => ShaderMask(
-        blendMode: BlendMode.srcATop,
-        shaderCallback: (bounds) {
-          // Travels from fully off the left to fully off the right, so
-          // the band is never parked mid-frame at the loop boundary.
-          final slide = -1.5 + 3 * _controller.value;
-          return LinearGradient(
-            begin: Alignment(slide - 0.5, -0.4),
-            end: Alignment(slide + 0.5, 0.4),
-            colors: [base, highlight, base],
-            stops: const [0.2, 0.5, 0.8],
-          ).createShader(bounds);
-        },
-        child: child,
-      ),
+      builder:
+          (context, child) => ShaderMask(
+            blendMode: BlendMode.srcATop,
+            shaderCallback: (bounds) {
+              // Travels from fully off the left to fully off the right, so
+              // the band is never parked mid-frame at the loop boundary.
+              final slide = -1.5 + 3 * _controller.value;
+              return LinearGradient(
+                begin: Alignment(slide - 0.5, -0.4),
+                end: Alignment(slide + 0.5, 0.4),
+                colors: [base, highlight, base],
+                stops: const [0.2, 0.5, 0.8],
+              ).createShader(bounds);
+            },
+            child: child,
+          ),
       child: widget.child,
     );
   }
@@ -209,9 +210,8 @@ class SkeletonText extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final fullWidth = constraints.maxWidth.isFinite
-          ? constraints.maxWidth
-          : 200.0;
+      final fullWidth =
+          constraints.maxWidth.isFinite ? constraints.maxWidth : 200.0;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -220,7 +220,8 @@ class SkeletonText extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(bottom: i == lines - 1 ? 0 : spacing),
               child: SkeletonBox(
-                width: i == lines - 1 ? fullWidth * lastLineFraction : fullWidth,
+                width:
+                    i == lines - 1 ? fullWidth * lastLineFraction : fullWidth,
                 height: lineHeight,
                 borderRadius: borderRadius,
               ),

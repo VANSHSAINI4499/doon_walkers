@@ -10,11 +10,12 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('ComingSoonScreen renders without crashing', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: ComingSoonScreen(featureName: 'Test Feature'),
-      ),
+      const MaterialApp(home: ComingSoonScreen(featureName: 'Test Feature')),
     );
     expect(find.text('Test Feature'), findsOneWidget);
-    expect(find.text('This feature is coming soon.\nStay tuned for updates!'), findsOneWidget);
+    expect(
+      find.text('This feature is coming soon.\nStay tuned for updates!'),
+      findsOneWidget,
+    );
   });
 }

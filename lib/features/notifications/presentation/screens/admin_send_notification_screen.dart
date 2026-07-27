@@ -19,10 +19,12 @@ class AdminSendNotificationScreen extends ConsumerStatefulWidget {
   const AdminSendNotificationScreen({super.key});
 
   @override
-  ConsumerState<AdminSendNotificationScreen> createState() => _AdminSendNotificationScreenState();
+  ConsumerState<AdminSendNotificationScreen> createState() =>
+      _AdminSendNotificationScreenState();
 }
 
-class _AdminSendNotificationScreenState extends ConsumerState<AdminSendNotificationScreen> {
+class _AdminSendNotificationScreenState
+    extends ConsumerState<AdminSendNotificationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
@@ -37,7 +39,9 @@ class _AdminSendNotificationScreenState extends ConsumerState<AdminSendNotificat
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final created = await ref.read(notificationControllerProvider.notifier).sendNotification(
+    final created = await ref
+        .read(notificationControllerProvider.notifier)
+        .sendNotification(
           title: _titleController.text.trim(),
           body: _bodyController.text.trim(),
         );
@@ -58,7 +62,9 @@ class _AdminSendNotificationScreenState extends ConsumerState<AdminSendNotificat
     debugPrint('AdminSendNotificationScreen: failed to send: $error');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Could not send this notification. Please try again.'),
+        content: const Text(
+          'Could not send this notification. Please try again.',
+        ),
         backgroundColor: palette.danger,
       ),
     );
@@ -89,23 +95,35 @@ class _AdminSendNotificationScreenState extends ConsumerState<AdminSendNotificat
                             'This goes out to every registered member as a push '
                             'notification, and shows up in everyone\'s in-app list. '
                             'Broadcast only.',
-                            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                            style: AppTextStyles.secondary(
+                              AppTextStyles.bodySmall,
+                            ),
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           TextFormField(
                             controller: _titleController,
-                            decoration: const InputDecoration(labelText: 'Title'),
+                            decoration: const InputDecoration(
+                              labelText: 'Title',
+                            ),
                             textInputAction: TextInputAction.next,
-                            validator: (value) =>
-                                (value == null || value.trim().isEmpty) ? 'Please enter a title' : null,
+                            validator:
+                                (value) =>
+                                    (value == null || value.trim().isEmpty)
+                                        ? 'Please enter a title'
+                                        : null,
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           TextFormField(
                             controller: _bodyController,
-                            decoration: const InputDecoration(labelText: 'Message'),
+                            decoration: const InputDecoration(
+                              labelText: 'Message',
+                            ),
                             maxLines: 4,
-                            validator: (value) =>
-                                (value == null || value.trim().isEmpty) ? 'Please enter a message' : null,
+                            validator:
+                                (value) =>
+                                    (value == null || value.trim().isEmpty)
+                                        ? 'Please enter a message'
+                                        : null,
                           ),
                         ],
                       ),

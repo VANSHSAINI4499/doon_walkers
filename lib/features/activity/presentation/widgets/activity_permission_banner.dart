@@ -41,10 +41,12 @@ class ActivityPermissionBanner extends ConsumerWidget {
         icon: AppIcons.download,
         accent: AppColors.accent,
         title: 'Health Connect required',
-        message: 'Install or update Health Connect to track fitness challenges '
+        message:
+            'Install or update Health Connect to track fitness challenges '
             '(steps, distance, calories).',
         actionLabel: 'Install',
-        onAction: () => ref.read(activityProviderProvider).openProviderSettings(),
+        onAction:
+            () => ref.read(activityProviderProvider).openProviderSettings(),
       );
     }
 
@@ -53,12 +55,14 @@ class ActivityPermissionBanner extends ConsumerWidget {
         icon: AppIcons.safety,
         accent: AppColors.primary,
         title: 'Sync your activity',
-        message: 'Grant read-only access to your steps, distance, and calories to '
+        message:
+            'Grant read-only access to your steps, distance, and calories to '
             'track fitness challenges. Nothing is ever written back.',
         actionLabel: 'Grant Access',
         isLoading: syncState.isLoading,
         onAction: () async {
-          final granted = await ref.read(activityProviderProvider).requestPermission();
+          final granted =
+              await ref.read(activityProviderProvider).requestPermission();
           if (granted) {
             await ref.read(activitySyncControllerProvider.notifier).sync();
           }
@@ -72,9 +76,10 @@ class ActivityPermissionBanner extends ConsumerWidget {
       icon: AppIcons.sync,
       accent: AppColors.secondary,
       title: 'Activity synced',
-      message: lastSynced == null
-          ? 'Tap Sync Now to pull in your latest activity.'
-          : 'Last synced ${_formatRelative(lastSynced)}.',
+      message:
+          lastSynced == null
+              ? 'Tap Sync Now to pull in your latest activity.'
+              : 'Last synced ${_formatRelative(lastSynced)}.',
       actionLabel: 'Sync Now',
       isLoading: syncState.isLoading,
       onAction: () => ref.read(activitySyncControllerProvider.notifier).sync(),
@@ -118,7 +123,12 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
       child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
@@ -139,20 +149,26 @@ class _Banner extends StatelessWidget {
                 children: [
                   Text(title, style: AppTextStyles.titleSmall),
                   const SizedBox(height: 2),
-                  Text(message, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+                  Text(
+                    message,
+                    style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   isLoading
                       ? SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: accent),
-                        )
-                      : PremiumButton(
-                          label: actionLabel,
-                          variant: PremiumButtonVariant.glass,
-                          size: PremiumButtonSize.small,
-                          onPressed: onAction,
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: accent,
                         ),
+                      )
+                      : PremiumButton(
+                        label: actionLabel,
+                        variant: PremiumButtonVariant.glass,
+                        size: PremiumButtonSize.small,
+                        onPressed: onAction,
+                      ),
                 ],
               ),
             ),

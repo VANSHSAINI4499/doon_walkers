@@ -56,19 +56,28 @@ class TrekGalleryPreview extends StatelessWidget {
           return _ViewAllTile(
             backdrop: media.last,
             remaining: totalCount - media.length,
-            onTap: () => context.push(
-              '${AppConstants.trekGalleryLocation(trekId)}'
-              '?title=${Uri.encodeComponent(trekTitle)}',
-            ),
+            onTap:
+                () => context.push(
+                  '${AppConstants.trekGalleryLocation(trekId)}'
+                  '?title=${Uri.encodeComponent(trekTitle)}',
+                ),
           );
         }
 
         final item = media[index];
-        void openTapped() =>
-            openMediaCarousel(context, trekId: trekId, trekTitle: trekTitle, initialIndex: index);
+        void openTapped() => openMediaCarousel(
+          context,
+          trekId: trekId,
+          trekTitle: trekTitle,
+          initialIndex: index,
+        );
 
         return isAdmin
-            ? MediaAdminOverlay(media: item, trekTitle: trekTitle, onTap: openTapped)
+            ? MediaAdminOverlay(
+              media: item,
+              trekTitle: trekTitle,
+              onTap: openTapped,
+            )
             : GalleryTile(media: item, onTap: openTapped);
       },
     );
@@ -76,7 +85,11 @@ class TrekGalleryPreview extends StatelessWidget {
 }
 
 class _ViewAllTile extends StatelessWidget {
-  const _ViewAllTile({required this.backdrop, required this.remaining, required this.onTap});
+  const _ViewAllTile({
+    required this.backdrop,
+    required this.remaining,
+    required this.onTap,
+  });
 
   final GalleryMedia backdrop;
   final int remaining;
@@ -106,13 +119,15 @@ class _ViewAllTile extends StatelessWidget {
               // navigable duplicate of the tile underneath it.
               backdrop.mediaType == MediaType.photo
                   ? CachedNetworkImage(
-                      imageUrl: backdrop.mediaUrl,
-                      cacheManager: MediaCacheManager.instance.imageCacheManager,
-                      fit: BoxFit.cover,
-                      placeholder: (context, _) =>
-                          Shimmer(child: Container(color: palette.cardHigh)),
-                      errorWidget: (context, _, __) => Container(color: palette.cardHigh),
-                    )
+                    imageUrl: backdrop.mediaUrl,
+                    cacheManager: MediaCacheManager.instance.imageCacheManager,
+                    fit: BoxFit.cover,
+                    placeholder:
+                        (context, _) =>
+                            Shimmer(child: Container(color: palette.cardHigh)),
+                    errorWidget:
+                        (context, _, __) => Container(color: palette.cardHigh),
+                  )
                   : VideoThumbnailWidget(thumbnailUrl: backdrop.thumbnailUrl),
               Container(color: Colors.black.withAlpha(140)),
               Center(

@@ -101,7 +101,8 @@ class _DemoScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           AppCard(
-            borderColor: isAdmin ? palette.primary.withValues(alpha: 0.55) : null,
+            borderColor:
+                isAdmin ? palette.primary.withValues(alpha: 0.55) : null,
             child: Row(
               children: [
                 AppIcon(
@@ -145,8 +146,10 @@ class _DemoScreen extends ConsumerWidget {
                 ),
                 Switch(
                   value: isDark,
-                  onChanged: (v) => ref.read(_demoThemeMode.notifier).state =
-                      v ? ThemeMode.dark : ThemeMode.light,
+                  onChanged:
+                      (v) =>
+                          ref.read(_demoThemeMode.notifier).state =
+                              v ? ThemeMode.dark : ThemeMode.light,
                 ),
               ],
             ),
@@ -155,11 +158,11 @@ class _DemoScreen extends ConsumerWidget {
           Text(
             isAdminBranch
                 ? 'This is a top-level route, pushed over the shell — note '
-                      'there is no bottom nav. In the real app the router\'s '
-                      'redirect guard bounces you Home on a demotion; this '
-                      'harness has no redirect, so nothing happens here.'
+                    'there is no bottom nav. In the real app the router\'s '
+                    'redirect guard bounces you Home on a demotion; this '
+                    'harness has no redirect, so nothing happens here.'
                 : 'Toggling this while you stay on this tab is the live '
-                      'role-transition case. The bar must not change shape.',
+                    'role-transition case. The bar must not change shape.',
             style: AppTextStyles.bodySmall.copyWith(
               color: palette.textSecondary,
             ),
@@ -178,15 +181,17 @@ GoRouter _buildDemoRouter() {
     initialLocation: AppConstants.routeHome,
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
+        builder:
+            (context, state, navigationShell) =>
+                AppShell(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppConstants.routeHome,
-                builder: (_, _) =>
-                    const _DemoScreen(label: 'Home', icon: AppIcons.home),
+                builder:
+                    (_, _) =>
+                        const _DemoScreen(label: 'Home', icon: AppIcons.home),
               ),
             ],
           ),
@@ -204,8 +209,9 @@ GoRouter _buildDemoRouter() {
             routes: [
               GoRoute(
                 path: AppConstants.routeTrekLibrary,
-                builder: (_, _) =>
-                    const _DemoScreen(label: 'Treks', icon: AppIcons.treks),
+                builder:
+                    (_, _) =>
+                        const _DemoScreen(label: 'Treks', icon: AppIcons.treks),
               ),
             ],
           ),
@@ -213,10 +219,11 @@ GoRouter _buildDemoRouter() {
             routes: [
               GoRoute(
                 path: AppConstants.routeChallenges,
-                builder: (_, _) => const _DemoScreen(
-                  label: 'Challenges',
-                  icon: AppIcons.challenges,
-                ),
+                builder:
+                    (_, _) => const _DemoScreen(
+                      label: 'Challenges',
+                      icon: AppIcons.challenges,
+                    ),
               ),
             ],
           ),
@@ -224,8 +231,11 @@ GoRouter _buildDemoRouter() {
             routes: [
               GoRoute(
                 path: AppConstants.routeProfile,
-                builder: (_, _) =>
-                    const _DemoScreen(label: 'Profile', icon: AppIcons.profile),
+                builder:
+                    (_, _) => const _DemoScreen(
+                      label: 'Profile',
+                      icon: AppIcons.profile,
+                    ),
               ),
             ],
           ),
@@ -238,11 +248,12 @@ GoRouter _buildDemoRouter() {
       // tab was underneath.
       GoRoute(
         path: AppConstants.routeAdminTrekRegistrations,
-        builder: (_, _) => const _DemoScreen(
-          label: 'Registrations (drawer only)',
-          icon: AppIcons.registrations,
-          isAdminBranch: true,
-        ),
+        builder:
+            (_, _) => const _DemoScreen(
+              label: 'Registrations (drawer only)',
+              icon: AppIcons.registrations,
+              isAdminBranch: true,
+            ),
       ),
       // The drawer's non-admin destinations, so tapping them in the demo
       // lands somewhere real rather than throwing a router error.
@@ -258,18 +269,19 @@ GoRouter _buildDemoRouter() {
       ])
         GoRoute(
           path: path,
-          builder: (context, state) => Scaffold(
-            appBar: AppBar(title: Text(label)),
-            body: Center(
-              child: Text(
-                '$label\n(real screen out of scope for this harness)',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppPalette.of(context).textSecondary,
+          builder:
+              (context, state) => Scaffold(
+                appBar: AppBar(title: Text(label)),
+                body: Center(
+                  child: Text(
+                    '$label\n(real screen out of scope for this harness)',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppPalette.of(context).textSecondary,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
         ),
     ],
   );

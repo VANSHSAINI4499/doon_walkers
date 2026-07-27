@@ -20,18 +20,25 @@ void main() {
     test('matches the admin edit form for any trek id', () {
       expect(isTrekAdminRoute('/trek-library/abc-123/edit'), isTrue);
       expect(
-        isTrekAdminRoute('/trek-library/7f3c1e2a-0b5d-4a8e-9f21-3c5d7e9a1b4f/edit'),
+        isTrekAdminRoute(
+          '/trek-library/7f3c1e2a-0b5d-4a8e-9f21-3c5d7e9a1b4f/edit',
+        ),
         isTrue,
       );
     });
 
-    test('matches the admin Check-in QR screen for any trek id (Phase QR-1)', () {
-      expect(isTrekAdminRoute('/trek-library/abc-123/checkin-qr'), isTrue);
-      expect(
-        isTrekAdminRoute('/trek-library/7f3c1e2a-0b5d-4a8e-9f21-3c5d7e9a1b4f/checkin-qr'),
-        isTrue,
-      );
-    });
+    test(
+      'matches the admin Check-in QR screen for any trek id (Phase QR-1)',
+      () {
+        expect(isTrekAdminRoute('/trek-library/abc-123/checkin-qr'), isTrue);
+        expect(
+          isTrekAdminRoute(
+            '/trek-library/7f3c1e2a-0b5d-4a8e-9f21-3c5d7e9a1b4f/checkin-qr',
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('does NOT match the public library or a public trek detail page', () {
       expect(isTrekAdminRoute('/trek-library'), isFalse);

@@ -35,7 +35,10 @@ Future<void> main() async {
   //     optional feature, not a startup prerequisite. See
   //     PhoneVerificationRepositoryImpl for where these calls are used.
   if (EnvConfig.isPhoneWidgetConfigured) {
-    OTPWidget.initializeWidget(EnvConfig.msg91WidgetId, EnvConfig.msg91WidgetTokenAuth);
+    OTPWidget.initializeWidget(
+      EnvConfig.msg91WidgetId,
+      EnvConfig.msg91WidgetTokenAuth,
+    );
   }
 
   // 3. Firebase must be initialised before any other Firebase plugin —
@@ -44,9 +47,11 @@ Future<void> main() async {
   debugPrint('[Push] Firebase.initializeApp() starting...');
   try {
     final app = await Firebase.initializeApp();
-    debugPrint('[Push] Firebase.initializeApp() succeeded: '
-        'name=${app.name}, projectId=${app.options.projectId}, '
-        'appId=${app.options.appId}');
+    debugPrint(
+      '[Push] Firebase.initializeApp() succeeded: '
+      'name=${app.name}, projectId=${app.options.projectId}, '
+      'appId=${app.options.appId}',
+    );
   } catch (e, st) {
     debugPrint('[Push] Firebase.initializeApp() FAILED: $e');
     debugPrint('[Push] $st');
@@ -106,7 +111,9 @@ class DoonWalkersApp extends ConsumerWidget {
       // to, so the real content is fully built underneath the splash for
       // its entire duration; see SplashGate's doc for why nothing here
       // blocks on real async work.
-      builder: (context, child) => SplashGate(child: child ?? const SizedBox.shrink()),
+      builder:
+          (context, child) =>
+              SplashGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }

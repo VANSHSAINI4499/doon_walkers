@@ -9,10 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// own `public.users` row live (Realtime is already enabled on that
 /// table), so the new value propagates on its own the moment the
 /// write commits.
-final leaderboardVisibilityControllerProvider = AsyncNotifierProvider<LeaderboardVisibilityController, void>(
-  LeaderboardVisibilityController.new,
-  name: 'leaderboardVisibilityControllerProvider',
-);
+final leaderboardVisibilityControllerProvider =
+    AsyncNotifierProvider<LeaderboardVisibilityController, void>(
+      LeaderboardVisibilityController.new,
+      name: 'leaderboardVisibilityControllerProvider',
+    );
 
 class LeaderboardVisibilityController extends AsyncNotifier<void> {
   @override

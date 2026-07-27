@@ -51,10 +51,12 @@ class _DesignSystemDemoScreenState extends State<DesignSystemDemoScreen> {
               actions: [
                 _ThemeSwitch(
                   isDark: _isDark,
-                  onChanged: (dark) => setState(
-                    () =>
-                        _brightness = dark ? Brightness.dark : Brightness.light,
-                  ),
+                  onChanged:
+                      (dark) => setState(
+                        () =>
+                            _brightness =
+                                dark ? Brightness.dark : Brightness.light,
+                      ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
               ],
@@ -236,11 +238,7 @@ class _ProgressDemo extends StatelessWidget {
   Widget build(BuildContext context) => const AppCard(
     child: Column(
       children: [
-        AppProgressBar(
-          value: 0.62,
-          label: 'Progress to Gold',
-          trailing: '62%',
-        ),
+        AppProgressBar(value: 0.62, label: 'Progress to Gold', trailing: '62%'),
         SizedBox(height: AppSpacing.xl),
         Center(
           child: AppProgressRing(
@@ -373,7 +371,11 @@ class _ButtonStatesDemo extends StatelessWidget {
             size: AppButtonSize.medium,
             onPressed: () {},
           ),
-          AppButton(label: 'Large', size: AppButtonSize.large, onPressed: () {}),
+          AppButton(
+            label: 'Large',
+            size: AppButtonSize.large,
+            onPressed: () {},
+          ),
         ],
       ),
       const SizedBox(height: AppSpacing.md),

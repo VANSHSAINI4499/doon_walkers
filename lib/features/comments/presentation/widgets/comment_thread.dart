@@ -91,9 +91,10 @@ class _CommentThreadState extends ConsumerState<CommentThread> {
 
     final error = ref.read(commentControllerProvider).error;
     debugPrint('CommentThread: failed to post comment: $error');
-    final message = error is CommentBlocklistException
-        ? error.toString()
-        : 'Could not post your comment. Please try again.';
+    final message =
+        error is CommentBlocklistException
+            ? error.toString()
+            : 'Could not post your comment. Please try again.';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppColors.danger),
     );
@@ -109,7 +110,8 @@ class _CommentThreadState extends ConsumerState<CommentThread> {
 
   @override
   Widget build(BuildContext context) {
-    final isSignedIn = ref.watch(supabaseClientProvider).auth.currentUser != null;
+    final isSignedIn =
+        ref.watch(supabaseClientProvider).auth.currentUser != null;
     final isPhoneVerified = ref.watch(isPhoneVerifiedProvider);
     final isSaving = ref.watch(commentControllerProvider).isLoading;
     final commentsAsync = ref.watch(trekCommentsProvider(widget.trekId));
@@ -124,7 +126,8 @@ class _CommentThreadState extends ConsumerState<CommentThread> {
             isSaving: isSaving,
             showBlocklistWarning: _showBlocklistWarning,
             onChanged: (_) {
-              if (_showBlocklistWarning) setState(() => _showBlocklistWarning = false);
+              if (_showBlocklistWarning)
+                setState(() => _showBlocklistWarning = false);
             },
             onSubmit: _submit,
           )
@@ -136,7 +139,9 @@ class _CommentThreadState extends ConsumerState<CommentThread> {
         commentsAsync.when(
           loading: () => const SkeletonTileList(count: 2),
           error: (error, stack) {
-            debugPrint('CommentThread: failed to load comments for ${widget.trekId}: $error');
+            debugPrint(
+              'CommentThread: failed to load comments for ${widget.trekId}: $error',
+            );
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               child: Row(
@@ -144,14 +149,19 @@ class _CommentThreadState extends ConsumerState<CommentThread> {
                   Expanded(
                     child: Text(
                       'Could not load comments.',
-                      style: AppTextStyles.tinted(AppTextStyles.bodySmall, AppColors.danger),
+                      style: AppTextStyles.tinted(
+                        AppTextStyles.bodySmall,
+                        AppColors.danger,
+                      ),
                     ),
                   ),
                   PremiumButton(
                     label: 'Retry',
                     variant: PremiumButtonVariant.ghost,
                     size: PremiumButtonSize.small,
-                    onPressed: () => ref.invalidate(trekCommentsProvider(widget.trekId)),
+                    onPressed:
+                        () =>
+                            ref.invalidate(trekCommentsProvider(widget.trekId)),
                   ),
                 ],
               ),
@@ -212,9 +222,10 @@ class _CommentInput extends StatelessWidget {
           minLines: 1,
           decoration: InputDecoration(
             hintText: 'Share your thoughts on this trek…',
-            errorText: showBlocklistWarning
-                ? 'This comment may contain inappropriate language.'
-                : null,
+            errorText:
+                showBlocklistWarning
+                    ? 'This comment may contain inappropriate language.'
+                    : null,
             errorMaxLines: 2,
           ),
         ),

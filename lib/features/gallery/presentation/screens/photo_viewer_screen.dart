@@ -34,11 +34,12 @@ class PhotoViewerScreen extends StatelessWidget {
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stack) => const Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.white54,
-                  size: 48,
-                ),
+                errorBuilder:
+                    (context, error, stack) => const Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white54,
+                      size: 48,
+                    ),
               ),
             ),
           ),

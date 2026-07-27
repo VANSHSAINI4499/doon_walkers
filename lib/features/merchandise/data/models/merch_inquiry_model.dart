@@ -36,9 +36,10 @@ class MerchInquiryModel extends MerchInquiry {
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
       note: json['note'] as String?,
       status: MerchInquiryStatus.fromString(json['status'] as String?),
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'] as String)
+              : DateTime.now(),
       productName: (product?['name'] as String?) ?? '',
       variantSize: variant?['size'] as String?,
       userName: (user?['name'] as String?) ?? '',

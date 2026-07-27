@@ -27,16 +27,18 @@ class UserModel extends UserEntity {
       role: UserRole.fromString(json['role'] as String?),
       profileImage:
           (json['avatar_url'] as String?) ?? (json['profile_image'] as String?),
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'] as String)
+              : DateTime.now(),
       // Missing (older cached row shape) defaults true, matching the
       // DB column's own default — never silently opts someone out.
       showOnLeaderboard: json['show_on_leaderboard'] as bool? ?? true,
       phoneVerified: json['phone_verified'] as bool? ?? false,
-      phoneVerifiedAt: json['phone_verified_at'] != null
-          ? DateTime.parse(json['phone_verified_at'] as String)
-          : null,
+      phoneVerifiedAt:
+          json['phone_verified_at'] != null
+              ? DateTime.parse(json['phone_verified_at'] as String)
+              : null,
       // Same "missing means the column default" treatment as
       // show_on_leaderboard above — a cached row from before 0034 must
       // not resolve to a 0 goal, which would divide by zero downstream.

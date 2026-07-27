@@ -37,7 +37,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final result = await ref.read(authControllerProvider.notifier).signUp(
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .signUp(
           fullName: _nameController.text,
           email: _emailController.text,
           password: _passwordController.text,
@@ -77,18 +79,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.xxl),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
-              child: _confirmationPending
-                  ? _buildSuccessView()
-                  : _buildFormView(authState),
+              child:
+                  _confirmationPending
+                      ? _buildSuccessView()
+                      : _buildFormView(authState),
             ),
           ),
         ),
@@ -185,7 +186,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             const Expanded(child: Divider(color: AppColors.glassBorder)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Text('OR', style: AppTextStyles.secondary(AppTextStyles.labelMedium)),
+              child: Text(
+                'OR',
+                style: AppTextStyles.secondary(AppTextStyles.labelMedium),
+              ),
             ),
             const Expanded(child: Divider(color: AppColors.glassBorder)),
           ],
@@ -202,10 +206,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Already have an account? ',
-              style: AppTextStyles.bodyMedium,
-            ),
+            Text('Already have an account? ', style: AppTextStyles.bodyMedium),
             TextButton(
               onPressed: () => context.pop(),
               child: const Text('Sign In'),

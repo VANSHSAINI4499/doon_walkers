@@ -30,13 +30,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Dummy init so the widgets that read Supabase.instance directly
   // (comment thread/tile) resolve to a guest session. Never connects.
-  await Supabase.initialize(url: 'https://demo.supabase.co', publishableKey: 'demo');
-  runApp(
-    ProviderScope(
-      overrides: _overrides,
-      child: const _TreksDemoApp(),
-    ),
+  await Supabase.initialize(
+    url: 'https://demo.supabase.co',
+    publishableKey: 'demo',
   );
+  runApp(ProviderScope(overrides: _overrides, child: const _TreksDemoApp()));
 }
 
 // ── Demo data ────────────────────────────────────────────────────────
@@ -130,7 +128,8 @@ final _tNoDesc = Trek(
 final _tDraft = Trek(
   id: 'draft',
   title: 'Brahmatal (unreleased)',
-  description: 'A winter ridge trek with twin summit views of Trishul & Nanda Ghunti.',
+  description:
+      'A winter ridge trek with twin summit views of Trishul & Nanda Ghunti.',
   difficulty: TrekDifficulty.moderate,
   distanceKm: 24,
   durationDays: 6,
@@ -143,14 +142,17 @@ final _tDraft = Trek(
 
 final _published = <Trek>[_tFree, _tFee, _tDone, _tShort, _tNoDesc];
 final _all = <Trek>[_tDraft, ..._published];
-final _byId = {for (final t in [..._all]) t.id: t};
+final _byId = {
+  for (final t in [..._all]) t.id: t,
+};
 
 final _demoComments = <Comment>[
   Comment(
     id: 'c1',
     trekId: 'free',
     userId: 'u2',
-    commentText: 'Did this last September — the final climb to the lake at dawn is unreal. Carry an extra layer!',
+    commentText:
+        'Did this last September — the final climb to the lake at dawn is unreal. Carry an extra layer!',
     isVisible: true,
     createdAt: DateTime.now().subtract(const Duration(days: 3)),
     userName: 'Meera K.',
@@ -168,11 +170,15 @@ final _demoComments = <Comment>[
 
 List<Override> get _overrides => [
   isAdminProvider.overrideWith((ref) => ref.watch(_demoIsAdmin)),
-  publishedTreksProvider.overrideWith((ref) async => sortTreksForLibrary(_published)),
+  publishedTreksProvider.overrideWith(
+    (ref) async => sortTreksForLibrary(_published),
+  ),
   adminAllTreksProvider.overrideWith((ref) async => sortTreksForLibrary(_all)),
   trekByIdProvider.overrideWith((ref, id) => _byId[id]),
   trekGalleryProvider.overrideWith((ref, id) async => const []),
-  trekCommentsProvider.overrideWith((ref, id) async => id == 'free' ? _demoComments : const []),
+  trekCommentsProvider.overrideWith(
+    (ref, id) async => id == 'free' ? _demoComments : const [],
+  ),
   commentBlocklistProvider.overrideWith((ref) async => const <String>[]),
   myRegistrationForTrekProvider.overrideWith((ref, id) async => null),
 ];
@@ -215,8 +221,10 @@ class _DemoHub extends ConsumerWidget {
             glowColor: isAdmin ? AppColors.accent : AppColors.primary,
             child: Row(
               children: [
-                AppIcon(isAdmin ? AppIcons.medal : AppIcons.person,
-                    color: isAdmin ? AppColors.accent : AppColors.primary),
+                AppIcon(
+                  isAdmin ? AppIcons.medal : AppIcons.person,
+                  color: isAdmin ? AppColors.accent : AppColors.primary,
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
@@ -255,7 +263,8 @@ class _DemoHub extends ConsumerWidget {
           _HubButton(
             label: 'Detail — draft (admin only)',
             icon: AppIcons.editNote,
-            onTap: () => _open(context, const TrekDetailScreen(trekId: 'draft')),
+            onTap:
+                () => _open(context, const TrekDetailScreen(trekId: 'draft')),
           ),
           const Divider(height: AppSpacing.xxxl),
           _HubButton(
@@ -275,7 +284,11 @@ class _DemoHub extends ConsumerWidget {
 }
 
 class _HubButton extends StatelessWidget {
-  const _HubButton({required this.label, required this.icon, required this.onTap});
+  const _HubButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   final String label;
   final IconData icon;
@@ -294,7 +307,10 @@ class _HubButton extends StatelessWidget {
             AppIcon(icon, color: AppColors.primary),
             const SizedBox(width: AppSpacing.md),
             Expanded(child: Text(label, style: AppTextStyles.titleSmall)),
-            const AppIcon(AppIcons.chevronRight, color: AppColors.textSecondary),
+            const AppIcon(
+              AppIcons.chevronRight,
+              color: AppColors.textSecondary,
+            ),
           ],
         ),
       ),

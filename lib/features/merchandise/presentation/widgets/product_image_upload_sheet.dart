@@ -30,10 +30,12 @@ class _ProductImageUploadSheet extends ConsumerStatefulWidget {
   final String productId;
 
   @override
-  ConsumerState<_ProductImageUploadSheet> createState() => _ProductImageUploadSheetState();
+  ConsumerState<_ProductImageUploadSheet> createState() =>
+      _ProductImageUploadSheetState();
 }
 
-class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadSheet> {
+class _ProductImageUploadSheetState
+    extends ConsumerState<_ProductImageUploadSheet> {
   static const _allowedExtensions = {'jpg', 'jpeg', 'png', 'webp'};
 
   Uint8List? _pickedBytes;
@@ -56,7 +58,9 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
     if (!_allowedExtensions.contains(extension)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please choose a JPG, PNG, or WEBP image.')),
+          const SnackBar(
+            content: Text('Please choose a JPG, PNG, or WEBP image.'),
+          ),
         );
       }
       return;
@@ -80,13 +84,15 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
     final extension = _pickedExtension;
 
     if (bytes == null || extension == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose a photo.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please choose a photo.')));
       return;
     }
 
-    final uploaded = await ref.read(productImageAdminControllerProvider.notifier).uploadImage(
+    final uploaded = await ref
+        .read(productImageAdminControllerProvider.notifier)
+        .uploadImage(
           productId: widget.productId,
           bytes: bytes,
           fileExtension: extension,
@@ -99,9 +105,9 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
     ref.invalidate(productByIdProvider(widget.productId));
 
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Uploaded.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Uploaded.')));
   }
 
   @override
@@ -109,7 +115,10 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
     final palette = AppPalette.of(context);
     final isSaving = ref.watch(productImageAdminControllerProvider).isLoading;
 
-    ref.listen<AsyncValue<void>>(productImageAdminControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<void>>(productImageAdminControllerProvider, (
+      previous,
+      next,
+    ) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -123,17 +132,21 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
     });
 
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xs, AppSpacing.xl, AppSpacing.xxl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xs,
+          AppSpacing.xl,
+          AppSpacing.xxl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Add Photo',
-              style: AppTextStyles.titleLarge,
-            ),
+            Text('Add Photo', style: AppTextStyles.titleLarge),
             const SizedBox(height: AppSpacing.lg),
 
             GestureDetector(
@@ -147,25 +160,32 @@ class _ProductImageUploadSheetState extends ConsumerState<_ProductImageUploadShe
                   color: palette.cardHigh,
                   border: Border.all(color: palette.border),
                 ),
-                child: _pickedBytes == null
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AppIcon(
-                              AppIcons.addPhoto,
-                              size: 36,
-                              color: palette.textSecondary,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(
-                              'Tap to choose a photo',
-                              style: AppTextStyles.secondary(AppTextStyles.bodySmall),
-                            ),
-                          ],
+                child:
+                    _pickedBytes == null
+                        ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AppIcon(
+                                AppIcons.addPhoto,
+                                size: 36,
+                                color: palette.textSecondary,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                'Tap to choose a photo',
+                                style: AppTextStyles.secondary(
+                                  AppTextStyles.bodySmall,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        : Image.memory(
+                          _pickedBytes!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
                         ),
-                      )
-                    : Image.memory(_pickedBytes!, fit: BoxFit.cover, width: double.infinity),
               ),
             ),
             const SizedBox(height: AppSpacing.xxl),

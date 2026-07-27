@@ -9,12 +9,10 @@ class EnvConfig {
   EnvConfig._();
 
   /// Your Supabase project URL, e.g. `https://xyz.supabase.co`
-  static String get supabaseUrl =>
-      dotenv.env['SUPABASE_URL'] ?? '';
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
 
   /// Supabase anonymous (public) key — safe to embed in the client.
-  static String get supabaseAnonKey =>
-      dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   /// Web OAuth client ID (client_type 3) from Google Cloud Console — used
   /// as [GoogleSignIn.serverClientId] so the ID token audience matches
@@ -44,7 +42,8 @@ class EnvConfig {
   /// embedded client-side: it's what lets `sendotp_flutter_sdk` call
   /// MSG91 directly from the device without ever exposing the real
   /// account authkey.
-  static String get msg91WidgetTokenAuth => dotenv.env['MSG91_WIDGET_TOKEN_AUTH'] ?? '';
+  static String get msg91WidgetTokenAuth =>
+      dotenv.env['MSG91_WIDGET_TOKEN_AUTH'] ?? '';
 
   /// Returns true when the OTP Widget has both values it needs to
   /// initialize. Checked separately from [isConfigured] for the same

@@ -27,7 +27,10 @@ const _origin = 'http://localhost:8905';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: 'https://demo.supabase.co', publishableKey: 'demo');
+  await Supabase.initialize(
+    url: 'https://demo.supabase.co',
+    publishableKey: 'demo',
+  );
   // Overrides at the ROOT scope so every pushed route (which are siblings
   // of the hub in the Navigator, outside `home`) inherits them.
   runApp(ProviderScope(overrides: _overrides, child: const _MerchDemoApp()));
@@ -47,20 +50,29 @@ ProductImage _img(String pid, String file, int order) => ProductImage(
   uploadedAt: DateTime(2026, 1, order + 1),
 );
 
-ProductVariant _variant(String pid, String size, int stock) =>
-    ProductVariant(id: '$pid-$size', productId: pid, size: size, stockQuantity: stock);
+ProductVariant _variant(String pid, String size, int stock) => ProductVariant(
+  id: '$pid-$size',
+  productId: pid,
+  size: size,
+  stockQuantity: stock,
+);
 
 final _tee = Product(
   id: 'tee',
   name: 'Doon Walkers Trail Tee',
-  description: 'Breathable, quick-dry cotton blend with the trail crest on the chest. '
+  description:
+      'Breathable, quick-dry cotton blend with the trail crest on the chest. '
       'Built for long ridge days and lazy chai afternoons alike.',
   price: 799,
   category: ProductCategory.apparel,
   stockQuantity: 0,
   isActive: true,
   createdAt: DateTime(2026, 1, 1),
-  variants: [_variant('tee', 'S', 4), _variant('tee', 'M', 6), _variant('tee', 'L', 0)],
+  variants: [
+    _variant('tee', 'S', 4),
+    _variant('tee', 'M', 6),
+    _variant('tee', 'L', 0),
+  ],
   images: [_img('tee', 'tee1.jpg', 0), _img('tee', 'tee2.jpg', 1)],
 );
 
@@ -131,22 +143,27 @@ class _FakeWishlistRepository implements WishlistRepository {
   }
 
   @override
-  Future<void> removeFromWishlist(String productId) async => _wishlist.remove(productId);
+  Future<void> removeFromWishlist(String productId) async =>
+      _wishlist.remove(productId);
 
   @override
-  Future<bool> isWishlisted(String productId) async => _wishlist.contains(productId);
+  Future<bool> isWishlisted(String productId) async =>
+      _wishlist.contains(productId);
 
   @override
   Future<List<WishlistItem>> fetchMyWishlist({int? limit}) async {
-    final items = _wishlist
-        .map((id) => WishlistItem(
-              id: 'w-$id',
-              userId: 'u1',
-              productId: id,
-              createdAt: DateTime.now(),
-              product: _byId[id]!,
-            ))
-        .toList();
+    final items =
+        _wishlist
+            .map(
+              (id) => WishlistItem(
+                id: 'w-$id',
+                userId: 'u1',
+                productId: id,
+                createdAt: DateTime.now(),
+                product: _byId[id]!,
+              ),
+            )
+            .toList();
     return limit != null ? items.take(limit).toList() : items;
   }
 
@@ -170,7 +187,8 @@ class _FakeMerchInquiryRepository implements MerchInquiryRepository {
     required String phoneNumber,
   }) async {
     final product = _byId[productId]!;
-    final variant = product.variants.where((v) => v.id == variantId).firstOrNull;
+    final variant =
+        product.variants.where((v) => v.id == variantId).firstOrNull;
     final inquiry = MerchInquiry(
       id: 'i${_inquiries.length + 1}',
       userId: 'u1',
@@ -214,21 +232,27 @@ class _FakeMerchInquiryRepository implements MerchInquiryRepository {
 List<Override> get _overrides => [
   isAdminProvider.overrideWith((ref) => ref.watch(_demoIsAdmin)),
   currentUserProvider.overrideWith(
-    (ref) => Stream.value(UserModel(
-      id: 'u1',
-      name: 'Asha Rawat',
-      email: 'asha.rawat@example.com',
-      phone: '+91 98765 43210',
-      role: ref.watch(_demoIsAdmin) ? UserRole.admin : UserRole.user,
-      createdAt: DateTime(2025, 3, 1),
-    )),
+    (ref) => Stream.value(
+      UserModel(
+        id: 'u1',
+        name: 'Asha Rawat',
+        email: 'asha.rawat@example.com',
+        phone: '+91 98765 43210',
+        role: ref.watch(_demoIsAdmin) ? UserRole.admin : UserRole.user,
+        createdAt: DateTime(2025, 3, 1),
+      ),
+    ),
   ),
   activeProductsProvider.overrideWith((ref) async => _active),
   adminAllProductsProvider.overrideWith((ref) async => _all),
   productByIdProvider.overrideWith((ref, id) => _byId[id]),
-  isProductWishlistedProvider.overrideWith((ref, id) async => _wishlist.contains(id)),
+  isProductWishlistedProvider.overrideWith(
+    (ref, id) async => _wishlist.contains(id),
+  ),
   wishlistRepositoryProvider.overrideWithValue(_FakeWishlistRepository()),
-  merchInquiryRepositoryProvider.overrideWithValue(_FakeMerchInquiryRepository()),
+  merchInquiryRepositoryProvider.overrideWithValue(
+    _FakeMerchInquiryRepository(),
+  ),
   allMerchInquiriesProvider.overrideWith((ref) async => List.of(_inquiries)),
 ];
 
@@ -268,22 +292,75 @@ class _DemoHub extends ConsumerWidget {
             glowColor: isAdmin ? AppColors.accent : AppColors.primary,
             child: Row(
               children: [
-                AppIcon(isAdmin ? AppIcons.medal : AppIcons.person, color: isAdmin ? AppColors.accent : AppColors.primary),
+                AppIcon(
+                  isAdmin ? AppIcons.medal : AppIcons.person,
+                  color: isAdmin ? AppColors.accent : AppColors.primary,
+                ),
                 const SizedBox(width: AppSpacing.md),
-                Expanded(child: Text(isAdmin ? 'Viewing as: Admin' : 'Viewing as: Member', style: AppTextStyles.titleMedium)),
-                Switch(value: isAdmin, onChanged: (v) => ref.read(_demoIsAdmin.notifier).state = v),
+                Expanded(
+                  child: Text(
+                    isAdmin ? 'Viewing as: Admin' : 'Viewing as: Member',
+                    style: AppTextStyles.titleMedium,
+                  ),
+                ),
+                Switch(
+                  value: isAdmin,
+                  onChanged: (v) => ref.read(_demoIsAdmin.notifier).state = v,
+                ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _HubButton(label: 'Catalog', icon: AppIcons.store, onTap: () => _open(context, const MerchandiseCatalogScreen())),
-          _HubButton(label: 'Detail — Trail Tee (variants)', icon: AppIcons.bag, onTap: () => _open(context, const ProductDetailScreen(productId: 'tee'))),
-          _HubButton(label: 'Detail — Beanie (no variants)', icon: AppIcons.bag, onTap: () => _open(context, const ProductDetailScreen(productId: 'beanie'))),
-          _HubButton(label: 'Detail — Flask (out of stock)', icon: AppIcons.cart, onTap: () => _open(context, const ProductDetailScreen(productId: 'flask'))),
-          _HubButton(label: 'Detail — Hoodie (draft, admin)', icon: AppIcons.editNote, onTap: () => _open(context, const ProductDetailScreen(productId: 'hoodie'))),
-          _HubButton(label: 'Admin inquiry roster', icon: AppIcons.forum, onTap: () => _open(context, const AdminMerchInquiriesScreen())),
+          _HubButton(
+            label: 'Catalog',
+            icon: AppIcons.store,
+            onTap: () => _open(context, const MerchandiseCatalogScreen()),
+          ),
+          _HubButton(
+            label: 'Detail — Trail Tee (variants)',
+            icon: AppIcons.bag,
+            onTap:
+                () =>
+                    _open(context, const ProductDetailScreen(productId: 'tee')),
+          ),
+          _HubButton(
+            label: 'Detail — Beanie (no variants)',
+            icon: AppIcons.bag,
+            onTap:
+                () => _open(
+                  context,
+                  const ProductDetailScreen(productId: 'beanie'),
+                ),
+          ),
+          _HubButton(
+            label: 'Detail — Flask (out of stock)',
+            icon: AppIcons.cart,
+            onTap:
+                () => _open(
+                  context,
+                  const ProductDetailScreen(productId: 'flask'),
+                ),
+          ),
+          _HubButton(
+            label: 'Detail — Hoodie (draft, admin)',
+            icon: AppIcons.editNote,
+            onTap:
+                () => _open(
+                  context,
+                  const ProductDetailScreen(productId: 'hoodie'),
+                ),
+          ),
+          _HubButton(
+            label: 'Admin inquiry roster',
+            icon: AppIcons.forum,
+            onTap: () => _open(context, const AdminMerchInquiriesScreen()),
+          ),
           const Divider(height: AppSpacing.xxxl),
-          _HubButton(label: 'Buy Now inquiry form (variants)', icon: AppIcons.send, onTap: () => showMerchInquiryFormSheet(context, product: _tee)),
+          _HubButton(
+            label: 'Buy Now inquiry form (variants)',
+            icon: AppIcons.send,
+            onTap: () => showMerchInquiryFormSheet(context, product: _tee),
+          ),
         ],
       ),
     );
@@ -291,7 +368,11 @@ class _DemoHub extends ConsumerWidget {
 }
 
 class _HubButton extends StatelessWidget {
-  const _HubButton({required this.label, required this.icon, required this.onTap});
+  const _HubButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   final String label;
   final IconData icon;
@@ -310,7 +391,10 @@ class _HubButton extends StatelessWidget {
             AppIcon(icon, color: AppColors.primary),
             const SizedBox(width: AppSpacing.md),
             Expanded(child: Text(label, style: AppTextStyles.titleSmall)),
-            const AppIcon(AppIcons.chevronRight, color: AppColors.textSecondary),
+            const AppIcon(
+              AppIcons.chevronRight,
+              color: AppColors.textSecondary,
+            ),
           ],
         ),
       ),

@@ -10,10 +10,16 @@ class TrekkingStreak {
   final int currentMonths;
   final int longestMonths;
 
-  const TrekkingStreak({required this.currentMonths, required this.longestMonths});
+  const TrekkingStreak({
+    required this.currentMonths,
+    required this.longestMonths,
+  });
 
   /// A brand-new member, or a guest — no history to compute from.
-  static const TrekkingStreak zero = TrekkingStreak(currentMonths: 0, longestMonths: 0);
+  static const TrekkingStreak zero = TrekkingStreak(
+    currentMonths: 0,
+    longestMonths: 0,
+  );
 
   bool get isActive => currentMonths > 0;
 }

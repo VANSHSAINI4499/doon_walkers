@@ -60,17 +60,19 @@ class CommentRepositoryImpl implements CommentRepository {
 
   @override
   Future<List<String>> fetchBlocklistTerms() async {
-    final rows =
-        await _supabase.from(AppConstants.tableCommentBlocklist).select('term').order('term');
+    final rows = await _supabase
+        .from(AppConstants.tableCommentBlocklist)
+        .select('term')
+        .order('term');
     return rows.map((row) => row['term'] as String).toList();
   }
 
   @override
   Future<void> addBlocklistTerm(String term) async {
     try {
-      await _supabase
-          .from(AppConstants.tableCommentBlocklist)
-          .insert({'term': term.trim().toLowerCase()});
+      await _supabase.from(AppConstants.tableCommentBlocklist).insert({
+        'term': term.trim().toLowerCase(),
+      });
     } on PostgrestException catch (error) {
       if (error.code == _uniqueViolation) {
         throw const DuplicateBlocklistTermException();
@@ -81,7 +83,10 @@ class CommentRepositoryImpl implements CommentRepository {
 
   @override
   Future<void> removeBlocklistTerm(String term) async {
-    await _supabase.from(AppConstants.tableCommentBlocklist).delete().eq('term', term);
+    await _supabase
+        .from(AppConstants.tableCommentBlocklist)
+        .delete()
+        .eq('term', term);
   }
 
   @override
@@ -90,15 +95,18 @@ class CommentRepositoryImpl implements CommentRepository {
     required String commentText,
   }) async {
     try {
-      final row = await _supabase
-          .from(AppConstants.tableComments)
-          .insert(CommentModel.toInsertJson(
-            trekId: trekId,
-            userId: _currentUserId,
-            commentText: commentText,
-          ))
-          .select()
-          .single();
+      final row =
+          await _supabase
+              .from(AppConstants.tableComments)
+              .insert(
+                CommentModel.toInsertJson(
+                  trekId: trekId,
+                  userId: _currentUserId,
+                  commentText: commentText,
+                ),
+              )
+              .select()
+              .single();
       return CommentModel.fromJson(row);
     } on PostgrestException catch (error) {
       if (error.code == _blocklistViolation) {
@@ -117,6 +125,7 @@ class CommentRepositoryImpl implements CommentRepository {
   Future<void> setVisibility(String id, bool isVisible) async {
     await _supabase
         .from(AppConstants.tableComments)
-        .update({'is_visible': isVisible}).eq('id', id);
+        .update({'is_visible': isVisible})
+        .eq('id', id);
   }
 }

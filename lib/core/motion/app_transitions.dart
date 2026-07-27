@@ -59,8 +59,14 @@ abstract final class AppTransitions {
     Widget child, {
     SharedAxis axis = SharedAxis.horizontal,
   }) {
-    final entering = CurvedAnimation(parent: animation, curve: AppMotion.emphasized);
-    final exiting = CurvedAnimation(parent: secondaryAnimation, curve: AppMotion.emphasized);
+    final entering = CurvedAnimation(
+      parent: animation,
+      curve: AppMotion.emphasized,
+    );
+    final exiting = CurvedAnimation(
+      parent: secondaryAnimation,
+      curve: AppMotion.emphasized,
+    );
 
     // The incoming page slides in from +offset and settles at 0; the
     // outgoing page keeps travelling in the same direction to -offset,
@@ -77,26 +83,35 @@ abstract final class AppTransitions {
 
     return AnimatedBuilder(
       animation: exiting,
-      builder: (context, _) => Transform.translate(
-        offset: offsetFor(exiting.value, incoming: false) * _pageExtent(context, axis),
-        child: Transform.scale(
-          scale: axis == SharedAxis.scaled ? 1 + exiting.value * 0.1 : 1,
-          child: FadeTransition(
-            opacity: Tween<double>(begin: 1, end: 0).animate(exiting),
-            child: AnimatedBuilder(
-              animation: entering,
-              builder: (context, child) => Transform.translate(
-                offset: offsetFor(entering.value, incoming: true) * _pageExtent(context, axis),
-                child: Transform.scale(
-                  scale: axis == SharedAxis.scaled ? 0.9 + entering.value * 0.1 : 1,
-                  child: Opacity(opacity: entering.value, child: child),
+      builder:
+          (context, _) => Transform.translate(
+            offset:
+                offsetFor(exiting.value, incoming: false) *
+                _pageExtent(context, axis),
+            child: Transform.scale(
+              scale: axis == SharedAxis.scaled ? 1 + exiting.value * 0.1 : 1,
+              child: FadeTransition(
+                opacity: Tween<double>(begin: 1, end: 0).animate(exiting),
+                child: AnimatedBuilder(
+                  animation: entering,
+                  builder:
+                      (context, child) => Transform.translate(
+                        offset:
+                            offsetFor(entering.value, incoming: true) *
+                            _pageExtent(context, axis),
+                        child: Transform.scale(
+                          scale:
+                              axis == SharedAxis.scaled
+                                  ? 0.9 + entering.value * 0.1
+                                  : 1,
+                          child: Opacity(opacity: entering.value, child: child),
+                        ),
+                      ),
+                  child: child,
                 ),
               ),
-              child: child,
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -118,8 +133,14 @@ abstract final class AppTransitions {
     child: child,
     transitionDuration: duration,
     reverseTransitionDuration: duration,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-        sharedAxisTransition(context, animation, secondaryAnimation, child, axis: axis),
+    transitionsBuilder:
+        (context, animation, secondaryAnimation, child) => sharedAxisTransition(
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+          axis: axis,
+        ),
   );
 
   /// [Navigator]-pushable route using a shared-axis transition.
@@ -133,8 +154,14 @@ abstract final class AppTransitions {
     transitionDuration: duration,
     reverseTransitionDuration: duration,
     pageBuilder: (context, animation, secondaryAnimation) => child,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
-        sharedAxisTransition(context, animation, secondaryAnimation, child, axis: axis),
+    transitionsBuilder:
+        (context, animation, secondaryAnimation, child) => sharedAxisTransition(
+          context,
+          animation,
+          secondaryAnimation,
+          child,
+          axis: axis,
+        ),
   );
 
   // ── Fade through ──────────────────────────────────────────────────
@@ -220,7 +247,10 @@ abstract final class AppTransitions {
         reverseCurve: AppMotion.exit,
       );
       return SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero).animate(curved),
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.08),
+          end: Offset.zero,
+        ).animate(curved),
         child: FadeTransition(opacity: curved, child: child),
       );
     },

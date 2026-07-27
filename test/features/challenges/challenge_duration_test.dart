@@ -27,31 +27,42 @@ void main() {
   group('challengeDurationDays', () {
     test('daily is 1 day', () {
       expect(
-        challengeDurationDays(_challenge(timeWindow: ChallengeTimeWindow.daily)),
+        challengeDurationDays(
+          _challenge(timeWindow: ChallengeTimeWindow.daily),
+        ),
         1,
       );
     });
 
     test('weekly is 7 days', () {
       expect(
-        challengeDurationDays(_challenge(timeWindow: ChallengeTimeWindow.weekly)),
+        challengeDurationDays(
+          _challenge(timeWindow: ChallengeTimeWindow.weekly),
+        ),
         7,
       );
     });
 
     test('monthly is approximated as 30 days', () {
       expect(
-        challengeDurationDays(_challenge(timeWindow: ChallengeTimeWindow.monthly)),
+        challengeDurationDays(
+          _challenge(timeWindow: ChallengeTimeWindow.monthly),
+        ),
         30,
       );
     });
 
-    test('allTime has no derivable duration — null, not a fabricated number', () {
-      expect(
-        challengeDurationDays(_challenge(timeWindow: ChallengeTimeWindow.allTime)),
-        isNull,
-      );
-    });
+    test(
+      'allTime has no derivable duration — null, not a fabricated number',
+      () {
+        expect(
+          challengeDurationDays(
+            _challenge(timeWindow: ChallengeTimeWindow.allTime),
+          ),
+          isNull,
+        );
+      },
+    );
 
     test('customRange with both dates set returns the real day span', () {
       expect(
@@ -69,18 +80,26 @@ void main() {
     test('customRange missing either date is null, not a guess', () {
       expect(
         challengeDurationDays(
-          _challenge(timeWindow: ChallengeTimeWindow.customRange, startDate: DateTime(2026, 3, 1)),
+          _challenge(
+            timeWindow: ChallengeTimeWindow.customRange,
+            startDate: DateTime(2026, 3, 1),
+          ),
         ),
         isNull,
       );
       expect(
         challengeDurationDays(
-          _challenge(timeWindow: ChallengeTimeWindow.customRange, endDate: DateTime(2026, 3, 1)),
+          _challenge(
+            timeWindow: ChallengeTimeWindow.customRange,
+            endDate: DateTime(2026, 3, 1),
+          ),
         ),
         isNull,
       );
       expect(
-        challengeDurationDays(_challenge(timeWindow: ChallengeTimeWindow.customRange)),
+        challengeDurationDays(
+          _challenge(timeWindow: ChallengeTimeWindow.customRange),
+        ),
         isNull,
       );
     });

@@ -8,5 +8,9 @@ class LeaderboardEntry {
   final int rank;
   final double score;
 
-  const LeaderboardEntry({required this.displayName, required this.rank, required this.score});
+  const LeaderboardEntry({
+    required this.displayName,
+    required this.rank,
+    required this.score,
+  });
 }

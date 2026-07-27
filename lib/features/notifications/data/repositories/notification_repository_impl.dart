@@ -20,9 +20,10 @@ class NotificationRepositoryImpl implements NotificationRepository {
   Future<List<NotificationItem>> fetchNotifications() async {
     final userId = _supabase.auth.currentUser?.id;
     final query = _supabase.from(AppConstants.tableNotifications).select();
-    final filtered = userId == null
-        ? query.isFilter('target_user_id', null)
-        : query.or('target_user_id.is.null,target_user_id.eq.$userId');
+    final filtered =
+        userId == null
+            ? query.isFilter('target_user_id', null)
+            : query.or('target_user_id.is.null,target_user_id.eq.$userId');
 
     final rows = await filtered.order('created_at', ascending: false);
     return rows.map(NotificationModel.fromJson).toList();
@@ -34,15 +35,18 @@ class NotificationRepositoryImpl implements NotificationRepository {
     required String body,
     String? targetUserId,
   }) async {
-    final row = await _supabase
-        .from(AppConstants.tableNotifications)
-        .insert(NotificationModel.toInsertJson(
-          title: title,
-          body: body,
-          targetUserId: targetUserId,
-        ))
-        .select()
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableNotifications)
+            .insert(
+              NotificationModel.toInsertJson(
+                title: title,
+                body: body,
+                targetUserId: targetUserId,
+              ),
+            )
+            .select()
+            .single();
     return NotificationModel.fromJson(row);
   }
 
@@ -51,8 +55,8 @@ class NotificationRepositoryImpl implements NotificationRepository {
     final user = _supabase.auth.currentUser;
     if (user == null) return const {};
 
-    final response = await _supabase.rpc('get_my_read_notification_ids')
-        as List<dynamic>;
+    final response =
+        await _supabase.rpc('get_my_read_notification_ids') as List<dynamic>;
 
     return response
         .map((e) => (e as Map<String, dynamic>)['notification_id'] as String)

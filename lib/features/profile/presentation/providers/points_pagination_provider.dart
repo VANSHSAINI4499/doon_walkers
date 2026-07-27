@@ -34,8 +34,10 @@ class PointsHistoryPage {
 /// `MyWishlistPaginationController`, the established pattern for this
 /// exact need in this codebase. `autoDispose` since the screen is
 /// visited transiently.
-final myPointsHistoryPaginationProvider =
-    AsyncNotifierProvider.autoDispose<MyPointsHistoryPaginationController, PointsHistoryPage>(
+final myPointsHistoryPaginationProvider = AsyncNotifierProvider.autoDispose<
+  MyPointsHistoryPaginationController,
+  PointsHistoryPage
+>(
   MyPointsHistoryPaginationController.new,
   name: 'myPointsHistoryPaginationProvider',
 );

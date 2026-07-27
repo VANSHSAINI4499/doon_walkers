@@ -66,25 +66,24 @@ class WishlistRepositoryImpl implements WishlistRepository {
 
   @override
   Future<bool> isWishlisted(String productId) async {
-    final row = await _supabase
-        .from(AppConstants.tableUserWishlist)
-        .select('id')
-        .eq('user_id', _currentUserId)
-        .eq('product_id', productId)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableUserWishlist)
+            .select('id')
+            .eq('user_id', _currentUserId)
+            .eq('product_id', productId)
+            .maybeSingle();
     return row != null;
   }
 
   @override
   Future<WishlistItem> addToWishlist(String productId) async {
-    final row = await _supabase
-        .from(AppConstants.tableUserWishlist)
-        .insert({
-          'user_id': _currentUserId,
-          'product_id': productId,
-        })
-        .select(_selectWithProduct)
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableUserWishlist)
+            .insert({'user_id': _currentUserId, 'product_id': productId})
+            .select(_selectWithProduct)
+            .single();
     return WishlistItemModel.fromJson(row);
   }
 

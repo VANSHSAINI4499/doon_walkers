@@ -184,10 +184,12 @@ bool isTrekDateBefore(DateTime trekDate, DateTime now) {
 /// If the library ever grows into the hundreds and gets paginated, this
 /// would need to move server-side — not a concern at today's scale.
 List<Trek> sortTreksForLibrary(List<Trek> treks) {
-  final upcoming = treks.where((t) => t.isUpcoming).toList()
-    ..sort((a, b) => a.trekDate!.compareTo(b.trekDate!));
-  final completed = treks.where((t) => t.isCompleted).toList()
-    ..sort((a, b) => b.trekDate!.compareTo(a.trekDate!));
+  final upcoming =
+      treks.where((t) => t.isUpcoming).toList()
+        ..sort((a, b) => a.trekDate!.compareTo(b.trekDate!));
+  final completed =
+      treks.where((t) => t.isCompleted).toList()
+        ..sort((a, b) => b.trekDate!.compareTo(a.trekDate!));
   final unscheduled = treks.where((t) => t.trekDate == null).toList();
   return [...upcoming, ...completed, ...unscheduled];
 }

@@ -17,7 +17,11 @@ import 'package:flutter/material.dart';
 /// keystroke, same pattern `merchandise_catalog_screen.dart` already
 /// established.
 class ListSearchField extends StatelessWidget {
-  const ListSearchField({super.key, required this.controller, required this.hint});
+  const ListSearchField({
+    super.key,
+    required this.controller,
+    required this.hint,
+  });
 
   final TextEditingController controller;
   final String hint;
@@ -29,7 +33,11 @@ class ListSearchField extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: AppIcon(AppIcons.search, size: 20, color: palette.textSecondary),
+        prefixIcon: AppIcon(
+          AppIcons.search,
+          size: 20,
+          color: palette.textSecondary,
+        ),
         filled: true,
         fillColor: palette.cardHigh,
         border: OutlineInputBorder(
@@ -59,7 +67,11 @@ class ListScreenSkeleton extends StatelessWidget {
 }
 
 class ListScreenError extends StatelessWidget {
-  const ListScreenError({super.key, required this.message, required this.onRetry});
+  const ListScreenError({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
 
   final String message;
   final VoidCallback onRetry;
@@ -74,7 +86,11 @@ class ListScreenError extends StatelessWidget {
           children: [
             const AppIcon(AppIcons.error, size: 44, color: AppColors.danger),
             const SizedBox(height: AppSpacing.md),
-            Text(message, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+            Text(
+              message,
+              style: AppTextStyles.titleMedium,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpacing.xl),
             PremiumButton(
               label: 'Retry',

@@ -39,11 +39,9 @@ class _CommentTileState extends ConsumerState<CommentTile> {
   Future<void> _toggleVisibility() async {
     final c = widget.comment;
     setState(() => _isPending = true);
-    final success = await ref.read(commentControllerProvider.notifier).setVisibility(
-          id: c.id,
-          trekId: c.trekId,
-          isVisible: !c.isVisible,
-        );
+    final success = await ref
+        .read(commentControllerProvider.notifier)
+        .setVisibility(id: c.id, trekId: c.trekId, isVisible: !c.isVisible);
     if (!mounted) return;
     setState(() => _isPending = false);
 
@@ -60,25 +58,28 @@ class _CommentTileState extends ConsumerState<CommentTile> {
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete comment?'),
-        content: const Text('This removes the comment permanently. This cannot be undone.'),
-        actions: [
-          PremiumButton(
-            label: 'Keep it',
-            variant: PremiumButtonVariant.glass,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Delete comment?'),
+            content: const Text(
+              'This removes the comment permanently. This cannot be undone.',
+            ),
+            actions: [
+              PremiumButton(
+                label: 'Keep it',
+                variant: PremiumButtonVariant.glass,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+              ),
+              PremiumButton(
+                label: 'Delete',
+                icon: AppIcons.delete,
+                variant: PremiumButtonVariant.danger,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+            ],
           ),
-          PremiumButton(
-            label: 'Delete',
-            icon: AppIcons.delete,
-            variant: PremiumButtonVariant.danger,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true || !mounted) return;
@@ -105,7 +106,8 @@ class _CommentTileState extends ConsumerState<CommentTile> {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final c = widget.comment;
-    final currentUserId = ref.watch(supabaseClientProvider).auth.currentUser?.id;
+    final currentUserId =
+        ref.watch(supabaseClientProvider).auth.currentUser?.id;
     final isAdmin = ref.watch(isAdminProvider);
     final isOwnComment = currentUserId != null && currentUserId == c.userId;
     final avatar = c.userAvatar;
@@ -123,15 +125,22 @@ class _CommentTileState extends ConsumerState<CommentTile> {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.primaryContainer,
-                backgroundImage: (avatar != null && avatar.isNotEmpty)
-                    ? NetworkImage(avatar)
-                    : null,
-                child: (avatar == null || avatar.isEmpty)
-                    ? Text(
-                        c.userName.isNotEmpty ? c.userName[0].toUpperCase() : '?',
-                        style: AppTextStyles.tinted(AppTextStyles.labelLarge, AppColors.primaryLight),
-                      )
-                    : null,
+                backgroundImage:
+                    (avatar != null && avatar.isNotEmpty)
+                        ? NetworkImage(avatar)
+                        : null,
+                child:
+                    (avatar == null || avatar.isEmpty)
+                        ? Text(
+                          c.userName.isNotEmpty
+                              ? c.userName[0].toUpperCase()
+                              : '?',
+                          style: AppTextStyles.tinted(
+                            AppTextStyles.labelLarge,
+                            AppColors.primaryLight,
+                          ),
+                        )
+                        : null,
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -181,7 +190,10 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                   const SizedBox(
                     height: 16,
                     width: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
                   )
                 else ...[
                   if (isAdmin)
@@ -194,19 +206,32 @@ class _CommentTileState extends ConsumerState<CommentTile> {
                       ),
                       label: Text(
                         c.isVisible ? 'Hide' : 'Unhide',
-                        style: AppTextStyles.secondary(AppTextStyles.labelMedium),
+                        style: AppTextStyles.secondary(
+                          AppTextStyles.labelMedium,
+                        ),
                       ),
-                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
                   if (isOwnComment || isAdmin)
                     TextButton.icon(
                       onPressed: _confirmDelete,
-                      icon: const AppIcon(AppIcons.delete, size: 16, color: AppColors.danger),
+                      icon: const AppIcon(
+                        AppIcons.delete,
+                        size: 16,
+                        color: AppColors.danger,
+                      ),
                       label: Text(
                         'Delete',
-                        style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.danger),
+                        style: AppTextStyles.tinted(
+                          AppTextStyles.labelMedium,
+                          AppColors.danger,
+                        ),
                       ),
-                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
                 ],
               ],
@@ -224,14 +249,20 @@ class _HiddenBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: AppColors.danger,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         'Hidden',
-        style: AppTextStyles.tinted(AppTextStyles.labelSmall, AppColors.onDanger),
+        style: AppTextStyles.tinted(
+          AppTextStyles.labelSmall,
+          AppColors.onDanger,
+        ),
       ),
     );
   }
@@ -239,8 +270,18 @@ class _HiddenBadge extends StatelessWidget {
 
 String _formatCommentDate(DateTime dt) {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final local = dt.toLocal();
   return '${local.day} ${months[local.month - 1]} ${local.year}';

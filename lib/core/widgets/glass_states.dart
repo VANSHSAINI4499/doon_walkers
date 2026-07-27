@@ -51,7 +51,11 @@ class GlassEmptyState extends StatelessWidget {
 /// A compact inline "couldn't load … · Retry" row for a section that
 /// failed to load, in the design system's danger tint.
 class GlassSectionError extends StatelessWidget {
-  const GlassSectionError({super.key, required this.message, required this.onRetry});
+  const GlassSectionError({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
 
   final String message;
   final VoidCallback onRetry;
@@ -62,7 +66,13 @@ class GlassSectionError extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(message, style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger)),
+          child: Text(
+            message,
+            style: AppTextStyles.tinted(
+              AppTextStyles.bodySmall,
+              palette.danger,
+            ),
+          ),
         ),
         PremiumButton(
           label: 'Retry',

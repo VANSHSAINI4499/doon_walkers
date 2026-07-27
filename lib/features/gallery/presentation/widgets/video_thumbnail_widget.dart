@@ -8,7 +8,11 @@ import 'package:flutter/material.dart';
 /// icon (not blank) when [thumbnailUrl] is null, which only happens
 /// for videos uploaded before the thumbnail-generation feature landed.
 class VideoThumbnailWidget extends StatelessWidget {
-  const VideoThumbnailWidget({super.key, required this.thumbnailUrl, this.memCacheWidth});
+  const VideoThumbnailWidget({
+    super.key,
+    required this.thumbnailUrl,
+    this.memCacheWidth,
+  });
 
   final String? thumbnailUrl;
 
@@ -31,7 +35,11 @@ class VideoThumbnailWidget extends StatelessWidget {
           Container(
             color: palette.cardHigh,
             alignment: Alignment.center,
-            child: AppIcon(AppIcons.video, size: 28, color: palette.textSecondary),
+            child: AppIcon(
+              AppIcons.video,
+              size: 28,
+              color: palette.textSecondary,
+            ),
           )
         else
           CachedNetworkImage(
@@ -39,12 +47,19 @@ class VideoThumbnailWidget extends StatelessWidget {
             cacheManager: MediaCacheManager.instance.imageCacheManager,
             fit: BoxFit.cover,
             memCacheWidth: memCacheWidth,
-            placeholder: (context, _) => Shimmer(child: Container(color: palette.cardHigh)),
-            errorWidget: (context, _, __) => Container(
-              color: palette.cardHigh,
-              alignment: Alignment.center,
-              child: AppIcon(AppIcons.imageBroken, size: 28, color: palette.textSecondary),
-            ),
+            placeholder:
+                (context, _) =>
+                    Shimmer(child: Container(color: palette.cardHigh)),
+            errorWidget:
+                (context, _, __) => Container(
+                  color: palette.cardHigh,
+                  alignment: Alignment.center,
+                  child: AppIcon(
+                    AppIcons.imageBroken,
+                    size: 28,
+                    color: palette.textSecondary,
+                  ),
+                ),
           ),
         const _PlayBadge(),
       ],
@@ -58,7 +73,10 @@ class _PlayBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.black.withAlpha(140)),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.black.withAlpha(140),
+      ),
       padding: const EdgeInsets.all(8),
       child: const AppIcon(AppIcons.play, color: Colors.white, size: 20),
     );

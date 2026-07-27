@@ -33,11 +33,12 @@ Future<void> openMediaCarousel(
 }) {
   return Navigator.of(context, rootNavigator: true).push(
     MaterialPageRoute(
-      builder: (context) => FullScreenMediaViewer(
-        trekId: trekId,
-        trekTitle: trekTitle,
-        initialIndex: initialIndex,
-      ),
+      builder:
+          (context) => FullScreenMediaViewer(
+            trekId: trekId,
+            trekTitle: trekTitle,
+            initialIndex: initialIndex,
+          ),
     ),
   );
 }
@@ -55,11 +56,14 @@ class FullScreenMediaViewer extends ConsumerStatefulWidget {
   final int initialIndex;
 
   @override
-  ConsumerState<FullScreenMediaViewer> createState() => _FullScreenMediaViewerState();
+  ConsumerState<FullScreenMediaViewer> createState() =>
+      _FullScreenMediaViewerState();
 }
 
 class _FullScreenMediaViewerState extends ConsumerState<FullScreenMediaViewer> {
-  late final PageController _pageController = PageController(initialPage: widget.initialIndex);
+  late final PageController _pageController = PageController(
+    initialPage: widget.initialIndex,
+  );
   late int _currentIndex = widget.initialIndex;
   bool _chromeVisible = true;
 
@@ -86,7 +90,9 @@ class _FullScreenMediaViewerState extends ConsumerState<FullScreenMediaViewer> {
     // going through the whole trek's media, not just the batch that
     // happened to be loaded when the viewer opened.
     if (items.length - index <= 5) {
-      ref.read(trekGalleryPaginationProvider(widget.trekId).notifier).loadMore();
+      ref
+          .read(trekGalleryPaginationProvider(widget.trekId).notifier)
+          .loadMore();
     }
   }
 
@@ -98,7 +104,8 @@ class _FullScreenMediaViewerState extends ConsumerState<FullScreenMediaViewer> {
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    final shouldDismiss = _dragOffset > 120 || details.velocity.pixelsPerSecond.dy > 800;
+    final shouldDismiss =
+        _dragOffset > 120 || details.velocity.pixelsPerSecond.dy > 800;
     if (shouldDismiss) {
       Navigator.of(context).pop();
       return;
@@ -123,20 +130,32 @@ class _FullScreenMediaViewerState extends ConsumerState<FullScreenMediaViewer> {
       child: Scaffold(
         backgroundColor: Colors.black,
         body: pageAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
-          error: (error, stack) => const Center(
-            child: Text('Could not load this gallery.', style: TextStyle(color: Colors.white)),
-          ),
+          loading:
+              () => const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+          error:
+              (error, stack) => const Center(
+                child: Text(
+                  'Could not load this gallery.',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
           data: (page) {
             final items = page.items;
             if (items.isEmpty) {
               return const Center(
-                child: Text('No media to show.', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'No media to show.',
+                  style: TextStyle(color: Colors.white),
+                ),
               );
             }
             final safeIndex = _currentIndex.clamp(0, items.length - 1).toInt();
             final double dragOpacity =
-                _dragging ? (1 - (_dragOffset / 500)).clamp(0.3, 1.0).toDouble() : 1.0;
+                _dragging
+                    ? (1 - (_dragOffset / 500)).clamp(0.3, 1.0).toDouble()
+                    : 1.0;
 
             return GestureDetector(
               onVerticalDragUpdate: _handleDragUpdate,
@@ -151,13 +170,17 @@ class _FullScreenMediaViewerState extends ConsumerState<FullScreenMediaViewer> {
                       PageView.builder(
                         controller: _pageController,
                         itemCount: items.length,
-                        physics: _dragging ? const NeverScrollableScrollPhysics() : null,
+                        physics:
+                            _dragging
+                                ? const NeverScrollableScrollPhysics()
+                                : null,
                         onPageChanged: (index) => _onPageChanged(index, items),
-                        itemBuilder: (context, index) => _MediaPage(
-                          key: ValueKey(items[index].id),
-                          media: items[index],
-                          isActive: index == safeIndex,
-                        ),
+                        itemBuilder:
+                            (context, index) => _MediaPage(
+                              key: ValueKey(items[index].id),
+                              media: items[index],
+                              isActive: index == safeIndex,
+                            ),
                       ),
                       _ChromeOverlay(
                         visible: _chromeVisible,
@@ -194,9 +217,10 @@ class _MediaPage extends StatelessWidget {
       tag: AppHeroTags.custom('gallery', media.id),
       fromRadius: AppRadius.sm,
       toRadius: 0,
-      child: media.mediaType == MediaType.photo
-          ? _PhotoPage(media: media)
-          : _VideoPage(media: media, isActive: isActive),
+      child:
+          media.mediaType == MediaType.photo
+              ? _PhotoPage(media: media)
+              : _VideoPage(media: media, isActive: isActive),
     );
   }
 }
@@ -216,11 +240,18 @@ class _PhotoPage extends StatelessWidget {
       backgroundDecoration: const BoxDecoration(color: Colors.black),
       minScale: PhotoViewComputedScale.contained,
       maxScale: PhotoViewComputedScale.covered * 4,
-      loadingBuilder: (context, event) =>
-          const Center(child: CircularProgressIndicator(color: Colors.white)),
-      errorBuilder: (context, error, stack) => const Center(
-        child: Icon(Icons.broken_image_outlined, color: Colors.white54, size: 48),
-      ),
+      loadingBuilder:
+          (context, event) => const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          ),
+      errorBuilder:
+          (context, error, stack) => const Center(
+            child: Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 48,
+            ),
+          ),
     );
   }
 }
@@ -252,10 +283,13 @@ class _VideoPageState extends State<_VideoPage> {
 
   Future<void> _initialize() async {
     try {
-      final cachedFile = await MediaCacheManager.instance.getCachedVideoFile(media.mediaUrl);
-      final controller = cachedFile != null
-          ? VideoPlayerController.file(cachedFile)
-          : VideoPlayerController.networkUrl(Uri.parse(media.mediaUrl));
+      final cachedFile = await MediaCacheManager.instance.getCachedVideoFile(
+        media.mediaUrl,
+      );
+      final controller =
+          cachedFile != null
+              ? VideoPlayerController.file(cachedFile)
+              : VideoPlayerController.networkUrl(Uri.parse(media.mediaUrl));
 
       await controller.initialize();
       if (!mounted) {
@@ -305,13 +339,17 @@ class _VideoPageState extends State<_VideoPage> {
   @override
   Widget build(BuildContext context) {
     if (_error != null) {
-      return Center(child: Text(_error!, style: const TextStyle(color: Colors.white)));
+      return Center(
+        child: Text(_error!, style: const TextStyle(color: Colors.white)),
+      );
     }
 
     final chewie = _chewie;
     final controller = _controller;
     if (chewie == null || controller == null) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
     }
 
     return Center(
@@ -379,13 +417,19 @@ class _ChromeOverlay extends StatelessWidget {
                         children: [
                           Text(
                             trekTitle,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             '$current / $total',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),

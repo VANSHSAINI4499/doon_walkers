@@ -23,7 +23,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// overrides, offline. `flutter run -t lib/main_challenges_demo.dart`.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: 'https://demo.supabase.co', publishableKey: 'demo');
+  await Supabase.initialize(
+    url: 'https://demo.supabase.co',
+    publishableKey: 'demo',
+  );
   final prefs = await SharedPreferences.getInstance();
 
   runApp(
@@ -40,10 +43,14 @@ Future<void> main() async {
         myChallengeProgressProvider.overrideWith(
           (ref) async => ref.watch(_demoSignedIn) ? _progress : const [],
         ),
-        challengeLeaderboardProvider.overrideWith((ref, id) async => _leaderboard),
+        challengeLeaderboardProvider.overrideWith(
+          (ref, id) async => _leaderboard,
+        ),
         myTierHistoryProvider.overrideWith((ref) async => _history),
         // Activity banner → "synced" state, no Health Connect needed.
-        activityAvailabilityProvider.overrideWith((ref) async => ActivityAvailability.available),
+        activityAvailabilityProvider.overrideWith(
+          (ref) async => ActivityAvailability.available,
+        ),
         activityPermissionGrantedProvider.overrideWith((ref) async => true),
         lastActivitySyncProvider.overrideWith(
           (ref) async => DateTime.now().subtract(const Duration(minutes: 8)),
@@ -62,10 +69,30 @@ final _demoSignedIn = StateProvider<bool>((ref) => true);
 // ── Demo data ────────────────────────────────────────────────────────
 
 List<ChallengeTierThreshold> _tiers(String cid, List<double> v) => [
-  ChallengeTierThreshold(id: '${cid}b', challengeId: cid, tier: ChallengeTier.bronze, thresholdValue: v[0]),
-  ChallengeTierThreshold(id: '${cid}s', challengeId: cid, tier: ChallengeTier.silver, thresholdValue: v[1]),
-  ChallengeTierThreshold(id: '${cid}g', challengeId: cid, tier: ChallengeTier.gold, thresholdValue: v[2]),
-  ChallengeTierThreshold(id: '${cid}p', challengeId: cid, tier: ChallengeTier.platinum, thresholdValue: v[3]),
+  ChallengeTierThreshold(
+    id: '${cid}b',
+    challengeId: cid,
+    tier: ChallengeTier.bronze,
+    thresholdValue: v[0],
+  ),
+  ChallengeTierThreshold(
+    id: '${cid}s',
+    challengeId: cid,
+    tier: ChallengeTier.silver,
+    thresholdValue: v[1],
+  ),
+  ChallengeTierThreshold(
+    id: '${cid}g',
+    challengeId: cid,
+    tier: ChallengeTier.gold,
+    thresholdValue: v[2],
+  ),
+  ChallengeTierThreshold(
+    id: '${cid}p',
+    challengeId: cid,
+    tier: ChallengeTier.platinum,
+    thresholdValue: v[3],
+  ),
 ];
 
 final _chSteps = Challenge(
@@ -135,10 +162,26 @@ final _byId = {for (final c in _all) c.id: c};
 // Genuine progress: Silver on steps (→ Gold), Gold on distance (→ Platinum),
 // maxed Platinum on streak, and no tier yet on calories (→ Bronze).
 final _progress = <ChallengeProgress>[
-  const ChallengeProgress(challengeId: 'steps', currentValue: 9200, currentTier: ChallengeTier.silver),
-  const ChallengeProgress(challengeId: 'distance', currentValue: 62, currentTier: ChallengeTier.gold),
-  const ChallengeProgress(challengeId: 'streak', currentValue: 30, currentTier: ChallengeTier.platinum),
-  const ChallengeProgress(challengeId: 'calories', currentValue: 0, currentTier: null),
+  const ChallengeProgress(
+    challengeId: 'steps',
+    currentValue: 9200,
+    currentTier: ChallengeTier.silver,
+  ),
+  const ChallengeProgress(
+    challengeId: 'distance',
+    currentValue: 62,
+    currentTier: ChallengeTier.gold,
+  ),
+  const ChallengeProgress(
+    challengeId: 'streak',
+    currentValue: 30,
+    currentTier: ChallengeTier.platinum,
+  ),
+  const ChallengeProgress(
+    challengeId: 'calories',
+    currentValue: 0,
+    currentTier: null,
+  ),
 ];
 
 // Leaderboard rows carry ONLY name/rank/score — the RPC contract. Opted-out
@@ -153,9 +196,21 @@ final _leaderboard = <LeaderboardEntry>[
 ];
 
 final _history = <ChallengeTierAchievement>[
-  ChallengeTierAchievement(challengeId: 'streak', tier: ChallengeTier.platinum, achievedAt: DateTime(2026, 7, 20)),
-  ChallengeTierAchievement(challengeId: 'distance', tier: ChallengeTier.gold, achievedAt: DateTime(2026, 7, 12)),
-  ChallengeTierAchievement(challengeId: 'steps', tier: ChallengeTier.silver, achievedAt: DateTime(2026, 6, 30)),
+  ChallengeTierAchievement(
+    challengeId: 'streak',
+    tier: ChallengeTier.platinum,
+    achievedAt: DateTime(2026, 7, 20),
+  ),
+  ChallengeTierAchievement(
+    challengeId: 'distance',
+    tier: ChallengeTier.gold,
+    achievedAt: DateTime(2026, 7, 12),
+  ),
+  ChallengeTierAchievement(
+    challengeId: 'steps',
+    tier: ChallengeTier.silver,
+    achievedAt: DateTime(2026, 6, 30),
+  ),
 ];
 
 // ── App ──────────────────────────────────────────────────────────────
@@ -209,19 +264,59 @@ class _DemoHub extends ConsumerWidget {
             onChanged: (v) => ref.read(_demoIsAdmin.notifier).state = v,
           ),
           const SizedBox(height: AppSpacing.lg),
-          _HubButton(label: 'Challenges list', icon: AppIcons.challenges, onTap: () => _open(context, const ChallengesScreen())),
-          _HubButton(label: 'Challenge detail (Steps → Gold)', icon: AppIcons.run, onTap: () => _open(context, const ChallengeDetailScreen(challengeId: 'steps'))),
-          _HubButton(label: 'Challenge detail (maxed Platinum)', icon: AppIcons.streak, onTap: () => _open(context, const ChallengeDetailScreen(challengeId: 'streak'))),
-          _HubButton(label: 'Leaderboard', icon: AppIcons.leaderboard, onTap: () => _open(context, const ChallengeLeaderboardScreen(challengeId: 'steps'))),
-          _HubButton(label: 'My Achievements', icon: AppIcons.medal, onTap: () => _open(context, const MyChallengeAchievementsScreen())),
+          _HubButton(
+            label: 'Challenges list',
+            icon: AppIcons.challenges,
+            onTap: () => _open(context, const ChallengesScreen()),
+          ),
+          _HubButton(
+            label: 'Challenge detail (Steps → Gold)',
+            icon: AppIcons.run,
+            onTap:
+                () => _open(
+                  context,
+                  const ChallengeDetailScreen(challengeId: 'steps'),
+                ),
+          ),
+          _HubButton(
+            label: 'Challenge detail (maxed Platinum)',
+            icon: AppIcons.streak,
+            onTap:
+                () => _open(
+                  context,
+                  const ChallengeDetailScreen(challengeId: 'streak'),
+                ),
+          ),
+          _HubButton(
+            label: 'Leaderboard',
+            icon: AppIcons.leaderboard,
+            onTap:
+                () => _open(
+                  context,
+                  const ChallengeLeaderboardScreen(challengeId: 'steps'),
+                ),
+          ),
+          _HubButton(
+            label: 'My Achievements',
+            icon: AppIcons.medal,
+            onTap: () => _open(context, const MyChallengeAchievementsScreen()),
+          ),
           const Divider(height: AppSpacing.xxxl),
-          Text('Tier-achievement animation', style: AppTextStyles.secondary(AppTextStyles.labelMedium)),
+          Text(
+            'Tier-achievement animation',
+            style: AppTextStyles.secondary(AppTextStyles.labelMedium),
+          ),
           const SizedBox(height: AppSpacing.sm),
           for (final tier in ChallengeTier.values)
             _HubButton(
               label: 'Play ${tier.label} celebration',
               icon: AppIcons.celebrate,
-              onTap: () => showTierCelebration(context, challenge: _chSteps, tier: tier),
+              onTap:
+                  () => showTierCelebration(
+                    context,
+                    challenge: _chSteps,
+                    tier: tier,
+                  ),
             ),
         ],
       ),
@@ -262,7 +357,11 @@ class _ToggleCard extends StatelessWidget {
 }
 
 class _HubButton extends StatelessWidget {
-  const _HubButton({required this.label, required this.icon, required this.onTap});
+  const _HubButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   final String label;
   final IconData icon;
@@ -281,7 +380,10 @@ class _HubButton extends StatelessWidget {
             AppIcon(icon, color: AppColors.primary),
             const SizedBox(width: AppSpacing.md),
             Expanded(child: Text(label, style: AppTextStyles.titleSmall)),
-            const AppIcon(AppIcons.chevronRight, color: AppColors.textSecondary),
+            const AppIcon(
+              AppIcons.chevronRight,
+              color: AppColors.textSecondary,
+            ),
           ],
         ),
       ),

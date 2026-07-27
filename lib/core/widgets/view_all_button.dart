@@ -6,7 +6,11 @@ import 'package:flutter/material.dart';
 /// once its section has more items than are displayed, opening the
 /// section's full list screen.
 class ViewAllButton extends StatelessWidget {
-  const ViewAllButton({super.key, this.label = 'View All', required this.onTap});
+  const ViewAllButton({
+    super.key,
+    this.label = 'View All',
+    required this.onTap,
+  });
 
   final String label;
   final VoidCallback onTap;
@@ -22,13 +26,26 @@ class ViewAllButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.pill),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label, style: AppTextStyles.tinted(AppTextStyles.labelMedium, AppColors.primary)),
+                Text(
+                  label,
+                  style: AppTextStyles.tinted(
+                    AppTextStyles.labelMedium,
+                    AppColors.primary,
+                  ),
+                ),
                 const SizedBox(width: 2),
-                const AppIcon(AppIcons.chevronRight, size: 16, color: AppColors.primary),
+                const AppIcon(
+                  AppIcons.chevronRight,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
               ],
             ),
           ),

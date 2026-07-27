@@ -22,12 +22,12 @@ class AchievementsScreen extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final summaryAsync = ref.watch(myPointsSummaryProvider);
     final statsAsync = ref.watch(myRegistrationStatsProvider);
-    final achievementsAsync = ref.watch(myAchievementsProvider((limit: 100, offset: 0)));
+    final achievementsAsync = ref.watch(
+      myAchievementsProvider((limit: 100, offset: 0)),
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Achievements'),
-      ),
+      appBar: AppBar(title: const Text('Achievements')),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -42,21 +42,24 @@ class AchievementsScreen extends ConsumerWidget {
                   summaryAsync.when(
                     loading: () => const _HeaderSkeleton(),
                     error: (_, __) => const SizedBox.shrink(),
-                    data: (summary) => _AchievementsHeader(
-                      totalPoints: summary.totalPoints,
-                      level: summary.level,
-                      progressToNextLevel: summary.progressToNextLevel,
-                      isMaxLevel: summary.isMaxLevel,
-                      nextLevel: summary.nextLevel,
-                      pointsToNextLevel: summary.pointsToNextLevel,
-                    ),
+                    data:
+                        (summary) => _AchievementsHeader(
+                          totalPoints: summary.totalPoints,
+                          level: summary.level,
+                          progressToNextLevel: summary.progressToNextLevel,
+                          isMaxLevel: summary.isMaxLevel,
+                          nextLevel: summary.nextLevel,
+                          pointsToNextLevel: summary.pointsToNextLevel,
+                        ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
                   // 2. Insights Grid Header
                   Text(
                     'Category Insights',
-                    style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: palette.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -65,12 +68,19 @@ class AchievementsScreen extends ConsumerWidget {
                     loading: () => const _GridSkeleton(),
                     error: (_, __) => const SizedBox.shrink(),
                     data: (achievements) {
-                      final platinumCount = achievements
-                          .where((a) => a.achievementType == 'challenge_platinum')
-                          .length;
-                      final milestoneCount = achievements
-                          .where((a) => a.achievementType == 'level_milestone')
-                          .length;
+                      final platinumCount =
+                          achievements
+                              .where(
+                                (a) =>
+                                    a.achievementType == 'challenge_platinum',
+                              )
+                              .length;
+                      final milestoneCount =
+                          achievements
+                              .where(
+                                (a) => a.achievementType == 'level_milestone',
+                              )
+                              .length;
 
                       return statsAsync.when(
                         loading: () => const _GridSkeleton(),
@@ -78,7 +88,8 @@ class AchievementsScreen extends ConsumerWidget {
                         data: (stats) {
                           final attended = stats.totalAttended;
                           final hasLoyaltyBadge = attended >= 3;
-                          final loyaltyBadgeName = loyaltyBadgeFor(attended).name;
+                          final loyaltyBadgeName =
+                              loyaltyBadgeFor(attended).name;
 
                           return GridView.count(
                             crossAxisCount: 2,
@@ -91,28 +102,40 @@ class AchievementsScreen extends ConsumerWidget {
                               _CategoryCard(
                                 icon: AppIcons.medal,
                                 label: 'Challenges',
-                                status: platinumCount > 0 ? '$platinumCount completed' : 'Locked',
+                                status:
+                                    platinumCount > 0
+                                        ? '$platinumCount completed'
+                                        : 'Locked',
                                 isLocked: platinumCount == 0,
                                 accentColor: palette.primary,
                               ),
                               _CategoryCard(
                                 icon: AppIcons.star,
                                 label: 'Milestones',
-                                status: milestoneCount > 0 ? '$milestoneCount unlocked' : 'Locked',
+                                status:
+                                    milestoneCount > 0
+                                        ? '$milestoneCount unlocked'
+                                        : 'Locked',
                                 isLocked: milestoneCount == 0,
                                 accentColor: palette.accent,
                               ),
                               _CategoryCard(
                                 icon: AppIcons.verified,
                                 label: 'Loyalty Badge',
-                                status: hasLoyaltyBadge ? loyaltyBadgeName : 'No badge yet',
+                                status:
+                                    hasLoyaltyBadge
+                                        ? loyaltyBadgeName
+                                        : 'No badge yet',
                                 isLocked: !hasLoyaltyBadge,
                                 accentColor: const Color(0xFF26A69A), // Teal
                               ),
                               _CategoryCard(
                                 icon: AppIcons.walk,
                                 label: 'Trek Check-ins',
-                                status: attended > 0 ? '$attended checked in' : 'No check-ins',
+                                status:
+                                    attended > 0
+                                        ? '$attended checked in'
+                                        : 'No check-ins',
                                 isLocked: attended == 0,
                                 accentColor: const Color(0xFFFF7043), // Orange
                               ),
@@ -130,13 +153,18 @@ class AchievementsScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'Recent Activity',
-                        style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: palette.textPrimary,
+                        ),
                       ),
                       TextButton(
-                        onPressed: () => context.push(AppConstants.routePointsHistory),
+                        onPressed:
+                            () => context.push(AppConstants.routePointsHistory),
                         child: Text(
                           'View Points History',
-                          style: AppTextStyles.labelMedium.copyWith(color: palette.primary),
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: palette.primary,
+                          ),
                         ),
                       ),
                     ],
@@ -145,27 +173,38 @@ class AchievementsScreen extends ConsumerWidget {
 
                   achievementsAsync.when(
                     loading: () => const _ListSkeleton(),
-                    error: (err, __) => Text(
-                      'Failed to load activity list.',
-                      style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
-                    ),
+                    error:
+                        (err, __) => Text(
+                          'Failed to load activity list.',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: palette.danger,
+                          ),
+                        ),
                     data: (achievements) {
                       if (achievements.isEmpty) {
                         return AppCard(
                           padding: const EdgeInsets.all(AppSpacing.xl),
                           child: Column(
                             children: [
-                              AppIcon(AppIcons.medal, size: 36, color: palette.textDisabled),
+                              AppIcon(
+                                AppIcons.medal,
+                                size: 36,
+                                color: palette.textDisabled,
+                              ),
                               const SizedBox(height: AppSpacing.md),
                               Text(
                                 'No achievements yet',
-                                style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+                                style: AppTextStyles.titleSmall.copyWith(
+                                  color: palette.textPrimary,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: AppSpacing.xs),
                               Text(
                                 'Complete a challenge or reach a new level to earn your first.',
-                                style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: palette.textSecondary,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ],
@@ -179,24 +218,31 @@ class AchievementsScreen extends ConsumerWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: recent.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
+                        separatorBuilder:
+                            (context, index) =>
+                                const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (context, index) {
                           final item = recent[index];
                           return AppCard(
                             padding: const EdgeInsets.all(AppSpacing.md),
                             child: Row(
                               children: [
-                                _ActivityIcon(type: item.achievementType, palette: palette),
+                                _ActivityIcon(
+                                  type: item.achievementType,
+                                  palette: palette,
+                                ),
                                 const SizedBox(width: AppSpacing.md),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         item.title,
-                                        style: AppTextStyles.titleSmall.copyWith(
-                                          color: palette.textPrimary,
-                                        ),
+                                        style: AppTextStyles.titleSmall
+                                            .copyWith(
+                                              color: palette.textPrimary,
+                                            ),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
@@ -238,10 +284,20 @@ class AchievementsScreen extends ConsumerWidget {
     if (diff.inDays == 1) return 'Yesterday';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     if (diff.inDays < 30) return '${(diff.inDays / 7).floor()}w ago';
-    
+
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}';
   }
@@ -279,21 +335,27 @@ class _AchievementsHeader extends StatelessWidget {
                 children: [
                   Text(
                     'Level Standing',
-                    style: AppTextStyles.overline.copyWith(color: palette.textSecondary),
+                    style: AppTextStyles.overline.copyWith(
+                      color: palette.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Row(
                     children: [
                       Text(
                         '$totalPoints',
-                        style: AppTextStyles.headlineMedium.copyWith(color: palette.textPrimary),
+                        style: AppTextStyles.headlineMedium.copyWith(
+                          color: palette.textPrimary,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           'points',
-                          style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: palette.textSecondary,
+                          ),
                         ),
                       ),
                     ],
@@ -307,7 +369,10 @@ class _AchievementsHeader extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           AppProgressBar(
             value: progressToNextLevel,
-            label: isMaxLevel ? 'Top level reached' : 'Progress to Level $nextLevel',
+            label:
+                isMaxLevel
+                    ? 'Top level reached'
+                    : 'Progress to Level $nextLevel',
             trailing: isMaxLevel ? null : '$pointsToNextLevel to go',
           ),
         ],
@@ -334,7 +399,8 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final cardColor = isLocked ? palette.card.withValues(alpha: 0.5) : palette.card;
+    final cardColor =
+        isLocked ? palette.card.withValues(alpha: 0.5) : palette.card;
     final color = isLocked ? palette.textDisabled : accentColor;
     final txtColor = isLocked ? palette.textDisabled : palette.textPrimary;
 
@@ -344,7 +410,8 @@ class _CategoryCard extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: isLocked ? palette.border.withValues(alpha: 0.5) : palette.border,
+          color:
+              isLocked ? palette.border.withValues(alpha: 0.5) : palette.border,
         ),
       ),
       child: Column(
@@ -359,22 +426,15 @@ class _CategoryCard extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isLocked
-                      ? palette.cardHigh.withValues(alpha: 0.5)
-                      : color.withValues(alpha: 0.12),
+                  color:
+                      isLocked
+                          ? palette.cardHigh.withValues(alpha: 0.5)
+                          : color.withValues(alpha: 0.12),
                 ),
-                child: AppIcon(
-                  icon,
-                  size: 16,
-                  color: color,
-                ),
+                child: AppIcon(icon, size: 16, color: color),
               ),
               if (isLocked)
-                AppIcon(
-                  AppIcons.lock,
-                  size: 14,
-                  color: palette.textDisabled,
-                ),
+                AppIcon(AppIcons.lock, size: 14, color: palette.textDisabled),
             ],
           ),
           Column(
@@ -472,7 +532,11 @@ class _HeaderSkeleton extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            Container(width: double.infinity, height: 8, color: palette.cardHigh),
+            Container(
+              width: double.infinity,
+              height: 8,
+              color: palette.cardHigh,
+            ),
           ],
         ),
       ),
@@ -494,13 +558,16 @@ class _GridSkeleton extends StatelessWidget {
         crossAxisSpacing: AppSpacing.md,
         mainAxisSpacing: AppSpacing.md,
         childAspectRatio: 1.35,
-        children: List.generate(4, (index) => Container(
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
+        children: List.generate(
+          4,
+          (index) => Container(
+            decoration: BoxDecoration(
+              color: palette.card,
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(color: palette.border),
+            ),
           ),
-        )),
+        ),
       ),
     );
   }
@@ -517,15 +584,17 @@ class _ListSkeleton extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 3,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
-        itemBuilder: (context, index) => Container(
-          height: 64,
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-        ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.sm),
+        itemBuilder:
+            (context, index) => Container(
+              height: 64,
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
+              ),
+            ),
       ),
     );
   }

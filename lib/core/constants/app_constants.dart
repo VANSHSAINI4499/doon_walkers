@@ -148,7 +148,8 @@ class AppConstants {
   /// [trekEditLocation]. Gated by `_isTrekAdminRoute` in app_router.dart
   /// alongside `/edit`; `trek_checkin_tokens_select_admin` RLS is the
   /// real gate on the token itself either way.
-  static String trekCheckinQrLocation(String id) => '$routeTrekLibrary/$id/checkin-qr';
+  static String trekCheckinQrLocation(String id) =>
+      '$routeTrekLibrary/$id/checkin-qr';
 
   /// Trek Media Gallery rebuild — the full paginated masonry gallery
   /// for one trek, reached from [TrekGalleryPreview]'s "+N · View All"
@@ -158,7 +159,8 @@ class AppConstants {
   /// same audience as the embedded preview it expands from; the admin
   /// upload/delete affordances are conditionally rendered inline, not
   /// route-gated.
-  static String trekGalleryLocation(String id) => '$routeTrekLibrary/$id/gallery';
+  static String trekGalleryLocation(String id) =>
+      '$routeTrekLibrary/$id/gallery';
 
   /// Cross-trek registrations roster — kept as its own admin destination
   /// since it has no single-trek screen to inline into. No UI entry
@@ -205,8 +207,10 @@ class AppConstants {
   /// it keeps this roster's back stack self-describing, and re-pointing
   /// live call sites for no behavioural gain is exactly the kind of
   /// churn that caused this file's earlier navigation incidents.
-  static String adminTrekRegistrationsDetailLocation(String trekId, String registrationId) =>
-      '${adminTrekRegistrationsLocation(trekId)}/$registrationId';
+  static String adminTrekRegistrationsDetailLocation(
+    String trekId,
+    String registrationId,
+  ) => '${adminTrekRegistrationsLocation(trekId)}/$registrationId';
 
   /// Cross-trek comment moderation queue — every currently-hidden
   /// comment across every trek. Drawer/dashboard-only like
@@ -222,7 +226,8 @@ class AppConstants {
   /// reachable without touching code or the Supabase dashboard.
   /// Nested under [routeCommentModeration], not its own Admin
   /// Dashboard destination — see AdminBlocklistScreen's doc.
-  static const String routeCommentBlocklist = '$routeCommentModeration/blocklist';
+  static const String routeCommentBlocklist =
+      '$routeCommentModeration/blocklist';
 
   /// In-app notification list — top-level, OUTSIDE the StatefulShellRoute
   /// entirely (like /sign-in), not nested under any bottom-nav branch.
@@ -259,7 +264,8 @@ class AppConstants {
 
   /// Admin edit form, nested under the detail route it edits — mirrors
   /// [trekEditLocation]'s shape exactly.
-  static String merchandiseEditLocation(String id) => '$routeMerchandise/$id/edit';
+  static String merchandiseEditLocation(String id) =>
+      '$routeMerchandise/$id/edit';
 
   /// Admin "Buy Now" inquiries roster — Version 2, Phase M2. Under
   /// `/admin/...` so the EXISTING `_isAdminRoute` prefix check already
@@ -286,7 +292,8 @@ class AppConstants {
   /// [routeTrekNew]/[routeMerchandiseNew].
   static const String routeAdminChallengesNew = '$routeAdminChallenges/new';
 
-  static String adminChallengeEditLocation(String id) => '$routeAdminChallenges/$id/edit';
+  static String adminChallengeEditLocation(String id) =>
+      '$routeAdminChallenges/$id/edit';
 
   /// Public Challenges tab (Version 2, Phase C2) — browsable by guests
   /// (RLS already scopes drafts to admin-only via `challenges_select`);
@@ -302,7 +309,8 @@ class AppConstants {
   /// Nested under the challenge detail route it's reached from —
   /// Version 2, Phase C3. See ChallengeLeaderboardScreen's doc for why
   /// there's no standalone leaderboard tab.
-  static String challengeLeaderboardLocation(String id) => '$routeChallenges/$id/leaderboard';
+  static String challengeLeaderboardLocation(String id) =>
+      '$routeChallenges/$id/leaderboard';
 
   /// Member-facing check-in scan screen (Phase QR-2) — nested under the
   /// trek detail route, same shape as [trekCheckinQrLocation] but a
@@ -314,7 +322,8 @@ class AppConstants {
   /// per that constant's own doc. `verify_trek_checkin` RPC is the real
   /// authorization boundary either way (a signed-in but unregistered
   /// caller reaching this screen just gets DWC01 back on scan).
-  static String trekCheckInLocation(String id) => '$routeTrekLibrary/$id/check-in';
+  static String trekCheckInLocation(String id) =>
+      '$routeTrekLibrary/$id/check-in';
 
   /// Declared BEFORE `:id` in app_router.dart, same reasoning as every
   /// other `new`-before-`:id` ordering in this file — without it,
@@ -411,7 +420,8 @@ class AppConstants {
   /// tier they've actually reached, per challenge (0023_challenge_tier_
   /// history.sql) — same no-parameter security model as
   /// [rpcGetMyChallengeProgress].
-  static const String rpcGetMyChallengeTierHistory = 'get_my_challenge_tier_history';
+  static const String rpcGetMyChallengeTierHistory =
+      'get_my_challenge_tier_history';
 
   /// Phase QR-2 (0030_trek_checkin_verify.sql) — validates a scanned
   /// check-in QR and, if every check passes, records
@@ -438,7 +448,8 @@ class AppConstants {
   /// Returns NULL when fewer than 5 members tracked that month (a
   /// k-anonymity floor) or when the caller has no data for it.
   static const String rpcGetMyActivityPercentile = 'get_my_activity_percentile';
-  static const String rpcGetDailyActivityPercentile = 'get_daily_activity_percentile';
+  static const String rpcGetDailyActivityPercentile =
+      'get_daily_activity_percentile';
 
   /// Ranks every leaderboard-visible user by their progress on ONE
   /// challenge (0025_leaderboard.sql) — Version 2, Phase C3. Takes a

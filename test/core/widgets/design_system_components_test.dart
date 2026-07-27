@@ -22,9 +22,7 @@ import 'package:google_fonts/google_fonts.dart';
 // viewport (which would throw a RenderFlex overflow and fail the pump).
 Widget _host(Widget child, {ThemeData? theme}) => MaterialApp(
   theme: theme ?? AppTheme.dark,
-  home: Scaffold(
-    body: SingleChildScrollView(child: Center(child: child)),
-  ),
+  home: Scaffold(body: SingleChildScrollView(child: Center(child: child))),
 );
 
 /// Runs [body] once per theme so colour-resolution bugs surface in both.
@@ -36,13 +34,18 @@ Widget _host(Widget child, {ThemeData? theme}) => MaterialApp(
 /// with "There is no current invoker". Keep it lazy.
 void _inBothThemes(
   String description,
-  Future<void> Function(WidgetTester tester, ThemeData theme, AppPalette palette)
+  Future<void> Function(
+    WidgetTester tester,
+    ThemeData theme,
+    AppPalette palette,
+  )
   body,
 ) {
-  for (final (name, theme, palette) in <(String, ThemeData Function(), AppPalette)>[
-    ('light', () => AppTheme.light, AppPalette.light),
-    ('dark', () => AppTheme.dark, AppPalette.dark),
-  ]) {
+  for (final (name, theme, palette)
+      in <(String, ThemeData Function(), AppPalette)>[
+        ('light', () => AppTheme.light, AppPalette.light),
+        ('dark', () => AppTheme.dark, AppPalette.dark),
+      ]) {
     testWidgets(
       '$description ($name)',
       (tester) => body(tester, theme(), palette),
@@ -209,11 +212,20 @@ void main() {
       expect(find.byType(BackdropFilter), findsNothing);
     });
 
-    _inBothThemes('fills from the active palette', (tester, theme, palette) async {
-      await tester.pumpWidget(_host(const AppCard(child: Text('x')), theme: theme));
+    _inBothThemes('fills from the active palette', (
+      tester,
+      theme,
+      palette,
+    ) async {
+      await tester.pumpWidget(
+        _host(const AppCard(child: Text('x')), theme: theme),
+      );
       final container = tester.widget<Container>(
         find
-            .descendant(of: find.byType(AppCard), matching: find.byType(Container))
+            .descendant(
+              of: find.byType(AppCard),
+              matching: find.byType(Container),
+            )
             .first,
       );
       final decoration = container.decoration! as BoxDecoration;
@@ -225,7 +237,9 @@ void main() {
     ) async {
       // The pulse is retired — this must now settle, which the old
       // repeating-controller version never could.
-      await tester.pumpWidget(_host(const PulsingGlassCard(child: Text('live'))));
+      await tester.pumpWidget(
+        _host(const PulsingGlassCard(child: Text('live'))),
+      );
       expect(find.text('live'), findsOneWidget);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -336,9 +350,7 @@ void main() {
     });
 
     testWidgets('renders a unit alongside the value', (tester) async {
-      await tester.pumpWidget(
-        _host(const StatDisplay(value: '62', unit: '%')),
-      );
+      await tester.pumpWidget(_host(const StatDisplay(value: '62', unit: '%')));
       expect(find.text('62'), findsOneWidget);
       expect(find.text('%'), findsOneWidget);
     });
@@ -383,7 +395,11 @@ void main() {
         _host(
           const SizedBox(
             width: 300,
-            child: AppProgressBar(value: 0.5, label: 'Progress', trailing: '50%'),
+            child: AppProgressBar(
+              value: 0.5,
+              label: 'Progress',
+              trailing: '50%',
+            ),
           ),
         ),
       );

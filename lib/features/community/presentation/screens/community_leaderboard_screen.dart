@@ -31,51 +31,59 @@ class _CommunityLeaderboardScreenState
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final leaderboardAsync =
-        ref.watch(communityLeaderboardProvider((limit: 50, offset: 0)));
+    final leaderboardAsync = ref.watch(
+      communityLeaderboardProvider((limit: 50, offset: 0)),
+    );
     final myRankAsync = ref.watch(myCommunityRankProvider);
     final isSignedIn = ref.watch(isSignedInProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Community Leaderboard'),
-      ),
+      appBar: AppBar(title: const Text('Community Leaderboard')),
       body: leaderboardAsync.when(
         loading: () => const _LeaderboardSkeleton(),
-        error: (err, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppIcon(AppIcons.error, size: 36, color: palette.danger),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Could not load leaderboard.',
-                  style: AppTextStyles.titleMedium,
+        error:
+            (err, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIcon(AppIcons.error, size: 36, color: palette.danger),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Could not load leaderboard.',
+                      style: AppTextStyles.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    AppButton(
+                      label: 'Retry',
+                      icon: AppIcons.refresh,
+                      onPressed:
+                          () => ref.invalidate(
+                            communityLeaderboardProvider((
+                              limit: 50,
+                              offset: 0,
+                            )),
+                          ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                AppButton(
-                  label: 'Retry',
-                  icon: AppIcons.refresh,
-                  onPressed: () => ref.invalidate(
-                      communityLeaderboardProvider((limit: 50, offset: 0))),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
         data: (entries) {
           final top3 = entries.take(3).toList();
           final rest = entries.skip(3).toList();
 
-          final filteredRest = _searchQuery.isEmpty
-              ? rest
-              : rest
-                  .where((e) => e.displayName
-                      .toLowerCase()
-                      .contains(_searchQuery.toLowerCase()))
-                  .toList();
+          final filteredRest =
+              _searchQuery.isEmpty
+                  ? rest
+                  : rest
+                      .where(
+                        (e) => e.displayName.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
+                      .toList();
 
           return Stack(
             children: [
@@ -86,20 +94,21 @@ class _CommunityLeaderboardScreenState
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (val) =>
-                          setState(() => _searchQuery = val.trim()),
+                      onChanged:
+                          (val) => setState(() => _searchQuery = val.trim()),
                       decoration: InputDecoration(
                         hintText: 'Search members...',
                         prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
+                        suffixIcon:
+                            _searchQuery.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                                : null,
                       ),
                     ),
                   ),
@@ -137,8 +146,9 @@ class _CommunityLeaderboardScreenState
                           else
                             ...filteredRest.map(
                               (entry) => Padding(
-                                padding:
-                                    const EdgeInsets.only(bottom: AppSpacing.sm),
+                                padding: const EdgeInsets.only(
+                                  bottom: AppSpacing.sm,
+                                ),
                                 child: _LeaderboardRow(entry: entry),
                               ),
                             ),
@@ -179,13 +189,14 @@ class _LeaderboardRow extends StatelessWidget {
     final palette = AppPalette.of(context);
 
     return AppCard(
-      onTap: () => showMemberDetailSheet(
-        context: context,
-        displayName: entry.displayName,
-        avatarUrl: entry.avatarUrl,
-        level: entry.level,
-        totalPoints: entry.totalPoints,
-      ),
+      onTap:
+          () => showMemberDetailSheet(
+            context: context,
+            displayName: entry.displayName,
+            avatarUrl: entry.avatarUrl,
+            level: entry.level,
+            totalPoints: entry.totalPoints,
+          ),
       child: Row(
         children: [
           SizedBox(
@@ -207,13 +218,15 @@ class _LeaderboardRow extends StatelessWidget {
               color: palette.primarySubtle,
             ),
             child: ClipOval(
-              child: entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: entry.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => _Initials(entry.displayName),
-                    )
-                  : _Initials(entry.displayName),
+              child:
+                  entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                        imageUrl: entry.avatarUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget:
+                            (_, __, ___) => _Initials(entry.displayName),
+                      )
+                      : _Initials(entry.displayName),
             ),
           ),
           const SizedBox(width: AppSpacing.md),

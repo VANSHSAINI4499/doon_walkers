@@ -7,13 +7,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 const int wishlistPageSize = 30;
 
 class WishlistPage {
-  const WishlistPage({required this.items, required this.hasMore, this.isLoadingMore = false});
+  const WishlistPage({
+    required this.items,
+    required this.hasMore,
+    this.isLoadingMore = false,
+  });
 
   final List<WishlistItem> items;
   final bool hasMore;
   final bool isLoadingMore;
 
-  WishlistPage copyWith({List<WishlistItem>? items, bool? hasMore, bool? isLoadingMore}) {
+  WishlistPage copyWith({
+    List<WishlistItem>? items,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
     return WishlistPage(
       items: items ?? this.items,
       hasMore: hasMore ?? this.hasMore,
@@ -26,13 +34,13 @@ class WishlistPage {
 /// `TrekGalleryPaginationController` (gallery feature), the established
 /// pattern for this exact need in this codebase. `autoDispose` since
 /// the screen is visited transiently.
-final myWishlistPaginationProvider =
-    AsyncNotifierProvider.autoDispose<MyWishlistPaginationController, WishlistPage>(
-  MyWishlistPaginationController.new,
-  name: 'myWishlistPaginationProvider',
-);
+final myWishlistPaginationProvider = AsyncNotifierProvider.autoDispose<
+  MyWishlistPaginationController,
+  WishlistPage
+>(MyWishlistPaginationController.new, name: 'myWishlistPaginationProvider');
 
-class MyWishlistPaginationController extends AutoDisposeAsyncNotifier<WishlistPage> {
+class MyWishlistPaginationController
+    extends AutoDisposeAsyncNotifier<WishlistPage> {
   int _page = 0;
 
   @override
@@ -41,7 +49,10 @@ class MyWishlistPaginationController extends AutoDisposeAsyncNotifier<WishlistPa
     final items = await ref
         .watch(wishlistRepositoryProvider)
         .fetchMyWishlistPage(page: 0, pageSize: wishlistPageSize);
-    return WishlistPage(items: items, hasMore: items.length == wishlistPageSize);
+    return WishlistPage(
+      items: items,
+      hasMore: items.length == wishlistPageSize,
+    );
   }
 
   Future<void> loadMore() async {

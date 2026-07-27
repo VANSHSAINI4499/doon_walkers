@@ -21,20 +21,11 @@ void main() {
 
   group('unreadCount', () {
     test('counts ids not present in the read set', () {
-      expect(
-        unreadCount(
-          notificationIds: ['a', 'b', 'c'],
-          readIds: {'a'},
-        ),
-        2,
-      );
+      expect(unreadCount(notificationIds: ['a', 'b', 'c'], readIds: {'a'}), 2);
     });
 
     test('is 0 when everything is read', () {
-      expect(
-        unreadCount(notificationIds: ['a', 'b'], readIds: {'a', 'b'}),
-        0,
-      );
+      expect(unreadCount(notificationIds: ['a', 'b'], readIds: {'a', 'b'}), 0);
     });
 
     test('is 0 for an empty list, whatever the read set holds', () {

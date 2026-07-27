@@ -25,7 +25,10 @@ Future<void> main() async {
   // Dummy init so `Supabase.instance` exists for the widgets that read it
   // directly (JoinCommunitySection). It never connects — every data
   // provider Home uses is overridden below.
-  await Supabase.initialize(url: 'https://demo.supabase.co', publishableKey: 'demo');
+  await Supabase.initialize(
+    url: 'https://demo.supabase.co',
+    publishableKey: 'demo',
+  );
 
   runApp(
     ProviderScope(
@@ -121,7 +124,10 @@ class _AppShellFrame extends StatelessWidget {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.terrain), label: 'Treks'),
-          NavigationDestination(icon: Icon(Icons.emoji_events), label: 'Challenges'),
+          NavigationDestination(
+            icon: Icon(Icons.emoji_events),
+            label: 'Challenges',
+          ),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),

@@ -21,9 +21,7 @@ class SectionHeader extends StatelessWidget {
         ],
         Text(
           title,
-          style: AppTextStyles.titleLarge.copyWith(
-            color: palette.textPrimary,
-          ),
+          style: AppTextStyles.titleLarge.copyWith(color: palette.textPrimary),
         ),
       ],
     );

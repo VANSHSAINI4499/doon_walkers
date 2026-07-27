@@ -20,18 +20,24 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
     final goalAsync = ref.watch(userGoalProvider('monthly_steps'));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Monthly Goal Progress'),
-      ),
+      appBar: AppBar(title: const Text('Monthly Goal Progress')),
       body: SafeArea(
         child: summaryAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error loading goal data', style: AppTextStyles.bodyMedium)),
+          error:
+              (e, _) => Center(
+                child: Text(
+                  'Error loading goal data',
+                  style: AppTextStyles.bodyMedium,
+                ),
+              ),
           data: (summary) {
             final target = goalAsync.when(
-              data: (data) => (data is Map && data['target_value'] != null)
-                  ? (data['target_value'] as num).toInt()
-                  : 200000,
+              data:
+                  (data) =>
+                      (data is Map && data['target_value'] != null)
+                          ? (data['target_value'] as num).toInt()
+                          : 200000,
               loading: () => 200000,
               error: (_, __) => 200000,
             );
@@ -43,7 +49,8 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
             final daysPassed = now.day;
             final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
             final daysRemaining = math.max(1, daysInMonth - daysPassed);
-            final avgPerDay = daysPassed == 0 ? 0 : (currentSteps / daysPassed).round();
+            final avgPerDay =
+                daysPassed == 0 ? 0 : (currentSteps / daysPassed).round();
             final remainingSteps = math.max(0, target - currentSteps);
             final needPerDay = (remainingSteps / daysRemaining).round();
 
@@ -64,8 +71,16 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('$percent%', style: AppTextStyles.statLarge),
-                                Text('completed', style: AppTextStyles.secondary(AppTextStyles.labelSmall)),
+                                Text(
+                                  '$percent%',
+                                  style: AppTextStyles.statLarge,
+                                ),
+                                Text(
+                                  'completed',
+                                  style: AppTextStyles.secondary(
+                                    AppTextStyles.labelSmall,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -74,7 +89,8 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
                         AppProgressBar(
                           value: fraction,
                           label: 'Monthly Target',
-                          trailing: '${ActivityFormat.stepsCompact(currentSteps)} / ${ActivityFormat.stepsCompact(target)}',
+                          trailing:
+                              '${ActivityFormat.stepsCompact(currentSteps)} / ${ActivityFormat.stepsCompact(target)}',
                         ),
                       ],
                     ),
@@ -87,14 +103,21 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
                     borderColor: palette.primary.withValues(alpha: 0.3),
                     child: Row(
                       children: [
-                        AppIcon(AppIcons.trending, size: 24, color: palette.primary),
+                        AppIcon(
+                          AppIcons.trending,
+                          size: 24,
+                          color: palette.primary,
+                        ),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(
                             percent >= 50
                                 ? 'Great pace! You are over halfway to your monthly target.'
                                 : 'Keep stepping! Every walk brings you closer to your goal.',
-                            style: AppTextStyles.tinted(AppTextStyles.titleSmall, palette.primary),
+                            style: AppTextStyles.tinted(
+                              AppTextStyles.titleSmall,
+                              palette.primary,
+                            ),
                           ),
                         ),
                       ],
@@ -107,7 +130,10 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Weekly Progress Overview', style: AppTextStyles.titleSmall),
+                        Text(
+                          'Weekly Progress Overview',
+                          style: AppTextStyles.titleSmall,
+                        ),
                         const SizedBox(height: AppSpacing.lg),
                         AspectRatio(
                           aspectRatio: 2.2,
@@ -147,11 +173,27 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
                         Text('Goal Details', style: AppTextStyles.titleSmall),
                         const SizedBox(height: AppSpacing.md),
                         _DetailRow(label: 'Goal Type', value: 'Monthly Steps'),
-                        _DetailRow(label: 'Monthly Goal', value: ActivityFormat.steps(target)),
-                        _DetailRow(label: 'Daily Average', value: ActivityFormat.steps(avgPerDay)),
-                        _DetailRow(label: 'Days Passed', value: '$daysPassed / $daysInMonth'),
-                        _DetailRow(label: 'Days Remaining', value: '$daysRemaining'),
-                        _DetailRow(label: 'Needed per Day', value: ActivityFormat.steps(needPerDay), highlight: true),
+                        _DetailRow(
+                          label: 'Monthly Goal',
+                          value: ActivityFormat.steps(target),
+                        ),
+                        _DetailRow(
+                          label: 'Daily Average',
+                          value: ActivityFormat.steps(avgPerDay),
+                        ),
+                        _DetailRow(
+                          label: 'Days Passed',
+                          value: '$daysPassed / $daysInMonth',
+                        ),
+                        _DetailRow(
+                          label: 'Days Remaining',
+                          value: '$daysRemaining',
+                        ),
+                        _DetailRow(
+                          label: 'Needed per Day',
+                          value: ActivityFormat.steps(needPerDay),
+                          highlight: true,
+                        ),
                       ],
                     ),
                   ),
@@ -162,15 +204,30 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Milestones Track', style: AppTextStyles.titleSmall),
+                        Text(
+                          'Milestones Track',
+                          style: AppTextStyles.titleSmall,
+                        ),
                         const SizedBox(height: AppSpacing.md),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _MilestoneChip(label: '50K', reached: currentSteps >= 50000),
-                            _MilestoneChip(label: '100K', reached: currentSteps >= 100000),
-                            _MilestoneChip(label: '150K', reached: currentSteps >= 150000),
-                            _MilestoneChip(label: '200K', reached: currentSteps >= 200000),
+                            _MilestoneChip(
+                              label: '50K',
+                              reached: currentSteps >= 50000,
+                            ),
+                            _MilestoneChip(
+                              label: '100K',
+                              reached: currentSteps >= 100000,
+                            ),
+                            _MilestoneChip(
+                              label: '150K',
+                              reached: currentSteps >= 150000,
+                            ),
+                            _MilestoneChip(
+                              label: '200K',
+                              reached: currentSteps >= 200000,
+                            ),
                           ],
                         ),
                       ],
@@ -183,17 +240,26 @@ class MonthlyGoalProgressScreen extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        AppIcon(AppIcons.info, size: 20, color: palette.primary),
+                        AppIcon(
+                          AppIcons.info,
+                          size: 20,
+                          color: palette.primary,
+                        ),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Tips to Reach Your Goal', style: AppTextStyles.titleSmall),
+                              Text(
+                                'Tips to Reach Your Goal',
+                                style: AppTextStyles.titleSmall,
+                              ),
                               const SizedBox(height: 4),
                               Text(
                                 'A 15-minute brisk walk after meals adds ~1,500 steps to your daily total effortlessly!',
-                                style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                                style: AppTextStyles.secondary(
+                                  AppTextStyles.bodyMedium,
+                                ),
                               ),
                             ],
                           ),
@@ -256,7 +322,10 @@ class _MilestoneChip extends StatelessWidget {
     final palette = AppPalette.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: reached ? palette.primary : palette.cardHigh,
         borderRadius: BorderRadius.circular(AppRadius.pill),

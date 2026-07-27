@@ -34,10 +34,7 @@ import 'package:go_router/go_router.dart';
 /// the already-registered summary — is exactly as it was; only the
 /// widgets drawing them changed.
 class TrekRegisterButton extends ConsumerWidget {
-  const TrekRegisterButton({
-    super.key,
-    required this.trek,
-  });
+  const TrekRegisterButton({super.key, required this.trek});
 
   /// The whole trek, not just id/title — the form sheet needs
   /// [Trek.requiresPayment]/[Trek.paymentQrCode] to decide whether to show
@@ -48,7 +45,9 @@ class TrekRegisterButton extends ConsumerWidget {
     final registered = await showRegistrationFormSheet(context, trek: trek);
     if (registered == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("You're registered — see you on the trail!")),
+        const SnackBar(
+          content: Text("You're registered — see you on the trail!"),
+        ),
       );
     }
   }
@@ -68,15 +67,18 @@ class TrekRegisterButton extends ConsumerWidget {
     return registrationAsync.when(
       // Disabled rather than hidden: keeps the layout stable and makes a
       // double-submit impossible while we're still resolving.
-      loading: () => const AppButton(
-        label: 'Register for this Trek',
-        icon: AppIcons.hiking,
-        isLoading: true,
-        fullWidth: true,
-        onPressed: null,
-      ),
+      loading:
+          () => const AppButton(
+            label: 'Register for this Trek',
+            icon: AppIcons.hiking,
+            isLoading: true,
+            fullWidth: true,
+            onPressed: null,
+          ),
       error: (error, stack) {
-        debugPrint('TrekRegisterButton: could not resolve registration state: $error');
+        debugPrint(
+          'TrekRegisterButton: could not resolve registration state: $error',
+        );
         // Fail open when the trek is still upcoming — offering the button
         // is safe because the UNIQUE constraint (surfaced as
         // DuplicateRegistrationException) is the real duplicate guard, not
@@ -157,7 +159,9 @@ class _RegistrationClosed extends StatelessWidget {
           Expanded(
             child: Text(
               'This trek has already taken place — registration is closed.',
-              style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: palette.textSecondary,
+              ),
             ),
           ),
         ],
@@ -182,14 +186,16 @@ class _AlreadyRegistered extends StatelessWidget {
     // "nothing to verify" — per the Part C brief. involvedPayment is
     // derived from whether a screenshot was ever attached, not the trek's
     // current fee (which may have changed since).
-    final subtitle = registration.involvedPayment
-        ? 'Payment: ${registration.memberFacingStatusLabel} · Manage this from your Profile.'
-        : 'Manage this from your Profile.';
+    final subtitle =
+        registration.involvedPayment
+            ? 'Payment: ${registration.memberFacingStatusLabel} · Manage this from your Profile.'
+            : 'Manage this from your Profile.';
 
     // Phase QR-2 — only offered once already checked in isn't the case,
     // and only near/within the active check-in window, so the button
     // isn't sitting there confusingly at a random unrelated time.
-    final showCheckIn = registration.checkedInAt == null &&
+    final showCheckIn =
+        registration.checkedInAt == null &&
         shouldShowCheckinEntryPoint(
           trekDate: trek.trekDate,
           trekStartTime: trek.trekStartTime,
@@ -221,12 +227,16 @@ class _AlreadyRegistered extends StatelessWidget {
                   children: [
                     Text(
                       checkedIn ? "You're checked in" : "You're registered",
-                      style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: palette.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: palette.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -240,7 +250,8 @@ class _AlreadyRegistered extends StatelessWidget {
               icon: AppIcons.qr,
               variant: AppButtonVariant.glass,
               fullWidth: true,
-              onPressed: () => context.push(AppConstants.trekCheckInLocation(trek.id)),
+              onPressed:
+                  () => context.push(AppConstants.trekCheckInLocation(trek.id)),
             ),
           ],
         ],

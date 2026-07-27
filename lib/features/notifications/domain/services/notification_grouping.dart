@@ -96,8 +96,18 @@ String formatNotificationTime(DateTime createdAt, {DateTime? now}) {
   if (date == today.subtract(const Duration(days: 1))) return 'Yesterday';
 
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final label = '${local.day} ${months[local.month - 1]}';
   // The year only earns its space when it isn't the current one.

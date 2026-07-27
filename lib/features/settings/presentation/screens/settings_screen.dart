@@ -137,26 +137,27 @@ class SettingsScreen extends ConsumerWidget {
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text(
-          "You'll need to sign in again to see your registrations, "
-          'activity and wishlist.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppPalette.of(context).danger,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Sign out?'),
+            content: const Text(
+              "You'll need to sign in again to see your registrations, "
+              'activity and wishlist.',
             ),
-            child: const Text('Sign out'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppPalette.of(context).danger,
+                ),
+                child: const Text('Sign out'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed ?? false) {
@@ -293,9 +294,8 @@ class _PrivacySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
-    final isSaving = ref
-        .watch(leaderboardVisibilityControllerProvider)
-        .isLoading;
+    final isSaving =
+        ref.watch(leaderboardVisibilityControllerProvider).isLoading;
     final showOnLeaderboard = userAsync.valueOrNull?.showOnLeaderboard ?? true;
 
     ref.listen<AsyncValue<void>>(leaderboardVisibilityControllerProvider, (
@@ -323,15 +323,17 @@ class _PrivacySection extends ConsumerWidget {
         SettingsRow(
           icon: AppIcons.leaderboard,
           label: 'Show me on leaderboards',
-          description: 'Turn off to hide your name and rank from other '
+          description:
+              'Turn off to hide your name and rank from other '
               'members.',
           trailing: Switch(
             value: showOnLeaderboard,
-            onChanged: isSaving
-                ? null
-                : (value) => ref
-                      .read(leaderboardVisibilityControllerProvider.notifier)
-                      .setShowOnLeaderboard(value),
+            onChanged:
+                isSaving
+                    ? null
+                    : (value) => ref
+                        .read(leaderboardVisibilityControllerProvider.notifier)
+                        .setShowOnLeaderboard(value),
           ),
         ),
       ],

@@ -24,6 +24,7 @@ class UserRepositoryImpl implements UserRepository {
     }
     await _supabase
         .from(AppConstants.tableUsers)
-        .update({'show_on_leaderboard': value}).eq('id', userId);
+        .update({'show_on_leaderboard': value})
+        .eq('id', userId);
   }
 }

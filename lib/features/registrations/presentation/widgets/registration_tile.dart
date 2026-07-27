@@ -63,7 +63,8 @@ class RegistrationTile extends StatelessWidget {
             text: r.userPhone ?? 'No phone on file',
             muted: r.userPhone == null,
           ),
-          if (r.paymentStatus == PaymentStatus.cancelled && r.cancellationReason != null) ...[
+          if (r.paymentStatus == PaymentStatus.cancelled &&
+              r.cancellationReason != null) ...[
             const SizedBox(height: AppSpacing.xs),
             _DetailRow(
               icon: AppIcons.info,
@@ -93,7 +94,11 @@ class RegistrationTile extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.icon, required this.text, this.muted = false});
+  const _DetailRow({
+    required this.icon,
+    required this.text,
+    this.muted = false,
+  });
 
   final IconData icon;
   final String text;
@@ -109,9 +114,9 @@ class _DetailRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: AppTextStyles.secondary(AppTextStyles.bodySmall).copyWith(
-              fontStyle: muted ? FontStyle.italic : FontStyle.normal,
-            ),
+            style: AppTextStyles.secondary(
+              AppTextStyles.bodySmall,
+            ).copyWith(fontStyle: muted ? FontStyle.italic : FontStyle.normal),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

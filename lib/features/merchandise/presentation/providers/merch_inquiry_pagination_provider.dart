@@ -7,13 +7,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 const int myInquiriesPageSize = 30;
 
 class MyInquiriesPage {
-  const MyInquiriesPage({required this.items, required this.hasMore, this.isLoadingMore = false});
+  const MyInquiriesPage({
+    required this.items,
+    required this.hasMore,
+    this.isLoadingMore = false,
+  });
 
   final List<MerchInquiry> items;
   final bool hasMore;
   final bool isLoadingMore;
 
-  MyInquiriesPage copyWith({List<MerchInquiry>? items, bool? hasMore, bool? isLoadingMore}) {
+  MyInquiriesPage copyWith({
+    List<MerchInquiry>? items,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
     return MyInquiriesPage(
       items: items ?? this.items,
       hasMore: hasMore ?? this.hasMore,
@@ -26,13 +34,13 @@ class MyInquiriesPage {
 /// `TrekGalleryPaginationController` (gallery feature), the established
 /// pattern for this exact need in this codebase. `autoDispose` since
 /// the screen is visited transiently.
-final myInquiriesPaginationProvider =
-    AsyncNotifierProvider.autoDispose<MyInquiriesPaginationController, MyInquiriesPage>(
-  MyInquiriesPaginationController.new,
-  name: 'myInquiriesPaginationProvider',
-);
+final myInquiriesPaginationProvider = AsyncNotifierProvider.autoDispose<
+  MyInquiriesPaginationController,
+  MyInquiriesPage
+>(MyInquiriesPaginationController.new, name: 'myInquiriesPaginationProvider');
 
-class MyInquiriesPaginationController extends AutoDisposeAsyncNotifier<MyInquiriesPage> {
+class MyInquiriesPaginationController
+    extends AutoDisposeAsyncNotifier<MyInquiriesPage> {
   int _page = 0;
 
   @override
@@ -41,7 +49,10 @@ class MyInquiriesPaginationController extends AutoDisposeAsyncNotifier<MyInquiri
     final items = await ref
         .watch(merchInquiryRepositoryProvider)
         .fetchMyInquiriesPage(page: 0, pageSize: myInquiriesPageSize);
-    return MyInquiriesPage(items: items, hasMore: items.length == myInquiriesPageSize);
+    return MyInquiriesPage(
+      items: items,
+      hasMore: items.length == myInquiriesPageSize,
+    );
   }
 
   Future<void> loadMore() async {

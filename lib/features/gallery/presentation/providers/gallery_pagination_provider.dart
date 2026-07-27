@@ -19,7 +19,11 @@ class TrekGalleryPage {
   final bool hasMore;
   final bool isLoadingMore;
 
-  TrekGalleryPage copyWith({List<GalleryMedia>? items, bool? hasMore, bool? isLoadingMore}) {
+  TrekGalleryPage copyWith({
+    List<GalleryMedia>? items,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
     return TrekGalleryPage(
       items: items ?? this.items,
       hasMore: hasMore ?? this.hasMore,
@@ -40,9 +44,9 @@ class TrekGalleryPage {
 /// same reasoning as [trekGalleryProvider].
 final trekGalleryPaginationProvider = AsyncNotifierProvider.autoDispose
     .family<TrekGalleryPaginationController, TrekGalleryPage, String>(
-  TrekGalleryPaginationController.new,
-  name: 'trekGalleryPaginationProvider',
-);
+      TrekGalleryPaginationController.new,
+      name: 'trekGalleryPaginationProvider',
+    );
 
 class TrekGalleryPaginationController
     extends AutoDisposeFamilyAsyncNotifier<TrekGalleryPage, String> {
@@ -51,12 +55,17 @@ class TrekGalleryPaginationController
   @override
   Future<TrekGalleryPage> build(String trekId) async {
     _page = 0;
-    final items = await ref.watch(galleryRepositoryProvider).fetchMediaForTrekPage(
+    final items = await ref
+        .watch(galleryRepositoryProvider)
+        .fetchMediaForTrekPage(
           trekId: trekId,
           page: 0,
           pageSize: trekGalleryPageSize,
         );
-    return TrekGalleryPage(items: items, hasMore: items.length == trekGalleryPageSize);
+    return TrekGalleryPage(
+      items: items,
+      hasMore: items.length == trekGalleryPageSize,
+    );
   }
 
   /// Fetches the next page and appends it. A no-op while already
@@ -70,7 +79,9 @@ class TrekGalleryPaginationController
     state = AsyncData(current.copyWith(isLoadingMore: true));
     final nextPage = _page + 1;
     try {
-      final next = await ref.read(galleryRepositoryProvider).fetchMediaForTrekPage(
+      final next = await ref
+          .read(galleryRepositoryProvider)
+          .fetchMediaForTrekPage(
             trekId: arg,
             page: nextPage,
             pageSize: trekGalleryPageSize,

@@ -50,7 +50,9 @@ void main() {
       expect(summary.daysWithData, 2);
     });
 
-    testWidgets('ActivityRings renders concentric rings CustomPaint', (tester) async {
+    testWidgets('ActivityRings renders concentric rings CustomPaint', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light,
@@ -73,16 +75,16 @@ void main() {
         MaterialApp(
           theme: AppTheme.light,
           home: const Scaffold(
-            body: CumulativeStepsChart(
-              totalSteps: 8500,
-              targetSteps: 10000,
-            ),
+            body: CumulativeStepsChart(totalSteps: 8500, targetSteps: 10000),
           ),
         ),
       );
 
       expect(find.byType(CumulativeStepsChart), findsOneWidget);
-      expect(find.text("Cumulative steps curve"), findsNothing); // Parent renders label
+      expect(
+        find.text("Cumulative steps curve"),
+        findsNothing,
+      ); // Parent renders label
     });
   });
 }

@@ -60,11 +60,15 @@ class PreviewSection<T> extends StatelessWidget {
         SectionTitle(title: title, icon: icon, accent: accent),
         const SizedBox(height: AppSpacing.md),
         asyncItems.when(
-          loading: () => const SkeletonList(count: 2, showImages: false, padding: EdgeInsets.zero),
-          error: (error, stack) => GlassSectionError(
-            message: errorMessage,
-            onRetry: onRetry,
-          ),
+          loading:
+              () => const SkeletonList(
+                count: 2,
+                showImages: false,
+                padding: EdgeInsets.zero,
+              ),
+          error:
+              (error, stack) =>
+                  GlassSectionError(message: errorMessage, onRetry: onRetry),
           data: (items) {
             if (items.isEmpty) {
               return GlassEmptyState(

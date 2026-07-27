@@ -20,7 +20,8 @@ import 'package:flutter/material.dart';
 abstract final class AppHeroTags {
   static String trekCover(String trekId) => 'trek-cover-$trekId';
   static String trekTitle(String trekId) => 'trek-title-$trekId';
-  static String challengeBadge(String challengeId) => 'challenge-badge-$challengeId';
+  static String challengeBadge(String challengeId) =>
+      'challenge-badge-$challengeId';
   static String productImage(String productId) => 'product-image-$productId';
   static String profileAvatar(String userId) => 'profile-avatar-$userId';
 
@@ -82,20 +83,24 @@ class AppHero extends StatelessWidget {
     final forward = flightDirection == HeroFlightDirection.push;
     final begin = forward ? fromRadius : toRadius;
     final end = forward ? toRadius : fromRadius;
-    final curved = CurvedAnimation(parent: animation, curve: AppMotion.emphasized);
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: AppMotion.emphasized,
+    );
     final hero = (forward ? toHeroContext : fromHeroContext).widget as Hero;
 
     return AnimatedBuilder(
       animation: curved,
-      builder: (context, _) => Material(
-        type: MaterialType.transparency,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(
-            lerpDouble(begin, end, curved.value),
+      builder:
+          (context, _) => Material(
+            type: MaterialType.transparency,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                lerpDouble(begin, end, curved.value),
+              ),
+              child: hero.child,
+            ),
           ),
-          child: hero.child,
-        ),
-      ),
     );
   }
 
@@ -144,7 +149,8 @@ class AppReveal extends StatefulWidget {
   State<AppReveal> createState() => _AppRevealState();
 }
 
-class _AppRevealState extends State<AppReveal> with SingleTickerProviderStateMixin {
+class _AppRevealState extends State<AppReveal>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: widget.duration,
@@ -182,13 +188,14 @@ class _AppRevealState extends State<AppReveal> with SingleTickerProviderStateMix
     final curved = CurvedAnimation(parent: _controller, curve: widget.curve);
     return AnimatedBuilder(
       animation: curved,
-      builder: (context, child) => Opacity(
-        opacity: curved.value.clamp(0, 1),
-        child: Transform.translate(
-          offset: Offset(0, widget.offsetY * (1 - curved.value)),
-          child: child,
-        ),
-      ),
+      builder:
+          (context, child) => Opacity(
+            opacity: curved.value.clamp(0, 1),
+            child: Transform.translate(
+              offset: Offset(0, widget.offsetY * (1 - curved.value)),
+              child: child,
+            ),
+          ),
       child: widget.child,
     );
   }

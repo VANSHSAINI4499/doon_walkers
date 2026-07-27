@@ -13,7 +13,11 @@ import 'package:flutter/material.dart';
 /// system (a rounded track that fills toward the next tier's colour, and
 /// an animated fill) — **the fraction/threshold maths is untouched.**
 class ChallengeProgressBar extends StatelessWidget {
-  const ChallengeProgressBar({super.key, required this.challenge, required this.progress});
+  const ChallengeProgressBar({
+    super.key,
+    required this.challenge,
+    required this.progress,
+  });
 
   final Challenge challenge;
 
@@ -28,9 +32,10 @@ class ChallengeProgressBar extends StatelessWidget {
 
     final currentValue = progress?.currentValue ?? 0;
     final currentTier = progress?.currentTier;
-    final currentTierIndex = currentTier == null
-        ? -1
-        : tiers.indexWhere((t) => t.tier == currentTier);
+    final currentTierIndex =
+        currentTier == null
+            ? -1
+            : tiers.indexWhere((t) => t.tier == currentTier);
     final isMaxTier = currentTierIndex == tiers.length - 1;
 
     final palette = AppPalette.of(context);
@@ -63,10 +68,14 @@ class ChallengeProgressBar extends StatelessWidget {
     }
 
     final next = tiers[currentTierIndex + 1];
-    final prevThreshold = currentTierIndex == -1 ? 0.0 : tiers[currentTierIndex].thresholdValue;
+    final prevThreshold =
+        currentTierIndex == -1 ? 0.0 : tiers[currentTierIndex].thresholdValue;
     final nextThreshold = next.thresholdValue;
     final span = nextThreshold - prevThreshold;
-    final fraction = span <= 0 ? 0.0 : ((currentValue - prevThreshold) / span).clamp(0.0, 1.0);
+    final fraction =
+        span <= 0
+            ? 0.0
+            : ((currentValue - prevThreshold) / span).clamp(0.0, 1.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

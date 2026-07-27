@@ -27,17 +27,21 @@ class ActivityRepositoryImpl implements ActivityRepository {
       throw StateError('upsertDailyActivity called with no signed-in user');
     }
 
-    await _supabase.from(AppConstants.tableDailyActivitySummary).upsert(
+    await _supabase
+        .from(AppConstants.tableDailyActivitySummary)
+        .upsert(
           activity
-              .map((a) => {
-                    'user_id': userId,
-                    'date': _formatDate(a.date),
-                    'steps': a.steps,
-                    'distance_km': a.distanceKm,
-                    'calories': a.calories,
-                    'active_minutes': a.activeMinutes,
-                    'synced_at': DateTime.now().toIso8601String(),
-                  })
+              .map(
+                (a) => {
+                  'user_id': userId,
+                  'date': _formatDate(a.date),
+                  'steps': a.steps,
+                  'distance_km': a.distanceKm,
+                  'calories': a.calories,
+                  'active_minutes': a.activeMinutes,
+                  'synced_at': DateTime.now().toIso8601String(),
+                },
+              )
               .toList(),
           onConflict: 'user_id,date',
         );
@@ -59,9 +63,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
     // Find today's activity in the synced batch.
     final today = DateTime.now();
     final todayStr = _formatDate(today);
-    final todayEntry = activity.where(
-      (a) => _formatDate(a.date) == todayStr,
-    );
+    final todayEntry = activity.where((a) => _formatDate(a.date) == todayStr);
     if (todayEntry.isEmpty) return;
     final todaySteps = todayEntry.first.steps;
     if (todaySteps <= 0) return;
@@ -74,7 +76,8 @@ class ActivityRepositoryImpl implements ActivityRepository {
           'get_or_create_user_goal',
           params: {'p_user_id': userId, 'p_goal_type': 'daily_steps'},
         );
-        final goalTarget = (goalRow as Map<String, dynamic>?)?['target_value'] as int? ?? 6500;
+        final goalTarget =
+            (goalRow as Map<String, dynamic>?)?['target_value'] as int? ?? 6500;
         if (todaySteps < goalTarget) return;
 
         // Check for existing ledger entry today (once-per-day guard).
@@ -84,20 +87,30 @@ class ActivityRepositoryImpl implements ActivityRepository {
             .eq('user_id', userId)
             .eq('reason', 'daily_step_goal')
             .gte('created_at', '${todayStr}T00:00:00Z')
-            .lt('created_at', '${_formatDate(today.add(const Duration(days: 1)))}T00:00:00Z')
+            .lt(
+              'created_at',
+              '${_formatDate(today.add(const Duration(days: 1)))}T00:00:00Z',
+            )
             .limit(1);
         if ((existingRows as List).isNotEmpty) return;
 
         // Award 25 points.
-        await _supabase.rpc('award_points', params: {
-          'p_user_id': userId,
-          'p_points': 25,
-          'p_reason': 'daily_step_goal',
-          'p_reference_id': null,
-        });
-        debugPrint('ActivityRepository: awarded daily_step_goal points for $userId');
+        await _supabase.rpc(
+          'award_points',
+          params: {
+            'p_user_id': userId,
+            'p_points': 25,
+            'p_reason': 'daily_step_goal',
+            'p_reference_id': null,
+          },
+        );
+        debugPrint(
+          'ActivityRepository: awarded daily_step_goal points for $userId',
+        );
       } catch (e) {
-        debugPrint('ActivityRepository: daily_step_goal award failed (non-fatal): $e');
+        debugPrint(
+          'ActivityRepository: daily_step_goal award failed (non-fatal): $e',
+        );
       }
     }();
   }
@@ -107,13 +120,14 @@ class ActivityRepositoryImpl implements ActivityRepository {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return null;
 
-    final row = await _supabase
-        .from(AppConstants.tableDailyActivitySummary)
-        .select('synced_at')
-        .eq('user_id', userId)
-        .order('synced_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
+    final row =
+        await _supabase
+            .from(AppConstants.tableDailyActivitySummary)
+            .select('synced_at')
+            .eq('user_id', userId)
+            .order('synced_at', ascending: false)
+            .limit(1)
+            .maybeSingle();
 
     if (row == null) return null;
     return DateTime.parse(row['synced_at'] as String);
@@ -211,10 +225,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
   }
 
   @override
-  Future<int> fetchActiveDays({
-    required int year,
-    required int month,
-  }) async {
+  Future<int> fetchActiveDays({required int year, required int month}) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return 0;
 
@@ -271,13 +282,15 @@ class ActivityRepositoryImpl implements ActivityRepository {
         actMin += r.activeMinutes;
       }
 
-      weekly.add(DailyActivity(
-        date: wStart,
-        steps: steps,
-        distanceKm: dist,
-        calories: cal,
-        activeMinutes: actMin,
-      ));
+      weekly.add(
+        DailyActivity(
+          date: wStart,
+          steps: steps,
+          distanceKm: dist,
+          calories: cal,
+          activeMinutes: actMin,
+        ),
+      );
     }
     return weekly;
   }
@@ -345,17 +358,13 @@ class ActivityRepositoryImpl implements ActivityRepository {
 
     final result = await _supabase.rpc(
       'get_my_achievements',
-      params: {
-        'p_limit': limit,
-        'p_offset': offset,
-      },
+      params: {'p_limit': limit, 'p_offset': offset},
     );
 
     return (result as List)
         .map((row) => UserAchievement.fromJson(row as Map<String, dynamic>))
         .toList();
   }
-
 
   @override
   Future<dynamic> getOrCreateUserGoal(String goalType) async {
@@ -364,10 +373,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
 
     final result = await _supabase.rpc(
       'get_or_create_user_goal',
-      params: {
-        'p_user_id': userId,
-        'p_goal_type': goalType,
-      },
+      params: {'p_user_id': userId, 'p_goal_type': goalType},
     );
 
     return result;

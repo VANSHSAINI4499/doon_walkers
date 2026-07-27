@@ -10,10 +10,13 @@ void main() {
       }
     });
 
-    test('unknown or null values fall back to pending (matches DB default)', () {
-      expect(PaymentStatus.fromString('settled'), PaymentStatus.pending);
-      expect(PaymentStatus.fromString(null), PaymentStatus.pending);
-    });
+    test(
+      'unknown or null values fall back to pending (matches DB default)',
+      () {
+        expect(PaymentStatus.fromString('settled'), PaymentStatus.pending);
+        expect(PaymentStatus.fromString(null), PaymentStatus.pending);
+      },
+    );
   });
 
   group('GenderType', () {
@@ -27,7 +30,10 @@ void main() {
     });
 
     test('maps the snake_case Postgres label, not the Dart identifier', () {
-      expect(GenderType.fromString('prefer_not_to_say'), GenderType.preferNotToSay);
+      expect(
+        GenderType.fromString('prefer_not_to_say'),
+        GenderType.preferNotToSay,
+      );
       expect(GenderType.preferNotToSay.toDbString(), 'prefer_not_to_say');
       // The Dart identifier must NOT be accepted as a DB value.
       expect(GenderType.fromString('preferNotToSay'), isNull);
@@ -109,7 +115,10 @@ void main() {
       expect(registration.trekId, 'trek-1');
       expect(registration.userId, 'user-1');
       expect(registration.paymentStatus, PaymentStatus.paid);
-      expect(registration.createdAt, DateTime.parse('2026-07-20T09:30:00.000Z'));
+      expect(
+        registration.createdAt,
+        DateTime.parse('2026-07-20T09:30:00.000Z'),
+      );
       expect(registration.userName, 'Aarav Sharma');
       expect(registration.userEmail, 'aarav@example.com');
       expect(registration.userPhone, '+91 98765 43210');
@@ -138,11 +147,12 @@ void main() {
     test('absent sensitive fields stay null rather than empty strings', () {
       // All four are nullable in the schema; the detail view renders a
       // distinct "Not provided" for null, so blank-vs-null matters.
-      final json = Map<String, dynamic>.from(fullJson)
-        ..remove('age')
-        ..remove('gender')
-        ..['emergency_contact'] = '   '
-        ..['medical_notes'] = '';
+      final json =
+          Map<String, dynamic>.from(fullJson)
+            ..remove('age')
+            ..remove('gender')
+            ..['emergency_contact'] = '   '
+            ..['medical_notes'] = '';
 
       final registration = RegistrationModel.fromJson(json);
 
@@ -155,7 +165,11 @@ void main() {
     test('a null phone stays null (column is nullable in the schema)', () {
       final json = {
         ...fullJson,
-        'users': {'name': 'Aarav Sharma', 'email': 'aarav@example.com', 'phone': null},
+        'users': {
+          'name': 'Aarav Sharma',
+          'email': 'aarav@example.com',
+          'phone': null,
+        },
       };
 
       expect(RegistrationModel.fromJson(json).userPhone, isNull);
@@ -164,7 +178,11 @@ void main() {
     test('a blank phone is normalised to null, not rendered as empty text', () {
       final json = {
         ...fullJson,
-        'users': {'name': 'Aarav Sharma', 'email': 'aarav@example.com', 'phone': '   '},
+        'users': {
+          'name': 'Aarav Sharma',
+          'email': 'aarav@example.com',
+          'phone': '   ',
+        },
       };
 
       expect(RegistrationModel.fromJson(json).userPhone, isNull);
@@ -188,9 +206,13 @@ void main() {
     });
 
     test('missing payment_status defaults to pending, not a crash', () {
-      final json = Map<String, dynamic>.from(fullJson)..remove('payment_status');
+      final json = Map<String, dynamic>.from(fullJson)
+        ..remove('payment_status');
 
-      expect(RegistrationModel.fromJson(json).paymentStatus, PaymentStatus.pending);
+      expect(
+        RegistrationModel.fromJson(json).paymentStatus,
+        PaymentStatus.pending,
+      );
     });
   });
 }

@@ -29,7 +29,8 @@ void main() {
       'email': 'trekker@doonwalkers.com',
       'phone': '+919876543210',
       'role': 'user',
-      'profile_image': 'https://supabase.co/storage/v1/object/public/avatar.jpg',
+      'profile_image':
+          'https://supabase.co/storage/v1/object/public/avatar.jpg',
       'created_at': testDate.toIso8601String(),
     };
 
@@ -41,7 +42,10 @@ void main() {
       expect(model.email, 'trekker@doonwalkers.com');
       expect(model.phone, '+919876543210');
       expect(model.role, UserRole.user);
-      expect(model.profileImage, 'https://supabase.co/storage/v1/object/public/avatar.jpg');
+      expect(
+        model.profileImage,
+        'https://supabase.co/storage/v1/object/public/avatar.jpg',
+      );
       expect(model.createdAt, testDate);
       expect(model.isAdmin, isFalse);
       expect(model.isRegisteredUser, isTrue);
@@ -57,15 +61,15 @@ void main() {
       expect(output['email'], 'trekker@doonwalkers.com');
       expect(output['phone'], '+919876543210');
       expect(output['role'], 'user');
-      expect(output['profile_image'], 'https://supabase.co/storage/v1/object/public/avatar.jpg');
+      expect(
+        output['profile_image'],
+        'https://supabase.co/storage/v1/object/public/avatar.jpg',
+      );
       expect(output['created_at'], testDate.toIso8601String());
     });
 
     test('admin user returns isAdmin = true', () {
-      final adminModel = UserModel.fromJson({
-        ...jsonMap,
-        'role': 'admin',
-      });
+      final adminModel = UserModel.fromJson({...jsonMap, 'role': 'admin'});
 
       expect(adminModel.role, UserRole.admin);
       expect(adminModel.isAdmin, isTrue);

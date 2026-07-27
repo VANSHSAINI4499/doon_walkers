@@ -30,7 +30,8 @@ class UserAchievement {
   });
 
   factory UserAchievement.fromJson(Map<String, dynamic> json) {
-    final def = json['achievement_definitions'] as Map<String, dynamic>? ?? json;
+    final def =
+        json['achievement_definitions'] as Map<String, dynamic>? ?? json;
     final dateStr = json['achieved_at'] ?? json['unlocked_at'];
     return UserAchievement(
       id: json['id'] as String? ?? '',
@@ -41,13 +42,11 @@ class UserAchievement {
       unlockMetric: def['unlock_metric'] as String? ?? '',
       unlockValue: (def['unlock_value'] as num?)?.toInt() ?? 0,
       pointsReward: (def['points_reward'] as num?)?.toInt() ?? 0,
-      unlockedAt: dateStr != null
-          ? DateTime.parse(dateStr as String)
-          : DateTime.now(),
+      unlockedAt:
+          dateStr != null ? DateTime.parse(dateStr as String) : DateTime.now(),
       achievementType: json['achievement_type'] as String? ?? 'badge',
       referenceId: json['reference_id'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
   }
 }
-

@@ -20,9 +20,10 @@ void showMemberDetailSheet({
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
     ),
     builder: (context) {
-      final joinedStr = createdAt != null
-          ? 'Member since ${createdAt.month}/${createdAt.year}'
-          : null;
+      final joinedStr =
+          createdAt != null
+              ? 'Member since ${createdAt.month}/${createdAt.year}'
+              : null;
 
       return SafeArea(
         child: Padding(
@@ -39,13 +40,14 @@ void showMemberDetailSheet({
                   border: Border.all(color: palette.border, width: 2),
                 ),
                 child: ClipOval(
-                  child: avatarUrl != null && avatarUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: avatarUrl,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => _Initials(displayName),
-                        )
-                      : _Initials(displayName),
+                  child:
+                      avatarUrl != null && avatarUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                            imageUrl: avatarUrl,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => _Initials(displayName),
+                          )
+                          : _Initials(displayName),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),

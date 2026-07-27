@@ -40,7 +40,9 @@ class _FakeRegistrationRepository implements RegistrationRepository {
 
   @override
   Never noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} not faked for this test');
+      throw UnimplementedError(
+        '${invocation.memberName} not faked for this test',
+      );
 }
 
 Registration _registration({
@@ -68,7 +70,10 @@ Registration _registration({
 final _future = DateTime(2026, 8, 20);
 final _past = DateTime(2026, 6, 1);
 
-Future<void> _pumpScreen(WidgetTester tester, List<Registration> registrations) async {
+Future<void> _pumpScreen(
+  WidgetTester tester,
+  List<Registration> registrations,
+) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -89,7 +94,12 @@ void main() {
   group('MyRegistrationsScreen tabs (Phase 15)', () {
     final fixtures = [
       _registration(id: '1', title: 'Kedarkantha', trekDate: _future),
-      _registration(id: '2', title: 'Roopkund', trekDate: _past, checkedInAt: _past),
+      _registration(
+        id: '2',
+        title: 'Roopkund',
+        trekDate: _past,
+        checkedInAt: _past,
+      ),
       _registration(
         id: '3',
         title: 'Valley of Flowers',
@@ -105,7 +115,9 @@ void main() {
       expect(find.text('Valley of Flowers'), findsNothing);
     });
 
-    testWidgets('Completed tab shows only the past, non-cancelled trek', (tester) async {
+    testWidgets('Completed tab shows only the past, non-cancelled trek', (
+      tester,
+    ) async {
       await _pumpScreen(tester, fixtures);
       await tester.tap(find.text('Completed'));
       await tester.pumpAndSettle();
@@ -115,7 +127,9 @@ void main() {
       expect(find.text('Valley of Flowers'), findsNothing);
     });
 
-    testWidgets('Cancelled tab shows only the cancelled registration', (tester) async {
+    testWidgets('Cancelled tab shows only the cancelled registration', (
+      tester,
+    ) async {
       await _pumpScreen(tester, fixtures);
       await tester.tap(find.text('Cancelled'));
       await tester.pumpAndSettle();
@@ -125,7 +139,9 @@ void main() {
       expect(find.text('Roopkund'), findsNothing);
     });
 
-    testWidgets('the milestone banner appears only on the Completed tab', (tester) async {
+    testWidgets('the milestone banner appears only on the Completed tab', (
+      tester,
+    ) async {
       await _pumpScreen(tester, fixtures);
       expect(find.textContaining("You've completed"), findsNothing);
 
@@ -140,28 +156,30 @@ void main() {
       expect(find.textContaining("You've completed"), findsNothing);
     });
 
-    testWidgets('an empty tab shows tab-specific copy, not the generic empty state', (
-      tester,
-    ) async {
-      // No cancelled registrations in this fixture set.
-      await _pumpScreen(tester, [
-        _registration(id: '1', title: 'Kedarkantha', trekDate: _future),
-      ]);
-      await tester.tap(find.text('Cancelled'));
-      await tester.pumpAndSettle();
-      expect(find.text('No cancelled registrations.'), findsOneWidget);
-    });
+    testWidgets(
+      'an empty tab shows tab-specific copy, not the generic empty state',
+      (tester) async {
+        // No cancelled registrations in this fixture set.
+        await _pumpScreen(tester, [
+          _registration(id: '1', title: 'Kedarkantha', trekDate: _future),
+        ]);
+        await tester.tap(find.text('Cancelled'));
+        await tester.pumpAndSettle();
+        expect(find.text('No cancelled registrations.'), findsOneWidget);
+      },
+    );
 
-    testWidgets('search and tab combine — a search match outside the tab is hidden', (
-      tester,
-    ) async {
-      await _pumpScreen(tester, fixtures);
-      // Still on Upcoming (default). Searching for the cancelled trek's
-      // title must show nothing, not fall back to matching another tab.
-      await tester.enterText(find.byType(TextField), 'Valley');
-      await tester.pumpAndSettle();
-      expect(find.text('Valley of Flowers'), findsNothing);
-    });
+    testWidgets(
+      'search and tab combine — a search match outside the tab is hidden',
+      (tester) async {
+        await _pumpScreen(tester, fixtures);
+        // Still on Upcoming (default). Searching for the cancelled trek's
+        // title must show nothing, not fall back to matching another tab.
+        await tester.enterText(find.byType(TextField), 'Valley');
+        await tester.pumpAndSettle();
+        expect(find.text('Valley of Flowers'), findsNothing);
+      },
+    );
 
     testWidgets('renders in light theme without throwing', (tester) async {
       await tester.pumpWidget(

@@ -86,7 +86,10 @@ class ActivitySummary {
   /// Builds a summary for [period] from [rows], which may contain days
   /// outside it — anything out of range is ignored, so a caller can hand
   /// over one wide fetch and slice it several ways.
-  factory ActivitySummary.from(ActivityPeriod period, List<DailyActivity> rows) {
+  factory ActivitySummary.from(
+    ActivityPeriod period,
+    List<DailyActivity> rows,
+  ) {
     final byDate = <DateTime, DailyActivity>{};
     var totalSteps = 0;
     var totalDistance = 0.0;

@@ -52,12 +52,13 @@ class ProfileStatsSection extends ConsumerWidget {
         );
       },
       data: (stats) {
-        final monthSteps = ref
-            .watch(
-              activitySummaryProvider(ActivityPeriod.month(DateTime.now())),
-            )
-            .valueOrNull
-            ?.totalSteps;
+        final monthSteps =
+            ref
+                .watch(
+                  activitySummaryProvider(ActivityPeriod.month(DateTime.now())),
+                )
+                .valueOrNull
+                ?.totalSteps;
         final tiers = ref.watch(myTierHistoryProvider).valueOrNull?.length;
 
         return Column(
@@ -74,9 +75,10 @@ class ProfileStatsSection extends ConsumerWidget {
                     // An em dash while loading, never a 0 that then jumps —
                     // "0 steps" and "still loading" look identical
                     // otherwise.
-                    value: monthSteps == null
-                        ? '—'
-                        : ActivityFormat.stepsCompact(monthSteps),
+                    value:
+                        monthSteps == null
+                            ? '—'
+                            : ActivityFormat.stepsCompact(monthSteps),
                     label: 'steps this month',
                   ),
                   StatDisplay(

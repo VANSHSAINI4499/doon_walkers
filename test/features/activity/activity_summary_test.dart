@@ -84,9 +84,7 @@ void main() {
     });
 
     test('averageStepsOverPeriod divides by every day in the period', () {
-      final s = ActivitySummary.from(_week, [
-        _row(20, steps: 7000),
-      ]);
+      final s = ActivitySummary.from(_week, [_row(20, steps: 7000)]);
       expect(s.averageSteps, 7000);
       expect(s.averageStepsOverPeriod, 1000); // 7000 / 7
     });

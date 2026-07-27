@@ -69,10 +69,7 @@ class ChallengeMetaRow extends StatelessWidget {
       runSpacing: AppSpacing.sm,
       children: [
         _MetaChip(icon: _metricIcon, label: challenge.metric.label),
-        _MetaChip(
-          icon: AppIcons.calendar,
-          label: challenge.timeWindow.label,
-        ),
+        _MetaChip(icon: AppIcons.calendar, label: challenge.timeWindow.label),
         if (remaining != null)
           _MetaChip(
             icon: AppIcons.duration,
@@ -88,7 +85,8 @@ class ChallengeMetaRow extends StatelessWidget {
         if (participantCount != null)
           _MetaChip(
             icon: AppIcons.group,
-            label: participantCount == 1 ? '1 joined' : '$participantCount joined',
+            label:
+                participantCount == 1 ? '1 joined' : '$participantCount joined',
           ),
         if (pointValue != null)
           _MetaChip(icon: AppIcons.star, label: '+$pointValue pts'),

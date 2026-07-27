@@ -15,7 +15,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// with variants; auto-selected when there's exactly one in-stock size),
 /// the phone-number pre-fill from the account (still editable), the
 /// quantity validator, the size-required guard, and the submit path.
-Future<bool?> showMerchInquiryFormSheet(BuildContext context, {required Product product}) {
+Future<bool?> showMerchInquiryFormSheet(
+  BuildContext context, {
+  required Product product,
+}) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -31,10 +34,12 @@ class _MerchInquiryFormSheet extends ConsumerStatefulWidget {
   final Product product;
 
   @override
-  ConsumerState<_MerchInquiryFormSheet> createState() => _MerchInquiryFormSheetState();
+  ConsumerState<_MerchInquiryFormSheet> createState() =>
+      _MerchInquiryFormSheetState();
 }
 
-class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> {
+class _MerchInquiryFormSheetState
+    extends ConsumerState<_MerchInquiryFormSheet> {
   final _formKey = GlobalKey<FormState>();
   final _quantityController = TextEditingController(text: '1');
   final _noteController = TextEditingController();
@@ -56,7 +61,8 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
 
     // Pre-fill from the account's phone if set — still editable, since the
     // member may want a different number reached for this specific order.
-    _phoneController.text = ref.read(currentUserProvider).valueOrNull?.phone ?? '';
+    _phoneController.text =
+        ref.read(currentUserProvider).valueOrNull?.phone ?? '';
   }
 
   @override
@@ -76,7 +82,9 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
     }
 
     final note = _noteController.text.trim();
-    final created = await ref.read(merchInquiryControllerProvider.notifier).submitInquiry(
+    final created = await ref
+        .read(merchInquiryControllerProvider.notifier)
+        .submitInquiry(
           productId: widget.product.id,
           variantId: _selectedVariant?.id,
           quantity: int.parse(_quantityController.text.trim()),
@@ -98,7 +106,10 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
     final palette = AppPalette.of(context);
     final isSaving = ref.watch(merchInquiryControllerProvider).isLoading;
 
-    ref.listen<AsyncValue<void>>(merchInquiryControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<void>>(merchInquiryControllerProvider, (
+      previous,
+      next,
+    ) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -112,9 +123,16 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
     });
 
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, AppSpacing.xxl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xs,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -129,7 +147,11 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                       gradient: AppGradients.primary,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: AppIcon(AppIcons.bag, size: 20, color: palette.onPrimary),
+                    child: AppIcon(
+                      AppIcons.bag,
+                      size: 20,
+                      color: palette.onPrimary,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -137,11 +159,16 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Inquire about this product', style: AppTextStyles.titleLarge),
+                        Text(
+                          'Inquire about this product',
+                          style: AppTextStyles.titleLarge,
+                        ),
                         const SizedBox(height: 2),
                         Text(
                           widget.product.name,
-                          style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                          style: AppTextStyles.secondary(
+                            AppTextStyles.bodyMedium,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -163,15 +190,21 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                   value: _selectedVariant,
                   decoration: InputDecoration(
                     labelText: 'Size',
-                    errorText: _showSizeRequiredError ? 'Please select a size' : null,
+                    errorText:
+                        _showSizeRequiredError ? 'Please select a size' : null,
                   ),
-                  items: _inStockVariants
-                      .map((v) => DropdownMenuItem(value: v, child: Text(v.size)))
-                      .toList(),
-                  onChanged: (value) => setState(() {
-                    _selectedVariant = value;
-                    _showSizeRequiredError = false;
-                  }),
+                  items:
+                      _inStockVariants
+                          .map(
+                            (v) =>
+                                DropdownMenuItem(value: v, child: Text(v.size)),
+                          )
+                          .toList(),
+                  onChanged:
+                      (value) => setState(() {
+                        _selectedVariant = value;
+                        _showSizeRequiredError = false;
+                      }),
                 ),
                 const SizedBox(height: AppSpacing.lg),
               ],
@@ -184,9 +217,11 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                 ),
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Please enter a phone number'
-                    : null,
+                validator:
+                    (value) =>
+                        (value == null || value.trim().isEmpty)
+                            ? 'Please enter a phone number'
+                            : null,
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -198,7 +233,8 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                   final text = value?.trim() ?? '';
                   if (text.isEmpty) return 'Please enter a quantity';
                   final qty = int.tryParse(text);
-                  if (qty == null || qty <= 0) return 'Enter a quantity of at least 1';
+                  if (qty == null || qty <= 0)
+                    return 'Enter a quantity of at least 1';
                   return null;
                 },
               ),
@@ -208,7 +244,8 @@ class _MerchInquiryFormSheetState extends ConsumerState<_MerchInquiryFormSheet> 
                 controller: _noteController,
                 decoration: const InputDecoration(
                   labelText: 'Note (optional)',
-                  hintText: "Anything we should know — e.g. when you'd like to collect it",
+                  hintText:
+                      "Anything we should know — e.g. when you'd like to collect it",
                 ),
                 maxLines: 3,
               ),

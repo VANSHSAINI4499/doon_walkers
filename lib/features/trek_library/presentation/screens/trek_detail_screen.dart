@@ -57,7 +57,8 @@ class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
   /// real title to show and we never prompt for a trek that turned out not
   /// to exist (or that RLS hid).
   void _maybeAutoOpenRegistration(Trek trek) {
-    if (!widget.openRegistration || _handledAutoOpen || !trek.isPublished) return;
+    if (!widget.openRegistration || _handledAutoOpen || !trek.isPublished)
+      return;
     // A completed trek never auto-opens the form — mirrors
     // TrekRegisterButton's own gating, so a stale `?register=1` return link
     // for a trek that has since passed can't pop the sheet anyway.
@@ -80,7 +81,9 @@ class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
       final registered = await showRegistrationFormSheet(context, trek: trek);
       if (registered == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You're registered — see you on the trail!")),
+          const SnackBar(
+            content: Text("You're registered — see you on the trail!"),
+          ),
         );
       }
     });
@@ -93,12 +96,13 @@ class _TrekDetailScreenState extends ConsumerState<TrekDetailScreen> {
     return Scaffold(
       body: trekAsync.when(
         loading: () => const _TrekDetailSkeleton(),
-        error: (error, stack) => _DetailMessage(
-          icon: AppIcons.error,
-          title: 'Could not load this trek.',
-          actionLabel: 'Retry',
-          onAction: () => ref.invalidate(trekByIdProvider(widget.trekId)),
-        ),
+        error:
+            (error, stack) => _DetailMessage(
+              icon: AppIcons.error,
+              title: 'Could not load this trek.',
+              actionLabel: 'Retry',
+              onAction: () => ref.invalidate(trekByIdProvider(widget.trekId)),
+            ),
         data: (trek) {
           if (trek == null) {
             return const _DetailMessage(
@@ -145,7 +149,9 @@ class _DetailMessage extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               Text(
                 title,
-                style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: palette.textPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
               if (actionLabel != null && onAction != null) ...[
@@ -163,7 +169,11 @@ class _DetailMessage extends StatelessWidget {
                 icon: AppIcons.back,
                 variant: AppButtonVariant.ghost,
                 size: AppButtonSize.small,
-                onPressed: () => Navigator.of(context).canPop() ? Navigator.of(context).pop() : null,
+                onPressed:
+                    () =>
+                        Navigator.of(context).canPop()
+                            ? Navigator.of(context).pop()
+                            : null,
               ),
             ],
           ),
@@ -174,7 +184,11 @@ class _DetailMessage extends StatelessWidget {
 }
 
 class _TrekDetailBody extends StatelessWidget {
-  const _TrekDetailBody({required this.trek, required this.isAdmin, this.openComment = false});
+  const _TrekDetailBody({
+    required this.trek,
+    required this.isAdmin,
+    this.openComment = false,
+  });
 
   final Trek trek;
 
@@ -207,7 +221,8 @@ class _TrekDetailBody extends StatelessWidget {
                 // The trek this screen is showing no longer exists — pop
                 // rather than sit on a dangling detail view.
                 onDeleted: () {
-                  if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+                  if (Navigator.of(context).canPop())
+                    Navigator.of(context).pop();
                 },
               ),
           ],
@@ -219,14 +234,17 @@ class _TrekDetailBody extends StatelessWidget {
                   tag: AppHeroTags.trekCover(trek.id),
                   fromRadius: 0,
                   toRadius: 0,
-                  child: (coverImage == null || coverImage.isEmpty)
-                      ? const _CoverFallback(icon: AppIcons.landscape)
-                      : Image.network(
-                          coverImage,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stack) =>
-                              const _CoverFallback(icon: AppIcons.imageBroken),
-                        ),
+                  child:
+                      (coverImage == null || coverImage.isEmpty)
+                          ? const _CoverFallback(icon: AppIcons.landscape)
+                          : Image.network(
+                            coverImage,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stack) => const _CoverFallback(
+                                  icon: AppIcons.imageBroken,
+                                ),
+                          ),
                 ),
                 // Top scrim keeps the back button + admin menu legible over
                 // a bright photo; bottom scrim melts the image into the page.
@@ -284,11 +302,16 @@ class _TrekDetailBody extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xxl),
 
                     if (trek.description.trim().isNotEmpty) ...[
-                      const SectionTitle(title: 'About This Trek', icon: AppIcons.book),
+                      const SectionTitle(
+                        title: 'About This Trek',
+                        icon: AppIcons.book,
+                      ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         trek.description,
-                        style: AppTextStyles.bodyLarge.copyWith(color: palette.textSecondary),
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: palette.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xxl),
                     ],
@@ -302,7 +325,9 @@ class _TrekDetailBody extends StatelessWidget {
                       const SizedBox(height: AppSpacing.md),
                       Text(
                         trek.thingsToCarry!,
-                        style: AppTextStyles.bodyLarge.copyWith(color: palette.textSecondary),
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: palette.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xxl),
                     ],
@@ -313,7 +338,9 @@ class _TrekDetailBody extends StatelessWidget {
                         icon: AppIcons.map,
                         variant: AppButtonVariant.secondary,
                         fullWidth: true,
-                        onPressed: () => openExternalLink(context, trek.googleMapLink!),
+                        onPressed:
+                            () =>
+                                openExternalLink(context, trek.googleMapLink!),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                     ],
@@ -376,7 +403,10 @@ class _DraftBanner extends StatelessWidget {
     final palette = AppPalette.of(context);
     return AppCard(
       borderColor: palette.gold.withValues(alpha: 0.5),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Row(
         children: [
           AppIcon(AppIcons.editNote, size: 18, color: palette.gold),
@@ -406,15 +436,40 @@ class _QuickFactsRow extends ConsumerWidget {
       // a real date. Omitted entirely for an older trek not yet backfilled
       // with one, rather than showing a blank placeholder.
       if (trek.trekDate != null)
-        _QuickFact(AppIcons.calendar, 'Trek Date', _formatTrekDate(trek.trekDate!), palette.primary),
+        _QuickFact(
+          AppIcons.calendar,
+          'Trek Date',
+          _formatTrekDate(trek.trekDate!),
+          palette.primary,
+        ),
       if (trek.distanceKm != null)
-        _QuickFact(AppIcons.distance, 'Distance', '${_formatNum(trek.distanceKm!)} km', palette.secondary),
+        _QuickFact(
+          AppIcons.distance,
+          'Distance',
+          '${_formatNum(trek.distanceKm!)} km',
+          palette.secondary,
+        ),
       if (trek.durationDays != null)
-        _QuickFact(AppIcons.duration, 'Duration', '${trek.durationDays} ${trek.durationDays == 1 ? 'day' : 'days'}', palette.accent),
+        _QuickFact(
+          AppIcons.duration,
+          'Duration',
+          '${trek.durationDays} ${trek.durationDays == 1 ? 'day' : 'days'}',
+          palette.accent,
+        ),
       if (trek.altitudeM != null)
-        _QuickFact(AppIcons.altitude, 'Max Altitude', '${trek.altitudeM} m', palette.gold),
+        _QuickFact(
+          AppIcons.altitude,
+          'Max Altitude',
+          '${trek.altitudeM} m',
+          palette.gold,
+        ),
       if ((trek.bestSeason ?? '').isNotEmpty)
-        _QuickFact(AppIcons.season, 'Best Season', trek.bestSeason!, palette.primary),
+        _QuickFact(
+          AppIcons.season,
+          'Best Season',
+          trek.bestSeason!,
+          palette.primary,
+        ),
     ];
 
     final spotsLeftAsync = ref.watch(trekSpotsLeftProvider(trek.id));
@@ -451,7 +506,8 @@ class _QuickFactsRow extends ConsumerWidget {
     );
   }
 
-  String _formatNum(double v) => v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+  String _formatNum(double v) =>
+      v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 }
 
 class _QuickFactTileSkeleton extends StatelessWidget {
@@ -474,14 +530,23 @@ class _QuickFactTileSkeleton extends StatelessWidget {
   }
 }
 
-
 /// Local rather than shared with the registrations feature's
 /// `formatRegistrationDate` — reaching back the other way for a one-line
 /// date format would just make a dependency cycle for no real reuse.
 String _formatTrekDate(DateTime dt) {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
 }
@@ -527,13 +592,17 @@ class _QuickFactTile extends StatelessWidget {
               children: [
                 Text(
                   fact.value,
-                  style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+                  style: AppTextStyles.titleSmall.copyWith(
+                    color: palette.textPrimary,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   fact.label,
-                  style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: palette.textSecondary,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -568,9 +637,17 @@ class _TrekDetailSkeleton extends StatelessWidget {
                 SizedBox(height: AppSpacing.xl),
                 Row(
                   children: [
-                    SkeletonBox(width: 150, height: 56, borderRadius: AppRadius.sm),
+                    SkeletonBox(
+                      width: 150,
+                      height: 56,
+                      borderRadius: AppRadius.sm,
+                    ),
                     SizedBox(width: AppSpacing.md),
-                    SkeletonBox(width: 150, height: 56, borderRadius: AppRadius.sm),
+                    SkeletonBox(
+                      width: 150,
+                      height: 56,
+                      borderRadius: AppRadius.sm,
+                    ),
                   ],
                 ),
                 SizedBox(height: AppSpacing.xxl),

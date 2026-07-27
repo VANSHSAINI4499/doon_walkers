@@ -6,7 +6,11 @@ void main() {
   group('isNewlyAchievedTier', () {
     test('never celebrates with no prior baseline, even a real first tier', () {
       expect(
-        isNewlyAchievedTier(hadBaseline: false, previous: null, current: ChallengeTier.bronze),
+        isNewlyAchievedTier(
+          hadBaseline: false,
+          previous: null,
+          current: ChallengeTier.bronze,
+        ),
         isFalse,
       );
     });
@@ -20,7 +24,11 @@ void main() {
 
     test('celebrates a confirmed-zero baseline crossing into bronze', () {
       expect(
-        isNewlyAchievedTier(hadBaseline: true, previous: null, current: ChallengeTier.bronze),
+        isNewlyAchievedTier(
+          hadBaseline: true,
+          previous: null,
+          current: ChallengeTier.bronze,
+        ),
         isTrue,
       );
     });
@@ -47,15 +55,18 @@ void main() {
       );
     });
 
-    test('does not celebrate a decrease (defensive — the RPC never actually regresses)', () {
-      expect(
-        isNewlyAchievedTier(
-          hadBaseline: true,
-          previous: ChallengeTier.platinum,
-          current: ChallengeTier.gold,
-        ),
-        isFalse,
-      );
-    });
+    test(
+      'does not celebrate a decrease (defensive — the RPC never actually regresses)',
+      () {
+        expect(
+          isNewlyAchievedTier(
+            hadBaseline: true,
+            previous: ChallengeTier.platinum,
+            current: ChallengeTier.gold,
+          ),
+          isFalse,
+        );
+      },
+    );
   });
 }

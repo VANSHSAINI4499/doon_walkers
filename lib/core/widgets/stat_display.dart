@@ -102,7 +102,9 @@ class StatDisplay extends StatelessWidget {
         if (eyebrow != null) ...[
           Text(
             eyebrow!.toUpperCase(),
-            style: AppTextStyles.overline.copyWith(color: palette.textSecondary),
+            style: AppTextStyles.overline.copyWith(
+              color: palette.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
@@ -184,15 +186,16 @@ class AnimatedStatDisplay extends StatelessWidget {
     tween: Tween(begin: 0, end: value.toDouble()),
     duration: duration,
     curve: AppMotion.emphasized,
-    builder: (context, v, _) => StatDisplay(
-      value: format?.call(v) ?? v.round().toString(),
-      eyebrow: eyebrow,
-      label: label,
-      size: size,
-      color: color,
-      unit: unit,
-      alignment: alignment,
-    ),
+    builder:
+        (context, v, _) => StatDisplay(
+          value: format?.call(v) ?? v.round().toString(),
+          eyebrow: eyebrow,
+          label: label,
+          size: size,
+          color: color,
+          unit: unit,
+          alignment: alignment,
+        ),
   );
 }
 

@@ -23,9 +23,10 @@ class GalleryMediaModel extends GalleryMedia {
       mediaUrl: (json['media_url'] as String?) ?? '',
       mediaType: MediaType.fromString(json['media_type'] as String?),
       caption: json['caption'] as String?,
-      uploadedAt: json['uploaded_at'] != null
-          ? DateTime.parse(json['uploaded_at'] as String)
-          : DateTime.now(),
+      uploadedAt:
+          json['uploaded_at'] != null
+              ? DateTime.parse(json['uploaded_at'] as String)
+              : DateTime.now(),
       thumbnailUrl: json['thumbnail_url'] as String?,
       width: json['width'] as int?,
       height: json['height'] as int?,

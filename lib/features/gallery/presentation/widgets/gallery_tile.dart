@@ -37,9 +37,10 @@ class GalleryTile extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            child: media.mediaType == MediaType.photo
-                ? _PhotoTile(media: media)
-                : VideoThumbnailWidget(thumbnailUrl: media.thumbnailUrl),
+            child:
+                media.mediaType == MediaType.photo
+                    ? _PhotoTile(media: media)
+                    : VideoThumbnailWidget(thumbnailUrl: media.thumbnailUrl),
           ),
         ),
       ),
@@ -69,7 +70,9 @@ class _PhotoTileState extends State<_PhotoTile> {
         // (requirement 7: "cache thumbnails separately").
         final dpr = MediaQuery.of(context).devicePixelRatio;
         final targetWidth =
-            constraints.maxWidth.isFinite ? (constraints.maxWidth * dpr).round() : null;
+            constraints.maxWidth.isFinite
+                ? (constraints.maxWidth * dpr).round()
+                : null;
 
         return CachedNetworkImage(
           imageUrl: widget.media.mediaUrl,
@@ -88,12 +91,18 @@ class _PhotoTileState extends State<_PhotoTile> {
               child: Image(image: imageProvider, fit: BoxFit.cover),
             );
           },
-          placeholder: (context, _) => Shimmer(child: Container(color: AppColors.cardHigh)),
-          errorWidget: (context, _, __) => Container(
-            color: AppColors.cardHigh,
-            alignment: Alignment.center,
-            child: const AppIcon(AppIcons.imageBroken, color: AppColors.textSecondary),
-          ),
+          placeholder:
+              (context, _) =>
+                  Shimmer(child: Container(color: AppColors.cardHigh)),
+          errorWidget:
+              (context, _, __) => Container(
+                color: AppColors.cardHigh,
+                alignment: Alignment.center,
+                child: const AppIcon(
+                  AppIcons.imageBroken,
+                  color: AppColors.textSecondary,
+                ),
+              ),
         );
       },
     );

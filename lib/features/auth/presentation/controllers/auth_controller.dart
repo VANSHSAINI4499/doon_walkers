@@ -17,16 +17,12 @@ class AuthController extends AsyncNotifier<void> {
   }
 
   /// Signs in with [email] and [password].
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signInWithEmailPassword(
-            email: email,
-            password: password,
-          ),
+      () => ref
+          .read(authRepositoryProvider)
+          .signInWithEmailPassword(email: email, password: password),
     );
   }
 
@@ -46,7 +42,9 @@ class AuthController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     SignUpResult? result;
     state = await AsyncValue.guard(() async {
-      result = await ref.read(authRepositoryProvider).signUpWithEmailPassword(
+      result = await ref
+          .read(authRepositoryProvider)
+          .signUpWithEmailPassword(
             email: email,
             password: password,
             fullName: fullName,
@@ -77,7 +75,9 @@ class AuthController extends AsyncNotifier<void> {
       // Best-effort: a failure here shouldn't block the user from
       // actually signing out.
       try {
-        await ref.read(pushNotificationServiceProvider).removeTokenForCurrentUser();
+        await ref
+            .read(pushNotificationServiceProvider)
+            .removeTokenForCurrentUser();
       } catch (_) {
         // Worst case: a stale token row lingers until the next device
         // that signs in on this phone reassigns it (upsert-by-token) or

@@ -37,7 +37,8 @@ class MyRegistrationsScreen extends ConsumerStatefulWidget {
   const MyRegistrationsScreen({super.key});
 
   @override
-  ConsumerState<MyRegistrationsScreen> createState() => _MyRegistrationsScreenState();
+  ConsumerState<MyRegistrationsScreen> createState() =>
+      _MyRegistrationsScreenState();
 }
 
 class _MyRegistrationsScreenState extends ConsumerState<MyRegistrationsScreen> {
@@ -84,7 +85,8 @@ class _MyRegistrationsScreenState extends ConsumerState<MyRegistrationsScreen> {
   String _emptyMessage() {
     if (_query.isNotEmpty) return 'No registrations match "$_query".';
     return switch (_group) {
-      RegistrationStatusGroup.upcoming => "You don't have any upcoming registrations.",
+      RegistrationStatusGroup.upcoming =>
+        "You don't have any upcoming registrations.",
       RegistrationStatusGroup.completed => "You haven't completed a trek yet.",
       RegistrationStatusGroup.cancelled => 'No cancelled registrations.',
     };
@@ -99,11 +101,24 @@ class _MyRegistrationsScreenState extends ConsumerState<MyRegistrationsScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-            child: ListSearchField(controller: _searchController, hint: 'Search your registrations'),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
+            child: ListSearchField(
+              controller: _searchController,
+              hint: 'Search your registrations',
+            ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              0,
+            ),
             child: AppSegmentedControl<RegistrationStatusGroup>(
               value: _group,
               onChanged: (g) => setState(() => _group = g),
@@ -115,12 +130,15 @@ class _MyRegistrationsScreenState extends ConsumerState<MyRegistrationsScreen> {
           Expanded(
             child: pageAsync.when(
               loading: () => const ListScreenSkeleton(),
-              error: (error, stack) => ListScreenError(
-                message: 'Could not load your registrations.',
-                onRetry: () => ref.invalidate(myRegistrationsPaginationProvider),
-              ),
+              error:
+                  (error, stack) => ListScreenError(
+                    message: 'Could not load your registrations.',
+                    onRetry:
+                        () => ref.invalidate(myRegistrationsPaginationProvider),
+                  ),
               data: (page) {
-                Future<void> onRefresh() => ref.refresh(myRegistrationsPaginationProvider.future);
+                Future<void> onRefresh() =>
+                    ref.refresh(myRegistrationsPaginationProvider.future);
 
                 final filtered = _filter(page.items);
 
@@ -130,8 +148,12 @@ class _MyRegistrationsScreenState extends ConsumerState<MyRegistrationsScreen> {
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        if (_group == RegistrationStatusGroup.completed) const _CompletedMilestoneBanner(),
-                        ListScreenEmpty(icon: AppIcons.hiking, message: _emptyMessage()),
+                        if (_group == RegistrationStatusGroup.completed)
+                          const _CompletedMilestoneBanner(),
+                        ListScreenEmpty(
+                          icon: AppIcons.hiking,
+                          message: _emptyMessage(),
+                        ),
                       ],
                     ),
                   );
@@ -199,7 +221,12 @@ class _CompletedMilestoneBanner extends ConsumerWidget {
     final attended = statsAsync.valueOrNull?.totalAttended;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: AppCard(
         borderColor: palette.primary.withValues(alpha: 0.4),
         child: Row(
@@ -207,8 +234,15 @@ class _CompletedMilestoneBanner extends ConsumerWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(color: palette.primarySubtle, shape: BoxShape.circle),
-              child: AppIcon(AppIcons.verified, size: 22, color: palette.primary),
+              decoration: BoxDecoration(
+                color: palette.primarySubtle,
+                shape: BoxShape.circle,
+              ),
+              child: AppIcon(
+                AppIcons.verified,
+                size: 22,
+                color: palette.primary,
+              ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -220,14 +254,18 @@ class _CompletedMilestoneBanner extends ConsumerWidget {
                     attended == null
                         ? 'Loading your trek history…'
                         : attended == 1
-                            ? "You've completed 1 trek"
-                            : "You've completed $attended treks",
-                    style: AppTextStyles.titleSmall.copyWith(color: palette.textPrimary),
+                        ? "You've completed 1 trek"
+                        : "You've completed $attended treks",
+                    style: AppTextStyles.titleSmall.copyWith(
+                      color: palette.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Verified by check-in where available.',
-                    style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: palette.textSecondary,
+                    ),
                   ),
                 ],
               ),

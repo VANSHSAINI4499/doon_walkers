@@ -35,10 +35,11 @@ class CommunityStatsSection extends ConsumerWidget {
 
     return statsAsync.when(
       loading: () => const SkeletonStatRow(),
-      error: (error, stack) => const _StatsRow(
-        stats: CommunityStats.zero,
-        notice: 'Stats unavailable right now.',
-      ),
+      error:
+          (error, stack) => const _StatsRow(
+            stats: CommunityStats.zero,
+            notice: 'Stats unavailable right now.',
+          ),
       data: (stats) => _StatsRow(stats: stats),
     );
   }
@@ -144,7 +145,12 @@ class _StatTile extends StatelessWidget {
         children: [
           AppIcon(icon, size: 26, color: accent),
           const SizedBox(height: AppSpacing.md),
-          _CountUp(value: value, suffix: suffix, animate: animate, color: accent),
+          _CountUp(
+            value: value,
+            suffix: suffix,
+            animate: animate,
+            color: accent,
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             label.toUpperCase(),

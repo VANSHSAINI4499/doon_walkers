@@ -15,8 +15,14 @@ void main() {
       };
 
       final model = UserModel.fromJson(json);
-      expect(model.avatarUrl, 'https://example.com/avatars/user-123/avatar.jpg');
-      expect(model.profileImage, 'https://example.com/avatars/user-123/avatar.jpg');
+      expect(
+        model.avatarUrl,
+        'https://example.com/avatars/user-123/avatar.jpg',
+      );
+      expect(
+        model.profileImage,
+        'https://example.com/avatars/user-123/avatar.jpg',
+      );
     });
 
     test('UserModel falls back to profile_image if avatar_url is missing', () {

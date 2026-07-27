@@ -114,9 +114,10 @@ class _StepGoalSheetState extends ConsumerState<_StepGoalSheet> {
                 _PresetChip(
                   value: preset,
                   selected: _parsed == preset,
-                  onTap: () => setState(() {
-                    _controller.text = preset.toString();
-                  }),
+                  onTap:
+                      () => setState(() {
+                        _controller.text = preset.toString();
+                      }),
                   palette: palette,
                 ),
             ],
@@ -129,9 +130,10 @@ class _StepGoalSheetState extends ConsumerState<_StepGoalSheet> {
             decoration: InputDecoration(
               labelText: 'Steps per day',
               suffixText: 'steps',
-              errorText: _controller.text.trim().isEmpty || valid
-                  ? null
-                  : 'Enter a number between 500 and 100,000',
+              errorText:
+                  _controller.text.trim().isEmpty || valid
+                      ? null
+                      : 'Enter a number between 500 and 100,000',
             ),
           ),
           const SizedBox(height: AppSpacing.xl),

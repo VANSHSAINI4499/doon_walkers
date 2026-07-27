@@ -45,7 +45,9 @@ class CommentModerationScreen extends ConsumerWidget {
         child: hiddenAsync.when(
           loading: () => const _ModerationQueueSkeleton(),
           error: (error, stack) {
-            debugPrint('CommentModerationScreen: failed to load hidden comments: $error');
+            debugPrint(
+              'CommentModerationScreen: failed to load hidden comments: $error',
+            );
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -73,7 +75,8 @@ class CommentModerationScreen extends ConsumerWidget {
             );
           },
           data: (comments) {
-            Future<void> onRefresh() => ref.refresh(hiddenCommentsProvider.future);
+            Future<void> onRefresh() =>
+                ref.refresh(hiddenCommentsProvider.future);
 
             if (comments.isEmpty) {
               return RefreshIndicator(
@@ -89,13 +92,22 @@ class CommentModerationScreen extends ConsumerWidget {
               onRefresh: onRefresh,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                ),
                 itemCount: comments.length,
-                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+                separatorBuilder:
+                    (context, index) => const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
                   return AppReveal(
                     index: index.clamp(0, 8),
-                    child: CommentTile(comment: comments[index], showTrekTitle: true),
+                    child: CommentTile(
+                      comment: comments[index],
+                      showTrekTitle: true,
+                    ),
                   );
                 },
               ),
@@ -156,25 +168,27 @@ class _ModerationQueueSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: 4,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 180, height: 16),
-              SizedBox(height: AppSpacing.sm),
-              SkeletonBox(width: 140, height: 12),
-              SizedBox(height: AppSpacing.md),
-              SkeletonBox(width: 240, height: 14),
-            ],
-          ),
-        ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder:
+            (context, index) => Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(width: 180, height: 16),
+                  SizedBox(height: AppSpacing.sm),
+                  SkeletonBox(width: 140, height: 12),
+                  SizedBox(height: AppSpacing.md),
+                  SkeletonBox(width: 240, height: 14),
+                ],
+              ),
+            ),
       ),
     );
   }

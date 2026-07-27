@@ -24,7 +24,10 @@ class GalleryRepositoryImpl implements GalleryRepository {
   GalleryRepositoryImpl(this._supabase);
 
   @override
-  Future<List<GalleryMedia>> fetchMediaForTrek(String trekId, {int? limit}) async {
+  Future<List<GalleryMedia>> fetchMediaForTrek(
+    String trekId, {
+    int? limit,
+  }) async {
     final query = _supabase
         .from(AppConstants.tableGallery)
         .select()
@@ -103,25 +106,28 @@ class GalleryRepositoryImpl implements GalleryRepository {
       bytes: bytes,
       fileExtension: fileExtension,
       cancelToken: cancelToken,
-      onProgress: onProgress == null
-          ? null
-          : (p) => onProgress(thumbnailBytes != null ? 0.15 + p * 0.85 : p),
+      onProgress:
+          onProgress == null
+              ? null
+              : (p) => onProgress(thumbnailBytes != null ? 0.15 + p * 0.85 : p),
     );
 
-    final row = await _supabase
-        .from(AppConstants.tableGallery)
-        .insert({
-          'trek_id': trekId,
-          'media_url': url,
-          'media_type': mediaType.toDbString(),
-          'caption': caption,
-          if (thumbnailUrl != null) 'thumbnail_url': thumbnailUrl,
-          if (width != null) 'width': width,
-          if (height != null) 'height': height,
-          if (uploadedAt != null) 'uploaded_at': uploadedAt.toIso8601String(),
-        })
-        .select()
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableGallery)
+            .insert({
+              'trek_id': trekId,
+              'media_url': url,
+              'media_type': mediaType.toDbString(),
+              'caption': caption,
+              if (thumbnailUrl != null) 'thumbnail_url': thumbnailUrl,
+              if (width != null) 'width': width,
+              if (height != null) 'height': height,
+              if (uploadedAt != null)
+                'uploaded_at': uploadedAt.toIso8601String(),
+            })
+            .select()
+            .single();
 
     return GalleryMediaModel.fromJson(row);
   }
@@ -133,19 +139,23 @@ class GalleryRepositoryImpl implements GalleryRepository {
     // first. Best-effort: a failed cleanup shouldn't block deleting
     // the row itself, it just leaves an orphaned file at worst.
     try {
-      final row = await _supabase
-          .from(AppConstants.tableGallery)
-          .select('media_url, thumbnail_url')
-          .eq('id', id)
-          .maybeSingle();
+      final row =
+          await _supabase
+              .from(AppConstants.tableGallery)
+              .select('media_url, thumbnail_url')
+              .eq('id', id)
+              .maybeSingle();
       final mediaUrl = row?['media_url'] as String?;
       final thumbnailUrl = row?['thumbnail_url'] as String?;
-      final paths = [
-        if (mediaUrl != null) _extractObjectPath(mediaUrl),
-        if (thumbnailUrl != null) _extractObjectPath(thumbnailUrl),
-      ].whereType<String>().toList();
+      final paths =
+          [
+            if (mediaUrl != null) _extractObjectPath(mediaUrl),
+            if (thumbnailUrl != null) _extractObjectPath(thumbnailUrl),
+          ].whereType<String>().toList();
       if (paths.isNotEmpty) {
-        await _supabase.storage.from(AppConstants.bucketTrekGallery).remove(paths);
+        await _supabase.storage
+            .from(AppConstants.bucketTrekGallery)
+            .remove(paths);
       }
     } catch (_) {
       // Orphaned file at worst — not worth failing the delete over.

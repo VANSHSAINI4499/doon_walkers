@@ -84,7 +84,10 @@ abstract class RegistrationRepository {
   Future<void> deleteRegistration(String id);
 
   /// User self-service cancellation with reason via secure RPC.
-  Future<Registration> cancelRegistration({required String id, required String reason});
+  Future<Registration> cancelRegistration({
+    required String id,
+    required String reason,
+  });
 
   /// Admin-only: sets `payment_status`.
   ///

@@ -63,9 +63,16 @@ class _LandedScreen extends StatelessWidget {
                 glowColor: AppColors.primary,
                 child: Column(
                   children: [
-                    const AppIcon(AppIcons.checkCircle, size: 40, color: AppColors.primary),
+                    const AppIcon(
+                      AppIcons.checkCircle,
+                      size: 40,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(height: AppSpacing.md),
-                    Text('Real content, already here', style: AppTextStyles.titleLarge),
+                    Text(
+                      'Real content, already here',
+                      style: AppTextStyles.titleLarge,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'This screen was built and laid out underneath the '

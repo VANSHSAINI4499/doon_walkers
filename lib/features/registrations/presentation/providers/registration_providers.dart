@@ -23,33 +23,33 @@ final allRegistrationsProvider = FutureProvider<List<Registration>>(
 
 /// A single registration by id — backs the admin detail view.
 /// `autoDispose` since detail pages are visited transiently.
-final registrationByIdProvider =
-    FutureProvider.autoDispose.family<Registration?, String>(
-  (ref, id) => ref.watch(registrationRepositoryProvider).fetchRegistrationById(id),
-  name: 'registrationByIdProvider',
-);
+final registrationByIdProvider = FutureProvider.autoDispose
+    .family<Registration?, String>(
+      (ref, id) =>
+          ref.watch(registrationRepositoryProvider).fetchRegistrationById(id),
+      name: 'registrationByIdProvider',
+    );
 
 /// Registrations for one trek — Admin Dashboard's per-trek roster.
 /// `autoDispose` since it's a transiently-visited screen, same reasoning
 /// as [registrationByIdProvider].
-final registrationsForTrekProvider =
-    FutureProvider.autoDispose.family<List<Registration>, String>(
-  (ref, trekId) => ref.watch(registrationRepositoryProvider).fetchRegistrationsForTrek(trekId),
-  name: 'registrationsForTrekProvider',
-);
+final registrationsForTrekProvider = FutureProvider.autoDispose
+    .family<List<Registration>, String>(
+      (ref, trekId) => ref
+          .watch(registrationRepositoryProvider)
+          .fetchRegistrationsForTrek(trekId),
+      name: 'registrationsForTrekProvider',
+    );
 
 /// The signed-in user's own registrations — "My Registrations" on Profile.
 ///
 /// Watches [authStateChangesProvider] so signing out (or switching
 /// accounts) refetches rather than leaving the previous user's list
 /// cached on screen.
-final myRegistrationsProvider = FutureProvider<List<Registration>>(
-  (ref) {
-    ref.watch(authStateChangesProvider);
-    return ref.watch(registrationRepositoryProvider).fetchMyRegistrations();
-  },
-  name: 'myRegistrationsProvider',
-);
+final myRegistrationsProvider = FutureProvider<List<Registration>>((ref) {
+  ref.watch(authStateChangesProvider);
+  return ref.watch(registrationRepositoryProvider).fetchMyRegistrations();
+}, name: 'myRegistrationsProvider');
 
 /// The signed-in user's 3 newest registrations — backs the "My
 /// Registrations" dashboard preview on Profile
@@ -59,13 +59,13 @@ final myRegistrationsProvider = FutureProvider<List<Registration>>(
 /// user's FULL history to compute accurate stats. Fetching 3 rather
 /// than exactly the 2 displayed is how [PreviewSection] decides
 /// whether to show "View All" without a separate COUNT query.
-final myRegistrationsPreviewProvider = FutureProvider.autoDispose<List<Registration>>(
-  (ref) {
-    ref.watch(authStateChangesProvider);
-    return ref.watch(registrationRepositoryProvider).fetchMyRegistrations(limit: 3);
-  },
-  name: 'myRegistrationsPreviewProvider',
-);
+final myRegistrationsPreviewProvider =
+    FutureProvider.autoDispose<List<Registration>>((ref) {
+      ref.watch(authStateChangesProvider);
+      return ref
+          .watch(registrationRepositoryProvider)
+          .fetchMyRegistrations(limit: 3);
+    }, name: 'myRegistrationsPreviewProvider');
 
 /// The signed-in user's registration for a given trek, or null.
 ///
@@ -73,50 +73,47 @@ final myRegistrationsPreviewProvider = FutureProvider.autoDispose<List<Registrat
 /// so up front, instead of finding out by tripping the UNIQUE constraint
 /// on submit. Returns null for a guest rather than throwing — the button
 /// shows "Register" and [AuthGuard] handles the sign-in bounce.
-final myRegistrationForTrekProvider =
-    FutureProvider.autoDispose.family<Registration?, String>(
-  (ref, trekId) async {
-    ref.watch(authStateChangesProvider);
-    final supabase = ref.watch(supabaseClientProvider);
-    if (supabase.auth.currentUser == null) return null;
-    return ref.watch(registrationRepositoryProvider).fetchMyRegistrationForTrek(trekId);
-  },
-  name: 'myRegistrationForTrekProvider',
-);
+final myRegistrationForTrekProvider = FutureProvider.autoDispose
+    .family<Registration?, String>((ref, trekId) async {
+      ref.watch(authStateChangesProvider);
+      final supabase = ref.watch(supabaseClientProvider);
+      if (supabase.auth.currentUser == null) return null;
+      return ref
+          .watch(registrationRepositoryProvider)
+          .fetchMyRegistrationForTrek(trekId);
+    }, name: 'myRegistrationForTrekProvider');
 
 /// Profile stats (Part D) — derived from [myRegistrationsProvider] rather
 /// than a separate fetch, so it always agrees with "My Registrations" and
 /// invalidates on the same triggers (register/cancel/status change).
-final myRegistrationStatsProvider = FutureProvider<RegistrationStats>(
-  (ref) async {
-    final registrations = await ref.watch(myRegistrationsProvider.future);
-    return RegistrationStats.fromRegistrations(registrations);
-  },
-  name: 'myRegistrationStatsProvider',
-);
+final myRegistrationStatsProvider = FutureProvider<RegistrationStats>((
+  ref,
+) async {
+  final registrations = await ref.watch(myRegistrationsProvider.future);
+  return RegistrationStats.fromRegistrations(registrations);
+}, name: 'myRegistrationStatsProvider');
 
 /// The signed-in user's attendance streak (Version 2, Phase C3) — see
 /// TrekkingStreak's doc. Watches [authStateChangesProvider] the same
 /// way [myRegistrationsProvider] does, so a sign-in/out is reflected
 /// without a stale cached value lingering.
-final myStreakProvider = FutureProvider<TrekkingStreak>(
-  (ref) {
-    ref.watch(authStateChangesProvider);
-    return ref.watch(registrationRepositoryProvider).fetchMyStreak();
-  },
-  name: 'myStreakProvider',
-);
+final myStreakProvider = FutureProvider<TrekkingStreak>((ref) {
+  ref.watch(authStateChangesProvider);
+  return ref.watch(registrationRepositoryProvider).fetchMyStreak();
+}, name: 'myStreakProvider');
 
 /// A short-lived signed URL for a payment-proof screenshot at [path]
 /// (the private `payment-proofs` bucket has no public URL — see
 /// RegistrationRepository.getPaymentProofSignedUrl). `autoDispose`
 /// since the signed URL expires anyway; re-fetching a fresh one on
 /// every visit to the detail screen is the point, not a waste.
-final paymentProofSignedUrlProvider =
-    FutureProvider.autoDispose.family<String, String>(
-  (ref, path) => ref.watch(registrationRepositoryProvider).getPaymentProofSignedUrl(path),
-  name: 'paymentProofSignedUrlProvider',
-);
+final paymentProofSignedUrlProvider = FutureProvider.autoDispose
+    .family<String, String>(
+      (ref, path) => ref
+          .watch(registrationRepositoryProvider)
+          .getPaymentProofSignedUrl(path),
+      name: 'paymentProofSignedUrlProvider',
+    );
 
 /// Riverpod AsyncNotifier managing registration mutations (create,
 /// cancel, admin status change). Mirrors [TrekAdminController]'s shape:
@@ -124,9 +121,9 @@ final paymentProofSignedUrlProvider =
 /// returns its own result so callers don't have to read `state.value`.
 final registrationControllerProvider =
     AsyncNotifierProvider<RegistrationController, void>(
-  RegistrationController.new,
-  name: 'registrationControllerProvider',
-);
+      RegistrationController.new,
+      name: 'registrationControllerProvider',
+    );
 
 class RegistrationController extends AsyncNotifier<void> {
   @override
@@ -178,7 +175,10 @@ class RegistrationController extends AsyncNotifier<void> {
     String? paymentScreenshotExtension,
   }) async {
     if (trek.isCompleted) {
-      state = AsyncError(const TrekRegistrationClosedException(), StackTrace.current);
+      state = AsyncError(
+        const TrekRegistrationClosedException(),
+        StackTrace.current,
+      );
       return null;
     }
 
@@ -194,7 +194,8 @@ class RegistrationController extends AsyncNotifier<void> {
         medicalNotes: medicalNotes,
       );
 
-      if (paymentScreenshotBytes == null || paymentScreenshotExtension == null) {
+      if (paymentScreenshotBytes == null ||
+          paymentScreenshotExtension == null) {
         created = registration;
         return;
       }
@@ -218,7 +219,8 @@ class RegistrationController extends AsyncNotifier<void> {
 
       // Re-fetch rather than trust the pre-upload snapshot, so the
       // returned Registration actually carries paymentScreenshotUrl.
-      created = await repo.fetchRegistrationById(registration.id) ?? registration;
+      created =
+          await repo.fetchRegistrationById(registration.id) ?? registration;
     });
     if (created != null) _invalidateRegistrationViews(trek.id);
     return created;
@@ -234,10 +236,9 @@ class RegistrationController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
-      await ref.read(registrationRepositoryProvider).cancelRegistration(
-            id: id,
-            reason: reason,
-          );
+      await ref
+          .read(registrationRepositoryProvider)
+          .cancelRegistration(id: id, reason: reason);
       success = true;
     });
     if (success) _invalidateRegistrationViews(trekId);
@@ -256,7 +257,9 @@ class RegistrationController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
-      await ref.read(registrationRepositoryProvider).updatePaymentStatus(id, status);
+      await ref
+          .read(registrationRepositoryProvider)
+          .updatePaymentStatus(id, status);
       success = true;
     });
     if (success) {
@@ -272,7 +275,10 @@ class RegistrationController extends AsyncNotifier<void> {
   /// is part of the same row. Returns the check-in moment, or null on
   /// failure — in which case [state] carries a [TrekCheckinException]
   /// with the specific reason, for the scanner screen to show.
-  Future<DateTime?> checkIn({required String trekId, required String scannedToken}) async {
+  Future<DateTime?> checkIn({
+    required String trekId,
+    required String scannedToken,
+  }) async {
     state = const AsyncLoading();
     DateTime? checkedInAt;
     state = await AsyncValue.guard(() async {

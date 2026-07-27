@@ -13,7 +13,9 @@ import 'package:go_router/go_router.dart';
 /// field doesn't have anywhere else to show it inline.
 String? _thresholdSuffixFor(ChallengeMetric metric) => switch (metric) {
   ChallengeMetric.totalDistanceKm || ChallengeMetric.dailyDistanceKm => 'km',
-  ChallengeMetric.dailySteps || ChallengeMetric.weeklySteps || ChallengeMetric.monthlySteps => 'steps',
+  ChallengeMetric.dailySteps ||
+  ChallengeMetric.weeklySteps ||
+  ChallengeMetric.monthlySteps => 'steps',
   ChallengeMetric.caloriesBurned => 'kcal',
   ChallengeMetric.activeStreakDays => 'days',
   ChallengeMetric.trekCount => null,
@@ -37,10 +39,12 @@ class AdminChallengeFormScreen extends ConsumerStatefulWidget {
   bool get isEdit => challengeId != null;
 
   @override
-  ConsumerState<AdminChallengeFormScreen> createState() => _AdminChallengeFormScreenState();
+  ConsumerState<AdminChallengeFormScreen> createState() =>
+      _AdminChallengeFormScreenState();
 }
 
-class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScreen> {
+class _AdminChallengeFormScreenState
+    extends ConsumerState<AdminChallengeFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -76,17 +80,30 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
     _endDate = challenge.endDate;
     _icon = challenge.icon ?? ChallengeIcon.keys.first;
     for (final threshold in challenge.tiers) {
-      _tierControllers[threshold.tier]?.text = _trimZero(threshold.thresholdValue);
+      _tierControllers[threshold.tier]?.text = _trimZero(
+        threshold.thresholdValue,
+      );
     }
     _prefilled = true;
   }
 
-  String _trimZero(double v) => v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
+  String _trimZero(double v) =>
+      v % 1 == 0 ? v.toStringAsFixed(0) : v.toString();
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -136,11 +153,17 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
     if (_timeWindow == ChallengeTimeWindow.customRange &&
         (_startDate == null || _endDate == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please set both a start and end date for a custom range.')),
+        const SnackBar(
+          content: Text(
+            'Please set both a start and end date for a custom range.',
+          ),
+        ),
       );
       return;
     }
-    if (_startDate != null && _endDate != null && !_endDate!.isAfter(_startDate!)) {
+    if (_startDate != null &&
+        _endDate != null &&
+        !_endDate!.isAfter(_startDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('End date must be after the start date.')),
       );
@@ -149,7 +172,9 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
 
     final tiersError = _validateTiers();
     if (tiersError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tiersError)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(tiersError)));
       return;
     }
 
@@ -162,8 +187,10 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
     };
     // customRange is the only window that persists dates; all_time/monthly
     // ignore start/end entirely (see 0022_challenges.sql / RPC filtering).
-    final startDate = _timeWindow == ChallengeTimeWindow.customRange ? _startDate : null;
-    final endDate = _timeWindow == ChallengeTimeWindow.customRange ? _endDate : null;
+    final startDate =
+        _timeWindow == ChallengeTimeWindow.customRange ? _startDate : null;
+    final endDate =
+        _timeWindow == ChallengeTimeWindow.customRange ? _endDate : null;
 
     if (widget.isEdit) {
       final success = await controller.updateChallenge(
@@ -202,7 +229,10 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(challengeAdminControllerProvider, (previous, next) {
+    ref.listen<AsyncValue<void>>(challengeAdminControllerProvider, (
+      previous,
+      next,
+    ) {
       next.whenOrNull(
         error: (error, stack) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -216,12 +246,15 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
     });
 
     if (widget.isEdit) {
-      final challengeAsync = ref.watch(challengeByIdProvider(widget.challengeId!));
+      final challengeAsync = ref.watch(
+        challengeByIdProvider(widget.challengeId!),
+      );
       return challengeAsync.when(
-        loading: () => Scaffold(
-          appBar: AppBar(title: const Text('Edit Challenge')),
-          body: const AdminFormLoadingSkeleton(),
-        ),
+        loading:
+            () => Scaffold(
+              appBar: AppBar(title: const Text('Edit Challenge')),
+              body: const AdminFormLoadingSkeleton(),
+            ),
         error: (error, stack) {
           debugPrint(
             'AdminChallengeFormScreen: failed to load challenge ${widget.challengeId}: $error',
@@ -230,7 +263,10 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
             appBar: AppBar(title: const Text('Edit Challenge')),
             body: AdminFormErrorState(
               message: 'Could not load this challenge.',
-              onRetry: () => ref.invalidate(challengeByIdProvider(widget.challengeId!)),
+              onRetry:
+                  () => ref.invalidate(
+                    challengeByIdProvider(widget.challengeId!),
+                  ),
             ),
           );
         },
@@ -278,17 +314,23 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
                               const SizedBox(height: AppSpacing.md),
                               TextFormField(
                                 controller: _titleController,
-                                decoration: const InputDecoration(labelText: 'Title'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Title',
+                                ),
                                 textInputAction: TextInputAction.next,
-                                validator: (value) => (value == null || value.trim().isEmpty)
-                                    ? 'Please enter a title'
-                                    : null,
+                                validator:
+                                    (value) =>
+                                        (value == null || value.trim().isEmpty)
+                                            ? 'Please enter a title'
+                                            : null,
                               ),
                               const SizedBox(height: AppSpacing.lg),
 
                               TextFormField(
                                 controller: _descriptionController,
-                                decoration: const InputDecoration(labelText: 'Description'),
+                                decoration: const InputDecoration(
+                                  labelText: 'Description',
+                                ),
                                 maxLines: 4,
                                 textInputAction: TextInputAction.newline,
                               ),
@@ -296,24 +338,37 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
 
                               DropdownButtonFormField<String>(
                                 value: _icon,
-                                decoration: const InputDecoration(labelText: 'Icon'),
-                                items: ChallengeIcon.keys
-                                    .map(
-                                      (key) => DropdownMenuItem(
-                                        value: key,
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            AppIcon(ChallengeIcon.forKey(key), size: 20),
-                                            const SizedBox(width: AppSpacing.sm),
-                                            Text(ChallengeIcon.labelForKey(key)),
-                                          ],
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
+                                decoration: const InputDecoration(
+                                  labelText: 'Icon',
+                                ),
+                                items:
+                                    ChallengeIcon.keys
+                                        .map(
+                                          (key) => DropdownMenuItem(
+                                            value: key,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                AppIcon(
+                                                  ChallengeIcon.forKey(key),
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(
+                                                  width: AppSpacing.sm,
+                                                ),
+                                                Text(
+                                                  ChallengeIcon.labelForKey(
+                                                    key,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
                                 onChanged: (value) {
-                                  if (value != null) setState(() => _icon = value);
+                                  if (value != null)
+                                    setState(() => _icon = value);
                                 },
                               ),
                               const SizedBox(height: AppSpacing.xl),
@@ -324,44 +379,69 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
                               const SizedBox(height: AppSpacing.md),
                               DropdownButtonFormField<ChallengeMetric>(
                                 value: _metric,
-                                decoration: const InputDecoration(labelText: 'Metric'),
-                                items: ChallengeMetric.values
-                                    .map((m) => DropdownMenuItem(value: m, child: Text(m.label)))
-                                    .toList(),
+                                decoration: const InputDecoration(
+                                  labelText: 'Metric',
+                                ),
+                                items:
+                                    ChallengeMetric.values
+                                        .map(
+                                          (m) => DropdownMenuItem(
+                                            value: m,
+                                            child: Text(m.label),
+                                          ),
+                                        )
+                                        .toList(),
                                 onChanged: (value) {
-                                  if (value != null) setState(() => _metric = value);
+                                  if (value != null)
+                                    setState(() => _metric = value);
                                 },
                               ),
                               const SizedBox(height: AppSpacing.lg),
 
                               DropdownButtonFormField<ChallengeTimeWindow>(
                                 value: _timeWindow,
-                                decoration: const InputDecoration(labelText: 'Time Window'),
-                                items: ChallengeTimeWindow.values
-                                    .map((w) => DropdownMenuItem(value: w, child: Text(w.label)))
-                                    .toList(),
+                                decoration: const InputDecoration(
+                                  labelText: 'Time Window',
+                                ),
+                                items:
+                                    ChallengeTimeWindow.values
+                                        .map(
+                                          (w) => DropdownMenuItem(
+                                            value: w,
+                                            child: Text(w.label),
+                                          ),
+                                        )
+                                        .toList(),
                                 onChanged: (value) {
-                                  if (value != null) setState(() => _timeWindow = value);
+                                  if (value != null)
+                                    setState(() => _timeWindow = value);
                                 },
                               ),
-                              if (_timeWindow == ChallengeTimeWindow.customRange) ...[
+                              if (_timeWindow ==
+                                  ChallengeTimeWindow.customRange) ...[
                                 const SizedBox(height: AppSpacing.lg),
                                 Row(
                                   children: [
                                     Expanded(
                                       child: OutlinedButton(
-                                        onPressed: () => _pickDate(isStart: true),
+                                        onPressed:
+                                            () => _pickDate(isStart: true),
                                         child: Text(
-                                          _startDate == null ? 'Start date' : _formatDate(_startDate!),
+                                          _startDate == null
+                                              ? 'Start date'
+                                              : _formatDate(_startDate!),
                                         ),
                                       ),
                                     ),
                                     const SizedBox(width: AppSpacing.md),
                                     Expanded(
                                       child: OutlinedButton(
-                                        onPressed: () => _pickDate(isStart: false),
+                                        onPressed:
+                                            () => _pickDate(isStart: false),
                                         child: Text(
-                                          _endDate == null ? 'End date' : _formatDate(_endDate!),
+                                          _endDate == null
+                                              ? 'End date'
+                                              : _formatDate(_endDate!),
                                         ),
                                       ),
                                     ),
@@ -374,19 +454,25 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
 
                               const AdminFormSectionLabel(
                                 'Tier Thresholds',
-                                subtitle: "Each tier's threshold must be greater than the one before it.",
+                                subtitle:
+                                    "Each tier's threshold must be greater than the one before it.",
                               ),
                               const SizedBox(height: AppSpacing.md),
                               for (final tier in ChallengeTier.values)
                                 Padding(
-                                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.md,
+                                  ),
                                   child: TextFormField(
                                     controller: _tierControllers[tier],
                                     decoration: InputDecoration(
                                       labelText: '${tier.label} threshold',
                                       suffixText: _thresholdSuffixFor(_metric),
                                     ),
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
                                   ),
                                 ),
                             ],
@@ -398,7 +484,8 @@ class _AdminChallengeFormScreenState extends ConsumerState<AdminChallengeFormScr
 
                     AdminFormActions(
                       isSaving: isSaving,
-                      saveLabel: widget.isEdit ? 'Save Changes' : 'Create Challenge',
+                      saveLabel:
+                          widget.isEdit ? 'Save Changes' : 'Create Challenge',
                       onSave: _submit,
                       onCancel: () => context.pop(),
                     ),

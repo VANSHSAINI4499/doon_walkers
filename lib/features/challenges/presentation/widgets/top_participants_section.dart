@@ -156,14 +156,18 @@ class _ParticipantAvatar extends StatelessWidget {
       child: SizedBox(
         width: 36,
         height: 36,
-        child: (url == null || url.isEmpty)
-            ? _Initials(name: participant.displayName, palette: palette)
-            : Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stack) =>
-                    _Initials(name: participant.displayName, palette: palette),
-              ),
+        child:
+            (url == null || url.isEmpty)
+                ? _Initials(name: participant.displayName, palette: palette)
+                : Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (context, error, stack) => _Initials(
+                        name: participant.displayName,
+                        palette: palette,
+                      ),
+                ),
       ),
     );
   }

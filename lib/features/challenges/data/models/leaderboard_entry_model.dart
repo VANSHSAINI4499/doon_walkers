@@ -2,7 +2,11 @@ import 'package:doon_walkers/features/challenges/domain/entities/leaderboard_ent
 
 /// Data model for one row returned by `get_challenge_leaderboard()`.
 class LeaderboardEntryModel extends LeaderboardEntry {
-  const LeaderboardEntryModel({required super.displayName, required super.rank, required super.score});
+  const LeaderboardEntryModel({
+    required super.displayName,
+    required super.rank,
+    required super.score,
+  });
 
   factory LeaderboardEntryModel.fromJson(Map<String, dynamic> json) {
     return LeaderboardEntryModel(

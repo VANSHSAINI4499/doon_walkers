@@ -22,10 +22,6 @@ class NotificationModel {
     required String body,
     String? targetUserId,
   }) {
-    return {
-      'title': title,
-      'body': body,
-      'target_user_id': targetUserId,
-    };
+    return {'title': title, 'body': body, 'target_user_id': targetUserId};
   }
 }

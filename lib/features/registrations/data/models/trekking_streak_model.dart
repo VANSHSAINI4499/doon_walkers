@@ -2,7 +2,10 @@ import 'package:doon_walkers/features/registrations/domain/entities/trekking_str
 
 /// Data model for the single row returned by the `get_my_streak()` RPC.
 class TrekkingStreakModel extends TrekkingStreak {
-  const TrekkingStreakModel({required super.currentMonths, required super.longestMonths});
+  const TrekkingStreakModel({
+    required super.currentMonths,
+    required super.longestMonths,
+  });
 
   factory TrekkingStreakModel.fromJson(Map<String, dynamic> json) {
     return TrekkingStreakModel(

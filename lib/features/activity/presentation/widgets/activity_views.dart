@@ -89,9 +89,7 @@ class _MetricTile extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             value,
-            style: AppTextStyles.statSmall.copyWith(
-              color: palette.textPrimary,
-            ),
+            style: AppTextStyles.statSmall.copyWith(color: palette.textPrimary),
           ),
           const SizedBox(height: 2),
           Text(
@@ -118,7 +116,11 @@ class _InsightsTeaserCard extends ConsumerWidget {
     final percentileAsync = ref.watch(dailyPercentileProvider(date));
 
     final title = percentileAsync.when(
-      data: (p) => p != null ? 'Top $p% of Doon Walkers today' : 'Community Insights',
+      data:
+          (p) =>
+              p != null
+                  ? 'Top $p% of Doon Walkers today'
+                  : 'Community Insights',
       loading: () => 'Loading insights...',
       error: (_, __) => 'Community Insights',
     );
@@ -226,9 +228,10 @@ class ActivityDayView extends ConsumerWidget {
 
     return summaryAsync.when(
       loading: () => const _ViewSkeleton(),
-      error: (e, _) => _ViewError(
-        onRetry: () => ref.invalidate(activitySummaryProvider(period)),
-      ),
+      error:
+          (e, _) => _ViewError(
+            onRetry: () => ref.invalidate(activitySummaryProvider(period)),
+          ),
       data: (summary) {
         final steps = summary.totalSteps;
         final percent = summary.goalPercent(goal);
@@ -325,16 +328,28 @@ class ActivityDayView extends ConsumerWidget {
                     children: [
                       Text('Activity Rings', style: AppTextStyles.titleSmall),
                       TextButton(
-                        onPressed: () => context.push(AppConstants.routeActivityInsights),
-                        child: Text('View Details', style: AppTextStyles.labelSmall.copyWith(color: palette.primary)),
+                        onPressed:
+                            () => context.push(
+                              AppConstants.routeActivityInsights,
+                            ),
+                        child: Text(
+                          'View Details',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: palette.primary,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
                   ActivityRings(
                     stepsProgress: summary.goalFraction(goal),
-                    caloriesProgress: (summary.totalCalories / 400.0).clamp(0.0, 1.0),
-                    activeTimeProgress: (summary.totalActiveMinutes / 30.0).clamp(0.0, 1.0),
+                    caloriesProgress: (summary.totalCalories / 400.0).clamp(
+                      0.0,
+                      1.0,
+                    ),
+                    activeTimeProgress: (summary.totalActiveMinutes / 30.0)
+                        .clamp(0.0, 1.0),
                   ),
                 ],
               ),
@@ -354,30 +369,30 @@ class ActivityDayView extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   trailingAsync.when(
-                    loading: () => const SizedBox(
-                      height: 140,
-                      child: Center(child: SkeletonBox(height: 120)),
-                    ),
-                    error: (e, _) => SizedBox(
-                      height: 60,
-                      child: Center(
-                        child: Text(
-                          "Couldn't load recent days.",
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: palette.textSecondary,
+                    loading:
+                        () => const SizedBox(
+                          height: 140,
+                          child: Center(child: SkeletonBox(height: 120)),
+                        ),
+                    error:
+                        (e, _) => SizedBox(
+                          height: 60,
+                          child: Center(
+                            child: Text(
+                              "Couldn't load recent days.",
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: palette.textSecondary,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
                     data: (rows) {
                       final byDate = {
                         for (final r in rows)
                           DateTime(r.date.year, r.date.month, r.date.day):
                               r.steps,
                       };
-                      final start = period.to.subtract(
-                        const Duration(days: 6),
-                      );
+                      final start = period.to.subtract(const Duration(days: 6));
                       return ActivityBarChart(
                         goal: goal,
                         bars: [
@@ -435,17 +450,19 @@ class ActivityWeekView extends ConsumerWidget {
 
     return summaryAsync.when(
       loading: () => const _ViewSkeleton(),
-      error: (e, _) => _ViewError(
-        onRetry: () => ref.invalidate(activitySummaryProvider(period)),
-      ),
+      error:
+          (e, _) => _ViewError(
+            onRetry: () => ref.invalidate(activitySummaryProvider(period)),
+          ),
       data: (summary) {
         final previous = previousAsync.valueOrNull;
-        final delta = previous == null
-            ? null
-            : percentChange(
-                current: summary.totalSteps,
-                previous: previous.totalSteps,
-              );
+        final delta =
+            previous == null
+                ? null
+                : percentChange(
+                  current: summary.totalSteps,
+                  previous: previous.totalSteps,
+                );
 
         return Column(
           children: [
@@ -472,7 +489,9 @@ class ActivityWeekView extends ConsumerWidget {
                     steps: summary.stepsOn(day),
                     hasData: summary.byDate.containsKey(day),
                     goal: goal,
-                    isBestDay: summary.bestDay != null && _sameDay(summary.bestDay!.date, day),
+                    isBestDay:
+                        summary.bestDay != null &&
+                        _sameDay(summary.bestDay!.date, day),
                   ),
               ],
             ),
@@ -500,17 +519,19 @@ class ActivityMonthView extends ConsumerWidget {
 
     return summaryAsync.when(
       loading: () => const _ViewSkeleton(),
-      error: (e, _) => _ViewError(
-        onRetry: () => ref.invalidate(activitySummaryProvider(period)),
-      ),
+      error:
+          (e, _) => _ViewError(
+            onRetry: () => ref.invalidate(activitySummaryProvider(period)),
+          ),
       data: (summary) {
         final previous = previousAsync.valueOrNull;
-        final delta = previous == null
-            ? null
-            : percentChange(
-                current: summary.totalSteps,
-                previous: previous.totalSteps,
-              );
+        final delta =
+            previous == null
+                ? null
+                : percentChange(
+                  current: summary.totalSteps,
+                  previous: previous.totalSteps,
+                );
 
         return Column(
           children: [
@@ -562,14 +583,17 @@ class _MonthlyGoalModule extends ConsumerWidget {
     final goalAsync = ref.watch(userGoalProvider('monthly_steps'));
 
     final target = goalAsync.when(
-      data: (data) => (data is Map && data['target_value'] != null)
-          ? (data['target_value'] as num).toInt()
-          : dailyGoal * summary.period.dayCount,
+      data:
+          (data) =>
+              (data is Map && data['target_value'] != null)
+                  ? (data['target_value'] as num).toInt()
+                  : dailyGoal * summary.period.dayCount,
       loading: () => dailyGoal * summary.period.dayCount,
       error: (_, __) => dailyGoal * summary.period.dayCount,
     );
 
-    final fraction = target <= 0 ? 0.0 : (summary.totalSteps / target).clamp(0.0, 1.0);
+    final fraction =
+        target <= 0 ? 0.0 : (summary.totalSteps / target).clamp(0.0, 1.0);
     final percent = (fraction * 100).round();
 
     return AppCard(
@@ -582,7 +606,8 @@ class _MonthlyGoalModule extends ConsumerWidget {
               Text('Monthly Goal Progress', style: AppTextStyles.titleSmall),
               IconButton(
                 icon: const AppIcon(AppIcons.forward, size: 18),
-                onPressed: () => context.push(AppConstants.routeMonthlyGoalProgress),
+                onPressed:
+                    () => context.push(AppConstants.routeMonthlyGoalProgress),
                 tooltip: 'Goal Details',
               ),
             ],
@@ -842,12 +867,14 @@ List<_WeekSpan> _weeksIn(ActivityPeriod period) {
     var end = start.add(Duration(days: daysLeftInWeek - 1));
     if (end.isAfter(period.to)) end = period.to;
 
-    out.add(_WeekSpan(
-      label: 'Week $weekIndex',
-      range: '${start.day}–${end.day} ${ActivityFormat.monthShort(start)}',
-      start: start,
-      end: end,
-    ));
+    out.add(
+      _WeekSpan(
+        label: 'Week $weekIndex',
+        range: '${start.day}–${end.day} ${ActivityFormat.monthShort(start)}',
+        start: start,
+        end: end,
+      ),
+    );
 
     weekIndex++;
     start = end.add(const Duration(days: 1));

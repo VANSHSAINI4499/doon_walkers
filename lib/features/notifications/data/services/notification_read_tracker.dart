@@ -52,9 +52,10 @@ class NotificationReadTracker {
     // from the end drops the oldest ids — and an id old enough to be
     // trimmed is one whose notification is far past the point anyone would
     // notice it flipping back to unread.
-    final trimmed = merged.length > _maxTrackedIds
-        ? merged.toList().sublist(0, _maxTrackedIds)
-        : merged.toList();
+    final trimmed =
+        merged.length > _maxTrackedIds
+            ? merged.toList().sublist(0, _maxTrackedIds)
+            : merged.toList();
 
     await _prefs.setStringList(_key(userId), trimmed);
     return true;

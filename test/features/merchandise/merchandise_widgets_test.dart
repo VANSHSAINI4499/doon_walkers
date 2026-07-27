@@ -29,8 +29,12 @@ Product _product({
   variants: variants,
 );
 
-ProductVariant _variant(String size, int stock) =>
-    ProductVariant(id: 'v-$size', productId: 'p1', size: size, stockQuantity: stock);
+ProductVariant _variant(String size, int stock) => ProductVariant(
+  id: 'v-$size',
+  productId: 'p1',
+  size: size,
+  stockQuantity: stock,
+);
 
 Widget _host(Widget child) => MaterialApp(
   theme: AppTheme.dark,
@@ -41,32 +45,54 @@ Widget _host(Widget child) => MaterialApp(
 
 void main() {
   group('ProductCard draft marker', () {
-    testWidgets('admin view of an inactive product shows Draft', (tester) async {
-      await tester.pumpWidget(_host(
-        ProductCard(product: _product(active: false), onTap: () {}, adminActions: const SizedBox(width: 24, height: 24)),
-      ));
+    testWidgets('admin view of an inactive product shows Draft', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          ProductCard(
+            product: _product(active: false),
+            onTap: () {},
+            adminActions: const SizedBox(width: 24, height: 24),
+          ),
+        ),
+      );
       await tester.pump();
       expect(find.text('Draft'), findsOneWidget);
     });
 
-    testWidgets('non-admin view of an inactive product shows no Draft', (tester) async {
-      await tester.pumpWidget(_host(
-        ProductCard(product: _product(active: false), onTap: () {}),
-      ));
+    testWidgets('non-admin view of an inactive product shows no Draft', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(ProductCard(product: _product(active: false), onTap: () {})),
+      );
       await tester.pump();
       expect(find.text('Draft'), findsNothing);
     });
 
-    testWidgets('admin view of an active product shows no Draft', (tester) async {
-      await tester.pumpWidget(_host(
-        ProductCard(product: _product(active: true), onTap: () {}, adminActions: const SizedBox(width: 24, height: 24)),
-      ));
+    testWidgets('admin view of an active product shows no Draft', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          ProductCard(
+            product: _product(active: true),
+            onTap: () {},
+            adminActions: const SizedBox(width: 24, height: 24),
+          ),
+        ),
+      );
       await tester.pump();
       expect(find.text('Draft'), findsNothing);
     });
 
-    testWidgets('shows category and stock badges and the price', (tester) async {
-      await tester.pumpWidget(_host(ProductCard(product: _product(), onTap: () {})));
+    testWidgets('shows category and stock badges and the price', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(ProductCard(product: _product(), onTap: () {})),
+      );
       await tester.pump();
       expect(find.text('Apparel'), findsOneWidget);
       expect(find.text('In Stock'), findsOneWidget);
@@ -76,32 +102,52 @@ void main() {
 
   group('ProductBuyButton stock gating', () {
     testWidgets('in-stock (no variants) → enabled Buy Now', (tester) async {
-      await tester.pumpWidget(_host(ProductBuyButton(product: _product(stock: 3))));
+      await tester.pumpWidget(
+        _host(ProductBuyButton(product: _product(stock: 3))),
+      );
       await tester.pump();
       expect(find.text('Buy Now'), findsOneWidget);
       expect(find.text('Out of Stock'), findsNothing);
     });
 
     testWidgets('out-of-stock (no variants) → Out of Stock', (tester) async {
-      await tester.pumpWidget(_host(ProductBuyButton(product: _product(stock: 0))));
+      await tester.pumpWidget(
+        _host(ProductBuyButton(product: _product(stock: 0))),
+      );
       await tester.pump();
       expect(find.text('Out of Stock'), findsOneWidget);
       expect(find.text('Buy Now'), findsNothing);
     });
 
-    testWidgets('any in-stock variant → Buy Now (per-variant stock rule)', (tester) async {
-      await tester.pumpWidget(_host(ProductBuyButton(
-        // The product-level stockQuantity is ignored once variants exist.
-        product: _product(stock: 0, variants: [_variant('S', 0), _variant('M', 2)]),
-      )));
+    testWidgets('any in-stock variant → Buy Now (per-variant stock rule)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          ProductBuyButton(
+            // The product-level stockQuantity is ignored once variants exist.
+            product: _product(
+              stock: 0,
+              variants: [_variant('S', 0), _variant('M', 2)],
+            ),
+          ),
+        ),
+      );
       await tester.pump();
       expect(find.text('Buy Now'), findsOneWidget);
     });
 
     testWidgets('all variants out of stock → Out of Stock', (tester) async {
-      await tester.pumpWidget(_host(ProductBuyButton(
-        product: _product(stock: 99, variants: [_variant('S', 0), _variant('M', 0)]),
-      )));
+      await tester.pumpWidget(
+        _host(
+          ProductBuyButton(
+            product: _product(
+              stock: 99,
+              variants: [_variant('S', 0), _variant('M', 0)],
+            ),
+          ),
+        ),
+      );
       await tester.pump();
       expect(find.text('Out of Stock'), findsOneWidget);
     });

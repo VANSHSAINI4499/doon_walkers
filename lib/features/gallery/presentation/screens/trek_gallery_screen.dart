@@ -17,7 +17,11 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 /// based masonry, so it stays smooth whether the trek has 50 items or
 /// 500 (requirement 9).
 class TrekGalleryScreen extends ConsumerStatefulWidget {
-  const TrekGalleryScreen({super.key, required this.trekId, required this.trekTitle});
+  const TrekGalleryScreen({
+    super.key,
+    required this.trekId,
+    required this.trekTitle,
+  });
 
   final String trekId;
   final String trekTitle;
@@ -38,7 +42,9 @@ class _TrekGalleryScreenState extends ConsumerState<TrekGalleryScreen> {
   void _maybeLoadMore() {
     if (!_scrollController.hasClients) return;
     if (_scrollController.position.extentAfter < 600) {
-      ref.read(trekGalleryPaginationProvider(widget.trekId).notifier).loadMore();
+      ref
+          .read(trekGalleryPaginationProvider(widget.trekId).notifier)
+          .loadMore();
     }
   }
 
@@ -56,35 +62,45 @@ class _TrekGalleryScreenState extends ConsumerState<TrekGalleryScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.trekTitle)),
-      floatingActionButton: isAdmin
-          ? FloatingActionButton(
-              onPressed: () => showGalleryUploadSheet(context, trekId: widget.trekId),
-              child: const AppIcon(AppIcons.addPhoto, color: AppColors.onPrimary),
-            )
-          : null,
+      floatingActionButton:
+          isAdmin
+              ? FloatingActionButton(
+                onPressed:
+                    () =>
+                        showGalleryUploadSheet(context, trekId: widget.trekId),
+                child: const AppIcon(
+                  AppIcons.addPhoto,
+                  color: AppColors.onPrimary,
+                ),
+              )
+              : null,
       body: pageAsync.when(
         loading: () => const _GalleryScreenSkeleton(),
-        error: (error, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Could not load this gallery.',
-                  style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+        error:
+            (error, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Could not load this gallery.',
+                      style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    PremiumButton(
+                      label: 'Retry',
+                      variant: PremiumButtonVariant.ghost,
+                      size: PremiumButtonSize.small,
+                      onPressed:
+                          () => ref.invalidate(
+                            trekGalleryPaginationProvider(widget.trekId),
+                          ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.md),
-                PremiumButton(
-                  label: 'Retry',
-                  variant: PremiumButtonVariant.ghost,
-                  size: PremiumButtonSize.small,
-                  onPressed: () => ref.invalidate(trekGalleryPaginationProvider(widget.trekId)),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
         data: (page) {
           final items = page.items;
           if (items.isEmpty) {
@@ -113,14 +129,18 @@ class _TrekGalleryScreenState extends ConsumerState<TrekGalleryScreen> {
 
               final item = items[index];
               void openTapped() => openMediaCarousel(
-                    context,
-                    trekId: widget.trekId,
-                    trekTitle: widget.trekTitle,
-                    initialIndex: index,
-                  );
+                context,
+                trekId: widget.trekId,
+                trekTitle: widget.trekTitle,
+                initialIndex: index,
+              );
 
               return isAdmin
-                  ? MediaAdminOverlay(media: item, trekTitle: widget.trekTitle, onTap: openTapped)
+                  ? MediaAdminOverlay(
+                    media: item,
+                    trekTitle: widget.trekTitle,
+                    onTap: openTapped,
+                  )
                   : GalleryTile(media: item, onTap: openTapped);
             },
           );
@@ -144,8 +164,11 @@ class _GalleryScreenSkeleton extends StatelessWidget {
         mainAxisSpacing: AppSpacing.sm,
         crossAxisSpacing: AppSpacing.sm,
         itemCount: _heights.length,
-        itemBuilder: (context, index) =>
-            SkeletonBox(height: _heights[index], borderRadius: AppRadius.sm),
+        itemBuilder:
+            (context, index) => SkeletonBox(
+              height: _heights[index],
+              borderRadius: AppRadius.sm,
+            ),
       ),
     );
   }

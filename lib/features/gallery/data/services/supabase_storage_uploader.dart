@@ -56,18 +56,20 @@ class SupabaseStorageUploader {
       data: bytes,
       options: Options(
         headers: {
-          'Authorization': 'Bearer ${session?.accessToken ?? EnvConfig.supabaseAnonKey}',
+          'Authorization':
+              'Bearer ${session?.accessToken ?? EnvConfig.supabaseAnonKey}',
           'apikey': EnvConfig.supabaseAnonKey,
           'Content-Length': bytes.length.toString(),
           'x-upsert': 'false',
         },
         contentType: mimeTypeFor(fileExtension),
       ),
-      onSendProgress: onProgress == null
-          ? null
-          : (sent, total) {
-              if (total > 0) onProgress(sent / total);
-            },
+      onSendProgress:
+          onProgress == null
+              ? null
+              : (sent, total) {
+                if (total > 0) onProgress(sent / total);
+              },
       cancelToken: cancelToken,
     );
 

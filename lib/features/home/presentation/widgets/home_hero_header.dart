@@ -25,9 +25,10 @@ class HomeHeroHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider).valueOrNull;
-    final tagline = settings == null || settings.orgTagline.isEmpty
-        ? AppConstants.appTagline
-        : settings.orgTagline;
+    final tagline =
+        settings == null || settings.orgTagline.isEmpty
+            ? AppConstants.appTagline
+            : settings.orgTagline;
 
     return SizedBox(
       // Trimmed from 300 — the greeting card is bottom-anchored, so a
@@ -53,9 +54,7 @@ class HomeHeroHeader extends ConsumerWidget {
                 AppSpacing.lg,
                 AppSpacing.xl,
               ),
-              child: AppReveal(
-                child: _GreetingCard(tagline: tagline),
-              ),
+              child: AppReveal(child: _GreetingCard(tagline: tagline)),
             ),
           ),
         ],
@@ -88,7 +87,11 @@ class _GreetingCard extends StatelessWidget {
                   color: palette.primarySubtle,
                   shape: BoxShape.circle,
                 ),
-                child: AppIcon(AppIcons.hiking, size: 20, color: palette.primary),
+                child: AppIcon(
+                  AppIcons.hiking,
+                  size: 20,
+                  color: palette.primary,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Text(
@@ -130,18 +133,11 @@ class _HeroBackdrop extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            AppColors.background,
-            Color(0xFF0B1A16),
-            Color(0xFF0E2622),
-          ],
+          colors: [AppColors.background, Color(0xFF0B1A16), Color(0xFF0E2622)],
           stops: [0, 0.5, 1],
         ),
       ),
-      child: CustomPaint(
-        painter: _MountainPainter(),
-        size: Size.infinite,
-      ),
+      child: CustomPaint(painter: _MountainPainter(), size: Size.infinite),
     );
   }
 }
@@ -246,16 +242,18 @@ class _MountainPainter extends CustomPainter {
     canvas.drawPath(path, Paint()..color = color);
 
     if (snow) {
-      final snowPaint = Paint()..color = AppColors.white.withValues(alpha: 0.06);
+      final snowPaint =
+          Paint()..color = AppColors.white.withValues(alpha: 0.06);
       for (var i = 0; i < peaks.length; i++) {
         final x = step * i;
         final y = baseline - h * peaks[i];
         if (peaks[i] < 0.3) continue; // only the taller peaks get snow
-        final cap = Path()
-          ..moveTo(x, y)
-          ..lineTo(x - 10, y + 16)
-          ..lineTo(x + 10, y + 16)
-          ..close();
+        final cap =
+            Path()
+              ..moveTo(x, y)
+              ..lineTo(x - 10, y + 16)
+              ..lineTo(x + 10, y + 16)
+              ..close();
         canvas.drawPath(cap, snowPaint);
       }
     }

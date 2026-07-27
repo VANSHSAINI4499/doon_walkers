@@ -32,7 +32,8 @@ class ProductAdminActions extends ConsumerStatefulWidget {
   final Color? iconColor;
 
   @override
-  ConsumerState<ProductAdminActions> createState() => _ProductAdminActionsState();
+  ConsumerState<ProductAdminActions> createState() =>
+      _ProductAdminActionsState();
 }
 
 class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
@@ -41,28 +42,29 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete product?'),
-        content: Text(
-          'This permanently deletes "${widget.product.name}", including its '
-          'photos and sizes. This cannot be undone.',
-        ),
-        actions: [
-          PremiumButton(
-            label: 'Cancel',
-            variant: PremiumButtonVariant.glass,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Delete product?'),
+            content: Text(
+              'This permanently deletes "${widget.product.name}", including its '
+              'photos and sizes. This cannot be undone.',
+            ),
+            actions: [
+              PremiumButton(
+                label: 'Cancel',
+                variant: PremiumButtonVariant.glass,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+              ),
+              PremiumButton(
+                label: 'Delete',
+                icon: AppIcons.delete,
+                variant: PremiumButtonVariant.danger,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+            ],
           ),
-          PremiumButton(
-            label: 'Delete',
-            icon: AppIcons.delete,
-            variant: PremiumButtonVariant.danger,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true || !mounted) return;
@@ -125,41 +127,57 @@ class _ProductAdminActionsState extends ConsumerState<ProductAdminActions> {
         child: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: palette.primary),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: palette.primary,
+          ),
         ),
       );
     }
 
     return PopupMenuButton<String>(
       tooltip: 'Admin actions',
-      icon: AppIcon(AppIcons.more, color: widget.iconColor ?? palette.textPrimary),
+      icon: AppIcon(
+        AppIcons.more,
+        color: widget.iconColor ?? palette.textPrimary,
+      ),
       onSelected: (value) {
         switch (value) {
           case 'edit':
-            context.push(AppConstants.merchandiseEditLocation(widget.product.id));
+            context.push(
+              AppConstants.merchandiseEditLocation(widget.product.id),
+            );
           case 'toggle':
             _toggleActive();
           case 'delete':
             _confirmDelete();
         }
       },
-      itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 'edit',
-          child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
-        ),
-        PopupMenuItem(
-          value: 'toggle',
-          child: _MenuRow(
-            icon: widget.product.isActive ? AppIcons.hidden : AppIcons.visible,
-            label: widget.product.isActive ? 'Deactivate' : 'Activate',
-          ),
-        ),
-        PopupMenuItem(
-          value: 'delete',
-          child: _MenuRow(icon: AppIcons.delete, label: 'Delete', color: palette.danger),
-        ),
-      ],
+      itemBuilder:
+          (context) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
+            ),
+            PopupMenuItem(
+              value: 'toggle',
+              child: _MenuRow(
+                icon:
+                    widget.product.isActive
+                        ? AppIcons.hidden
+                        : AppIcons.visible,
+                label: widget.product.isActive ? 'Deactivate' : 'Activate',
+              ),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: _MenuRow(
+                icon: AppIcons.delete,
+                label: 'Delete',
+                color: palette.danger,
+              ),
+            ),
+          ],
     );
   }
 }
@@ -179,7 +197,10 @@ class _MenuRow extends StatelessWidget {
       children: [
         AppIcon(icon, size: 20, color: tint),
         const SizedBox(width: AppSpacing.md),
-        Text(label, style: AppTextStyles.tinted(AppTextStyles.bodyMedium, tint)),
+        Text(
+          label,
+          style: AppTextStyles.tinted(AppTextStyles.bodyMedium, tint),
+        ),
       ],
     );
   }

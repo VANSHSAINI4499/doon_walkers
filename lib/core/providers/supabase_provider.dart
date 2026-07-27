@@ -18,41 +18,35 @@ final supabaseClientProvider = Provider<SupabaseClient>(
 );
 
 /// Exposes the raw Supabase [AuthState] stream.
-final authStateChangesProvider = StreamProvider<AuthState>(
-  (ref) {
-    final supabase = ref.watch(supabaseClientProvider);
-    return supabase.auth.onAuthStateChange;
-  },
-  name: 'authStateChangesProvider',
-);
+final authStateChangesProvider = StreamProvider<AuthState>((ref) {
+  final supabase = ref.watch(supabaseClientProvider);
+  return supabase.auth.onAuthStateChange;
+}, name: 'authStateChangesProvider');
 
 /// Exposes the current user's profile row from `public.users` (`role`, `name`, etc.).
 ///
 /// Automatically streams updates (such as manual admin role assignment in Supabase dashboard)
 /// or yields null if no user is signed in.
-final currentUserProvider = StreamProvider<UserModel?>(
-  (ref) async* {
-    ref.watch(authStateChangesProvider);
-    final supabase = ref.watch(supabaseClientProvider);
+final currentUserProvider = StreamProvider<UserModel?>((ref) async* {
+  ref.watch(authStateChangesProvider);
+  final supabase = ref.watch(supabaseClientProvider);
 
-    final sessionUser = supabase.auth.currentUser;
-    if (sessionUser == null) {
-      yield null;
-      return;
-    }
+  final sessionUser = supabase.auth.currentUser;
+  if (sessionUser == null) {
+    yield null;
+    return;
+  }
 
-    // Stream live row updates from public.users table
-    yield* supabase
-        .from('users')
-        .stream(primaryKey: ['id'])
-        .eq('id', sessionUser.id)
-        .map((rows) {
-          if (rows.isEmpty) return null;
-          return UserModel.fromJson(rows.first);
-        });
-  },
-  name: 'currentUserProvider',
-);
+  // Stream live row updates from public.users table
+  yield* supabase
+      .from('users')
+      .stream(primaryKey: ['id'])
+      .eq('id', sessionUser.id)
+      .map((rows) {
+        if (rows.isEmpty) return null;
+        return UserModel.fromJson(rows.first);
+      });
+}, name: 'currentUserProvider');
 
 /// Derived boolean provider checking if the active user has the `admin` role.
 ///
@@ -64,13 +58,10 @@ final currentUserProvider = StreamProvider<UserModel?>(
 /// last-known [UserModel] through that transition via `copyWithPrevious`,
 /// so `.value` still reflects the real role until a *confirmed* new value
 /// (or a sign-out) replaces it.
-final isAdminProvider = Provider<bool>(
-  (ref) {
-    final userAsync = ref.watch(currentUserProvider);
-    return userAsync.value?.role == UserRole.admin;
-  },
-  name: 'isAdminProvider',
-);
+final isAdminProvider = Provider<bool>((ref) {
+  final userAsync = ref.watch(currentUserProvider);
+  return userAsync.value?.role == UserRole.admin;
+}, name: 'isAdminProvider');
 
 /// Derived boolean provider for the signed-in user's phone verification
 /// status (Version 2, Phase Auth Upgrade) — same `.value` (not
@@ -78,13 +69,10 @@ final isAdminProvider = Provider<bool>(
 /// transient stream hiccup doesn't flip protected-action gating off. False
 /// for a guest (no [currentUserProvider] value at all), same as
 /// [isAdminProvider].
-final isPhoneVerifiedProvider = Provider<bool>(
-  (ref) {
-    final userAsync = ref.watch(currentUserProvider);
-    return userAsync.value?.phoneVerified ?? false;
-  },
-  name: 'isPhoneVerifiedProvider',
-);
+final isPhoneVerifiedProvider = Provider<bool>((ref) {
+  final userAsync = ref.watch(currentUserProvider);
+  return userAsync.value?.phoneVerified ?? false;
+}, name: 'isPhoneVerifiedProvider');
 
 /// Whether a session exists at all — guest vs. signed-in, regardless of
 /// role. Reads the raw session (not [currentUserProvider]'s `.value`)
@@ -93,13 +81,10 @@ final isPhoneVerifiedProvider = Provider<bool>(
 /// Challenges tab needs this the moment a guest lands on it, not a
 /// beat later. Watches [authStateChangesProvider] purely to re-run on
 /// every auth transition; the actual read is always the live session.
-final isSignedInProvider = Provider<bool>(
-  (ref) {
-    ref.watch(authStateChangesProvider);
-    return Supabase.instance.client.auth.currentUser != null;
-  },
-  name: 'isSignedInProvider',
-);
+final isSignedInProvider = Provider<bool>((ref) {
+  ref.watch(authStateChangesProvider);
+  return Supabase.instance.client.auth.currentUser != null;
+}, name: 'isSignedInProvider');
 
 /// The signed-in user's auth id, or null for a guest.
 ///
@@ -109,13 +94,10 @@ final isSignedInProvider = Provider<bool>(
 /// key device-local state per user — notification read state, the
 /// challenge celebration baseline — without depending on the profile row
 /// having loaded.
-final currentUserIdProvider = Provider<String?>(
-  (ref) {
-    ref.watch(authStateChangesProvider);
-    return Supabase.instance.client.auth.currentUser?.id;
-  },
-  name: 'currentUserIdProvider',
-);
+final currentUserIdProvider = Provider<String?>((ref) {
+  ref.watch(authStateChangesProvider);
+  return Supabase.instance.client.auth.currentUser?.id;
+}, name: 'currentUserIdProvider');
 
 /// Example trivial provider — demonstrates the Riverpod pattern works.
 ///

@@ -46,18 +46,19 @@ class MerchInquiryRepositoryImpl implements MerchInquiryRepository {
     String? note,
     required String phoneNumber,
   }) async {
-    final row = await _supabase
-        .from(AppConstants.tableMerchInquiries)
-        .insert({
-          'user_id': _currentUserId,
-          'product_id': productId,
-          'variant_id': variantId,
-          'quantity': quantity,
-          'note': note,
-          'phone_number': phoneNumber,
-        })
-        .select(_selectWithJoins)
-        .single();
+    final row =
+        await _supabase
+            .from(AppConstants.tableMerchInquiries)
+            .insert({
+              'user_id': _currentUserId,
+              'product_id': productId,
+              'variant_id': variantId,
+              'quantity': quantity,
+              'note': note,
+              'phone_number': phoneNumber,
+            })
+            .select(_selectWithJoins)
+            .single();
     return MerchInquiryModel.fromJson(row);
   }
 
@@ -101,6 +102,7 @@ class MerchInquiryRepositoryImpl implements MerchInquiryRepository {
   Future<void> updateStatus(String id, MerchInquiryStatus status) async {
     await _supabase
         .from(AppConstants.tableMerchInquiries)
-        .update({'status': status.toDbString()}).eq('id', id);
+        .update({'status': status.toDbString()})
+        .eq('id', id);
   }
 }

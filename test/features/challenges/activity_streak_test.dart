@@ -11,13 +11,10 @@ import 'package:flutter_test/flutter_test.dart';
 /// Fixed "today" so no test depends on the wall clock.
 final _today = DateTime(2026, 7, 26);
 
-ActiveDay _day(int daysAgo, {int steps = 5000}) => ActiveDay(
-  date: _today.subtract(Duration(days: daysAgo)),
-  steps: steps,
-);
+ActiveDay _day(int daysAgo, {int steps = 5000}) =>
+    ActiveDay(date: _today.subtract(Duration(days: daysAgo)), steps: steps);
 
-int _streak(List<ActiveDay> days) =>
-    computeActiveStreak(days, today: _today);
+int _streak(List<ActiveDay> days) => computeActiveStreak(days, today: _today);
 
 void main() {
   group('computeActiveStreak', () {
@@ -49,11 +46,7 @@ void main() {
     test('only the latest run counts, not the longest', () {
       // A 5-day run last month does not resurrect a broken streak, and
       // does not get added to the current one.
-      final days = [
-        _day(0),
-        _day(1),
-        for (var i = 20; i < 25; i++) _day(i),
-      ];
+      final days = [_day(0), _day(1), for (var i = 20; i < 25; i++) _day(i)];
       expect(_streak(days), 2);
     });
 

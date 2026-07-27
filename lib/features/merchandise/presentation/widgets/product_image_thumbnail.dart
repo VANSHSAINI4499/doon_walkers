@@ -24,10 +24,9 @@ class ProductImageThumbnail extends StatelessWidget {
           child: Image.network(
             imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stack) => AppIcon(
-              AppIcons.imageBroken,
-              color: palette.textSecondary,
-            ),
+            errorBuilder:
+                (context, error, stack) =>
+                    AppIcon(AppIcons.imageBroken, color: palette.textSecondary),
           ),
         ),
       ),

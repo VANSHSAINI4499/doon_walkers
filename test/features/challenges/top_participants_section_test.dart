@@ -30,7 +30,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        challengeTopParticipantsProvider(_challenge.id).overrideWith((ref) async => participants),
+        challengeTopParticipantsProvider(
+          _challenge.id,
+        ).overrideWith((ref) async => participants),
       ],
       child: MaterialApp(
         theme: AppTheme.dark,
@@ -55,42 +57,46 @@ void main() {
       );
     });
 
-    testWidgets('renders display name, level badge, and points chip for each row', (
+    testWidgets(
+      'renders display name, level badge, and points chip for each row',
+      (tester) async {
+        await _pump(
+          tester,
+          participants: const [
+            ChallengeTopParticipant(
+              userId: 'u1',
+              displayName: 'Asha',
+              avatarUrl: null,
+              score: 8200,
+              totalPoints: 640,
+              level: 3,
+            ),
+            ChallengeTopParticipant(
+              userId: 'u2',
+              displayName: 'Rohit',
+              avatarUrl: 'https://example.com/avatar.png',
+              score: 6100,
+              totalPoints: 210,
+              level: 2,
+            ),
+          ],
+        );
+
+        expect(find.text('Asha'), findsOneWidget);
+        expect(find.text('Rohit'), findsOneWidget);
+        expect(find.text('640 pts'), findsOneWidget);
+        expect(find.text('210 pts'), findsOneWidget);
+        expect(find.byType(LevelBadge), findsNWidgets(2));
+
+        final badges =
+            tester.widgetList<LevelBadge>(find.byType(LevelBadge)).toList();
+        expect(badges.map((b) => b.level), containsAll([3, 2]));
+      },
+    );
+
+    testWidgets('a participant with no avatar URL falls back to initials', (
       tester,
     ) async {
-      await _pump(
-        tester,
-        participants: const [
-          ChallengeTopParticipant(
-            userId: 'u1',
-            displayName: 'Asha',
-            avatarUrl: null,
-            score: 8200,
-            totalPoints: 640,
-            level: 3,
-          ),
-          ChallengeTopParticipant(
-            userId: 'u2',
-            displayName: 'Rohit',
-            avatarUrl: 'https://example.com/avatar.png',
-            score: 6100,
-            totalPoints: 210,
-            level: 2,
-          ),
-        ],
-      );
-
-      expect(find.text('Asha'), findsOneWidget);
-      expect(find.text('Rohit'), findsOneWidget);
-      expect(find.text('640 pts'), findsOneWidget);
-      expect(find.text('210 pts'), findsOneWidget);
-      expect(find.byType(LevelBadge), findsNWidgets(2));
-
-      final badges = tester.widgetList<LevelBadge>(find.byType(LevelBadge)).toList();
-      expect(badges.map((b) => b.level), containsAll([3, 2]));
-    });
-
-    testWidgets('a participant with no avatar URL falls back to initials', (tester) async {
       await _pump(
         tester,
         participants: const [
@@ -109,29 +115,33 @@ void main() {
       expect(find.byType(Image), findsNothing);
     });
 
-    testWidgets('a participant with an avatar URL attempts to render an Image', (tester) async {
-      await _pump(
-        tester,
-        participants: const [
-          ChallengeTopParticipant(
-            userId: 'u1',
-            displayName: 'Zara',
-            avatarUrl: 'https://example.com/avatar.png',
-            score: 100,
-            totalPoints: 50,
-            level: 1,
-          ),
-        ],
-      );
-      expect(find.byType(Image), findsOneWidget);
-    });
+    testWidgets(
+      'a participant with an avatar URL attempts to render an Image',
+      (tester) async {
+        await _pump(
+          tester,
+          participants: const [
+            ChallengeTopParticipant(
+              userId: 'u1',
+              displayName: 'Zara',
+              avatarUrl: 'https://example.com/avatar.png',
+              score: 100,
+              totalPoints: 50,
+              level: 1,
+            ),
+          ],
+        );
+        expect(find.byType(Image), findsOneWidget);
+      },
+    );
 
     testWidgets('shows an error message if the provider fails', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            challengeTopParticipantsProvider(_challenge.id)
-                .overrideWith((ref) async => throw Exception('boom')),
+            challengeTopParticipantsProvider(
+              _challenge.id,
+            ).overrideWith((ref) async => throw Exception('boom')),
           ],
           child: MaterialApp(
             theme: AppTheme.dark,

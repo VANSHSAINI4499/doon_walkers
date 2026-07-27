@@ -16,7 +16,11 @@ import 'package:go_router/go_router.dart';
 /// onto the design system. The gating, the mutations, and the pending
 /// state are unchanged.
 class ChallengeAdminActions extends ConsumerStatefulWidget {
-  const ChallengeAdminActions({super.key, required this.challenge, this.iconColor});
+  const ChallengeAdminActions({
+    super.key,
+    required this.challenge,
+    this.iconColor,
+  });
 
   final Challenge challenge;
 
@@ -25,7 +29,8 @@ class ChallengeAdminActions extends ConsumerStatefulWidget {
   final Color? iconColor;
 
   @override
-  ConsumerState<ChallengeAdminActions> createState() => _ChallengeAdminActionsState();
+  ConsumerState<ChallengeAdminActions> createState() =>
+      _ChallengeAdminActionsState();
 }
 
 class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
@@ -34,28 +39,29 @@ class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete challenge?'),
-        content: Text(
-          'This permanently deletes "${widget.challenge.title}", including its '
-          'tier thresholds. This cannot be undone.',
-        ),
-        actions: [
-          AppButton(
-            label: 'Cancel',
-            variant: AppButtonVariant.glass,
-            size: AppButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Delete challenge?'),
+            content: Text(
+              'This permanently deletes "${widget.challenge.title}", including its '
+              'tier thresholds. This cannot be undone.',
+            ),
+            actions: [
+              AppButton(
+                label: 'Cancel',
+                variant: AppButtonVariant.glass,
+                size: AppButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+              ),
+              AppButton(
+                label: 'Delete',
+                icon: AppIcons.delete,
+                variant: AppButtonVariant.danger,
+                size: AppButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+            ],
           ),
-          AppButton(
-            label: 'Delete',
-            icon: AppIcons.delete,
-            variant: AppButtonVariant.danger,
-            size: AppButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true || !mounted) return;
@@ -114,34 +120,40 @@ class _ChallengeAdminActionsState extends ConsumerState<ChallengeAdminActions> {
       onSelected: (value) {
         switch (value) {
           case 'edit':
-            context.push(AppConstants.adminChallengeEditLocation(widget.challenge.id));
+            context.push(
+              AppConstants.adminChallengeEditLocation(widget.challenge.id),
+            );
           case 'toggle':
             _toggleActive();
           case 'delete':
             _confirmDelete();
         }
       },
-      itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 'edit',
-          child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
-        ),
-        PopupMenuItem(
-          value: 'toggle',
-          child: _MenuRow(
-            icon: widget.challenge.isActive ? AppIcons.hidden : AppIcons.visible,
-            label: widget.challenge.isActive ? 'Deactivate' : 'Activate',
-          ),
-        ),
-        PopupMenuItem(
-          value: 'delete',
-          child: _MenuRow(
-            icon: AppIcons.delete,
-            label: 'Delete',
-            color: AppPalette.of(context).danger,
-          ),
-        ),
-      ],
+      itemBuilder:
+          (context) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: _MenuRow(icon: AppIcons.edit, label: 'Edit'),
+            ),
+            PopupMenuItem(
+              value: 'toggle',
+              child: _MenuRow(
+                icon:
+                    widget.challenge.isActive
+                        ? AppIcons.hidden
+                        : AppIcons.visible,
+                label: widget.challenge.isActive ? 'Deactivate' : 'Activate',
+              ),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: _MenuRow(
+                icon: AppIcons.delete,
+                label: 'Delete',
+                color: AppPalette.of(context).danger,
+              ),
+            ),
+          ],
     );
   }
 }

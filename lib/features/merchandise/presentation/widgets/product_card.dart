@@ -50,13 +50,16 @@ class ProductCard extends StatelessWidget {
                   tag: AppHeroTags.productImage(product.id),
                   fromRadius: AppRadius.card,
                   toRadius: 0,
-                  child: (coverImage == null || coverImage.isEmpty)
-                      ? const _CoverPlaceholder()
-                      : Image.network(
-                          coverImage,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stack) => const _CoverPlaceholder(),
-                        ),
+                  child:
+                      (coverImage == null || coverImage.isEmpty)
+                          ? const _CoverPlaceholder()
+                          : Image.network(
+                            coverImage,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stack) =>
+                                    const _CoverPlaceholder(),
+                          ),
                 ),
                 const DecoratedBox(
                   decoration: BoxDecoration(
@@ -107,7 +110,10 @@ class ProductCard extends StatelessWidget {
                   spacing: AppSpacing.sm,
                   runSpacing: AppSpacing.xs,
                   children: [
-                    ProductCategoryBadge(category: product.category, dense: true),
+                    ProductCategoryBadge(
+                      category: product.category,
+                      dense: true,
+                    ),
                     StockStatusBadge(isInStock: product.isInStock, dense: true),
                   ],
                 ),
@@ -123,7 +129,10 @@ class ProductCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   _formatPrice(product.price),
-                  style: AppTextStyles.tinted(AppTextStyles.titleMedium, palette.primary),
+                  style: AppTextStyles.tinted(
+                    AppTextStyles.titleMedium,
+                    palette.primary,
+                  ),
                 ),
               ],
             ),
@@ -133,7 +142,8 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  String _formatPrice(double price) => '₹${price % 1 == 0 ? price.toStringAsFixed(0) : price.toStringAsFixed(2)}';
+  String _formatPrice(double price) =>
+      '₹${price % 1 == 0 ? price.toStringAsFixed(0) : price.toStringAsFixed(2)}';
 }
 
 class _CoverPlaceholder extends StatelessWidget {
@@ -143,9 +153,7 @@ class _CoverPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: palette.cardHigh,
-      ),
+      decoration: BoxDecoration(color: palette.cardHigh),
       child: Center(
         child: AppIcon(AppIcons.bag, size: 40, color: palette.textDisabled),
       ),
@@ -160,7 +168,10 @@ class _DraftBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: palette.scrim,
         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -170,7 +181,13 @@ class _DraftBadge extends StatelessWidget {
         children: [
           AppIcon(AppIcons.editNote, size: 12, color: palette.textInverse),
           const SizedBox(width: AppSpacing.xs),
-          Text('Draft', style: AppTextStyles.tinted(AppTextStyles.labelSmall, palette.textInverse)),
+          Text(
+            'Draft',
+            style: AppTextStyles.tinted(
+              AppTextStyles.labelSmall,
+              palette.textInverse,
+            ),
+          ),
         ],
       ),
     );

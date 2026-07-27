@@ -255,29 +255,41 @@ void main() {
       expect(filterChallenges(_all, durationRange: null).length, 5);
     });
 
-    test('excludes a challenge whose derived duration falls outside the range', () {
-      expect(
-        _ids(
-          filterChallenges(
-            [monthLong, dayLong],
-            durationRange: const ChallengeDurationRange(minDays: 1, maxDays: 7),
+    test(
+      'excludes a challenge whose derived duration falls outside the range',
+      () {
+        expect(
+          _ids(
+            filterChallenges(
+              [monthLong, dayLong],
+              durationRange: const ChallengeDurationRange(
+                minDays: 1,
+                maxDays: 7,
+              ),
+            ),
           ),
-        ),
-        ['d1'], // dayLong (1 day) passes; monthLong (30 days) does not
-      );
-    });
+          ['d1'], // dayLong (1 day) passes; monthLong (30 days) does not
+        );
+      },
+    );
 
-    test('a challenge with no derivable duration always passes the range filter', () {
-      expect(
-        _ids(
-          filterChallenges(
-            [foreverOpen],
-            durationRange: const ChallengeDurationRange(minDays: 1, maxDays: 1),
+    test(
+      'a challenge with no derivable duration always passes the range filter',
+      () {
+        expect(
+          _ids(
+            filterChallenges(
+              [foreverOpen],
+              durationRange: const ChallengeDurationRange(
+                minDays: 1,
+                maxDays: 1,
+              ),
+            ),
           ),
-        ),
-        ['z1'],
-      );
-    });
+          ['z1'],
+        );
+      },
+    );
 
     test('a daily challenge (1 day) matches a 1-7 day range', () {
       expect(
@@ -291,20 +303,26 @@ void main() {
       );
     });
 
-    test('AND-composes with metric filters — matching the metric is not enough', () {
-      // monthLong's metric defaults to dailySteps, so it passes the Steps
-      // filter, but its 30-day window fails a 1-7 day range — both
-      // conditions must hold.
-      expect(
-        _ids(
-          filterChallenges(
-            [dayLong, monthLong],
-            metricFilters: const {ChallengeMetricFilter.steps},
-            durationRange: const ChallengeDurationRange(minDays: 1, maxDays: 7),
+    test(
+      'AND-composes with metric filters — matching the metric is not enough',
+      () {
+        // monthLong's metric defaults to dailySteps, so it passes the Steps
+        // filter, but its 30-day window fails a 1-7 day range — both
+        // conditions must hold.
+        expect(
+          _ids(
+            filterChallenges(
+              [dayLong, monthLong],
+              metricFilters: const {ChallengeMetricFilter.steps},
+              durationRange: const ChallengeDurationRange(
+                minDays: 1,
+                maxDays: 7,
+              ),
+            ),
           ),
-        ),
-        ['d1'],
-      );
-    });
+          ['d1'],
+        );
+      },
+    );
   });
 }

@@ -26,9 +26,7 @@ Widget _host(Widget child, {List<Override> overrides = const []}) {
     overrides: overrides,
     child: MaterialApp(
       theme: AppTheme.dark,
-      home: Scaffold(
-        body: SingleChildScrollView(child: child),
-      ),
+      home: Scaffold(body: SingleChildScrollView(child: child)),
     ),
   );
 }
@@ -36,57 +34,76 @@ Widget _host(Widget child, {List<Override> overrides = const []}) {
 void main() {
   group('HomeHeroHeader', () {
     testWidgets('shows the org tagline from settings', (tester) async {
-      await tester.pumpWidget(_host(
-        const HomeHeroHeader(),
-        overrides: [
-          settingsProvider.overrideWith(
-            (ref) => const AppSettings({'org_tagline': 'Wander the wild Himalaya'}),
-          ),
-        ],
-      ));
+      await tester.pumpWidget(
+        _host(
+          const HomeHeroHeader(),
+          overrides: [
+            settingsProvider.overrideWith(
+              (ref) => const AppSettings({
+                'org_tagline': 'Wander the wild Himalaya',
+              }),
+            ),
+          ],
+        ),
+      );
       await tester.pump();
       expect(find.text('Wander the wild Himalaya'), findsOneWidget);
     });
 
-    testWidgets('falls back to the constant tagline when settings are blank',
-        (tester) async {
-      await tester.pumpWidget(_host(
-        const HomeHeroHeader(),
-        overrides: [
-          settingsProvider.overrideWith((ref) => const AppSettings({'org_tagline': ''})),
-        ],
-      ));
+    testWidgets('falls back to the constant tagline when settings are blank', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const HomeHeroHeader(),
+          overrides: [
+            settingsProvider.overrideWith(
+              (ref) => const AppSettings({'org_tagline': ''}),
+            ),
+          ],
+        ),
+      );
       await tester.pump();
       expect(find.text(AppConstants.appTagline), findsOneWidget);
     });
   });
 
   group('CommunityStatsSection', () {
-    testWidgets('shows a skeleton (not a spinner) while loading', (tester) async {
-      await tester.pumpWidget(_host(
-        const CommunityStatsSection(),
-        overrides: [
-          communityStatsProvider.overrideWith((ref) => Completer<CommunityStats>().future),
-        ],
-      ));
+    testWidgets('shows a skeleton (not a spinner) while loading', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const CommunityStatsSection(),
+          overrides: [
+            communityStatsProvider.overrideWith(
+              (ref) => Completer<CommunityStats>().future,
+            ),
+          ],
+        ),
+      );
       await tester.pump();
       expect(find.byType(Shimmer), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
-    testWidgets('renders the real trek count and a bucketed member count', (tester) async {
-      await tester.pumpWidget(_host(
-        const CommunityStatsSection(),
-        overrides: [
-          communityStatsProvider.overrideWith(
-            (ref) => const CommunityStats(
-              memberCount: 42,
-              publishedTrekCount: 7,
-              registrationCount: 15,
+    testWidgets('renders the real trek count and a bucketed member count', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const CommunityStatsSection(),
+          overrides: [
+            communityStatsProvider.overrideWith(
+              (ref) => const CommunityStats(
+                memberCount: 42,
+                publishedTrekCount: 7,
+                registrationCount: 15,
+              ),
             ),
-          ),
-        ],
-      ));
+          ],
+        ),
+      );
       // Let the count-up animation settle onto the exact values.
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
@@ -98,31 +115,37 @@ void main() {
       expect(find.text('15'), findsNothing);
     });
 
-    testWidgets('shows the exact member count below the smallest milestone', (tester) async {
-      await tester.pumpWidget(_host(
-        const CommunityStatsSection(),
-        overrides: [
-          communityStatsProvider.overrideWith(
-            (ref) => const CommunityStats(
-              memberCount: 7,
-              publishedTrekCount: 3,
-              registrationCount: 4,
+    testWidgets('shows the exact member count below the smallest milestone', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          const CommunityStatsSection(),
+          overrides: [
+            communityStatsProvider.overrideWith(
+              (ref) => const CommunityStats(
+                memberCount: 7,
+                publishedTrekCount: 3,
+                registrationCount: 4,
+              ),
             ),
-          ),
-        ],
-      ));
+          ],
+        ),
+      );
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('7'), findsOneWidget);
     });
 
     testWidgets('softens a fetch failure to zeros + a notice', (tester) async {
-      await tester.pumpWidget(_host(
-        const CommunityStatsSection(),
-        overrides: [
-          communityStatsProvider.overrideWith((ref) => Future.error('boom')),
-        ],
-      ));
+      await tester.pumpWidget(
+        _host(
+          const CommunityStatsSection(),
+          overrides: [
+            communityStatsProvider.overrideWith((ref) => Future.error('boom')),
+          ],
+        ),
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Stats unavailable right now.'), findsOneWidget);

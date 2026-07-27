@@ -73,9 +73,7 @@ class AuthRepositoryImpl implements AuthRepository {
             .signUp(
               email: email.trim(),
               password: password,
-              data: {
-                'full_name': fullName.trim(),
-              },
+              data: {'full_name': fullName.trim()},
             )
             .timeout(_authCallTimeout),
       );
@@ -98,7 +96,9 @@ class AuthRepositoryImpl implements AuthRepository {
     final googleAuth = await googleUser.authentication;
     final idToken = googleAuth.idToken;
     if (idToken == null) {
-      throw Exception('Google sign-in did not return an ID token. Please try again.');
+      throw Exception(
+        'Google sign-in did not return an ID token. Please try again.',
+      );
     }
 
     try {
@@ -126,7 +126,9 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (_) {}
 
     try {
-      await _withRetry(() => _supabase.auth.signOut().timeout(_authCallTimeout));
+      await _withRetry(
+        () => _supabase.auth.signOut().timeout(_authCallTimeout),
+      );
     } on TimeoutException {
       throw Exception(_timeoutMessage);
     }
@@ -136,7 +138,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       await _withRetry(
-        () => _supabase.auth.resetPasswordForEmail(email.trim()).timeout(_authCallTimeout),
+        () => _supabase.auth
+            .resetPasswordForEmail(email.trim())
+            .timeout(_authCallTimeout),
       );
     } on TimeoutException {
       throw Exception(_timeoutMessage);

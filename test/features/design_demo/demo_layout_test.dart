@@ -4,15 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('DesignSystemDemoScreen lays out with no overflow', (tester) async {
+  testWidgets('DesignSystemDemoScreen lays out with no overflow', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1200, 2000);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.dark,
-      home: const DesignSystemDemoScreen(),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.dark, home: const DesignSystemDemoScreen()),
+    );
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(tester.takeException(), isNull);
@@ -22,7 +23,11 @@ void main() {
     for (var i = 0; i < 8; i++) {
       await tester.drag(scrollable, const Offset(0, -600));
       await tester.pump(const Duration(milliseconds: 100));
-      expect(tester.takeException(), isNull, reason: 'overflow at scroll step $i');
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'overflow at scroll step $i',
+      );
     }
     await tester.pumpWidget(const SizedBox());
   });

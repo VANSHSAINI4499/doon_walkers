@@ -9,10 +9,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Riverpod provider exposing the implementation of
 /// [PhoneVerificationRepository].
-final phoneVerificationRepositoryProvider = Provider<PhoneVerificationRepository>(
-  (ref) => PhoneVerificationRepositoryImpl(ref.watch(supabaseClientProvider)),
-  name: 'phoneVerificationRepositoryProvider',
-);
+final phoneVerificationRepositoryProvider =
+    Provider<PhoneVerificationRepository>(
+      (ref) =>
+          PhoneVerificationRepositoryImpl(ref.watch(supabaseClientProvider)),
+      name: 'phoneVerificationRepositoryProvider',
+    );
 
 /// Digits-only, with country code, no leading `+` — this is MSG91's own
 /// documented requirement for `sendOTP`'s `identifier` field ("it must
@@ -44,13 +46,18 @@ class PhoneVerificationRepositoryImpl implements PhoneVerificationRepository {
   @override
   Future<SendOtpResult> sendOtp(String phone) async {
     final identifier = _normalizeIdentifier(phone);
-    debugPrint('[PhoneVerification] sendOtp: raw="$phone" identifier="$identifier"');
+    debugPrint(
+      '[PhoneVerification] sendOtp: raw="$phone" identifier="$identifier"',
+    );
 
     final response = await OTPWidget.sendOTP({'identifier': identifier});
     debugPrint('[PhoneVerification] sendOtp response: ${jsonEncode(response)}');
 
     if (response == null || response['type'] != 'success') {
-      throw Exception(_messageOf(response) ?? 'Could not send the verification code. Please try again.');
+      throw Exception(
+        _messageOf(response) ??
+            'Could not send the verification code. Please try again.',
+      );
     }
 
     // MSG91's own example checks specifically for this key to detect an
@@ -59,15 +66,21 @@ class PhoneVerificationRepositoryImpl implements PhoneVerificationRepository {
     // pub.dev example.
     final instantToken = response['access-token'] as String?;
     if (instantToken != null && instantToken.isNotEmpty) {
-      debugPrint('[PhoneVerification] sendOtp: instant verification (no SMS sent)');
+      debugPrint(
+        '[PhoneVerification] sendOtp: instant verification (no SMS sent)',
+      );
       return SendOtpInstantlyVerified(instantToken);
     }
 
     final reqId = response['message'] as String?;
     if (reqId == null || reqId.isEmpty) {
-      throw Exception('Could not send the verification code. Please try again.');
+      throw Exception(
+        'Could not send the verification code. Please try again.',
+      );
     }
-    debugPrint('[PhoneVerification] sendOtp: code dispatch requested, reqId="$reqId"');
+    debugPrint(
+      '[PhoneVerification] sendOtp: code dispatch requested, reqId="$reqId"',
+    );
     return SendOtpCodeSent(reqId);
   }
 
@@ -75,10 +88,15 @@ class PhoneVerificationRepositoryImpl implements PhoneVerificationRepository {
   Future<void> retryOtp(String reqId) async {
     debugPrint('[PhoneVerification] retryOtp: reqId="$reqId"');
     final response = await OTPWidget.retryOTP({'reqId': reqId});
-    debugPrint('[PhoneVerification] retryOtp response: ${jsonEncode(response)}');
+    debugPrint(
+      '[PhoneVerification] retryOtp response: ${jsonEncode(response)}',
+    );
 
     if (response == null || response['type'] != 'success') {
-      throw Exception(_messageOf(response) ?? 'Could not resend the verification code. Please try again.');
+      throw Exception(
+        _messageOf(response) ??
+            'Could not resend the verification code. Please try again.',
+      );
     }
   }
 
@@ -86,10 +104,14 @@ class PhoneVerificationRepositoryImpl implements PhoneVerificationRepository {
   Future<String> verifyOtp({required String reqId, required String otp}) async {
     debugPrint('[PhoneVerification] verifyOtp: reqId="$reqId" otp="$otp"');
     final response = await OTPWidget.verifyOTP({'reqId': reqId, 'otp': otp});
-    debugPrint('[PhoneVerification] verifyOtp response: ${jsonEncode(response)}');
+    debugPrint(
+      '[PhoneVerification] verifyOtp response: ${jsonEncode(response)}',
+    );
 
     if (response == null || response['type'] != 'success') {
-      throw Exception(_messageOf(response) ?? 'Incorrect or expired code. Please try again.');
+      throw Exception(
+        _messageOf(response) ?? 'Incorrect or expired code. Please try again.',
+      );
     }
 
     // Which key actually carries the token here isn't confirmed against
@@ -98,23 +120,37 @@ class PhoneVerificationRepositoryImpl implements PhoneVerificationRepository {
     // uses) with a fallback to `message` (the old raw-API convention)
     // covers both plausible shapes; if MSG91 uses neither, this throws
     // with the raw response already printed above by debugPrint.
-    final accessToken = response['access-token'] as String? ?? response['message'] as String?;
+    final accessToken =
+        response['access-token'] as String? ?? response['message'] as String?;
     if (accessToken == null || accessToken.isEmpty) {
-      throw Exception('Verification succeeded but no access token was returned. Please try again.');
+      throw Exception(
+        'Verification succeeded but no access token was returned. Please try again.',
+      );
     }
     return accessToken;
   }
 
   @override
   Future<void> confirmVerification(String accessToken) async {
-    debugPrint('[PhoneVerification] confirmVerification: accessToken="$accessToken"');
+    debugPrint(
+      '[PhoneVerification] confirmVerification: accessToken="$accessToken"',
+    );
     try {
-      final response =
-          await _supabase.functions.invoke('verify-phone-token', body: {'accessToken': accessToken});
-      debugPrint('[PhoneVerification] confirmVerification response: status=${response.status} data=${response.data}');
+      final response = await _supabase.functions.invoke(
+        'verify-phone-token',
+        body: {'accessToken': accessToken},
+      );
+      debugPrint(
+        '[PhoneVerification] confirmVerification response: status=${response.status} data=${response.data}',
+      );
     } on FunctionException catch (e) {
-      debugPrint('[PhoneVerification] confirmVerification FAILED: status=${e.status} details=${e.details}');
-      throw Exception(_functionErrorMessage(e) ?? 'Could not verify your phone. Please try again.');
+      debugPrint(
+        '[PhoneVerification] confirmVerification FAILED: status=${e.status} details=${e.details}',
+      );
+      throw Exception(
+        _functionErrorMessage(e) ??
+            'Could not verify your phone. Please try again.',
+      );
     }
   }
 

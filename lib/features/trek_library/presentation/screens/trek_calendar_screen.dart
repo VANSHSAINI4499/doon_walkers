@@ -6,14 +6,14 @@ import 'package:doon_walkers/features/trek_library/presentation/providers/trek_p
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class TrekCalendarScreen extends ConsumerStatefulWidget {
   const TrekCalendarScreen({super.key});
 
   @override
-  ConsumerState<TrekCalendarScreen> createState() =>
-      _TrekCalendarScreenState();
+  ConsumerState<TrekCalendarScreen> createState() => _TrekCalendarScreenState();
 }
 
 class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
@@ -72,7 +72,7 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
         actions: [
           TextButton.icon(
             onPressed: _resetToToday,
-            icon: const Icon(Icons.today, size: 18),
+            icon: Icon(LucideIcons.calendarDays, size: 18),
             label: const Text('Today'),
           ),
         ],
@@ -80,55 +80,56 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
       body: SafeArea(
         child: treksAsync.when(
           loading: () => const _CalendarSkeleton(),
-          error: (err, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppIcon(AppIcons.error, size: 36, color: palette.danger),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'Could not load trek calendar.',
-                    style: AppTextStyles.titleMedium,
+          error:
+              (err, stack) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIcon(AppIcons.error, size: 36, color: palette.danger),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'Could not load trek calendar.',
+                        style: AppTextStyles.titleMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      AppButton(
+                        label: 'Retry',
+                        icon: AppIcons.refresh,
+                        onPressed: () => ref.invalidate(treksProvider),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppButton(
-                    label: 'Retry',
-                    icon: AppIcons.refresh,
-                    onPressed: () => ref.invalidate(treksProvider),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
           data: (allTreks) {
             final treksWithDates =
                 allTreks.where((t) => t.trekDate != null).toList();
 
             // Month level check
-            final monthTreks = treksWithDates.where((t) {
-              final start = t.trekDate!;
-              return start.year == _focusedDay.year &&
-                  start.month == _focusedDay.month;
-            }).toList();
+            final monthTreks =
+                treksWithDates.where((t) {
+                  final start = t.trekDate!;
+                  return start.year == _focusedDay.year &&
+                      start.month == _focusedDay.month;
+                }).toList();
 
             // Selected day matching treks
-            final selectedDayTreks = _selectedDay != null
-                ? treksWithDates
-                    .where((t) => _isTrekOnDate(t, _selectedDay!))
-                    .toList()
-                : [];
+            final selectedDayTreks =
+                _selectedDay != null
+                    ? treksWithDates
+                        .where((t) => _isTrekOnDate(t, _selectedDay!))
+                        .toList()
+                    : [];
 
             // Default upcoming list when no day selected
-            final upcomingTreks = treksWithDates
-                .where((t) => t.isUpcoming)
-                .toList()
-              ..sort((a, b) => a.trekDate!.compareTo(b.trekDate!));
+            final upcomingTreks =
+                treksWithDates.where((t) => t.isUpcoming).toList()
+                  ..sort((a, b) => a.trekDate!.compareTo(b.trekDate!));
 
-            final displayedTreks = _selectedDay != null
-                ? selectedDayTreks
-                : upcomingTreks;
+            final displayedTreks =
+                _selectedDay != null ? selectedDayTreks : upcomingTreks;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -149,9 +150,10 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                         firstDay: DateTime.utc(2020, 1, 1),
                         lastDay: DateTime.utc(2030, 12, 31),
                         focusedDay: _focusedDay,
-                        selectedDayPredicate: (day) =>
-                            _selectedDay != null &&
-                            isSameDay(_selectedDay, day),
+                        selectedDayPredicate:
+                            (day) =>
+                                _selectedDay != null &&
+                                isSameDay(_selectedDay, day),
                         eventLoader: (day) {
                           return treksWithDates
                               .where((t) => _isTrekStartingOnDate(t, day))
@@ -165,16 +167,22 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                             color: palette.textPrimary,
                             fontWeight: FontWeight.bold,
                           ),
-                          leftChevronIcon: Icon(Icons.chevron_left,
-                              color: palette.textPrimary),
-                          rightChevronIcon: Icon(Icons.chevron_right,
-                              color: palette.textPrimary),
+                          leftChevronIcon: Icon(
+                            LucideIcons.chevronLeft,
+                            color: palette.textPrimary,
+                          ),
+                          rightChevronIcon: Icon(
+                            LucideIcons.chevronRight,
+                            color: palette.textPrimary,
+                          ),
                         ),
                         calendarStyle: CalendarStyle(
                           todayDecoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border:
-                                Border.all(color: palette.primary, width: 2),
+                            border: Border.all(
+                              color: palette.primary,
+                              width: 2,
+                            ),
                           ),
                           todayTextStyle: AppTextStyles.labelMedium.copyWith(
                             color: palette.primary,
@@ -194,16 +202,18 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                           markerBuilder: (context, date, events) {
                             if (events.isEmpty) return const SizedBox.shrink();
 
-                            final startingTreks = treksWithDates
-                                .where((t) => _isTrekStartingOnDate(t, date))
-                                .toList();
+                            final startingTreks =
+                                treksWithDates
+                                    .where(
+                                      (t) => _isTrekStartingOnDate(t, date),
+                                    )
+                                    .toList();
 
                             if (startingTreks.isEmpty) {
                               return const SizedBox.shrink();
                             }
 
-                            final visibleDots =
-                                startingTreks.take(3).toList();
+                            final visibleDots = startingTreks.take(3).toList();
                             final overflow = startingTreks.length - 3;
 
                             return Positioned(
@@ -216,10 +226,13 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                                       width: 6,
                                       height: 6,
                                       margin: const EdgeInsets.symmetric(
-                                          horizontal: 1),
+                                        horizontal: 1,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: _getDifficultyColor(
-                                            trek.difficulty, palette),
+                                          trek.difficulty,
+                                          palette,
+                                        ),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -268,8 +281,7 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                       ),
                       if (_selectedDay != null)
                         TextButton(
-                          onPressed: () =>
-                              setState(() => _selectedDay = null),
+                          onPressed: () => setState(() => _selectedDay = null),
                           child: const Text('Show All Upcoming'),
                         ),
                     ],
@@ -280,7 +292,8 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                   if (monthTreks.isEmpty && _selectedDay == null)
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.lg),
+                        vertical: AppSpacing.lg,
+                      ),
                       child: AppCard(
                         child: Padding(
                           padding: const EdgeInsets.all(AppSpacing.xl),
@@ -298,7 +311,8 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                   else if (displayedTreks.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.lg),
+                        vertical: AppSpacing.lg,
+                      ),
                       child: AppCard(
                         child: Padding(
                           padding: const EdgeInsets.all(AppSpacing.xl),
@@ -320,8 +334,9 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: displayedTreks.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: AppSpacing.md),
+                      separatorBuilder:
+                          (context, index) =>
+                              const SizedBox(height: AppSpacing.md),
                       itemBuilder: (context, index) {
                         final trek = displayedTreks[index];
                         return _CalendarTrekCard(trek: trek);
@@ -347,13 +362,15 @@ class _CalendarTrekCard extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final spotsLeftAsync = ref.watch(trekSpotsLeftProvider(trek.id));
 
-    final dateStr = trek.trekDate != null
-        ? '${trek.trekDate!.day}/${trek.trekDate!.month}/${trek.trekDate!.year}'
-        : 'Unscheduled';
+    final dateStr =
+        trek.trekDate != null
+            ? '${trek.trekDate!.day}/${trek.trekDate!.month}/${trek.trekDate!.year}'
+            : 'Unscheduled';
 
-    final durationStr = trek.durationDays != null
-        ? ' · ${trek.durationDays} day${trek.durationDays! > 1 ? 's' : ''}'
-        : '';
+    final durationStr =
+        trek.durationDays != null
+            ? ' · ${trek.durationDays} day${trek.durationDays! > 1 ? 's' : ''}'
+            : '';
 
     return AppCard(
       onTap: () => context.push('/trek-library/${trek.id}'),
@@ -372,21 +389,23 @@ class _CalendarTrekCard extends ConsumerWidget {
               borderRadius: const BorderRadius.horizontal(
                 left: Radius.circular(AppRadius.card),
               ),
-              child: trek.coverImage != null && trek.coverImage!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: trek.coverImage!,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => Icon(
-                        Icons.terrain,
+              child:
+                  trek.coverImage != null && trek.coverImage!.isNotEmpty
+                      ? CachedNetworkImage(
+                        imageUrl: trek.coverImage!,
+                        fit: BoxFit.cover,
+                        errorWidget:
+                            (_, __, ___) => Icon(
+                              LucideIcons.mountain,
+                              color: palette.primary,
+                              size: 32,
+                            ),
+                      )
+                      : Icon(
+                        LucideIcons.mountain,
                         color: palette.primary,
                         size: 32,
                       ),
-                    )
-                  : Icon(
-                      Icons.terrain,
-                      color: palette.primary,
-                      size: 32,
-                    ),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -442,9 +461,8 @@ class _CalendarTrekCard extends ConsumerWidget {
                                 ? 'Waitlist Only'
                                 : '$remaining spots left',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: isWaitlist
-                                  ? palette.danger
-                                  : palette.primary,
+                              color:
+                                  isWaitlist ? palette.danger : palette.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           );
@@ -460,7 +478,7 @@ class _CalendarTrekCard extends ConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.md),
-            child: Icon(Icons.chevron_right, color: palette.textSecondary),
+            child: Icon(LucideIcons.chevronRight, color: palette.textSecondary),
           ),
         ],
       ),

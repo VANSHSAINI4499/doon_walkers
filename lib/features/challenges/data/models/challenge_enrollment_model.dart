@@ -14,9 +14,10 @@ class ChallengeEnrollmentModel extends ChallengeEnrollment {
       id: json['id'] as String,
       challengeId: json['challenge_id'] as String,
       userId: json['user_id'] as String,
-      enrolledAt: json['enrolled_at'] != null
-          ? DateTime.parse(json['enrolled_at'] as String)
-          : DateTime.now(),
+      enrolledAt:
+          json['enrolled_at'] != null
+              ? DateTime.parse(json['enrolled_at'] as String)
+              : DateTime.now(),
     );
   }
 }

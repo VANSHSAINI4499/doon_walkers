@@ -22,7 +22,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// appears only for an admin. `flutter run -t lib/main_profile_demo.dart`.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: 'https://demo.supabase.co', publishableKey: 'demo');
+  await Supabase.initialize(
+    url: 'https://demo.supabase.co',
+    publishableKey: 'demo',
+  );
   runApp(const ProviderScope(child: _ProfileDemoApp()));
 }
 
@@ -46,7 +49,12 @@ const _stats = RegistrationStats(
 
 const _streak = TrekkingStreak(currentMonths: 4, longestMonths: 6);
 
-Registration _reg(String id, String title, {String? screenshotUrl, int daysAgo = 10}) => Registration(
+Registration _reg(
+  String id,
+  String title, {
+  String? screenshotUrl,
+  int daysAgo = 10,
+}) => Registration(
   id: id,
   trekId: 't-$id',
   userId: 'u1',
@@ -59,7 +67,12 @@ Registration _reg(String id, String title, {String? screenshotUrl, int daysAgo =
 );
 
 final _registrations = <Registration>[
-  _reg('1', 'Kedarkantha Winter Summit', screenshotUrl: 'proof.jpg', daysAgo: 4),
+  _reg(
+    '1',
+    'Kedarkantha Winter Summit',
+    screenshotUrl: 'proof.jpg',
+    daysAgo: 4,
+  ),
   _reg('2', 'Nag Tibba Night Trek', daysAgo: 18),
 ];
 
@@ -108,7 +121,9 @@ final _inquiries = <MerchInquiry>[
 
 List<Override> _overrides(bool admin) => [
   isAdminProvider.overrideWith((ref) => ref.watch(_demoIsAdmin)),
-  currentUserProvider.overrideWith((ref) => Stream.value(_user(ref.watch(_demoIsAdmin)))),
+  currentUserProvider.overrideWith(
+    (ref) => Stream.value(_user(ref.watch(_demoIsAdmin))),
+  ),
   myRegistrationsProvider.overrideWith((ref) async => _registrations),
   myRegistrationsPreviewProvider.overrideWith((ref) async => _registrations),
   myRegistrationStatsProvider.overrideWith((ref) async => _stats),
@@ -149,13 +164,7 @@ class _ProfileWithToggle extends ConsumerWidget {
     return Stack(
       children: [
         const ProfileScreen(),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: SafeArea(
-            child: _RoleToggleChip(),
-          ),
-        ),
+        Positioned(top: 8, right: 8, child: SafeArea(child: _RoleToggleChip())),
       ],
     );
   }
@@ -170,12 +179,19 @@ class _RoleToggleChip extends ConsumerWidget {
       child: GlassCard(
         blurEnabled: false,
         glowColor: admin ? AppColors.accent : AppColors.primary,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         onTap: () => ref.read(_demoIsAdmin.notifier).state = !admin,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppIcon(admin ? AppIcons.medal : AppIcons.person, size: 18, color: admin ? AppColors.accent : AppColors.primary),
+            AppIcon(
+              admin ? AppIcons.medal : AppIcons.person,
+              size: 18,
+              color: admin ? AppColors.accent : AppColors.primary,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Text(admin ? 'Admin' : 'Member', style: AppTextStyles.labelMedium),
           ],

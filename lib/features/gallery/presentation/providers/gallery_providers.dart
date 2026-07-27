@@ -13,10 +13,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// is a nice-to-have for browse-then-view content, not worth an open
 /// websocket channel per session. Refetches via `ref.invalidate` after
 /// an admin's own upload/delete, or the error state's Retry button.
-final trekGalleryProvider = FutureProvider.autoDispose.family<List<GalleryMedia>, String>(
-  (ref, trekId) => ref.watch(galleryRepositoryProvider).fetchMediaForTrek(trekId, limit: 5),
-  name: 'trekGalleryProvider',
-);
+final trekGalleryProvider = FutureProvider.autoDispose
+    .family<List<GalleryMedia>, String>(
+      (ref, trekId) => ref
+          .watch(galleryRepositoryProvider)
+          .fetchMediaForTrek(trekId, limit: 5),
+      name: 'trekGalleryProvider',
+    );
 
 /// Total media count for a trek — drives [TrekGalleryPreview]'s
 /// "+N · View All" tile once there are more than 5 items.
@@ -30,10 +33,11 @@ final trekGalleryCountProvider = FutureProvider.autoDispose.family<int, String>(
 /// multi-file batch upload path) — this controller is delete-only now.
 /// [state] is shared loading/error status across calls, same shape as
 /// TrekAdminController.
-final galleryAdminControllerProvider = AsyncNotifierProvider<GalleryAdminController, void>(
-  GalleryAdminController.new,
-  name: 'galleryAdminControllerProvider',
-);
+final galleryAdminControllerProvider =
+    AsyncNotifierProvider<GalleryAdminController, void>(
+      GalleryAdminController.new,
+      name: 'galleryAdminControllerProvider',
+    );
 
 class GalleryAdminController extends AsyncNotifier<void> {
   @override

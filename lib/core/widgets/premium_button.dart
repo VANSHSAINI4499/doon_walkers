@@ -209,9 +209,10 @@ class AppButton extends StatelessWidget {
       curve: AppMotion.standard,
       height: _height,
       width: _iconOnly ? _height : null,
-      padding: _iconOnly
-          ? EdgeInsets.zero
-          : EdgeInsets.symmetric(horizontal: _horizontalPadding),
+      padding:
+          _iconOnly
+              ? EdgeInsets.zero
+              : EdgeInsets.symmetric(horizontal: _horizontalPadding),
       decoration: decoration,
       // Only pin an alignment when the button's width is being imposed
       // from outside. A Container *with* an alignment expands to fill any
@@ -293,14 +294,15 @@ class _AppButtonContent extends StatelessWidget {
     if (iconOnly) {
       return AnimatedSwitcher(
         duration: AppMotion.fast,
-        child: isLoading
-            ? spinner
-            : AppIcon(
-                icon!,
-                size: iconSize,
-                color: foreground,
-                key: const ValueKey('icon'),
-              ),
+        child:
+            isLoading
+                ? spinner
+                : AppIcon(
+                  icon!,
+                  size: iconSize,
+                  color: foreground,
+                  key: const ValueKey('icon'),
+                ),
       );
     }
 

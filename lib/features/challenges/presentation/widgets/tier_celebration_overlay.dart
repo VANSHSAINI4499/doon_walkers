@@ -40,10 +40,14 @@ Future<void> showTierCelebration(
     barrierLabel: 'Dismiss',
     barrierColor: AppPalette.of(context).scrim,
     transitionDuration: AppMotion.medium,
-    pageBuilder: (context, animation, secondaryAnimation) =>
-        _TierCelebrationDialog(challenge: challenge, tier: tier),
+    pageBuilder:
+        (context, animation, secondaryAnimation) =>
+            _TierCelebrationDialog(challenge: challenge, tier: tier),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curved = CurvedAnimation(parent: animation, curve: AppMotion.emphasized);
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: AppMotion.emphasized,
+      );
       return FadeTransition(
         opacity: curved,
         child: ScaleTransition(
@@ -74,8 +78,10 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
-      ..forward();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
     _badgeScale = CurvedAnimation(
       parent: _controller,
       curve: const Interval(0, 0.6, curve: Curves.elasticOut),
@@ -141,18 +147,19 @@ class _TierCelebrationDialogState extends State<_TierCelebrationDialog>
                   height: 132,
                   child: AnimatedBuilder(
                     animation: _controller,
-                    builder: (context, child) => CustomPaint(
-                      painter: _ParticleBurstPainter(
-                        particles: _particles,
-                        progress: _controller.value,
-                      ),
-                      child: Center(
-                        child: Transform.scale(
-                          scale: _badgeScale.value,
-                          child: child,
+                    builder:
+                        (context, child) => CustomPaint(
+                          painter: _ParticleBurstPainter(
+                            particles: _particles,
+                            progress: _controller.value,
+                          ),
+                          child: Center(
+                            child: Transform.scale(
+                              scale: _badgeScale.value,
+                              child: child,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
                     child: TierBadgeIcon(tier: widget.tier, size: 72),
                   ),
                 ),
@@ -216,17 +223,23 @@ class _ParticleBurstPainter extends CustomPainter {
     // position while fading out over the remainder.
     final travel = (progress / 0.7).clamp(0.0, 1.0);
     const fadeStart = 0.4;
-    final opacity = progress <= fadeStart ? 1.0 : (1 - ((progress - fadeStart) / (1 - fadeStart))).clamp(0.0, 1.0);
+    final opacity =
+        progress <= fadeStart
+            ? 1.0
+            : (1 - ((progress - fadeStart) / (1 - fadeStart))).clamp(0.0, 1.0);
     if (opacity <= 0) return;
 
     for (final particle in particles) {
-      final offset = center +
-          Offset(cos(particle.angle), sin(particle.angle)) * (particle.distance * travel);
+      final offset =
+          center +
+          Offset(cos(particle.angle), sin(particle.angle)) *
+              (particle.distance * travel);
       final paint = Paint()..color = particle.color.withValues(alpha: opacity);
       canvas.drawCircle(offset, particle.radius, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticleBurstPainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _ParticleBurstPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }

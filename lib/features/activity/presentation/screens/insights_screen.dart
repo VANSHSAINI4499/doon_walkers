@@ -28,7 +28,11 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
 
   void _previousMonth() {
     setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
+      _selectedMonth = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month - 1,
+        1,
+      );
     });
   }
 
@@ -37,7 +41,11 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     final thisMonth = DateTime(now.year, now.month, 1);
     if (_selectedMonth.isBefore(thisMonth)) {
       setState(() {
-        _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+        _selectedMonth = DateTime(
+          _selectedMonth.year,
+          _selectedMonth.month + 1,
+          1,
+        );
       });
     }
   }
@@ -46,32 +54,46 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     final palette = AppPalette.of(context);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: palette.surface,
-        title: Text('How Percentiles Work', style: AppTextStyles.titleMedium),
-        content: Text(
-          'Your percentile shows the percentage of active community members whose step count you exceeded during the selected month.\n\nA floor of 5 active tracking members is required for percentile calculations to protect community privacy.',
-          style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Got it', style: AppTextStyles.labelLarge.copyWith(color: palette.primary)),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: palette.surface,
+            title: Text(
+              'How Percentiles Work',
+              style: AppTextStyles.titleMedium,
+            ),
+            content: Text(
+              'Your percentile shows the percentage of active community members whose step count you exceeded during the selected month.\n\nA floor of 5 active tracking members is required for percentile calculations to protect community privacy.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: palette.textSecondary,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'Got it',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: palette.primary,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final percentileAsync = ref.watch(activityPercentileProvider(_selectedMonth));
+    final percentileAsync = ref.watch(
+      activityPercentileProvider(_selectedMonth),
+    );
     final comparisonAsync = ref.watch(monthComparisonProvider(_selectedMonth));
     final bestDayAsync = ref.watch(bestDayProvider(_selectedMonth));
     final activeDaysAsync = ref.watch(activeDaysProvider(_selectedMonth));
     final achievementsAsync = ref.watch(userAchievementsProvider);
 
-    final monthLabel = '${ActivityFormat.monthShort(_selectedMonth)} ${_selectedMonth.year}';
+    final monthLabel =
+        '${ActivityFormat.monthShort(_selectedMonth)} ${_selectedMonth.year}';
 
     return Scaffold(
       appBar: AppBar(
@@ -96,7 +118,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 percentileAsync: percentileAsync,
                 onPreviousMonth: _previousMonth,
                 onNextMonth: _nextMonth,
-                canGoNext: _selectedMonth.isBefore(DateTime(DateTime.now().year, DateTime.now().month, 1)),
+                canGoNext: _selectedMonth.isBefore(
+                  DateTime(DateTime.now().year, DateTime.now().month, 1),
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -129,10 +153,16 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: activeDaysAsync.when(
-                      data: (count) => _ConsistencyCard(
-                        activeDays: count,
-                        daysInMonth: DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day,
-                      ),
+                      data:
+                          (count) => _ConsistencyCard(
+                            activeDays: count,
+                            daysInMonth:
+                                DateTime(
+                                  _selectedMonth.year,
+                                  _selectedMonth.month + 1,
+                                  0,
+                                ).day,
+                          ),
                       loading: () => const SkeletonBox(height: 140),
                       error: (_, __) => const SizedBox.shrink(),
                     ),
@@ -201,25 +231,36 @@ class _OverviewBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           percentileAsync.when(
-            data: (pct) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-              decoration: BoxDecoration(
-                color: palette.primarySubtle,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppIcon(AppIcons.medal, size: 24, color: palette.primary),
-                  const SizedBox(width: AppSpacing.md),
-                  Text(
-                    pct != null ? 'Top $pct% of Doon Walkers' : 'Keep walking to earn percentile ranking',
-                    style: AppTextStyles.tinted(AppTextStyles.titleSmall, palette.primary),
+            data:
+                (pct) => Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
                   ),
-                ],
-              ),
-            ),
+                  decoration: BoxDecoration(
+                    color: palette.primarySubtle,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: palette.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIcon(AppIcons.medal, size: 24, color: palette.primary),
+                      const SizedBox(width: AppSpacing.md),
+                      Text(
+                        pct != null
+                            ? 'Top $pct% of Doon Walkers'
+                            : 'Keep walking to earn percentile ranking',
+                        style: AppTextStyles.tinted(
+                          AppTextStyles.titleSmall,
+                          palette.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             loading: () => const SkeletonBox(height: 48),
             error: (_, __) => const SizedBox.shrink(),
           ),
@@ -238,19 +279,23 @@ class _KeyHighlightsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final curSteps = comparison['current_steps'] ?? 0;
     final priSteps = comparison['prior_steps'] ?? 0;
-    final stepsDelta = priSteps > 0 ? ((curSteps - priSteps) / priSteps * 100).round() : null;
+    final stepsDelta =
+        priSteps > 0 ? ((curSteps - priSteps) / priSteps * 100).round() : null;
 
     final curCal = comparison['current_cal'] ?? 0;
     final priCal = comparison['prior_cal'] ?? 0;
-    final calDelta = priCal > 0 ? ((curCal - priCal) / priCal * 100).round() : null;
+    final calDelta =
+        priCal > 0 ? ((curCal - priCal) / priCal * 100).round() : null;
 
     final curDist = comparison['current_dist'] ?? 0;
     final priDist = comparison['prior_dist'] ?? 0;
-    final distDelta = priDist > 0 ? ((curDist - priDist) / priDist * 100).round() : null;
+    final distDelta =
+        priDist > 0 ? ((curDist - priDist) / priDist * 100).round() : null;
 
     final curAct = comparison['current_active'] ?? 0;
     final priAct = comparison['prior_active'] ?? 0;
-    final actDelta = priAct > 0 ? ((curAct - priAct) / priAct * 100).round() : null;
+    final actDelta =
+        priAct > 0 ? ((curAct - priAct) / priAct * 100).round() : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +380,8 @@ class _HighlightTile extends StatelessWidget {
                 Text(
                   ActivityFormat.delta(delta!),
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: delta! >= 0 ? palette.primary : palette.textSecondary,
+                    color:
+                        delta! >= 0 ? palette.primary : palette.textSecondary,
                   ),
                 ),
             ],
@@ -383,15 +429,35 @@ class _ActivityComparisonChart extends StatelessWidget {
                   BarChartGroupData(
                     x: 0,
                     barRods: [
-                      BarChartRodData(toY: priSteps / 4, color: palette.textDisabled, width: 14, borderRadius: BorderRadius.circular(4)),
-                      BarChartRodData(toY: curSteps / 4, color: palette.primary, width: 14, borderRadius: BorderRadius.circular(4)),
+                      BarChartRodData(
+                        toY: priSteps / 4,
+                        color: palette.textDisabled,
+                        width: 14,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      BarChartRodData(
+                        toY: curSteps / 4,
+                        color: palette.primary,
+                        width: 14,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ],
                   ),
                   BarChartGroupData(
                     x: 1,
                     barRods: [
-                      BarChartRodData(toY: priSteps / 4 * 1.1, color: palette.textDisabled, width: 14, borderRadius: BorderRadius.circular(4)),
-                      BarChartRodData(toY: curSteps / 4 * 0.9, color: palette.primary, width: 14, borderRadius: BorderRadius.circular(4)),
+                      BarChartRodData(
+                        toY: priSteps / 4 * 1.1,
+                        color: palette.textDisabled,
+                        width: 14,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      BarChartRodData(
+                        toY: curSteps / 4 * 0.9,
+                        color: palette.primary,
+                        width: 14,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ],
                   ),
                 ],
@@ -423,7 +489,11 @@ class _LegendItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: AppSpacing.xs),
         Text(label, style: AppTextStyles.secondary(AppTextStyles.labelSmall)),
       ],
@@ -439,8 +509,12 @@ class _BestDayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final dayStr = bestDay != null ? '${bestDay!.date.day} ${ActivityFormat.monthShort(bestDay!.date)}' : '—';
-    final stepsStr = bestDay != null ? ActivityFormat.steps(bestDay!.steps) : 'No data';
+    final dayStr =
+        bestDay != null
+            ? '${bestDay!.date.day} ${ActivityFormat.monthShort(bestDay!.date)}'
+            : '—';
+    final stepsStr =
+        bestDay != null ? ActivityFormat.steps(bestDay!.steps) : 'No data';
 
     return AppCard(
       child: Column(
@@ -456,7 +530,10 @@ class _BestDayCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(stepsStr, style: AppTextStyles.statMedium),
           const SizedBox(height: 2),
-          Text(dayStr, style: AppTextStyles.secondary(AppTextStyles.labelSmall)),
+          Text(
+            dayStr,
+            style: AppTextStyles.secondary(AppTextStyles.labelSmall),
+          ),
         ],
       ),
     );
@@ -486,9 +563,15 @@ class _ConsistencyCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Text('$activeDays / $targetDays days', style: AppTextStyles.statMedium),
+          Text(
+            '$activeDays / $targetDays days',
+            style: AppTextStyles.statMedium,
+          ),
           const SizedBox(height: 2),
-          Text('Goal: 20 active days', style: AppTextStyles.secondary(AppTextStyles.labelSmall)),
+          Text(
+            'Goal: 20 active days',
+            style: AppTextStyles.secondary(AppTextStyles.labelSmall),
+          ),
         ],
       ),
     );
@@ -540,7 +623,11 @@ class _RecentAchievementsSection extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Column(
                       children: [
-                        AppIcon(AppIcons.medal, size: 24, color: palette.primary),
+                        AppIcon(
+                          AppIcons.medal,
+                          size: 24,
+                          color: palette.primary,
+                        ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           item.title,
@@ -560,7 +647,6 @@ class _RecentAchievementsSection extends StatelessWidget {
     );
   }
 }
-
 
 class _TipsCard extends StatelessWidget {
   const _TipsCard();

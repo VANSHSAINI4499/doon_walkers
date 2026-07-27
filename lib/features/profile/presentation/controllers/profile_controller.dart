@@ -12,8 +12,8 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 
 final profileControllerProvider =
     StateNotifierProvider<ProfileController, AsyncValue<void>>((ref) {
-  return ProfileController(ref);
-});
+      return ProfileController(ref);
+    });
 
 class ProfileController extends StateNotifier<AsyncValue<void>> {
   ProfileController(this._ref) : super(const AsyncValue.data(null));

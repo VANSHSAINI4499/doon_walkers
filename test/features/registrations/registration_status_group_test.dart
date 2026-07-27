@@ -69,7 +69,9 @@ void main() {
         RegistrationStatusGroup.completed,
       );
       expect(
-        _groupOf(_registration(trekDate: DateTime(2026, 7, 1), checkedInAt: null)),
+        _groupOf(
+          _registration(trekDate: DateTime(2026, 7, 1), checkedInAt: null),
+        ),
         RegistrationStatusGroup.completed,
       );
     });
@@ -113,10 +115,17 @@ void main() {
       // and refunded registrations for an upcoming trek must still read
       // as Upcoming, since payment state and trek timing are independent
       // questions for anything other than cancellation.
-      for (final status in [PaymentStatus.pending, PaymentStatus.paid, PaymentStatus.refunded]) {
+      for (final status in [
+        PaymentStatus.pending,
+        PaymentStatus.paid,
+        PaymentStatus.refunded,
+      ]) {
         expect(
           _groupOf(
-            _registration(paymentStatus: status, trekDate: DateTime(2026, 8, 1)),
+            _registration(
+              paymentStatus: status,
+              trekDate: DateTime(2026, 8, 1),
+            ),
           ),
           RegistrationStatusGroup.upcoming,
           reason: '$status must not be treated as cancelled',

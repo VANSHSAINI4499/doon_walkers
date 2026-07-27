@@ -6,7 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class _OnboardingSlide {
-  const _OnboardingSlide({required this.icon, required this.title, required this.body});
+  const _OnboardingSlide({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
 
   final IconData icon;
   final String title;
@@ -18,26 +22,30 @@ const _slides = [
   _OnboardingSlide(
     icon: AppIcons.landscape,
     title: 'Welcome to Doon Walkers',
-    body: 'A Dehradun-based community of trekkers exploring the Himalayas '
+    body:
+        'A Dehradun-based community of trekkers exploring the Himalayas '
         'together — real treks, real people.',
   ),
   _OnboardingSlide(
     icon: AppIcons.treks,
     title: 'Discover & Register for Treks',
-    body: 'Browse upcoming treks, check difficulty and distance, and '
+    body:
+        'Browse upcoming treks, check difficulty and distance, and '
         'register in a few taps — from easy weekend walks to multi-day '
         'Himalayan routes.',
   ),
   _OnboardingSlide(
     icon: AppIcons.challenges,
     title: 'Turn Your Treks into Challenges',
-    body: 'Your steps, distance, and trekking streaks are tracked '
+    body:
+        'Your steps, distance, and trekking streaks are tracked '
         'automatically — climb from Bronze to Platinum as you go.',
   ),
   _OnboardingSlide(
     icon: AppIcons.group,
     title: 'Stay Connected',
-    body: 'Join the conversation on every trek, relive the trip through '
+    body:
+        'Join the conversation on every trek, relive the trip through '
         'shared photos, and grab official Doon Walkers merch.',
   ),
 ];
@@ -75,7 +83,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _finish() async {
-    await ref.read(sharedPreferencesProvider).setBool(AppConstants.prefsHasSeenOnboarding, true);
+    await ref
+        .read(sharedPreferencesProvider)
+        .setBool(AppConstants.prefsHasSeenOnboarding, true);
     if (!mounted) return;
     context.go(AppConstants.routeSignIn);
   }
@@ -84,7 +94,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_page == _slides.length - 1) {
       _finish();
     } else {
-      _pageController.nextPage(duration: AppMotion.page, curve: AppMotion.emphasized);
+      _pageController.nextPage(
+        duration: AppMotion.page,
+        curve: AppMotion.emphasized,
+      );
     }
   }
 
@@ -105,7 +118,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
                 child: TextButton(
                   onPressed: _finish,
-                  child: Text('Skip', style: AppTextStyles.secondary(AppTextStyles.labelLarge)),
+                  child: Text(
+                    'Skip',
+                    style: AppTextStyles.secondary(AppTextStyles.labelLarge),
+                  ),
                 ),
               ),
             ),
@@ -113,21 +129,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: _slides.length,
-                itemBuilder: (context, index) => AnimatedBuilder(
-                  animation: _pageController,
-                  builder: (context, child) {
-                    var t = (_page - index).toDouble();
-                    if (_pageController.hasClients && _pageController.position.haveDimensions) {
-                      t = (_pageController.page ?? _page.toDouble()) - index;
-                    }
-                    final distance = t.clamp(-1.0, 1.0).abs();
-                    return Opacity(
-                      opacity: 1 - distance,
-                      child: Transform.scale(scale: 1 - (distance * 0.1), child: child),
-                    );
-                  },
-                  child: _SlideContent(slide: _slides[index]),
-                ),
+                itemBuilder:
+                    (context, index) => AnimatedBuilder(
+                      animation: _pageController,
+                      builder: (context, child) {
+                        var t = (_page - index).toDouble();
+                        if (_pageController.hasClients &&
+                            _pageController.position.haveDimensions) {
+                          t =
+                              (_pageController.page ?? _page.toDouble()) -
+                              index;
+                        }
+                        final distance = t.clamp(-1.0, 1.0).abs();
+                        return Opacity(
+                          opacity: 1 - distance,
+                          child: Transform.scale(
+                            scale: 1 - (distance * 0.1),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _SlideContent(slide: _slides[index]),
+                    ),
               ),
             ),
             _DotIndicator(count: _slides.length, activePage: _page),
@@ -169,12 +192,19 @@ class _SlideContent extends StatelessWidget {
             decoration: BoxDecoration(
               color: palette.primary,
               shape: BoxShape.circle,
-              border: Border.all(color: palette.primary.withValues(alpha: 0.3), width: 3),
+              border: Border.all(
+                color: palette.primary.withValues(alpha: 0.3),
+                width: 3,
+              ),
             ),
             child: AppIcon(slide.icon, size: 64, color: palette.onPrimary),
           ),
           const SizedBox(height: AppSpacing.xxxl),
-          Text(slide.title, style: AppTextStyles.headlineMedium, textAlign: TextAlign.center),
+          Text(
+            slide.title,
+            style: AppTextStyles.headlineMedium,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: AppSpacing.md),
           Text(
             slide.body,

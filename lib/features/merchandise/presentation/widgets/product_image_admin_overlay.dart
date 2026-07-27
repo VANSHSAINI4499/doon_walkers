@@ -23,45 +23,49 @@ class ProductImageAdminOverlay extends ConsumerStatefulWidget {
   final String productName;
 
   @override
-  ConsumerState<ProductImageAdminOverlay> createState() => _ProductImageAdminOverlayState();
+  ConsumerState<ProductImageAdminOverlay> createState() =>
+      _ProductImageAdminOverlayState();
 }
 
-class _ProductImageAdminOverlayState extends ConsumerState<ProductImageAdminOverlay> {
+class _ProductImageAdminOverlayState
+    extends ConsumerState<ProductImageAdminOverlay> {
   bool _isPending = false;
 
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete photo?'),
-        content: Text(
-          'This permanently removes this photo from '
-          '"${widget.productName}", including the file in Storage. '
-          'This cannot be undone.',
-        ),
-        actions: [
-          PremiumButton(
-            label: 'Cancel',
-            variant: PremiumButtonVariant.glass,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Delete photo?'),
+            content: Text(
+              'This permanently removes this photo from '
+              '"${widget.productName}", including the file in Storage. '
+              'This cannot be undone.',
+            ),
+            actions: [
+              PremiumButton(
+                label: 'Cancel',
+                variant: PremiumButtonVariant.glass,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+              ),
+              PremiumButton(
+                label: 'Delete',
+                icon: AppIcons.delete,
+                variant: PremiumButtonVariant.danger,
+                size: PremiumButtonSize.small,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+            ],
           ),
-          PremiumButton(
-            label: 'Delete',
-            icon: AppIcons.delete,
-            variant: PremiumButtonVariant.danger,
-            size: PremiumButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
     );
 
     if (confirmed != true || !mounted) return;
 
     setState(() => _isPending = true);
-    final success =
-        await ref.read(productImageAdminControllerProvider.notifier).deleteImage(widget.image.id);
+    final success = await ref
+        .read(productImageAdminControllerProvider.notifier)
+        .deleteImage(widget.image.id);
     if (!mounted) return;
     setState(() => _isPending = false);
 
@@ -88,41 +92,52 @@ class _ProductImageAdminOverlayState extends ConsumerState<ProductImageAdminOver
         Positioned.fill(
           child: ProductImageThumbnail(
             imageUrl: widget.image.imageUrl,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => PhotoViewerScreen(imageUrl: widget.image.imageUrl),
-              ),
-            ),
+            onTap:
+                () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder:
+                        (context) =>
+                            PhotoViewerScreen(imageUrl: widget.image.imageUrl),
+                  ),
+                ),
           ),
         ),
         Positioned(
           top: 4,
           right: 4,
-          child: _isPending
-              ? Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
+          child:
+              _isPending
+                  ? Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: palette.scrim,
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                  )
+                  : Material(
                     color: palette.scrim,
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: palette.textPrimary),
-                  ),
-                )
-              : Material(
-                  color: palette.scrim,
-                  shape: const CircleBorder(),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: _confirmDelete,
-                    child: Padding(
-                      padding: const EdgeInsets.all(6),
-                      child: AppIcon(AppIcons.delete, size: 18, color: palette.textPrimary),
+                    shape: const CircleBorder(),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: _confirmDelete,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: AppIcon(
+                          AppIcons.delete,
+                          size: 18,
+                          color: palette.textPrimary,
+                        ),
+                      ),
                     ),
                   ),
-                ),
         ),
       ],
     );

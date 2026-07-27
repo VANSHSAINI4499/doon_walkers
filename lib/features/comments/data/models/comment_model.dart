@@ -21,9 +21,10 @@ class CommentModel {
       commentText: json['comment'] as String,
       isVisible: json['is_visible'] as bool? ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
-      userName: (json['user_name'] as String?)?.trim().isNotEmpty == true
-          ? json['user_name'] as String
-          : 'Unknown member',
+      userName:
+          (json['user_name'] as String?)?.trim().isNotEmpty == true
+              ? json['user_name'] as String
+              : 'Unknown member',
       userAvatar: json['user_avatar'] as String?,
       trekTitle: trek?['title'] as String?,
     );
@@ -38,10 +39,6 @@ class CommentModel {
     required String userId,
     required String commentText,
   }) {
-    return {
-      'trek_id': trekId,
-      'user_id': userId,
-      'comment': commentText,
-    };
+    return {'trek_id': trekId, 'user_id': userId, 'comment': commentText};
   }
 }

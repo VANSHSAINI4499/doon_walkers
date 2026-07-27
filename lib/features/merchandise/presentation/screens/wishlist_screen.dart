@@ -51,7 +51,9 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
   List<WishlistItem> _filter(List<WishlistItem> items) {
     if (_query.isEmpty) return items;
-    return items.where((item) => item.product.name.toLowerCase().contains(_query)).toList();
+    return items
+        .where((item) => item.product.name.toLowerCase().contains(_query))
+        .toList();
   }
 
   @override
@@ -63,18 +65,28 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-            child: ListSearchField(controller: _searchController, hint: 'Search your wishlist'),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              0,
+            ),
+            child: ListSearchField(
+              controller: _searchController,
+              hint: 'Search your wishlist',
+            ),
           ),
           Expanded(
             child: pageAsync.when(
               loading: () => const ListScreenSkeleton(),
-              error: (error, stack) => ListScreenError(
-                message: 'Could not load your wishlist.',
-                onRetry: () => ref.invalidate(myWishlistPaginationProvider),
-              ),
+              error:
+                  (error, stack) => ListScreenError(
+                    message: 'Could not load your wishlist.',
+                    onRetry: () => ref.invalidate(myWishlistPaginationProvider),
+                  ),
               data: (page) {
-                Future<void> onRefresh() => ref.refresh(myWishlistPaginationProvider.future);
+                Future<void> onRefresh() =>
+                    ref.refresh(myWishlistPaginationProvider.future);
 
                 final filtered = _filter(page.items);
                 if (filtered.isEmpty) {
@@ -85,9 +97,10 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                       children: [
                         ListScreenEmpty(
                           icon: AppIcons.favorite,
-                          message: _query.isNotEmpty
-                              ? 'No wishlist items match "$_query".'
-                              : "You haven't wishlisted anything yet.",
+                          message:
+                              _query.isNotEmpty
+                                  ? 'No wishlist items match "$_query".'
+                                  : "You haven't wishlisted anything yet.",
                         ),
                       ],
                     ),

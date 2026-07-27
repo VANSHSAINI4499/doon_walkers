@@ -35,22 +35,32 @@ class ProductSearchFilterBar extends StatelessWidget {
       children: [
         AnimatedBuilder(
           animation: searchController,
-          builder: (context, _) => TextField(
-            controller: searchController,
-            onChanged: onSearchChanged,
-            decoration: InputDecoration(
-              hintText: 'Search merchandise…',
-              prefixIcon: AppIcon(AppIcons.search, size: 20, color: palette.textSecondary),
-              suffixIcon: searchController.text.isEmpty
-                  ? null
-                  : IconButton(
-                      icon: AppIcon(AppIcons.close, size: 18, color: palette.textSecondary),
-                      tooltip: 'Clear search',
-                      onPressed: onClearSearch,
-                    ),
-              isDense: true,
-            ),
-          ),
+          builder:
+              (context, _) => TextField(
+                controller: searchController,
+                onChanged: onSearchChanged,
+                decoration: InputDecoration(
+                  hintText: 'Search merchandise…',
+                  prefixIcon: AppIcon(
+                    AppIcons.search,
+                    size: 20,
+                    color: palette.textSecondary,
+                  ),
+                  suffixIcon:
+                      searchController.text.isEmpty
+                          ? null
+                          : IconButton(
+                            icon: AppIcon(
+                              AppIcons.close,
+                              size: 18,
+                              color: palette.textSecondary,
+                            ),
+                            tooltip: 'Clear search',
+                            onPressed: onClearSearch,
+                          ),
+                  isDense: true,
+                ),
+              ),
         ),
         const SizedBox(height: AppSpacing.md),
         SingleChildScrollView(
@@ -79,7 +89,11 @@ class ProductSearchFilterBar extends StatelessWidget {
 }
 
 class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.label, required this.selected, required this.onSelected});
+  const _CategoryChip({
+    required this.label,
+    required this.selected,
+    required this.onSelected,
+  });
 
   final String label;
   final bool selected;
@@ -94,7 +108,10 @@ class _CategoryChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: AppMotion.fast,
         curve: AppMotion.standard,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           gradient: selected ? AppGradients.primary : null,
           color: selected ? null : palette.card,

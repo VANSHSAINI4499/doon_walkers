@@ -37,10 +37,11 @@ class AuthGuard {
 
     // Determine return destination
     final targetPath = returnPath ?? GoRouterState.of(context).uri.toString();
-    final signInUrl = Uri(
-      path: AppConstants.routeSignIn,
-      queryParameters: {'redirectTo': targetPath},
-    ).toString();
+    final signInUrl =
+        Uri(
+          path: AppConstants.routeSignIn,
+          queryParameters: {'redirectTo': targetPath},
+        ).toString();
 
     context.push(signInUrl);
   }
@@ -71,11 +72,13 @@ class AuthGuard {
           return;
         }
 
-        final targetPath = returnPath ?? GoRouterState.of(context).uri.toString();
-        final verifyUrl = Uri(
-          path: AppConstants.routePhoneVerification,
-          queryParameters: {'redirectTo': targetPath},
-        ).toString();
+        final targetPath =
+            returnPath ?? GoRouterState.of(context).uri.toString();
+        final verifyUrl =
+            Uri(
+              path: AppConstants.routePhoneVerification,
+              queryParameters: {'redirectTo': targetPath},
+            ).toString();
         context.push(verifyUrl);
       },
     );

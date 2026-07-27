@@ -15,8 +15,7 @@ class MemberDirectoryScreen extends ConsumerStatefulWidget {
       _MemberDirectoryScreenState();
 }
 
-class _MemberDirectoryScreenState
-    extends ConsumerState<MemberDirectoryScreen> {
+class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
@@ -29,16 +28,16 @@ class _MemberDirectoryScreenState
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    final membersAsync = ref.watch(memberDirectoryProvider((
-      limit: 50,
-      offset: 0,
-      search: _searchQuery.isEmpty ? null : _searchQuery,
-    )));
+    final membersAsync = ref.watch(
+      memberDirectoryProvider((
+        limit: 50,
+        offset: 0,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+      )),
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Member Directory'),
-      ),
+      appBar: AppBar(title: const Text('Member Directory')),
       body: Column(
         children: [
           // Search Input Bar
@@ -50,15 +49,16 @@ class _MemberDirectoryScreenState
               decoration: InputDecoration(
                 hintText: 'Search members by name...',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                        },
-                      )
-                    : null,
+                suffixIcon:
+                    _searchQuery.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                        : null,
               ),
             ),
           ),
@@ -67,32 +67,43 @@ class _MemberDirectoryScreenState
           Expanded(
             child: membersAsync.when(
               loading: () => const _DirectorySkeleton(),
-              error: (err, stack) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xl),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppIcon(AppIcons.error, size: 36, color: palette.danger),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        'Could not load member directory.',
-                        style: AppTextStyles.titleMedium,
+              error:
+                  (err, stack) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppIcon(
+                            AppIcons.error,
+                            size: 36,
+                            color: palette.danger,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            'Could not load member directory.',
+                            style: AppTextStyles.titleMedium,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          AppButton(
+                            label: 'Retry',
+                            icon: AppIcons.refresh,
+                            onPressed:
+                                () => ref.invalidate(
+                                  memberDirectoryProvider((
+                                    limit: 50,
+                                    offset: 0,
+                                    search:
+                                        _searchQuery.isEmpty
+                                            ? null
+                                            : _searchQuery,
+                                  )),
+                                ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: AppSpacing.lg),
-                      AppButton(
-                        label: 'Retry',
-                        icon: AppIcons.refresh,
-                        onPressed: () => ref.invalidate(memberDirectoryProvider((
-                          limit: 50,
-                          offset: 0,
-                          search: _searchQuery.isEmpty ? null : _searchQuery,
-                        ))),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
               data: (members) {
                 if (members.isEmpty) {
                   return Center(
@@ -144,14 +155,15 @@ class _MemberCard extends StatelessWidget {
     final palette = AppPalette.of(context);
 
     return AppCard(
-      onTap: () => showMemberDetailSheet(
-        context: context,
-        displayName: member.displayName,
-        avatarUrl: member.avatarUrl,
-        level: member.level,
-        totalPoints: member.totalPoints,
-        createdAt: member.createdAt,
-      ),
+      onTap:
+          () => showMemberDetailSheet(
+            context: context,
+            displayName: member.displayName,
+            avatarUrl: member.avatarUrl,
+            level: member.level,
+            totalPoints: member.totalPoints,
+            createdAt: member.createdAt,
+          ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -164,13 +176,15 @@ class _MemberCard extends StatelessWidget {
               border: Border.all(color: palette.border, width: 1.5),
             ),
             child: ClipOval(
-              child: member.avatarUrl != null && member.avatarUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: member.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => _Initials(member.displayName),
-                    )
-                  : _Initials(member.displayName),
+              child:
+                  member.avatarUrl != null && member.avatarUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                        imageUrl: member.avatarUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget:
+                            (_, __, ___) => _Initials(member.displayName),
+                      )
+                      : _Initials(member.displayName),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -234,8 +248,9 @@ class _DirectorySkeleton extends StatelessWidget {
           childAspectRatio: 0.82,
         ),
         itemCount: 6,
-        itemBuilder: (context, index) =>
-            const SkeletonBox(height: 140, borderRadius: AppRadius.card),
+        itemBuilder:
+            (context, index) =>
+                const SkeletonBox(height: 140, borderRadius: AppRadius.card),
       ),
     );
   }

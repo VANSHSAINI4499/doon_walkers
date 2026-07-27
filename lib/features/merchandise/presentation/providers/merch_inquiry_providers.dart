@@ -28,22 +28,23 @@ final allMerchInquiriesProvider = FutureProvider<List<MerchInquiry>>(
 /// Watches [authStateChangesProvider] so signing out (or switching
 /// accounts) refetches rather than leaving the previous user's list
 /// cached on screen — mirrors [myRegistrationsProvider] exactly.
-final myMerchInquiriesPreviewProvider = FutureProvider.autoDispose<List<MerchInquiry>>(
-  (ref) {
-    ref.watch(authStateChangesProvider);
-    return ref.watch(merchInquiryRepositoryProvider).fetchMyInquiries(limit: 3);
-  },
-  name: 'myMerchInquiriesPreviewProvider',
-);
+final myMerchInquiriesPreviewProvider =
+    FutureProvider.autoDispose<List<MerchInquiry>>((ref) {
+      ref.watch(authStateChangesProvider);
+      return ref
+          .watch(merchInquiryRepositoryProvider)
+          .fetchMyInquiries(limit: 3);
+    }, name: 'myMerchInquiriesPreviewProvider');
 
 /// Riverpod AsyncNotifier managing inquiry mutations (submit, admin
 /// status change). Mirrors RegistrationController's shape: [state]
 /// carries shared loading/error status, each method also returns its
 /// own result.
-final merchInquiryControllerProvider = AsyncNotifierProvider<MerchInquiryController, void>(
-  MerchInquiryController.new,
-  name: 'merchInquiryControllerProvider',
-);
+final merchInquiryControllerProvider =
+    AsyncNotifierProvider<MerchInquiryController, void>(
+      MerchInquiryController.new,
+      name: 'merchInquiryControllerProvider',
+    );
 
 class MerchInquiryController extends AsyncNotifier<void> {
   @override
@@ -59,7 +60,9 @@ class MerchInquiryController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     MerchInquiry? created;
     state = await AsyncValue.guard(() async {
-      created = await ref.read(merchInquiryRepositoryProvider).createInquiry(
+      created = await ref
+          .read(merchInquiryRepositoryProvider)
+          .createInquiry(
             productId: productId,
             variantId: variantId,
             quantity: quantity,
@@ -93,11 +96,16 @@ class MerchInquiryController extends AsyncNotifier<void> {
   /// Server-side `merch_inquiries_update_admin` rejects the status
   /// write itself for any non-admin caller, so a mis-gated UI fails
   /// safely there regardless of the notification step.
-  Future<bool> updateStatus(MerchInquiry inquiry, MerchInquiryStatus status) async {
+  Future<bool> updateStatus(
+    MerchInquiry inquiry,
+    MerchInquiryStatus status,
+  ) async {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
-      await ref.read(merchInquiryRepositoryProvider).updateStatus(inquiry.id, status);
+      await ref
+          .read(merchInquiryRepositoryProvider)
+          .updateStatus(inquiry.id, status);
       success = true;
     });
 
@@ -106,14 +114,19 @@ class MerchInquiryController extends AsyncNotifier<void> {
       ref.invalidate(myMerchInquiriesPreviewProvider);
       ref.invalidate(myInquiriesPaginationProvider);
       try {
-        await ref.read(notificationRepositoryProvider).createNotification(
+        await ref
+            .read(notificationRepositoryProvider)
+            .createNotification(
               title: 'Inquiry Update',
-              body: 'Your inquiry for "${inquiry.productName}" is now ${status.label}.',
+              body:
+                  'Your inquiry for "${inquiry.productName}" is now ${status.label}.',
               targetUserId: inquiry.userId,
             );
       } catch (e, st) {
-        debugPrint('MerchInquiryController.updateStatus: '
-            'targeted notification failed (status change itself still succeeded): $e');
+        debugPrint(
+          'MerchInquiryController.updateStatus: '
+          'targeted notification failed (status change itself still succeeded): $e',
+        );
         debugPrint('$st');
       }
     }

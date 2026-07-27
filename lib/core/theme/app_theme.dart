@@ -82,9 +82,8 @@ abstract final class AppTheme {
         titleTextStyle: textTheme.titleLarge,
         iconTheme: IconThemeData(color: p.textPrimary),
         actionsIconTheme: IconThemeData(color: p.textPrimary),
-        systemOverlayStyle: isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        systemOverlayStyle:
+            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       ),
 
       // ── Bottom navigation ──────────────────────────────────────────
@@ -98,17 +97,19 @@ abstract final class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
-            color: states.contains(WidgetState.selected)
-                ? p.primary
-                : p.textSecondary,
+            color:
+                states.contains(WidgetState.selected)
+                    ? p.primary
+                    : p.textSecondary,
             size: 24,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => AppTextStyles.labelSmall.copyWith(
-            color: states.contains(WidgetState.selected)
-                ? p.primary
-                : p.textSecondary,
+            color:
+                states.contains(WidgetState.selected)
+                    ? p.primary
+                    : p.textSecondary,
           ),
         ),
       ),
@@ -274,7 +275,9 @@ abstract final class AppTheme {
         backgroundColor: p.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.top(AppRadius.xl)),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.top(AppRadius.xl),
+        ),
         showDragHandle: true,
         dragHandleColor: p.borderStrong,
       ),
@@ -338,9 +341,10 @@ abstract final class AppTheme {
 
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? p.onPrimary
-              : p.textSecondary,
+          (states) =>
+              states.contains(WidgetState.selected)
+                  ? p.onPrimary
+                  : p.textSecondary,
         ),
         trackColor: WidgetStateProperty.resolveWith(
           (states) =>
@@ -351,9 +355,10 @@ abstract final class AppTheme {
 
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? p.primary
-              : Colors.transparent,
+          (states) =>
+              states.contains(WidgetState.selected)
+                  ? p.primary
+                  : Colors.transparent,
         ),
         checkColor: WidgetStateProperty.all(p.onPrimary),
         side: BorderSide(color: p.borderStrong, width: 1.5),
@@ -362,9 +367,10 @@ abstract final class AppTheme {
 
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? p.primary
-              : p.borderStrong,
+          (states) =>
+              states.contains(WidgetState.selected)
+                  ? p.primary
+                  : p.borderStrong,
         ),
       ),
 

@@ -18,7 +18,10 @@
 bool commentMatchesBlocklist(String text, List<String> terms) {
   for (final term in terms) {
     if (term.isEmpty) continue;
-    final pattern = RegExp(r'\b' + RegExp.escape(term) + r'\b', caseSensitive: false);
+    final pattern = RegExp(
+      r'\b' + RegExp.escape(term) + r'\b',
+      caseSensitive: false,
+    );
     if (pattern.hasMatch(text)) return true;
   }
   return false;

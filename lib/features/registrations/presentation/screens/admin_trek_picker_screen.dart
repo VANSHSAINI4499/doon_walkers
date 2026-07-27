@@ -59,18 +59,25 @@ class AdminTrekPickerScreen extends ConsumerWidget {
             if (treks.isEmpty) return const _EmptyTrekPicker();
 
             return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.xxl),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
               itemCount: treks.length,
-              separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+              separatorBuilder:
+                  (context, index) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 final trek = treks[index];
                 return AppReveal(
                   index: index.clamp(0, 8),
                   child: _TrekPickerTile(
                     trek: trek,
-                    onTap: () => context.push(
-                      AppConstants.adminTrekRegistrationsLocation(trek.id),
-                    ),
+                    onTap:
+                        () => context.push(
+                          AppConstants.adminTrekRegistrationsLocation(trek.id),
+                        ),
                   ),
                 );
               },
@@ -99,7 +106,9 @@ class _EmptyTrekPicker extends StatelessWidget {
               decoration: BoxDecoration(
                 color: palette.primarySubtle,
                 shape: BoxShape.circle,
-                border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: palette.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: AppIcon(AppIcons.treks, size: 48, color: palette.primary),
             ),
@@ -130,8 +139,18 @@ class _TrekPickerTile extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
@@ -168,8 +187,11 @@ class _TrekPickerTile extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   trekDate != null ? _formatDate(trekDate) : 'No date set',
-                  style: AppTextStyles.secondary(AppTextStyles.bodySmall).copyWith(
-                    fontStyle: trekDate == null ? FontStyle.italic : FontStyle.normal,
+                  style: AppTextStyles.secondary(
+                    AppTextStyles.bodySmall,
+                  ).copyWith(
+                    fontStyle:
+                        trekDate == null ? FontStyle.italic : FontStyle.normal,
                   ),
                 ),
               ],
@@ -194,30 +216,36 @@ class _TrekPickerSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: 4,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-          child: const Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonBox(width: 180, height: 16),
-                    SizedBox(height: AppSpacing.sm),
-                    SkeletonBox(width: 100, height: 12),
-                  ],
-                ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder:
+            (context, index) => Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
               ),
-              SkeletonBox(width: 24, height: 24, borderRadius: AppRadius.xs),
-            ],
-          ),
-        ),
+              child: const Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonBox(width: 180, height: 16),
+                        SizedBox(height: AppSpacing.sm),
+                        SkeletonBox(width: 100, height: 12),
+                      ],
+                    ),
+                  ),
+                  SkeletonBox(
+                    width: 24,
+                    height: 24,
+                    borderRadius: AppRadius.xs,
+                  ),
+                ],
+              ),
+            ),
       ),
     );
   }

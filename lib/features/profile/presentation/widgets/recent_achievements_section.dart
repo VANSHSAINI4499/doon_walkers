@@ -19,7 +19,9 @@ class RecentAchievementsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
-    final achievementsAsync = ref.watch(myAchievementsProvider((limit: 3, offset: 0)));
+    final achievementsAsync = ref.watch(
+      myAchievementsProvider((limit: 3, offset: 0)),
+    );
 
     return achievementsAsync.when(
       loading: () => const _RecentAchievementsSkeleton(),
@@ -56,9 +58,10 @@ class RecentAchievementsSection extends ConsumerWidget {
               Wrap(
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
-                children: achievements.map((achievement) {
-                  return _AchievementChip(achievement: achievement);
-                }).toList(),
+                children:
+                    achievements.map((achievement) {
+                      return _AchievementChip(achievement: achievement);
+                    }).toList(),
               ),
             ],
           ),
@@ -98,9 +101,7 @@ class _AchievementChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.cardHigh,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(
-          color: color.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -155,17 +156,20 @@ class _RecentAchievementsSkeleton extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
-              children: List.generate(2, (index) => Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.sm),
-                child: Container(
-                  width: 100,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: palette.cardHigh,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
+              children: List.generate(
+                2,
+                (index) => Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: Container(
+                    width: 100,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: palette.cardHigh,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
                   ),
                 ),
-              )),
+              ),
             ),
           ],
         ),

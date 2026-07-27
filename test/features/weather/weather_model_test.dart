@@ -1,15 +1,12 @@
 import 'package:doon_walkers/features/weather/domain/models/weather_model.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 void main() {
   group('WeatherModel & Recommendation Tests', () {
     test('Parses Open-Meteo JSON response correctly', () {
       final json = {
-        'current_weather': {
-          'temperature': 28.5,
-          'weathercode': 0,
-        },
+        'current_weather': {'temperature': 28.5, 'weathercode': 0},
         'hourly': {
           'precipitation_probability': [10, 20, 30],
         },
@@ -20,7 +17,7 @@ void main() {
       expect(model.weatherCode, 0);
       expect(model.precipitationProbability, 10);
       expect(model.conditionName, 'Clear Sky');
-      expect(model.conditionIcon, Icons.wb_sunny);
+      expect(model.conditionIcon, LucideIcons.sun);
       expect(model.recommendationLabel, 'Great day for a trek');
     });
 
@@ -33,7 +30,7 @@ void main() {
 
       expect(model.recommendationLabel, 'Pack a raincoat');
       expect(model.conditionName, 'Rainy');
-      expect(model.conditionIcon, Icons.grain);
+      expect(model.conditionIcon, LucideIcons.cloudRain);
     });
 
     test('Recommends layer up when temperature <= 10', () {

@@ -86,19 +86,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               );
             }
 
-            final visible = notifications.where((item) {
-              final isUnread = !effectiveReadIds.contains(item.id);
-              switch (filter) {
-                case NotificationFilter.all:
-                  return true;
-                case NotificationFilter.unread:
-                  return isUnread;
-                case NotificationFilter.updates:
-                  return item.isTargeted;
-                case NotificationFilter.announcements:
-                  return !item.isTargeted;
-              }
-            }).toList();
+            final visible =
+                notifications.where((item) {
+                  final isUnread = !effectiveReadIds.contains(item.id);
+                  switch (filter) {
+                    case NotificationFilter.all:
+                      return true;
+                    case NotificationFilter.unread:
+                      return isUnread;
+                    case NotificationFilter.updates:
+                      return item.isTargeted;
+                    case NotificationFilter.announcements:
+                      return !item.isTargeted;
+                  }
+                }).toList();
 
             final groups = groupNotificationsByDay(visible);
 
@@ -132,27 +133,36 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: NotificationFilter.values.map((f) {
-                        final isSelected = filter == f;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: AppSpacing.sm),
-                          child: ChoiceChip(
-                            label: Text(f.label),
-                            selected: isSelected,
-                            onSelected: (_) => ref
-                                .read(notificationFilterProvider.notifier)
-                                .state = f,
-                          ),
-                        );
-                      }).toList(),
+                      children:
+                          NotificationFilter.values.map((f) {
+                            final isSelected = filter == f;
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                right: AppSpacing.sm,
+                              ),
+                              child: ChoiceChip(
+                                label: Text(f.label),
+                                selected: isSelected,
+                                onSelected:
+                                    (_) =>
+                                        ref
+                                            .read(
+                                              notificationFilterProvider
+                                                  .notifier,
+                                            )
+                                            .state = f,
+                              ),
+                            );
+                          }).toList(),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   if (visible.isEmpty)
                     _NotificationsEmpty(
-                      icon: filter == NotificationFilter.unread
-                          ? AppIcons.taskDone
-                          : AppIcons.notifications,
+                      icon:
+                          filter == NotificationFilter.unread
+                              ? AppIcons.taskDone
+                              : AppIcons.notifications,
                       title: emptyTitle,
                       message: emptyMessage,
                     )

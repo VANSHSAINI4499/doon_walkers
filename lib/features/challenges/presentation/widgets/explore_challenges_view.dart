@@ -145,17 +145,17 @@ class _ExploreChallengesViewState extends ConsumerState<ExploreChallengesView> {
                 return _ExploreEmpty(
                   icon: AppIcons.searchOff,
                   title: 'No matches',
-                  message: !_hasActiveFilter
-                      ? 'Nothing matches "${_query.trim()}".'
-                      : 'Nothing matches that search and filter combination.',
+                  message:
+                      !_hasActiveFilter
+                          ? 'Nothing matches "${_query.trim()}".'
+                          : 'Nothing matches that search and filter combination.',
                   onClear: _clearAll,
                 );
               }
 
               final progressByChallenge = <String, ChallengeProgress>{
                 for (final p
-                    in progressAsync.valueOrNull ??
-                        const <ChallengeProgress>[])
+                    in progressAsync.valueOrNull ?? const <ChallengeProgress>[])
                   p.challengeId: p,
               };
 
@@ -229,12 +229,14 @@ class _StructuredExploreLayout extends ConsumerWidget {
               progress: progressByChallenge[challenge.id],
               showMeta: true,
               showPoints: true,
-              participantCount: ref
-                  .watch(challengeParticipantCountProvider(challenge.id))
-                  .valueOrNull,
-              onTap: () => context.push(
-                AppConstants.challengeDetailLocation(challenge.id),
-              ),
+              participantCount:
+                  ref
+                      .watch(challengeParticipantCountProvider(challenge.id))
+                      .valueOrNull,
+              onTap:
+                  () => context.push(
+                    AppConstants.challengeDetailLocation(challenge.id),
+                  ),
             ),
           ),
         const SizedBox(height: AppSpacing.lg),
@@ -272,12 +274,14 @@ class _FilteredChallengeList extends ConsumerWidget {
               progress: progressByChallenge[challenge.id],
               showMeta: true,
               showPoints: true,
-              participantCount: ref
-                  .watch(challengeParticipantCountProvider(challenge.id))
-                  .valueOrNull,
-              onTap: () => context.push(
-                AppConstants.challengeDetailLocation(challenge.id),
-              ),
+              participantCount:
+                  ref
+                      .watch(challengeParticipantCountProvider(challenge.id))
+                      .valueOrNull,
+              onTap:
+                  () => context.push(
+                    AppConstants.challengeDetailLocation(challenge.id),
+                  ),
             ),
           ),
         const SizedBox(height: AppSpacing.sm),
@@ -323,8 +327,8 @@ class _PopularChallengesSection extends ConsumerWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: challenges.length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(width: AppSpacing.md),
+            separatorBuilder:
+                (context, index) => const SizedBox(width: AppSpacing.md),
             itemBuilder: (context, index) {
               final challenge = challenges[index];
               return SizedBox(
@@ -334,12 +338,16 @@ class _PopularChallengesSection extends ConsumerWidget {
                   progress: progressByChallenge[challenge.id],
                   showMeta: true,
                   showPoints: true,
-                  participantCount: ref
-                      .watch(challengeParticipantCountProvider(challenge.id))
-                      .valueOrNull,
-                  onTap: () => context.push(
-                    AppConstants.challengeDetailLocation(challenge.id),
-                  ),
+                  participantCount:
+                      ref
+                          .watch(
+                            challengeParticipantCountProvider(challenge.id),
+                          )
+                          .valueOrNull,
+                  onTap:
+                      () => context.push(
+                        AppConstants.challengeDetailLocation(challenge.id),
+                      ),
                 ),
               );
             },
@@ -371,9 +379,10 @@ class _NewChallengesGrid extends StatelessWidget {
         final challenge = challenges[index];
         return NewChallengeCard(
           challenge: challenge,
-          onTap: () => context.push(
-            AppConstants.challengeDetailLocation(challenge.id),
-          ),
+          onTap:
+              () => context.push(
+                AppConstants.challengeDetailLocation(challenge.id),
+              ),
         );
       },
     );
@@ -458,20 +467,22 @@ class _SearchField extends StatelessWidget {
                 prefixIconConstraints: const BoxConstraints(minWidth: 44),
                 suffixIcon: ValueListenableBuilder<TextEditingValue>(
                   valueListenable: controller,
-                  builder: (context, value, _) => value.text.isEmpty
-                      ? const SizedBox.shrink()
-                      : IconButton(
-                          icon: AppIcon(
-                            AppIcons.close,
-                            size: 18,
-                            color: palette.textSecondary,
-                          ),
-                          tooltip: 'Clear',
-                          onPressed: () {
-                            controller.clear();
-                            onChanged('');
-                          },
-                        ),
+                  builder:
+                      (context, value, _) =>
+                          value.text.isEmpty
+                              ? const SizedBox.shrink()
+                              : IconButton(
+                                icon: AppIcon(
+                                  AppIcons.close,
+                                  size: 18,
+                                  color: palette.textSecondary,
+                                ),
+                                tooltip: 'Clear',
+                                onPressed: () {
+                                  controller.clear();
+                                  onChanged('');
+                                },
+                              ),
                 ),
                 // Tighter than the app-wide input padding: a search field
                 // in a header should not be as tall as a form field.

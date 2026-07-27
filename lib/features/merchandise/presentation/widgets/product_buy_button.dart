@@ -22,11 +22,16 @@ class ProductBuyButton extends StatelessWidget {
   final Product product;
 
   Future<void> _openForm(BuildContext context) async {
-    final submitted = await showMerchInquiryFormSheet(context, product: product);
+    final submitted = await showMerchInquiryFormSheet(
+      context,
+      product: product,
+    );
     if (submitted == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Thanks! We'll be in touch to arrange payment and pickup."),
+          content: Text(
+            "Thanks! We'll be in touch to arrange payment and pickup.",
+          ),
         ),
       );
     }

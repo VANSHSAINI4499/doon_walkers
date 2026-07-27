@@ -57,15 +57,18 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
   Future<void> _remove() async {
     final palette = AppPalette.of(context);
     setState(() => _isPending = true);
-    final success =
-        await ref.read(wishlistControllerProvider.notifier).remove(widget.item.productId);
+    final success = await ref
+        .read(wishlistControllerProvider.notifier)
+        .remove(widget.item.productId);
     if (!mounted) return;
     setState(() => _isPending = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          success ? 'Removed from your wishlist.' : 'Could not remove this item. Please try again.',
+          success
+              ? 'Removed from your wishlist.'
+              : 'Could not remove this item. Please try again.',
         ),
         backgroundColor: success ? null : palette.danger,
       ),
@@ -82,7 +85,9 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
     final palette = AppPalette.of(context);
 
     return AppCard(
-      onTap: () => context.push(AppConstants.merchandiseDetailLocation(product.id)),
+      onTap:
+          () =>
+              context.push(AppConstants.merchandiseDetailLocation(product.id)),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -92,14 +97,17 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
             child: SizedBox(
               width: 56,
               height: 56,
-              child: (coverImage == null || coverImage.isEmpty)
-                  ? const _ThumbFallback(icon: AppIcons.bag)
-                  : Image.network(
-                      coverImage,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stack) =>
-                          const _ThumbFallback(icon: AppIcons.imageBroken),
-                    ),
+              child:
+                  (coverImage == null || coverImage.isEmpty)
+                      ? const _ThumbFallback(icon: AppIcons.bag)
+                      : Image.network(
+                        coverImage,
+                        fit: BoxFit.cover,
+                        errorBuilder:
+                            (context, error, stack) => const _ThumbFallback(
+                              icon: AppIcons.imageBroken,
+                            ),
+                      ),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -116,25 +124,31 @@ class _WishlistTileState extends ConsumerState<WishlistTile> {
                 const SizedBox(height: 4),
                 Text(
                   _formatPrice(product.price),
-                  style: AppTextStyles.tinted(AppTextStyles.titleSmall, palette.primary),
+                  style: AppTextStyles.tinted(
+                    AppTextStyles.titleSmall,
+                    palette.primary,
+                  ),
                 ),
               ],
             ),
           ),
           _isPending
               ? Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger),
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: palette.danger,
                   ),
-                )
-              : IconButton(
-                  onPressed: _remove,
-                  tooltip: 'Remove from wishlist',
-                  icon: AppIcon(AppIcons.favorite, color: palette.danger),
                 ),
+              )
+              : IconButton(
+                onPressed: _remove,
+                tooltip: 'Remove from wishlist',
+                icon: AppIcon(AppIcons.favorite, color: palette.danger),
+              ),
         ],
       ),
     );

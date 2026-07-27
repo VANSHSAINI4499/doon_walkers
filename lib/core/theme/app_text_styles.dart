@@ -255,17 +255,19 @@ abstract final class AppTextStyles {
   /// Recolour to the supporting-text ink.
   static TextStyle secondary(TextStyle style, [BuildContext? context]) =>
       style.copyWith(
-        color: context == null
-            ? AppColors.textSecondary
-            : AppPalette.of(context).textSecondary,
+        color:
+            context == null
+                ? AppColors.textSecondary
+                : AppPalette.of(context).textSecondary,
       );
 
   /// Recolour to the disabled/placeholder ink.
   static TextStyle disabled(TextStyle style, [BuildContext? context]) =>
       style.copyWith(
-        color: context == null
-            ? AppColors.textDisabled
-            : AppPalette.of(context).textDisabled,
+        color:
+            context == null
+                ? AppColors.textDisabled
+                : AppPalette.of(context).textDisabled,
       );
 
   /// Recolour to an arbitrary hue (e.g. a stat in Nature Green).

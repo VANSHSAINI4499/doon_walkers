@@ -28,7 +28,10 @@ class AdminFormSectionLabel extends StatelessWidget {
         ),
         if (subtitle != null) ...[
           const SizedBox(height: AppSpacing.xs),
-          Text(subtitle!, style: AppTextStyles.secondary(AppTextStyles.bodySmall)),
+          Text(
+            subtitle!,
+            style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+          ),
         ],
       ],
     );
@@ -75,7 +78,11 @@ class AdminFormLoadingSkeleton extends StatelessWidget {
 /// Full-screen "couldn't load this record" state for the edit-mode
 /// prefill fetch failing outright.
 class AdminFormErrorState extends StatelessWidget {
-  const AdminFormErrorState({super.key, required this.message, required this.onRetry});
+  const AdminFormErrorState({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
 
   final String message;
   final VoidCallback onRetry;
@@ -92,9 +99,17 @@ class AdminFormErrorState extends StatelessWidget {
             children: [
               AppIcon(AppIcons.error, size: 40, color: palette.danger),
               const SizedBox(height: AppSpacing.md),
-              Text(message, style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+              Text(
+                message,
+                style: AppTextStyles.titleMedium,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: AppSpacing.lg),
-              PremiumButton(label: 'Retry', variant: PremiumButtonVariant.glass, onPressed: onRetry),
+              PremiumButton(
+                label: 'Retry',
+                variant: PremiumButtonVariant.glass,
+                onPressed: onRetry,
+              ),
             ],
           ),
         ),

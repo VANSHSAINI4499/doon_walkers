@@ -14,7 +14,8 @@ class PointsHistoryScreen extends ConsumerStatefulWidget {
   const PointsHistoryScreen({super.key});
 
   @override
-  ConsumerState<PointsHistoryScreen> createState() => _PointsHistoryScreenState();
+  ConsumerState<PointsHistoryScreen> createState() =>
+      _PointsHistoryScreenState();
 }
 
 class _PointsHistoryScreenState extends ConsumerState<PointsHistoryScreen> {
@@ -48,10 +49,11 @@ class _PointsHistoryScreenState extends ConsumerState<PointsHistoryScreen> {
       appBar: AppBar(title: const Text('Points History')),
       body: pageAsync.when(
         loading: () => const ListScreenSkeleton(),
-        error: (error, stack) => ListScreenError(
-          message: 'Could not load your points history.',
-          onRetry: () => ref.invalidate(myPointsHistoryPaginationProvider),
-        ),
+        error:
+            (error, stack) => ListScreenError(
+              message: 'Could not load your points history.',
+              onRetry: () => ref.invalidate(myPointsHistoryPaginationProvider),
+            ),
         data: (page) {
           Future<void> onRefresh() =>
               ref.refresh(myPointsHistoryPaginationProvider.future);

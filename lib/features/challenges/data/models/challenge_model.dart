@@ -44,7 +44,6 @@ class ChallengeModel extends Challenge {
     super.pointValue,
   });
 
-
   factory ChallengeModel.fromJson(Map<String, dynamic> json) {
     final tierRows = (json['challenge_tiers'] as List?) ?? const [];
 
@@ -53,23 +52,36 @@ class ChallengeModel extends Challenge {
       title: (json['title'] as String?) ?? '',
       description: (json['description'] as String?) ?? '',
       metric: ChallengeMetric.fromString(json['metric'] as String?),
-      timeWindow: ChallengeTimeWindow.fromString(json['time_window'] as String?),
+      timeWindow: ChallengeTimeWindow.fromString(
+        json['time_window'] as String?,
+      ),
       // Postgres `date` arrives as an ISO date string ("2026-07-01"),
       // parseable directly by DateTime.parse.
-      startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : null,
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
+      startDate:
+          json['start_date'] != null
+              ? DateTime.parse(json['start_date'] as String)
+              : null,
+      endDate:
+          json['end_date'] != null
+              ? DateTime.parse(json['end_date'] as String)
+              : null,
       icon: json['icon'] as String?,
       isActive: json['is_active'] as bool? ?? false,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
-      tiers: tierRows
-          .map((row) => ChallengeTierThresholdModel.fromJson(row as Map<String, dynamic>))
-          .toList(),
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'] as String)
+              : DateTime.now(),
+      tiers:
+          tierRows
+              .map(
+                (row) => ChallengeTierThresholdModel.fromJson(
+                  row as Map<String, dynamic>,
+                ),
+              )
+              .toList(),
       // Phase 21: point_value added by 0038_challenge_enrollments.sql.
       // Defaults to 50 for rows created before this migration.
       pointValue: (json['point_value'] as num?)?.toInt() ?? 50,
     );
   }
-
 }

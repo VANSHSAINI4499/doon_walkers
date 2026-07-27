@@ -65,79 +65,106 @@ Future<void> _pump(
 
 void main() {
   group('TrekRegisterButton gating (unchanged across redesign)', () {
-    testWidgets('unpublished trek shows the publish-first message, no CTA', (tester) async {
+    testWidgets('unpublished trek shows the publish-first message, no CTA', (
+      tester,
+    ) async {
       // No registration lookup happens for an unpublished trek, but supply
       // a harmless override so the family provider never hits Supabase.
       await _pump(
         tester,
         _trek(published: false, date: _tomorrow),
-        registrationOverride:
-            myRegistrationForTrekProvider('t1').overrideWith((ref) => Future.value(null)),
+        registrationOverride: myRegistrationForTrekProvider(
+          't1',
+        ).overrideWith((ref) => Future.value(null)),
       );
-      expect(find.text('Publish this trek to open registrations'), findsOneWidget);
+      expect(
+        find.text('Publish this trek to open registrations'),
+        findsOneWidget,
+      );
       expect(find.text('Register for this Trek'), findsNothing);
     });
 
-    testWidgets('while the registration lookup is loading, shows a disabled spinner', (tester) async {
-      await _pump(
-        tester,
-        _trek(published: true, date: _tomorrow),
-        registrationOverride: myRegistrationForTrekProvider('t1')
-            .overrideWith((ref) => Completer<Registration?>().future),
-      );
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    });
+    testWidgets(
+      'while the registration lookup is loading, shows a disabled spinner',
+      (tester) async {
+        await _pump(
+          tester,
+          _trek(published: true, date: _tomorrow),
+          registrationOverride: myRegistrationForTrekProvider(
+            't1',
+          ).overrideWith((ref) => Completer<Registration?>().future),
+        );
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      },
+    );
 
-    testWidgets('upcoming trek, not registered → the Register CTA', (tester) async {
+    testWidgets('upcoming trek, not registered → the Register CTA', (
+      tester,
+    ) async {
       await _pump(
         tester,
         _trek(published: true, date: _tomorrow),
-        registrationOverride:
-            myRegistrationForTrekProvider('t1').overrideWith((ref) => Future.value(null)),
+        registrationOverride: myRegistrationForTrekProvider(
+          't1',
+        ).overrideWith((ref) => Future.value(null)),
       );
       expect(find.text('Register for this Trek'), findsOneWidget);
       expect(find.textContaining('registration is closed'), findsNothing);
     });
 
-    testWidgets('completed trek, not registered → registration closed (no CTA)', (tester) async {
-      await _pump(
-        tester,
-        _trek(published: true, date: _yesterday),
-        registrationOverride:
-            myRegistrationForTrekProvider('t1').overrideWith((ref) => Future.value(null)),
-      );
-      expect(find.textContaining('registration is closed'), findsOneWidget);
-      expect(find.text('Register for this Trek'), findsNothing);
-    });
+    testWidgets(
+      'completed trek, not registered → registration closed (no CTA)',
+      (tester) async {
+        await _pump(
+          tester,
+          _trek(published: true, date: _yesterday),
+          registrationOverride: myRegistrationForTrekProvider(
+            't1',
+          ).overrideWith((ref) => Future.value(null)),
+        );
+        expect(find.textContaining('registration is closed'), findsOneWidget);
+        expect(find.text('Register for this Trek'), findsNothing);
+      },
+    );
 
-    testWidgets('already registered → the registered summary, even once completed', (tester) async {
-      await _pump(
-        tester,
-        _trek(published: true, date: _yesterday),
-        registrationOverride: myRegistrationForTrekProvider('t1')
-            .overrideWith((ref) => Future.value(_registration())),
-      );
-      expect(find.text("You're registered"), findsOneWidget);
-      expect(find.text('Register for this Trek'), findsNothing);
-    });
+    testWidgets(
+      'already registered → the registered summary, even once completed',
+      (tester) async {
+        await _pump(
+          tester,
+          _trek(published: true, date: _yesterday),
+          registrationOverride: myRegistrationForTrekProvider(
+            't1',
+          ).overrideWith((ref) => Future.value(_registration())),
+        );
+        expect(find.text("You're registered"), findsOneWidget);
+        expect(find.text('Register for this Trek'), findsNothing);
+      },
+    );
 
-    testWidgets('lookup error but trek still upcoming → CTA (fail open)', (tester) async {
+    testWidgets('lookup error but trek still upcoming → CTA (fail open)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         _trek(published: true, date: _tomorrow),
-        registrationOverride:
-            myRegistrationForTrekProvider('t1').overrideWith((ref) => Future.error('boom')),
+        registrationOverride: myRegistrationForTrekProvider(
+          't1',
+        ).overrideWith((ref) => Future.error('boom')),
       );
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Register for this Trek'), findsOneWidget);
     });
 
-    testWidgets('lookup error and trek completed → still closed', (tester) async {
+    testWidgets('lookup error and trek completed → still closed', (
+      tester,
+    ) async {
       await _pump(
         tester,
         _trek(published: true, date: _yesterday),
-        registrationOverride:
-            myRegistrationForTrekProvider('t1').overrideWith((ref) => Future.error('boom')),
+        registrationOverride: myRegistrationForTrekProvider(
+          't1',
+        ).overrideWith((ref) => Future.error('boom')),
       );
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.textContaining('registration is closed'), findsOneWidget);

@@ -17,16 +17,17 @@ final mediaUploadServiceProvider = Provider<MediaUploadService>(
 /// running in the background.
 final mediaUploadControllerProvider =
     NotifierProvider<MediaUploadController, List<MediaUploadTask>>(
-  MediaUploadController.new,
-  name: 'mediaUploadControllerProvider',
-);
+      MediaUploadController.new,
+      name: 'mediaUploadControllerProvider',
+    );
 
 class MediaUploadController extends Notifier<List<MediaUploadTask>> {
   @override
   List<MediaUploadTask> build() => [];
 
   int _idCounter = 0;
-  String _nextId() => 'upload-${DateTime.now().microsecondsSinceEpoch}-${_idCounter++}';
+  String _nextId() =>
+      'upload-${DateTime.now().microsecondsSinceEpoch}-${_idCounter++}';
 
   /// Tasks belonging to [trekId] — what the upload sheet renders,
   /// newest-batch-first to match the gallery's own ordering.
@@ -37,22 +38,29 @@ class MediaUploadController extends Notifier<List<MediaUploadTask>> {
   /// batch has settled (each task terminal) — callers that want live
   /// progress should watch [mediaUploadControllerProvider] rather than
   /// await this directly.
-  Future<void> startBatch(String trekId, List<XFile> files, {String? caption}) async {
+  Future<void> startBatch(
+    String trekId,
+    List<XFile> files, {
+    String? caption,
+  }) async {
     final service = ref.read(mediaUploadServiceProvider);
     final baseTime = DateTime.now();
 
-    final newTasks = files.map((file) {
-      final extension = file.name.contains('.') ? file.name.split('.').last : '';
-      final mediaType = MediaType.fromExtension(extension) ?? MediaType.photo;
-      return MediaUploadTask(
-        id: _nextId(),
-        trekId: trekId,
-        file: file,
-        mediaType: mediaType,
-        caption: caption,
-        cancelToken: CancelToken(),
-      );
-    }).toList();
+    final newTasks =
+        files.map((file) {
+          final extension =
+              file.name.contains('.') ? file.name.split('.').last : '';
+          final mediaType =
+              MediaType.fromExtension(extension) ?? MediaType.photo;
+          return MediaUploadTask(
+            id: _nextId(),
+            trekId: trekId,
+            file: file,
+            mediaType: mediaType,
+            caption: caption,
+            cancelToken: CancelToken(),
+          );
+        }).toList();
 
     state = [...state, ...newTasks];
 

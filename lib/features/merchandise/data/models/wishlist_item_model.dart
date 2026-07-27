@@ -20,9 +20,10 @@ class WishlistItemModel extends WishlistItem {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       productId: json['product_id'] as String,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'] as String)
+              : DateTime.now(),
       product: ProductModel.fromJson(json['products'] as Map<String, dynamic>),
     );
   }

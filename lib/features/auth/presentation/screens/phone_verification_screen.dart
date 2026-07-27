@@ -32,10 +32,12 @@ class PhoneVerificationScreen extends ConsumerStatefulWidget {
   const PhoneVerificationScreen({super.key, this.redirectTo});
 
   @override
-  ConsumerState<PhoneVerificationScreen> createState() => _PhoneVerificationScreenState();
+  ConsumerState<PhoneVerificationScreen> createState() =>
+      _PhoneVerificationScreenState();
 }
 
-class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScreen> {
+class _PhoneVerificationScreenState
+    extends ConsumerState<PhoneVerificationScreen> {
   final _phoneFormKey = GlobalKey<FormState>();
   final _otpInputKey = GlobalKey<OTPInputState>();
   final _phoneController = TextEditingController();
@@ -60,7 +62,9 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
   Future<void> _resend() async {
     await ref.read(phoneVerificationControllerProvider.notifier).retryOtp();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code resent.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Code resent.')));
     }
   }
 
@@ -69,7 +73,9 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
       setState(() => _otpError = 'Enter the $_otpLength-digit code');
       return;
     }
-    final verified = await ref.read(phoneVerificationControllerProvider.notifier).verifyOtp(_otpCode);
+    final verified = await ref
+        .read(phoneVerificationControllerProvider.notifier)
+        .verifyOtp(_otpCode);
     if (verified) _completeVerification();
   }
 
@@ -102,26 +108,30 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
 
     final verificationState = ref.watch(phoneVerificationControllerProvider);
     final isLoading = verificationState.isLoading;
-    final data = verificationState.valueOrNull ?? const PhoneVerificationState();
+    final data =
+        verificationState.valueOrNull ?? const PhoneVerificationState();
 
-    ref.listen<AsyncValue<PhoneVerificationState>>(phoneVerificationControllerProvider, (previous, next) {
-      next.whenOrNull(
-        error: (error, stackTrace) {
-          // A failed verify attempt shouldn't leave stale/wrong digits
-          // sitting in the boxes — no-ops harmlessly if we're still on
-          // the phone step (OTPInput isn't mounted, so the key's
-          // currentState is null).
-          _otpInputKey.currentState?.clear();
-          setState(() => _otpCode = '');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_cleanErrorMessage(error)),
-              backgroundColor: AppColors.danger,
-            ),
-          );
-        },
-      );
-    });
+    ref.listen<AsyncValue<PhoneVerificationState>>(
+      phoneVerificationControllerProvider,
+      (previous, next) {
+        next.whenOrNull(
+          error: (error, stackTrace) {
+            // A failed verify attempt shouldn't leave stale/wrong digits
+            // sitting in the boxes — no-ops harmlessly if we're still on
+            // the phone step (OTPInput isn't mounted, so the key's
+            // currentState is null).
+            _otpInputKey.currentState?.clear();
+            setState(() => _otpCode = '');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_cleanErrorMessage(error)),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          },
+        );
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Verify Phone Number')),
@@ -131,9 +141,10 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
             padding: const EdgeInsets.all(AppSpacing.xxl),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
-              child: data.step == PhoneVerificationStep.enterPhone
-                  ? _buildPhoneStep(isLoading)
-                  : _buildOtpStep(isLoading, data),
+              child:
+                  data.step == PhoneVerificationStep.enterPhone
+                      ? _buildPhoneStep(isLoading)
+                      : _buildOtpStep(isLoading, data),
             ),
           ),
         ),
@@ -147,7 +158,11 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
       children: [
         const AppIcon(AppIcons.phone, size: 56, color: AppColors.primary),
         const SizedBox(height: AppSpacing.lg),
-        Text('Verify Your Phone', style: AppTextStyles.headlineMedium, textAlign: TextAlign.center),
+        Text(
+          'Verify Your Phone',
+          style: AppTextStyles.headlineMedium,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Text(
           "We'll text you a one-time code to confirm your number before you continue.",
@@ -170,7 +185,10 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _sendOtp(),
                   validator: (value) {
-                    final digits = (value ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+                    final digits = (value ?? '').replaceAll(
+                      RegExp(r'[^0-9]'),
+                      '',
+                    );
                     if (digits.length < 10 || digits.length > 15) {
                       return 'Enter a valid phone number with country code';
                     }
@@ -199,7 +217,11 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
       children: [
         AppIcon(AppIcons.verified, size: 56, color: palette.primary),
         const SizedBox(height: AppSpacing.lg),
-        Text('Enter the Code', style: AppTextStyles.headlineMedium, textAlign: TextAlign.center),
+        Text(
+          'Enter the Code',
+          style: AppTextStyles.headlineMedium,
+          textAlign: TextAlign.center,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Text(
           'We sent a code to ${data.phone}.',

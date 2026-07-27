@@ -106,7 +106,8 @@ class _RouterRefreshNotifier extends ChangeNotifier {
 bool isAdminRoute(String location) => _isAdminRoute(location);
 
 bool _isAdminRoute(String location) =>
-    location == AppConstants.routeAdmin || location.startsWith('${AppConstants.routeAdmin}/');
+    location == AppConstants.routeAdmin ||
+    location.startsWith('${AppConstants.routeAdmin}/');
 
 /// True for the admin-only trek create/edit forms — plus, since Phase
 /// QR-1, the admin-only Check-in QR display — that now live under the
@@ -178,15 +179,12 @@ bool _isMerchAdminRoute(String location) {
 /// bare top-level field) so its `redirect` logic can [Ref.read] Riverpod
 /// state directly and its refresh listenable can [Ref.listen] to it — see
 /// [_RouterRefreshNotifier].
-final routerProvider = Provider<GoRouter>(
-  (ref) {
-    final refreshNotifier = _RouterRefreshNotifier(ref);
-    ref.onDispose(refreshNotifier.dispose);
+final routerProvider = Provider<GoRouter>((ref) {
+  final refreshNotifier = _RouterRefreshNotifier(ref);
+  ref.onDispose(refreshNotifier.dispose);
 
-    return _buildRouter(ref, refreshNotifier);
-  },
-  name: 'routerProvider',
-);
+  return _buildRouter(ref, refreshNotifier);
+}, name: 'routerProvider');
 
 /// DoonWalkers application router.
 ///
@@ -236,17 +234,23 @@ final routerProvider = Provider<GoRouter>(
 /// still under an `/admin/...` path so [_isAdminRoute]'s prefix check
 /// keeps gating them exactly as before. There is deliberately no route
 /// left for bare `/admin` — nothing in the UI links there anymore.
-GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRouter(
+GoRouter _buildRouter(
+  Ref ref,
+  _RouterRefreshNotifier refreshNotifier,
+) => GoRouter(
   // Read once, synchronously, at router construction — SharedPreferences
   // is already resolved before runApp() (see main.dart), same as
   // Supabase's currentUser is already resolved by the time this runs.
   // A device that has already seen onboarding boots straight to Home as
   // always; a fresh install (or one where this flag was never set)
   // lands on the carousel instead, which itself hands off to Sign In.
-  initialLocation: (ref.read(sharedPreferencesProvider).getBool(AppConstants.prefsHasSeenOnboarding) ??
-          false)
-      ? AppConstants.routeHome
-      : AppConstants.routeOnboarding,
+  initialLocation:
+      (ref
+                  .read(sharedPreferencesProvider)
+                  .getBool(AppConstants.prefsHasSeenOnboarding) ??
+              false)
+          ? AppConstants.routeHome
+          : AppConstants.routeOnboarding,
   debugLogDiagnostics: kDebugMode,
   refreshListenable: refreshNotifier,
   routes: [
@@ -262,16 +266,16 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     GoRoute(
       path: AppConstants.routeSignIn,
       name: 'sign-in',
-      builder: (context, state) => SignInScreen(
-        redirectTo: state.uri.queryParameters['redirectTo'],
-      ),
+      builder:
+          (context, state) =>
+              SignInScreen(redirectTo: state.uri.queryParameters['redirectTo']),
     ),
     GoRoute(
       path: AppConstants.routeSignUp,
       name: 'sign-up',
-      builder: (context, state) => SignUpScreen(
-        redirectTo: state.uri.queryParameters['redirectTo'],
-      ),
+      builder:
+          (context, state) =>
+              SignUpScreen(redirectTo: state.uri.queryParameters['redirectTo']),
     ),
     GoRoute(
       path: AppConstants.routeForgotPassword,
@@ -284,9 +288,10 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     GoRoute(
       path: AppConstants.routePhoneVerification,
       name: 'verify-phone',
-      builder: (context, state) => PhoneVerificationScreen(
-        redirectTo: state.uri.queryParameters['redirectTo'],
-      ),
+      builder:
+          (context, state) => PhoneVerificationScreen(
+            redirectTo: state.uri.queryParameters['redirectTo'],
+          ),
     ),
     // /notifications — deliberately top-level, not nested under any
     // StatefulShellRoute branch. See AppConstants.routeNotifications'
@@ -338,18 +343,20 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     GoRoute(
       path: AppConstants.routePointsHistory,
       name: 'points-history',
-      pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
-        key: state.pageKey,
-        child: const PointsHistoryScreen(),
-      ),
+      pageBuilder:
+          (context, state) => AppTransitions.sharedAxisPage(
+            key: state.pageKey,
+            child: const PointsHistoryScreen(),
+          ),
     ),
     GoRoute(
       path: AppConstants.routeAchievements,
       name: 'achievements',
-      pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
-        key: state.pageKey,
-        child: const AchievementsScreen(),
-      ),
+      pageBuilder:
+          (context, state) => AppTransitions.sharedAxisPage(
+            key: state.pageKey,
+            child: const AchievementsScreen(),
+          ),
     ),
     // /design-system — the Redesign Phase 1 component gallery. A
     // developer/design review surface, not linked from any user-facing
@@ -359,10 +366,11 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     GoRoute(
       path: DesignSystemDemoScreen.routeName,
       name: 'design-system',
-      pageBuilder: (context, state) => AppTransitions.fadeThroughPage(
-        key: state.pageKey,
-        child: const DesignSystemDemoScreen(),
-      ),
+      pageBuilder:
+          (context, state) => AppTransitions.fadeThroughPage(
+            key: state.pageKey,
+            child: const DesignSystemDemoScreen(),
+          ),
     ),
     // /merchandise — deliberately top-level, same reasoning as
     // /notifications above: reached from the Navigation Drawer, which
@@ -387,24 +395,26 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
         GoRoute(
           path: ':id',
           name: 'merchandise-detail',
-          builder: (context, state) => ProductDetailScreen(
-            productId: state.pathParameters['id']!,
-            // Set by ProductBuyButton's sign-in return path so a guest
-            // who signed in mid-inquiry lands back in the form rather
-            // than just on the product page — mirrors
-            // TrekRegisterButton's `register=1` round trip.
-            openBuyForm: state.uri.queryParameters['buy'] == '1',
-            // Set by WishlistButton's sign-in return path — same idea,
-            // completes the original add-to-wishlist tap automatically.
-            openWishlist: state.uri.queryParameters['wishlist'] == '1',
-          ),
+          builder:
+              (context, state) => ProductDetailScreen(
+                productId: state.pathParameters['id']!,
+                // Set by ProductBuyButton's sign-in return path so a guest
+                // who signed in mid-inquiry lands back in the form rather
+                // than just on the product page — mirrors
+                // TrekRegisterButton's `register=1` round trip.
+                openBuyForm: state.uri.queryParameters['buy'] == '1',
+                // Set by WishlistButton's sign-in return path — same idea,
+                // completes the original add-to-wishlist tap automatically.
+                openWishlist: state.uri.queryParameters['wishlist'] == '1',
+              ),
           routes: [
             GoRoute(
               path: 'edit',
               name: 'merchandise-edit',
-              builder: (context, state) => AdminProductFormScreen(
-                productId: state.pathParameters['id']!,
-              ),
+              builder:
+                  (context, state) => AdminProductFormScreen(
+                    productId: state.pathParameters['id']!,
+                  ),
             ),
           ],
         ),
@@ -426,16 +436,18 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
         GoRoute(
           path: ':id',
           name: 'challenge-detail',
-          builder: (context, state) => ChallengeDetailScreen(
-            challengeId: state.pathParameters['id']!,
-          ),
+          builder:
+              (context, state) => ChallengeDetailScreen(
+                challengeId: state.pathParameters['id']!,
+              ),
           routes: [
             GoRoute(
               path: 'leaderboard',
               name: 'challenge-leaderboard',
-              builder: (context, state) => ChallengeLeaderboardScreen(
-                challengeId: state.pathParameters['id']!,
-              ),
+              builder:
+                  (context, state) => ChallengeLeaderboardScreen(
+                    challengeId: state.pathParameters['id']!,
+                  ),
             ),
           ],
         ),
@@ -449,9 +461,10 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     GoRoute(
       path: '${AppConstants.routeAdminChallenges}/:id/edit',
       name: 'admin-challenges-edit',
-      builder: (context, state) => AdminChallengeFormScreen(
-        challengeId: state.pathParameters['id']!,
-      ),
+      builder:
+          (context, state) => AdminChallengeFormScreen(
+            challengeId: state.pathParameters['id']!,
+          ),
     ),
 
     // Top-level Community sub-routes (outside StatefulShellRoute per nav crash prevention rule)
@@ -475,8 +488,9 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
 
     // StatefulShellRoute for App Navigation Tabs & Drawer Screens
     StatefulShellRoute.indexedStack(
-      builder: (context, state, navigationShell) =>
-          AppShell(navigationShell: navigationShell),
+      builder:
+          (context, state, navigationShell) =>
+              AppShell(navigationShell: navigationShell),
       branches: [
         // Branch 0 — Home
         StatefulShellBranch(
@@ -516,8 +530,8 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                 GoRoute(
                   path: 'insights',
                   name: 'activity-insights',
-                  pageBuilder: (context, state) =>
-                      AppTransitions.sharedAxisPage(
+                  pageBuilder:
+                      (context, state) => AppTransitions.sharedAxisPage(
                         key: state.pageKey,
                         child: const InsightsScreen(),
                       ),
@@ -525,8 +539,8 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                 GoRoute(
                   path: 'goal-progress',
                   name: 'activity-goal-progress',
-                  pageBuilder: (context, state) =>
-                      AppTransitions.sharedAxisPage(
+                  pageBuilder:
+                      (context, state) => AppTransitions.sharedAxisPage(
                         key: state.pageKey,
                         child: const MonthlyGoalProgressScreen(),
                       ),
@@ -558,16 +572,19 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                 GoRoute(
                   path: ':id',
                   name: 'trek-detail',
-                  builder: (context, state) => TrekDetailScreen(
-                    trekId: state.pathParameters['id']!,
-                    // Set by TrekRegisterButton's sign-in return path so a
-                    // guest who signed in mid-registration lands back in
-                    // the form rather than just on the trek page.
-                    openRegistration: state.uri.queryParameters['register'] == '1',
-                    // Set by CommentThread's "Sign in to comment" sign-in
-                    // return path — same idea, for the comment input.
-                    openComment: state.uri.queryParameters['comment'] == '1',
-                  ),
+                  builder:
+                      (context, state) => TrekDetailScreen(
+                        trekId: state.pathParameters['id']!,
+                        // Set by TrekRegisterButton's sign-in return path so a
+                        // guest who signed in mid-registration lands back in
+                        // the form rather than just on the trek page.
+                        openRegistration:
+                            state.uri.queryParameters['register'] == '1',
+                        // Set by CommentThread's "Sign in to comment" sign-in
+                        // return path — same idea, for the comment input.
+                        openComment:
+                            state.uri.queryParameters['comment'] == '1',
+                      ),
                   routes: [
                     // /trek-library/:id/edit — admin trek edit form.
                     // Lives under the public branch (not /admin/treks)
@@ -577,9 +594,10 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                     GoRoute(
                       path: 'edit',
                       name: 'trek-edit',
-                      builder: (context, state) => AdminTrekFormScreen(
-                        trekId: state.pathParameters['id']!,
-                      ),
+                      builder:
+                          (context, state) => AdminTrekFormScreen(
+                            trekId: state.pathParameters['id']!,
+                          ),
                     ),
                     // /trek-library/:id/checkin-qr — admin-only Display
                     // Check-in QR screen (Phase QR-1). Same placement
@@ -588,9 +606,10 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                     GoRoute(
                       path: 'checkin-qr',
                       name: 'trek-checkin-qr',
-                      builder: (context, state) => TrekCheckinQrScreen(
-                        trekId: state.pathParameters['id']!,
-                      ),
+                      builder:
+                          (context, state) => TrekCheckinQrScreen(
+                            trekId: state.pathParameters['id']!,
+                          ),
                     ),
                     // /trek-library/:id/check-in — member-facing check-in
                     // scanner (Phase QR-2). A DIFFERENT last segment from
@@ -611,17 +630,19 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                     GoRoute(
                       path: 'gallery',
                       name: 'trek-gallery',
-                      builder: (context, state) => TrekGalleryScreen(
-                        trekId: state.pathParameters['id']!,
-                        trekTitle: state.uri.queryParameters['title'] ?? '',
-                      ),
+                      builder:
+                          (context, state) => TrekGalleryScreen(
+                            trekId: state.pathParameters['id']!,
+                            trekTitle: state.uri.queryParameters['title'] ?? '',
+                          ),
                     ),
                     GoRoute(
                       path: 'check-in',
                       name: 'trek-check-in',
-                      builder: (context, state) => TrekCheckinScanScreen(
-                        trekId: state.pathParameters['id']!,
-                      ),
+                      builder:
+                          (context, state) => TrekCheckinScanScreen(
+                            trekId: state.pathParameters['id']!,
+                          ),
                     ),
                   ],
                 ),
@@ -657,26 +678,29 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
                 GoRoute(
                   path: 'wishlist',
                   name: 'my-wishlist',
-                  pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
-                    key: state.pageKey,
-                    child: const WishlistScreen(),
-                  ),
+                  pageBuilder:
+                      (context, state) => AppTransitions.sharedAxisPage(
+                        key: state.pageKey,
+                        child: const WishlistScreen(),
+                      ),
                 ),
                 GoRoute(
                   path: 'enquiries',
                   name: 'my-enquiries',
-                  pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
-                    key: state.pageKey,
-                    child: const MyEnquiriesScreen(),
-                  ),
+                  pageBuilder:
+                      (context, state) => AppTransitions.sharedAxisPage(
+                        key: state.pageKey,
+                        child: const MyEnquiriesScreen(),
+                      ),
                 ),
                 GoRoute(
                   path: 'registrations',
                   name: 'my-registrations',
-                  pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
-                    key: state.pageKey,
-                    child: const MyRegistrationsScreen(),
-                  ),
+                  pageBuilder:
+                      (context, state) => AppTransitions.sharedAxisPage(
+                        key: state.pageKey,
+                        child: const MyRegistrationsScreen(),
+                      ),
                 ),
               ],
             ),
@@ -717,9 +741,10 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
         GoRoute(
           path: ':trekId',
           name: 'admin-trek-registrations-detail',
-          builder: (context, state) => AdminTrekRegistrationsScreen(
-            trekId: state.pathParameters['trekId']!,
-          ),
+          builder:
+              (context, state) => AdminTrekRegistrationsScreen(
+                trekId: state.pathParameters['trekId']!,
+              ),
           routes: [
             // /admin/trek-registrations/:trekId/:id — the same
             // AdminRegistrationDetailScreen the flat roster below
@@ -731,8 +756,8 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
             GoRoute(
               path: ':id',
               name: 'admin-trek-registrations-registration-detail',
-              builder: (context, state) =>
-                  AdminRegistrationDetailScreen(
+              builder:
+                  (context, state) => AdminRegistrationDetailScreen(
                     registrationId: state.pathParameters['id']!,
                   ),
             ),
@@ -761,9 +786,10 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
         GoRoute(
           path: ':id',
           name: 'admin-registration-detail',
-          builder: (context, state) => AdminRegistrationDetailScreen(
-            registrationId: state.pathParameters['id']!,
-          ),
+          builder:
+              (context, state) => AdminRegistrationDetailScreen(
+                registrationId: state.pathParameters['id']!,
+              ),
         ),
       ],
     ),
@@ -815,7 +841,8 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     final location = state.uri.path;
 
     // Check if target is an auth screen
-    final isAuthScreen = location == AppConstants.routeSignIn ||
+    final isAuthScreen =
+        location == AppConstants.routeSignIn ||
         location == AppConstants.routeSignUp ||
         location == AppConstants.routeForgotPassword;
 
@@ -833,10 +860,12 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //     (unlike the admin check below) since the "still loading"
     //     default is simply staying on the verification screen, which is
     //     always safe, not a destructive kick like the admin case would be.
-    if (sessionUser != null && location == AppConstants.routePhoneVerification) {
+    if (sessionUser != null &&
+        location == AppConstants.routePhoneVerification) {
       final userAsync = ref.read(currentUserProvider);
       if (userAsync.value?.phoneVerified == true) {
-        return state.uri.queryParameters['redirectTo'] ?? AppConstants.routeHome;
+        return state.uri.queryParameters['redirectTo'] ??
+            AppConstants.routeHome;
       }
     }
 
@@ -878,7 +907,8 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    rather than shown a permanently empty dashboard. Wired now,
     //    while the screen is still a placeholder, so Phase 11 inherits
     //    the guard instead of having to remember to add it.
-    final isProtectedRoute = location == AppConstants.routeProfile ||
+    final isProtectedRoute =
+        location == AppConstants.routeProfile ||
         location == AppConstants.routeActivity ||
         location == AppConstants.routeActivityInsights ||
         location == AppConstants.routeMonthlyGoalProgress ||
@@ -907,7 +937,9 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     //    /trek-library/new, or /merchandise/new otherwise, even though
     //    the UI never offers those to them.
     if (sessionUser != null &&
-        (_isAdminRoute(location) || _isTrekAdminRoute(location) || _isMerchAdminRoute(location))) {
+        (_isAdminRoute(location) ||
+            _isTrekAdminRoute(location) ||
+            _isMerchAdminRoute(location))) {
       final userAsync = ref.read(currentUserProvider);
 
       // The public.users row hasn't resolved into a value yet — either
@@ -933,9 +965,7 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
     return null; // no redirect
   },
 
-  errorBuilder: (context, state) => Scaffold(
-    body: Center(
-      child: Text('Page not found: ${state.uri}'),
-    ),
-  ),
+  errorBuilder:
+      (context, state) =>
+          Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),
 );

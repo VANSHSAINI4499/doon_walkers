@@ -15,8 +15,8 @@ void main() {
           'icon_asset': 'assets/icons/badges/step_master.png',
           'unlock_metric': 'daily_steps',
           'unlock_value': 10000,
-          'points_reward': 50
-        }
+          'points_reward': 50,
+        },
       };
 
       final achievement = UserAchievement.fromJson(json);
@@ -43,7 +43,7 @@ void main() {
         'key': 'level_milestone_5',
         'title': 'Level 5 Milestone',
         'description': 'Reached the level 5 milestone!',
-        'icon_asset': 'assets/icons/badges/level_5.png'
+        'icon_asset': 'assets/icons/badges/level_5.png',
       };
 
       final achievement = UserAchievement.fromJson(json);
@@ -70,8 +70,9 @@ void main() {
         'metadata': null,
         'key': 'challenge_platinum_d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a',
         'title': 'Challenge Completed',
-        'description': 'Mastered a fitness challenge by reaching the Platinum tier!',
-        'icon_asset': 'assets/icons/badges/platinum_challenge.png'
+        'description':
+            'Mastered a fitness challenge by reaching the Platinum tier!',
+        'icon_asset': 'assets/icons/badges/platinum_challenge.png',
       };
 
       final achievement = UserAchievement.fromJson(json);
@@ -80,8 +81,14 @@ void main() {
       expect(achievement.achievementType, 'challenge_platinum');
       expect(achievement.referenceId, 'd4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a');
       expect(achievement.title, 'Challenge Completed');
-      expect(achievement.description, 'Mastered a fitness challenge by reaching the Platinum tier!');
-      expect(achievement.iconAsset, 'assets/icons/badges/platinum_challenge.png');
+      expect(
+        achievement.description,
+        'Mastered a fitness challenge by reaching the Platinum tier!',
+      );
+      expect(
+        achievement.iconAsset,
+        'assets/icons/badges/platinum_challenge.png',
+      );
       expect(achievement.unlockedAt.minute, 45);
     });
   });

@@ -52,30 +52,44 @@ void main() {
       expect(stats.upcoming, 1);
     });
 
-    test('a cancelled registration counts as cancelled even with a past date', () {
-      final stats = RegistrationStats.fromRegistrations([
-        _registration(id: '1', paymentStatus: PaymentStatus.cancelled, trekDate: pastDate),
-      ]);
-      expect(stats.cancelled, 1);
-      expect(stats.totalAttended, 0);
-      expect(stats.upcoming, 0);
-    });
+    test(
+      'a cancelled registration counts as cancelled even with a past date',
+      () {
+        final stats = RegistrationStats.fromRegistrations([
+          _registration(
+            id: '1',
+            paymentStatus: PaymentStatus.cancelled,
+            trekDate: pastDate,
+          ),
+        ]);
+        expect(stats.cancelled, 1);
+        expect(stats.totalAttended, 0);
+        expect(stats.upcoming, 0);
+      },
+    );
 
-    test('an unscheduled registration (no trekDate) counts toward the total only', () {
-      final stats = RegistrationStats.fromRegistrations([
-        _registration(id: '1'),
-      ]);
-      expect(stats.totalRegistered, 1);
-      expect(stats.totalAttended, 0);
-      expect(stats.upcoming, 0);
-      expect(stats.cancelled, 0);
-    });
+    test(
+      'an unscheduled registration (no trekDate) counts toward the total only',
+      () {
+        final stats = RegistrationStats.fromRegistrations([
+          _registration(id: '1'),
+        ]);
+        expect(stats.totalRegistered, 1);
+        expect(stats.totalAttended, 0);
+        expect(stats.upcoming, 0);
+        expect(stats.cancelled, 0);
+      },
+    );
 
     test('totalRegistered counts every row regardless of status', () {
       final stats = RegistrationStats.fromRegistrations([
         _registration(id: '1', trekDate: pastDate),
         _registration(id: '2', trekDate: futureDate),
-        _registration(id: '3', paymentStatus: PaymentStatus.cancelled, trekDate: pastDate),
+        _registration(
+          id: '3',
+          paymentStatus: PaymentStatus.cancelled,
+          trekDate: pastDate,
+        ),
         _registration(id: '4'),
       ]);
       expect(stats.totalRegistered, 4);
@@ -84,13 +98,16 @@ void main() {
       expect(stats.cancelled, 1);
     });
 
-    test("today's date counts as upcoming, not attended (matches Trek.isUpcoming)", () {
-      final stats = RegistrationStats.fromRegistrations([
-        _registration(id: '1', trekDate: now),
-      ]);
-      expect(stats.totalAttended, 0);
-      expect(stats.upcoming, 1);
-    });
+    test(
+      "today's date counts as upcoming, not attended (matches Trek.isUpcoming)",
+      () {
+        final stats = RegistrationStats.fromRegistrations([
+          _registration(id: '1', trekDate: now),
+        ]);
+        expect(stats.totalAttended, 0);
+        expect(stats.upcoming, 1);
+      },
+    );
   });
 
   // Phase QR-3 — grandfathering around trekCheckinFeatureCutoff
@@ -99,55 +116,65 @@ void main() {
   // on the real clock being safely past the fixed cutoff.
   group('RegistrationStats.fromRegistrations — grandfathered attendance', () {
     final fixedNow = DateTime(2026, 8, 10);
-    final postCutoffPastDate = DateTime(2026, 8, 1); // after cutoff, before fixedNow
-    final preCutoffDate = DateTime(2026, 7, 1); // before cutoff, before fixedNow
+    final postCutoffPastDate = DateTime(
+      2026,
+      8,
+      1,
+    ); // after cutoff, before fixedNow
+    final preCutoffDate = DateTime(
+      2026,
+      7,
+      1,
+    ); // before cutoff, before fixedNow
 
-    test('pre-cutoff trek: date passed is enough, checkedInAt is irrelevant', () {
-      final stats = RegistrationStats.fromRegistrations(
-        [_registration(id: '1', trekDate: preCutoffDate)], // no checkedInAt
-        now: fixedNow,
-      );
-      expect(stats.totalAttended, 1);
-    });
+    test(
+      'pre-cutoff trek: date passed is enough, checkedInAt is irrelevant',
+      () {
+        final stats = RegistrationStats.fromRegistrations(
+          [_registration(id: '1', trekDate: preCutoffDate)], // no checkedInAt
+          now: fixedNow,
+        );
+        expect(stats.totalAttended, 1);
+      },
+    );
 
     test('post-cutoff trek with a genuine check-in counts as attended', () {
-      final stats = RegistrationStats.fromRegistrations(
-        [
-          _registration(
-            id: '1',
-            trekDate: postCutoffPastDate,
-            checkedInAt: postCutoffPastDate.add(const Duration(hours: 2)),
-          ),
-        ],
-        now: fixedNow,
-      );
+      final stats = RegistrationStats.fromRegistrations([
+        _registration(
+          id: '1',
+          trekDate: postCutoffPastDate,
+          checkedInAt: postCutoffPastDate.add(const Duration(hours: 2)),
+        ),
+      ], now: fixedNow);
       expect(stats.totalAttended, 1);
     });
 
     test('post-cutoff trek with NO check-in does NOT count as attended, '
         'even though its date passed', () {
       final stats = RegistrationStats.fromRegistrations(
-        [_registration(id: '1', trekDate: postCutoffPastDate)], // no checkedInAt
+        [
+          _registration(id: '1', trekDate: postCutoffPastDate),
+        ], // no checkedInAt
         now: fixedNow,
       );
       expect(stats.totalAttended, 0);
-      expect(stats.upcoming, 0); // falls into neither bucket, per the class's doc
+      expect(
+        stats.upcoming,
+        0,
+      ); // falls into neither bucket, per the class's doc
       expect(stats.totalRegistered, 1);
     });
 
     test('a cancelled registration never counts as attended, even with '
         'checkedInAt set (post-cutoff)', () {
-      final stats = RegistrationStats.fromRegistrations(
-        [
-          _registration(
-            id: '1',
-            paymentStatus: PaymentStatus.cancelled,
-            trekDate: postCutoffPastDate,
-            checkedInAt: postCutoffPastDate.add(const Duration(hours: 2)),
-          ),
-        ],
-        now: fixedNow,
-      );
+      final stats = RegistrationStats.fromRegistrations([
+        _registration(
+          id: '1',
+          paymentStatus: PaymentStatus.cancelled,
+          trekDate: postCutoffPastDate,
+          checkedInAt: postCutoffPastDate.add(const Duration(hours: 2)),
+        ),
+      ], now: fixedNow);
       expect(stats.cancelled, 1);
       expect(stats.totalAttended, 0);
     });

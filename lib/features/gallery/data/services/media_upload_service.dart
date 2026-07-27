@@ -65,15 +65,16 @@ class MediaUploadService {
     required MediaUploadTask task,
     required DateTime uploadedAt,
     required void Function(MediaUploadTask updated) onTaskUpdate,
-  }) =>
-      _runOne(task: task, uploadedAt: uploadedAt, onTaskUpdate: onTaskUpdate);
+  }) => _runOne(task: task, uploadedAt: uploadedAt, onTaskUpdate: onTaskUpdate);
 
   Future<void> _runOne({
     required MediaUploadTask task,
     required DateTime uploadedAt,
     required void Function(MediaUploadTask updated) onTaskUpdate,
   }) async {
-    onTaskUpdate(task.copyWith(status: MediaUploadStatus.compressing, progress: 0));
+    onTaskUpdate(
+      task.copyWith(status: MediaUploadStatus.compressing, progress: 0),
+    );
 
     try {
       final rawBytes = await task.file.readAsBytes();
@@ -103,7 +104,9 @@ class MediaUploadService {
         return;
       }
 
-      onTaskUpdate(task.copyWith(status: MediaUploadStatus.uploading, progress: 0));
+      onTaskUpdate(
+        task.copyWith(status: MediaUploadStatus.uploading, progress: 0),
+      );
 
       final media = await _repository.uploadMedia(
         trekId: task.trekId,
@@ -116,27 +119,40 @@ class MediaUploadService {
         thumbnailBytes: thumbnailBytes,
         uploadedAt: uploadedAt,
         cancelToken: task.cancelToken,
-        onProgress: (p) => onTaskUpdate(
-          task.copyWith(status: MediaUploadStatus.uploading, progress: p),
-        ),
+        onProgress:
+            (p) => onTaskUpdate(
+              task.copyWith(status: MediaUploadStatus.uploading, progress: p),
+            ),
       );
 
       onTaskUpdate(
-        task.copyWith(status: MediaUploadStatus.success, progress: 1, result: media),
+        task.copyWith(
+          status: MediaUploadStatus.success,
+          progress: 1,
+          result: media,
+        ),
       );
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) {
         onTaskUpdate(task.copyWith(status: MediaUploadStatus.cancelled));
       } else {
-        debugPrint('MediaUploadService: upload failed for ${task.file.name}: $e');
+        debugPrint(
+          'MediaUploadService: upload failed for ${task.file.name}: $e',
+        );
         onTaskUpdate(
-          task.copyWith(status: MediaUploadStatus.failed, errorMessage: 'Upload failed.'),
+          task.copyWith(
+            status: MediaUploadStatus.failed,
+            errorMessage: 'Upload failed.',
+          ),
         );
       }
     } catch (e) {
       debugPrint('MediaUploadService: upload failed for ${task.file.name}: $e');
       onTaskUpdate(
-        task.copyWith(status: MediaUploadStatus.failed, errorMessage: 'Something went wrong.'),
+        task.copyWith(
+          status: MediaUploadStatus.failed,
+          errorMessage: 'Something went wrong.',
+        ),
       );
     }
   }

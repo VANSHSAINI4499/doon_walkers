@@ -28,7 +28,9 @@ class AdminMerchInquiriesScreen extends ConsumerWidget {
         child: inquiriesAsync.when(
           loading: () => const _InquiriesSkeleton(),
           error: (error, stack) {
-            debugPrint('AdminMerchInquiriesScreen: failed to load inquiries: $error');
+            debugPrint(
+              'AdminMerchInquiriesScreen: failed to load inquiries: $error',
+            );
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -37,14 +39,19 @@ class AdminMerchInquiriesScreen extends ConsumerWidget {
                   children: [
                     AppIcon(AppIcons.error, size: 44, color: palette.danger),
                     const SizedBox(height: AppSpacing.md),
-                    Text('Could not load inquiries.', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+                    Text(
+                      'Could not load inquiries.',
+                      style: AppTextStyles.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: AppSpacing.xl),
                     PremiumButton(
                       label: 'Retry',
                       icon: AppIcons.refresh,
                       variant: PremiumButtonVariant.glass,
                       size: PremiumButtonSize.small,
-                      onPressed: () => ref.invalidate(allMerchInquiriesProvider),
+                      onPressed:
+                          () => ref.invalidate(allMerchInquiriesProvider),
                     ),
                   ],
                 ),
@@ -52,7 +59,8 @@ class AdminMerchInquiriesScreen extends ConsumerWidget {
             );
           },
           data: (inquiries) {
-            Future<void> onRefresh() => ref.refresh(allMerchInquiriesProvider.future);
+            Future<void> onRefresh() =>
+                ref.refresh(allMerchInquiriesProvider.future);
 
             if (inquiries.isEmpty) {
               return RefreshIndicator(
@@ -70,11 +78,13 @@ class AdminMerchInquiriesScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 itemCount: inquiries.length,
-                separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-                itemBuilder: (context, index) => AppReveal(
-                  index: index.clamp(0, 8),
-                  child: _InquiryTile(inquiry: inquiries[index]),
-                ),
+                separatorBuilder:
+                    (context, index) => const SizedBox(height: AppSpacing.md),
+                itemBuilder:
+                    (context, index) => AppReveal(
+                      index: index.clamp(0, 8),
+                      child: _InquiryTile(inquiry: inquiries[index]),
+                    ),
               ),
             );
           },
@@ -105,7 +115,11 @@ class _EmptyInquiries extends StatelessWidget {
             child: AppIcon(AppIcons.bag, size: 48, color: palette.primary),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('No inquiries yet', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+          Text(
+            'No inquiries yet',
+            style: AppTextStyles.titleLarge,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Inquiries will appear here when a member taps "Buy Now" on a product.',
@@ -144,7 +158,9 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
     if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Could not update this inquiry. Please try again.'),
+          content: const Text(
+            'Could not update this inquiry. Please try again.',
+          ),
           backgroundColor: palette.danger,
         ),
       );
@@ -155,7 +171,8 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     final inquiry = widget.inquiry;
-    final sizeLabel = inquiry.variantSize != null ? ' · Size ${inquiry.variantSize}' : '';
+    final sizeLabel =
+        inquiry.variantSize != null ? ' · Size ${inquiry.variantSize}' : '';
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -166,7 +183,10 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text('${inquiry.productName}$sizeLabel', style: AppTextStyles.titleSmall),
+                child: Text(
+                  '${inquiry.productName}$sizeLabel',
+                  style: AppTextStyles.titleSmall,
+                ),
               ),
               const SizedBox(width: AppSpacing.sm),
               MerchInquiryStatusChip(status: inquiry.status),
@@ -203,7 +223,10 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   'Contact for this order: ${inquiry.phoneNumber}',
-                  style: AppTextStyles.tinted(AppTextStyles.labelMedium, palette.primary),
+                  style: AppTextStyles.tinted(
+                    AppTextStyles.labelMedium,
+                    palette.primary,
+                  ),
                 ),
               ],
             ),
@@ -212,7 +235,9 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               inquiry.note!,
-              style: AppTextStyles.secondary(AppTextStyles.bodySmall).copyWith(fontStyle: FontStyle.italic),
+              style: AppTextStyles.secondary(
+                AppTextStyles.bodySmall,
+              ).copyWith(fontStyle: FontStyle.italic),
             ),
           ],
           const SizedBox(height: AppSpacing.md),
@@ -220,15 +245,22 @@ class _InquiryTileState extends ConsumerState<_InquiryTile> {
             width: 220,
             child: DropdownButtonFormField<MerchInquiryStatus>(
               value: inquiry.status,
-              decoration: const InputDecoration(labelText: 'Status', isDense: true),
-              items: MerchInquiryStatus.values
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s.label)))
-                  .toList(),
-              onChanged: _isSaving
-                  ? null
-                  : (value) {
-                      if (value != null) _updateStatus(value);
-                    },
+              decoration: const InputDecoration(
+                labelText: 'Status',
+                isDense: true,
+              ),
+              items:
+                  MerchInquiryStatus.values
+                      .map(
+                        (s) => DropdownMenuItem(value: s, child: Text(s.label)),
+                      )
+                      .toList(),
+              onChanged:
+                  _isSaving
+                      ? null
+                      : (value) {
+                        if (value != null) _updateStatus(value);
+                      },
             ),
           ),
           if (_isSaving) ...[
@@ -252,25 +284,31 @@ class _InquiriesSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: 4,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
-        itemBuilder: (context, index) => Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: palette.card,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: palette.border),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 180, height: 16),
-              SizedBox(height: AppSpacing.sm),
-              SkeletonBox(width: 140, height: 10),
-              SizedBox(height: AppSpacing.md),
-              SkeletonBox(width: 220, height: 44, borderRadius: AppRadius.sm),
-            ],
-          ),
-        ),
+        separatorBuilder:
+            (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder:
+            (context, index) => Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: palette.card,
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(color: palette.border),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(width: 180, height: 16),
+                  SizedBox(height: AppSpacing.sm),
+                  SkeletonBox(width: 140, height: 10),
+                  SizedBox(height: AppSpacing.md),
+                  SkeletonBox(
+                    width: 220,
+                    height: 44,
+                    borderRadius: AppRadius.sm,
+                  ),
+                ],
+              ),
+            ),
       ),
     );
   }

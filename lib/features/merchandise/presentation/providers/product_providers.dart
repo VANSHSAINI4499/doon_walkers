@@ -40,10 +40,11 @@ final productByIdProvider = FutureProvider.autoDispose.family<Product?, String>(
 /// TrekAdminController's shape: [state] is shared loading/error status
 /// across all actions; each method also returns its own result so
 /// callers don't have to read state.value.
-final productAdminControllerProvider = AsyncNotifierProvider<ProductAdminController, void>(
-  ProductAdminController.new,
-  name: 'productAdminControllerProvider',
-);
+final productAdminControllerProvider =
+    AsyncNotifierProvider<ProductAdminController, void>(
+      ProductAdminController.new,
+      name: 'productAdminControllerProvider',
+    );
 
 class ProductAdminController extends AsyncNotifier<void> {
   @override
@@ -75,7 +76,11 @@ class ProductAdminController extends AsyncNotifier<void> {
       created = product;
 
       for (final (size, stock) in variants) {
-        await repo.addVariant(productId: product.id, size: size, stockQuantity: stock);
+        await repo.addVariant(
+          productId: product.id,
+          size: size,
+          stockQuantity: stock,
+        );
       }
     });
     return created;
@@ -123,9 +128,16 @@ class ProductAdminController extends AsyncNotifier<void> {
       for (final (size, stock) in variants) {
         final match = existingBySize[size];
         if (match == null) {
-          await repo.addVariant(productId: id, size: size, stockQuantity: stock);
+          await repo.addVariant(
+            productId: id,
+            size: size,
+            stockQuantity: stock,
+          );
         } else if (match.stockQuantity != stock) {
-          await repo.updateVariantStock(variantId: match.id, stockQuantity: stock);
+          await repo.updateVariantStock(
+            variantId: match.id,
+            stockQuantity: stock,
+          );
         }
       }
     });
@@ -158,9 +170,9 @@ class ProductAdminController extends AsyncNotifier<void> {
 /// same one-to-many-media-on-a-detail-page pattern, different table.
 final productImageAdminControllerProvider =
     AsyncNotifierProvider<ProductImageAdminController, void>(
-  ProductImageAdminController.new,
-  name: 'productImageAdminControllerProvider',
-);
+      ProductImageAdminController.new,
+      name: 'productImageAdminControllerProvider',
+    );
 
 class ProductImageAdminController extends AsyncNotifier<void> {
   @override
@@ -174,7 +186,9 @@ class ProductImageAdminController extends AsyncNotifier<void> {
     state = const AsyncLoading();
     ProductImage? uploaded;
     state = await AsyncValue.guard(() async {
-      uploaded = await ref.read(productRepositoryProvider).uploadImage(
+      uploaded = await ref
+          .read(productRepositoryProvider)
+          .uploadImage(
             productId: productId,
             bytes: bytes,
             fileExtension: fileExtension,

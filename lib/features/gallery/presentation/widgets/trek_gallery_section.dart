@@ -40,7 +40,9 @@ class TrekGallerySection extends ConsumerWidget {
     return mediaAsync.when(
       loading: () => const _GallerySkeleton(),
       error: (error, stack) {
-        debugPrint('TrekGallerySection: failed to load media for $trekId: $error');
+        debugPrint(
+          'TrekGallerySection: failed to load media for $trekId: $error',
+        );
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
           child: Row(
@@ -48,7 +50,10 @@ class TrekGallerySection extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Could not load the gallery for this trek.',
-                  style: AppTextStyles.tinted(AppTextStyles.bodySmall, palette.danger),
+                  style: AppTextStyles.tinted(
+                    AppTextStyles.bodySmall,
+                    palette.danger,
+                  ),
                 ),
               ),
               PremiumButton(
@@ -62,18 +67,20 @@ class TrekGallerySection extends ConsumerWidget {
         );
       },
       data: (media) {
-        final addButton = isAdmin
-            ? Align(
-                alignment: Alignment.centerLeft,
-                child: PremiumButton(
-                  label: 'Add Photo/Video',
-                  icon: AppIcons.addPhoto,
-                  variant: PremiumButtonVariant.glass,
-                  size: PremiumButtonSize.small,
-                  onPressed: () => showGalleryUploadSheet(context, trekId: trekId),
-                ),
-              )
-            : null;
+        final addButton =
+            isAdmin
+                ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: PremiumButton(
+                    label: 'Add Photo/Video',
+                    icon: AppIcons.addPhoto,
+                    variant: PremiumButtonVariant.glass,
+                    size: PremiumButtonSize.small,
+                    onPressed:
+                        () => showGalleryUploadSheet(context, trekId: trekId),
+                  ),
+                )
+                : null;
 
         if (media.isEmpty) {
           return Column(
@@ -83,12 +90,18 @@ class TrekGallerySection extends ConsumerWidget {
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Row(
                   children: [
-                    AppIcon(AppIcons.photo, size: 22, color: palette.textSecondary),
+                    AppIcon(
+                      AppIcons.photo,
+                      size: 22,
+                      color: palette.textSecondary,
+                    ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
                         'No photos or videos for this trek yet.',
-                        style: AppTextStyles.secondary(AppTextStyles.bodyMedium),
+                        style: AppTextStyles.secondary(
+                          AppTextStyles.bodyMedium,
+                        ),
                       ),
                     ),
                   ],
@@ -145,8 +158,11 @@ class _GallerySkeleton extends StatelessWidget {
         mainAxisSpacing: AppSpacing.sm,
         crossAxisSpacing: AppSpacing.sm,
         itemCount: _heights.length,
-        itemBuilder: (context, index) =>
-            SkeletonBox(height: _heights[index], borderRadius: AppRadius.sm),
+        itemBuilder:
+            (context, index) => SkeletonBox(
+              height: _heights[index],
+              borderRadius: AppRadius.sm,
+            ),
       ),
     );
   }

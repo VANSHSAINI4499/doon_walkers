@@ -54,38 +54,32 @@ void main() {
       expect(selected, 4);
     });
 
-    test(
-      'the admin-only branch (5) is never a tab — falls back to the last '
-      'real tab instead of selecting itself',
-      () {
-        for (var last = 0; last < _tabCount; last++) {
-          final (selected, next) = resolveSelectedTabIndex(
-            currentIndex: _adminBranch,
-            lastPrimaryIndex: last,
-          );
-          expect(selected, last);
-          expect(next, last);
-          expect(selected, lessThan(_tabCount));
-        }
-      },
-    );
-
-    test(
-      'an admin opening Registrations from the drawer keeps whichever tab '
-      'they were on highlighted',
-      () {
-        // The real Phase 10 scenario: admin is on Challenges (3), opens
-        // the drawer, taps Registrations. The router moves to branch 5,
-        // which has no tab — the bar should keep showing Challenges
-        // rather than blanking or crashing.
+    test('the admin-only branch (5) is never a tab — falls back to the last '
+        'real tab instead of selecting itself', () {
+      for (var last = 0; last < _tabCount; last++) {
         final (selected, next) = resolveSelectedTabIndex(
           currentIndex: _adminBranch,
-          lastPrimaryIndex: 3,
+          lastPrimaryIndex: last,
         );
-        expect(selected, 3);
-        expect(next, 3);
-      },
-    );
+        expect(selected, last);
+        expect(next, last);
+        expect(selected, lessThan(_tabCount));
+      }
+    });
+
+    test('an admin opening Registrations from the drawer keeps whichever tab '
+        'they were on highlighted', () {
+      // The real Phase 10 scenario: admin is on Challenges (3), opens
+      // the drawer, taps Registrations. The router moves to branch 5,
+      // which has no tab — the bar should keep showing Challenges
+      // rather than blanking or crashing.
+      final (selected, next) = resolveSelectedTabIndex(
+        currentIndex: _adminBranch,
+        lastPrimaryIndex: 3,
+      );
+      expect(selected, 3);
+      expect(next, 3);
+    });
 
     test('a demotion while on the admin branch cannot produce a bad index', () {
       // AppShell's ref.listen actively navigates Home on this transition,
@@ -121,29 +115,26 @@ void main() {
       expect(next, 0);
     });
 
-    test(
-      'selectedIndex is never out of range for ANY combination of '
-      'currentIndex and lastPrimaryIndex',
-      () {
-        // The invariant the crash history is really about. Swept wide on
-        // purpose, including indices no real router would produce.
-        for (var currentIndex = -2; currentIndex <= 8; currentIndex++) {
-          for (var last = -2; last <= 8; last++) {
-            final (selected, next) = resolveSelectedTabIndex(
-              currentIndex: currentIndex,
-              lastPrimaryIndex: last,
-            );
-            expect(
-              selected,
-              inInclusiveRange(0, _tabCount - 1),
-              reason:
-                  'currentIndex=$currentIndex lastPrimaryIndex=$last '
-                  'produced selected=$selected',
-            );
-            expect(next, inInclusiveRange(0, _tabCount - 1));
-          }
+    test('selectedIndex is never out of range for ANY combination of '
+        'currentIndex and lastPrimaryIndex', () {
+      // The invariant the crash history is really about. Swept wide on
+      // purpose, including indices no real router would produce.
+      for (var currentIndex = -2; currentIndex <= 8; currentIndex++) {
+        for (var last = -2; last <= 8; last++) {
+          final (selected, next) = resolveSelectedTabIndex(
+            currentIndex: currentIndex,
+            lastPrimaryIndex: last,
+          );
+          expect(
+            selected,
+            inInclusiveRange(0, _tabCount - 1),
+            reason:
+                'currentIndex=$currentIndex lastPrimaryIndex=$last '
+                'produced selected=$selected',
+          );
+          expect(next, inInclusiveRange(0, _tabCount - 1));
         }
-      },
-    );
+      }
+    });
   });
 }

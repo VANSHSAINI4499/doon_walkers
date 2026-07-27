@@ -16,22 +16,22 @@ class MerchInquiryStatusChip extends StatelessWidget {
     final palette = AppPalette.of(context);
     final (bg, fg) = switch (status) {
       MerchInquiryStatus.fulfilled => (
-          palette.primaryContainer,
-          palette.onPrimaryContainer,
-        ),
+        palette.primaryContainer,
+        palette.onPrimaryContainer,
+      ),
       MerchInquiryStatus.pending || MerchInquiryStatus.contacted => (
-          palette.accentContainer,
-          palette.onAccent,
-        ),
-      MerchInquiryStatus.cancelled => (
-          palette.cardHigh,
-          palette.textSecondary,
-        ),
+        palette.accentContainer,
+        palette.onAccent,
+      ),
+      MerchInquiryStatus.cancelled => (palette.cardHigh, palette.textSecondary),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.pill)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
       child: Text(
         status.label,
         style: AppTextStyles.tinted(AppTextStyles.labelSmall, fg),

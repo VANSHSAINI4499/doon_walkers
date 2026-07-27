@@ -12,10 +12,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// bypass, not a client-side filter (see [CommentRepository]'s doc) —
 /// so [CommentTile] decides how a hidden one renders, this just
 /// returns whatever RLS allowed through.
-final trekCommentsProvider = FutureProvider.autoDispose.family<List<Comment>, String>(
-  (ref, trekId) => ref.watch(commentRepositoryProvider).fetchCommentsForTrek(trekId),
-  name: 'trekCommentsProvider',
-);
+final trekCommentsProvider = FutureProvider.autoDispose
+    .family<List<Comment>, String>(
+      (ref, trekId) =>
+          ref.watch(commentRepositoryProvider).fetchCommentsForTrek(trekId),
+      name: 'trekCommentsProvider',
+    );
 
 /// Every currently-hidden comment across every trek — the admin
 /// moderation queue (Admin Dashboard → Comment Moderation).
@@ -38,10 +40,11 @@ final commentBlocklistProvider = FutureProvider<List<String>>(
 
 /// Riverpod AsyncNotifier managing comment mutations (post, delete,
 /// admin visibility toggle). Mirrors RegistrationController's shape.
-final commentControllerProvider = AsyncNotifierProvider<CommentController, void>(
-  CommentController.new,
-  name: 'commentControllerProvider',
-);
+final commentControllerProvider =
+    AsyncNotifierProvider<CommentController, void>(
+      CommentController.new,
+      name: 'commentControllerProvider',
+    );
 
 class CommentController extends AsyncNotifier<void> {
   @override
@@ -51,14 +54,16 @@ class CommentController extends AsyncNotifier<void> {
   /// null on failure — in which case [state] carries the error, which
   /// may be a [CommentBlocklistException] the caller can show a
   /// specific message for.
-  Future<Comment?> postComment({required String trekId, required String commentText}) async {
+  Future<Comment?> postComment({
+    required String trekId,
+    required String commentText,
+  }) async {
     state = const AsyncLoading();
     Comment? created;
     state = await AsyncValue.guard(() async {
-      created = await ref.read(commentRepositoryProvider).createComment(
-            trekId: trekId,
-            commentText: commentText,
-          );
+      created = await ref
+          .read(commentRepositoryProvider)
+          .createComment(trekId: trekId, commentText: commentText);
     });
     if (created != null) {
       ref.invalidate(trekCommentsProvider(trekId));
@@ -66,7 +71,10 @@ class CommentController extends AsyncNotifier<void> {
     return created;
   }
 
-  Future<bool> deleteComment({required String id, required String trekId}) async {
+  Future<bool> deleteComment({
+    required String id,
+    required String trekId,
+  }) async {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {

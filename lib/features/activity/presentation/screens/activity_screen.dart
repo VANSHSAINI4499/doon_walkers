@@ -96,48 +96,49 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
         // The router protects /activity, so a guest is bounced to sign-in
         // before reaching here. This guard is belt-and-braces for the case
         // where the session expires while the tab is already open.
-        child: !isSignedIn
-            ? const _SignInRequired()
-            : RefreshIndicator(
-                onRefresh: _refresh,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.md,
-                    AppSpacing.lg,
-                    AppSpacing.xxl,
+        child:
+            !isSignedIn
+                ? const _SignInRequired()
+                : RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.md,
+                      AppSpacing.lg,
+                      AppSpacing.xxl,
+                    ),
+                    children: [
+                      const _SyncNotice(),
+                      AppSegmentedControl<ActivityGranularity>(
+                        value: _granularity,
+                        onChanged: _setGranularity,
+                        segments: [
+                          for (final g in ActivityGranularity.values)
+                            (g, g.label),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      ActivityPeriodNavigator(
+                        period: _period,
+                        onChanged: (p) => setState(() => _period = p),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      switch (_granularity) {
+                        ActivityGranularity.day => ActivityDayView(
+                          period: _period,
+                        ),
+                        ActivityGranularity.week => ActivityWeekView(
+                          period: _period,
+                        ),
+                        ActivityGranularity.month => ActivityMonthView(
+                          period: _period,
+                        ),
+                      },
+                    ],
                   ),
-                  children: [
-                    const _SyncNotice(),
-                    AppSegmentedControl<ActivityGranularity>(
-                      value: _granularity,
-                      onChanged: _setGranularity,
-                      segments: [
-                        for (final g in ActivityGranularity.values)
-                          (g, g.label),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ActivityPeriodNavigator(
-                      period: _period,
-                      onChanged: (p) => setState(() => _period = p),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    switch (_granularity) {
-                      ActivityGranularity.day => ActivityDayView(
-                        period: _period,
-                      ),
-                      ActivityGranularity.week => ActivityWeekView(
-                        period: _period,
-                      ),
-                      ActivityGranularity.month => ActivityMonthView(
-                        period: _period,
-                      ),
-                    },
-                  ],
                 ),
-              ),
       ),
     );
   }
@@ -175,8 +176,8 @@ class _SyncNotice extends ConsumerWidget {
             'Install or update Health Connect to see your steps, distance '
             'and calories here.',
         actionLabel: 'Install',
-        onAction: () =>
-            ref.read(activityProviderProvider).openProviderSettings(),
+        onAction:
+            () => ref.read(activityProviderProvider).openProviderSettings(),
       );
     }
 
@@ -189,9 +190,8 @@ class _SyncNotice extends ConsumerWidget {
             'Nothing is ever written back.',
         actionLabel: 'Grant access',
         onAction: () async {
-          final granted = await ref
-              .read(activityProviderProvider)
-              .requestPermission();
+          final granted =
+              await ref.read(activityProviderProvider).requestPermission();
           if (granted) {
             await ref.read(activitySyncControllerProvider.notifier).sync();
           }

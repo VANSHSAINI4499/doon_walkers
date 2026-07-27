@@ -30,7 +30,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await ref.read(authControllerProvider.notifier).signIn(
+    await ref
+        .read(authControllerProvider.notifier)
+        .signIn(
           email: _emailController.text,
           password: _passwordController.text,
         );
@@ -69,7 +71,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const AppIcon(AppIcons.landscape, size: 56, color: AppColors.primary),
+                  const AppIcon(
+                    AppIcons.landscape,
+                    size: 56,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
                     'Welcome Back',
@@ -125,7 +131,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () => context.push(AppConstants.routeForgotPassword),
+                              onPressed:
+                                  () => context.push(
+                                    AppConstants.routeForgotPassword,
+                                  ),
                               child: const Text('Forgot Password?'),
                             ),
                           ),
@@ -143,12 +152,23 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   const SizedBox(height: AppSpacing.xl),
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: AppColors.glassBorder)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                        child: Text('OR', style: AppTextStyles.secondary(AppTextStyles.labelMedium)),
+                      const Expanded(
+                        child: Divider(color: AppColors.glassBorder),
                       ),
-                      const Expanded(child: Divider(color: AppColors.glassBorder)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: Text(
+                          'OR',
+                          style: AppTextStyles.secondary(
+                            AppTextStyles.labelMedium,
+                          ),
+                        ),
+                      ),
+                      const Expanded(
+                        child: Divider(color: AppColors.glassBorder),
+                      ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -169,9 +189,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          final signUpUrl = widget.redirectTo != null
-                              ? '${AppConstants.routeSignUp}?redirectTo=${Uri.encodeComponent(widget.redirectTo!)}'
-                              : AppConstants.routeSignUp;
+                          final signUpUrl =
+                              widget.redirectTo != null
+                                  ? '${AppConstants.routeSignUp}?redirectTo=${Uri.encodeComponent(widget.redirectTo!)}'
+                                  : AppConstants.routeSignUp;
                           context.push(signUpUrl);
                         },
                         child: const Text('Create Account'),
@@ -181,7 +202,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   TextButton.icon(
                     onPressed: () => context.go(AppConstants.routeHome),
-                    icon: const AppIcon(AppIcons.explore, size: 18, color: AppColors.textSecondary),
+                    icon: const AppIcon(
+                      AppIcons.explore,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
                     label: Text(
                       'Continue as Guest',
                       style: AppTextStyles.secondary(AppTextStyles.labelLarge),
