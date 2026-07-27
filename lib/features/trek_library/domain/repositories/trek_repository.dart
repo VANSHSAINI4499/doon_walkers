@@ -45,6 +45,7 @@ abstract class TrekRepository {
     DateTime? trekDate,
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
+    int? maxParticipants,
   });
 
   Future<void> updateTrek({
@@ -61,7 +62,11 @@ abstract class TrekRepository {
     DateTime? trekDate,
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
+    int? maxParticipants,
   });
+
+  /// Fetches spots remaining for the trek via the get_trek_spots_left RPC.
+  Future<int?> fetchSpotsLeft(String trekId);
 
   /// Deletes the trek row. Best-effort deletes its cover image from
   /// Storage first (see impl) — Storage objects aren't tied to the row

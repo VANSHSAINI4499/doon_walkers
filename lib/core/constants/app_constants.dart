@@ -101,6 +101,7 @@ class AppConstants {
   /// auth-gated (added to `isProtectedRoute`), same treatment as
   /// [routeChallengeHistory].
   static const String routePointsHistory = '$routeProfile/points-history';
+  static const String routeAchievements = '$routeProfile/achievements';
 
   /// First-launch intro carousel — top-level, outside the shell, shown
   /// at most once per device. See app_router.dart's `_buildRouter` for

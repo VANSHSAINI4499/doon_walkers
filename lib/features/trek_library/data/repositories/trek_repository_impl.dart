@@ -64,6 +64,7 @@ class TrekRepositoryImpl implements TrekRepository {
     DateTime? trekDate,
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
+    int? maxParticipants,
   }) async {
     final row = await _supabase
         .from(AppConstants.tableTreks)
@@ -80,6 +81,7 @@ class TrekRepositoryImpl implements TrekRepository {
           trekDate: trekDate,
           trekStartTime: trekStartTime,
           registrationFee: registrationFee,
+          maxParticipants: maxParticipants,
         ))
         .select()
         .single();
@@ -104,6 +106,7 @@ class TrekRepositoryImpl implements TrekRepository {
     DateTime? trekDate,
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
+    int? maxParticipants,
   }) async {
     await _supabase
         .from(AppConstants.tableTreks)
@@ -120,6 +123,7 @@ class TrekRepositoryImpl implements TrekRepository {
           trekDate: trekDate,
           trekStartTime: trekStartTime,
           registrationFee: registrationFee,
+          maxParticipants: maxParticipants,
         ))
         .eq('id', id);
   }
@@ -241,6 +245,15 @@ class TrekRepositoryImpl implements TrekRepository {
     return row?['token'] as String?;
   }
 
+  @override
+  Future<int?> fetchSpotsLeft(String trekId) async {
+    final result = await _supabase.rpc(
+      'get_trek_spots_left',
+      params: {'p_trek_id': trekId},
+    );
+    return result as int?;
+  }
+
   Map<String, dynamic> _writablePayload({
     required String title,
     required String description,
@@ -254,6 +267,7 @@ class TrekRepositoryImpl implements TrekRepository {
     DateTime? trekDate,
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
+    int? maxParticipants,
   }) {
     return {
       'title': title,
@@ -277,6 +291,7 @@ class TrekRepositoryImpl implements TrekRepository {
       // as trek_date above — no timezone to carry for a bare time of day.
       'trek_start_time': trekStartTime?.toDbString(),
       'registration_fee': registrationFee,
+      'max_participants': maxParticipants,
     };
   }
 

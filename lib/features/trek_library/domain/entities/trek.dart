@@ -103,6 +103,9 @@ class Trek {
   /// admin sets it via the trek form, same contract as [trekDate].
   final TrekStartTime? trekStartTime;
 
+  /// Optional capacity/limit on registrations. NULL means unlimited.
+  final int? maxParticipants;
+
   const Trek({
     required this.id,
     required this.title,
@@ -121,6 +124,7 @@ class Trek {
     this.registrationFee = 0,
     this.paymentQrCode,
     this.trekStartTime,
+    this.maxParticipants,
   });
 
   /// True when registering for this trek requires payment.

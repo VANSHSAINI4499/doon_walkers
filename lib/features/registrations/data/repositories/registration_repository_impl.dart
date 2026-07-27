@@ -189,6 +189,19 @@ class RegistrationRepositoryImpl implements RegistrationRepository {
   }
 
   @override
+  Future<Registration> cancelRegistration({required String id, required String reason}) async {
+    final row = await _supabase.rpc(
+      'cancel_trek_registration',
+      params: {
+        'p_registration_id': id,
+        'p_reason': reason,
+      },
+    ).select(_selectWithJoins).single();
+
+    return RegistrationModel.fromJson(row);
+  }
+
+  @override
   Future<void> updatePaymentStatus(String id, PaymentStatus status) async {
     await _supabase
         .from(AppConstants.tableRegistrations)

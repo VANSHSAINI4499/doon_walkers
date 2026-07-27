@@ -29,6 +29,10 @@ class RegistrationModel {
       gender: GenderType.fromString(json['gender'] as String?),
       emergencyContact: _emptyToNull(json['emergency_contact'] as String?),
       medicalNotes: _emptyToNull(json['medical_notes'] as String?),
+      cancellationReason: json['cancellation_reason'] as String?,
+      cancelledAt: json['cancelled_at'] != null
+          ? DateTime.parse(json['cancelled_at'] as String)
+          : null,
       userName: (user?['name'] as String?) ?? 'Unknown member',
       userEmail: (user?['email'] as String?) ?? '—',
       userPhone: _emptyToNull(user?['phone'] as String?),

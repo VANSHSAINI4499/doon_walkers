@@ -168,6 +168,20 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                       label: 'Registered',
                       value: formatRegistrationDate(r.createdAt),
                     ),
+                    if (r.paymentStatus == PaymentStatus.cancelled) ...[
+                      _Field(
+                        icon: AppIcons.info,
+                        label: 'Cancellation Reason',
+                        value: r.cancellationReason,
+                        emptyText: 'No reason specified',
+                      ),
+                      if (r.cancelledAt != null)
+                        _Field(
+                          icon: AppIcons.schedule,
+                          label: 'Cancelled At',
+                          value: formatRegistrationDate(r.cancelledAt!),
+                        ),
+                    ],
                   ],
                 ),
               ),

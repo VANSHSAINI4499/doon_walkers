@@ -393,13 +393,13 @@ class _DraftBanner extends StatelessWidget {
   }
 }
 
-class _QuickFactsRow extends StatelessWidget {
+class _QuickFactsRow extends ConsumerWidget {
   const _QuickFactsRow({required this.trek});
 
   final Trek trek;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
     final facts = <_QuickFact>[
       // First — "when" is the most decision-relevant fact once a trek has
@@ -417,17 +417,63 @@ class _QuickFactsRow extends StatelessWidget {
         _QuickFact(AppIcons.season, 'Best Season', trek.bestSeason!, palette.primary),
     ];
 
-    if (facts.isEmpty) return const SizedBox.shrink();
+    final spotsLeftAsync = ref.watch(trekSpotsLeftProvider(trek.id));
 
     return Wrap(
       spacing: AppSpacing.md,
       runSpacing: AppSpacing.md,
-      children: facts.map((f) => _QuickFactTile(fact: f)).toList(),
+      children: [
+        ...facts.map((f) => _QuickFactTile(fact: f)),
+        if (trek.isPublished && !trek.isCompleted)
+          spotsLeftAsync.when(
+            loading: () => const _QuickFactTileSkeleton(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (spots) {
+              if (spots == null) return const SizedBox.shrink();
+              final Color color;
+              final String value;
+              if (spots == 0) {
+                color = palette.danger;
+                value = 'Full';
+              } else if (spots <= 10) {
+                color = palette.accent;
+                value = 'Only $spots left';
+              } else {
+                color = const Color(0xFF26A69A); // Teal/green
+                value = '$spots spots left';
+              }
+              return _QuickFactTile(
+                fact: _QuickFact(AppIcons.info, 'Spots Left', value, color),
+              );
+            },
+          ),
+      ],
     );
   }
 
   String _formatNum(double v) => v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 }
+
+class _QuickFactTileSkeleton extends StatelessWidget {
+  const _QuickFactTileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Shimmer(
+      child: Container(
+        width: 150,
+        height: 62,
+        decoration: BoxDecoration(
+          color: palette.card,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: palette.border),
+        ),
+      ),
+    );
+  }
+}
+
 
 /// Local rather than shared with the registrations feature's
 /// `formatRegistrationDate` — reaching back the other way for a one-line

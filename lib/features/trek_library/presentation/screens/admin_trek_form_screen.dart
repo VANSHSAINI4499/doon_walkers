@@ -35,6 +35,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
   final _thingsToCarryController = TextEditingController();
   final _googleMapController = TextEditingController();
   final _feeController = TextEditingController(text: '0');
+  final _capacityController = TextEditingController();
 
   TrekDifficulty _difficulty = TrekDifficulty.moderate;
   DateTime? _trekDate;
@@ -64,6 +65,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _thingsToCarryController.dispose();
     _googleMapController.dispose();
     _feeController.dispose();
+    _capacityController.dispose();
     super.dispose();
   }
 
@@ -78,6 +80,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _thingsToCarryController.text = trek.thingsToCarry ?? '';
     _googleMapController.text = trek.googleMapLink ?? '';
     _feeController.text = _trimZero(trek.registrationFee);
+    _capacityController.text = trek.maxParticipants?.toString() ?? '';
     _difficulty = trek.difficulty;
     _trekDate = trek.trekDate;
     _trekStartTime = trek.trekStartTime;
@@ -133,6 +136,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     final bestSeason = _emptyToNull(_bestSeasonController.text);
     final thingsToCarry = _emptyToNull(_thingsToCarryController.text);
     final googleMapLink = _emptyToNull(_googleMapController.text);
+    final maxParticipants = _parseOrNullInt(_capacityController.text);
 
     if (widget.isEdit) {
       final success = await controller.updateTrek(
@@ -149,6 +153,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         trekDate: _trekDate,
         trekStartTime: _trekStartTime,
         registrationFee: _registrationFee,
+        maxParticipants: maxParticipants,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
         previousCoverImageUrl: _existingCoverImage,
@@ -180,6 +185,7 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         trekDate: _trekDate,
         trekStartTime: _trekStartTime,
         registrationFee: _registrationFee,
+        maxParticipants: maxParticipants,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
         qrCodeBytes: _registrationFee > 0 ? _pickedQrBytes : null,
@@ -254,6 +260,13 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
 
   Widget _buildForm(BuildContext context, {required String title}) {
     final isSaving = ref.watch(trekAdminControllerProvider).isLoading;
+    final int confirmedCount;
+    if (widget.trekId != null) {
+      final registrations = ref.watch(registrationsForTrekProvider(widget.trekId!)).valueOrNull ?? [];
+      confirmedCount = registrations.where((r) => r.paymentStatus == PaymentStatus.paid || r.paymentStatus == PaymentStatus.pending).length;
+    } else {
+      confirmedCount = 0;
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
@@ -471,6 +484,28 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                                 },
                                 onChanged: (value) {
                                   setState(() => _registrationFee = double.tryParse(value.trim()) ?? 0);
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+
+                              TextFormField(
+                                controller: _capacityController,
+                                decoration: InputDecoration(
+                                  labelText: 'Max participants (optional)',
+                                  hintText: 'e.g. 20',
+                                  helperText: widget.isEdit
+                                      ? '$confirmedCount current confirmed registrations'
+                                      : null,
+                                ),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) return null;
+                                  final val = int.tryParse(value.trim());
+                                  if (val == null || val < 1) return 'Must be 1 or greater';
+                                  if (widget.isEdit && val < confirmedCount) {
+                                    return 'Must be >= current headcount ($confirmedCount)';
+                                  }
+                                  return null;
                                 },
                               ),
 

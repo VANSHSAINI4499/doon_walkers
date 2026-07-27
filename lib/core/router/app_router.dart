@@ -36,6 +36,7 @@ import 'package:doon_walkers/features/notifications/presentation/screens/notific
 import 'package:doon_walkers/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/points_history_screen.dart';
 import 'package:doon_walkers/features/profile/presentation/screens/profile_screen.dart';
+import 'package:doon_walkers/features/profile/presentation/screens/achievements_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registration_detail_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_registrations_screen.dart';
 import 'package:doon_walkers/features/registrations/presentation/screens/admin_trek_picker_screen.dart';
@@ -337,6 +338,14 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
         key: state.pageKey,
         child: const PointsHistoryScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppConstants.routeAchievements,
+      name: 'achievements',
+      pageBuilder: (context, state) => AppTransitions.sharedAxisPage(
+        key: state.pageKey,
+        child: const AchievementsScreen(),
       ),
     ),
     // /design-system — the Redesign Phase 1 component gallery. A
@@ -855,6 +864,7 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
         location == AppConstants.routeMyEnquiries ||
         location == AppConstants.routeMyRegistrations ||
         location == AppConstants.routePointsHistory ||
+        location == AppConstants.routeAchievements ||
         location == AppConstants.routeNotifications ||
         location == AppConstants.routeChallengeHistory ||
         location == AppConstants.routePhoneVerification ||

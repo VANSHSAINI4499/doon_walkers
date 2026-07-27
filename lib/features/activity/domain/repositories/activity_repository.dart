@@ -1,4 +1,5 @@
 import 'package:doon_walkers/features/activity/domain/entities/daily_activity.dart';
+import 'package:doon_walkers/features/activity/domain/entities/user_achievement.dart';
 
 /// Abstract interface for reading/writing the signed-in user's own
 /// `public.daily_activity_summary` rows — the table the Challenge
@@ -66,7 +67,14 @@ abstract class ActivityRepository {
   });
 
   /// Fetches unlocked achievements for the signed-in user.
-  Future<List<dynamic>> fetchUserAchievements();
+  Future<List<UserAchievement>> fetchUserAchievements();
+
+  /// Fetches the caller's own achievements (milestones, platinums, standard badges)
+  /// ordered by achieved_at desc, leveraging the get_my_achievements RPC.
+  Future<List<UserAchievement>> fetchMyAchievements({
+    int limit = 20,
+    int offset = 0,
+  });
 
   /// Gets or creates a personal goal for [goalType] ('daily_steps' | 'monthly_steps').
   Future<dynamic> getOrCreateUserGoal(String goalType);

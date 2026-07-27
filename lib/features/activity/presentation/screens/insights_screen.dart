@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/activity/domain/entities/daily_activity.dart';
+import 'package:doon_walkers/features/activity/domain/entities/user_achievement.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
 import 'package:doon_walkers/features/activity/presentation/widgets/activity_format.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -497,7 +498,7 @@ class _ConsistencyCard extends StatelessWidget {
 class _RecentAchievementsSection extends StatelessWidget {
   const _RecentAchievementsSection({required this.achievements});
 
-  final List<dynamic> achievements;
+  final List<UserAchievement> achievements;
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +543,7 @@ class _RecentAchievementsSection extends StatelessWidget {
                         AppIcon(AppIcons.medal, size: 24, color: palette.primary),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          item['achievement_definitions']?['title'] ?? 'Badge',
+                          item.title,
                           style: AppTextStyles.labelSmall,
                           textAlign: TextAlign.center,
                           maxLines: 1,
@@ -559,6 +560,7 @@ class _RecentAchievementsSection extends StatelessWidget {
     );
   }
 }
+
 
 class _TipsCard extends StatelessWidget {
   const _TipsCard();

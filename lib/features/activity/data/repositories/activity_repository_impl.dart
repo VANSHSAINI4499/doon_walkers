@@ -1,6 +1,7 @@
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/domain/entities/daily_activity.dart';
+import 'package:doon_walkers/features/activity/domain/entities/user_achievement.dart';
 import 'package:doon_walkers/features/activity/domain/repositories/activity_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -320,7 +321,7 @@ class ActivityRepositoryImpl implements ActivityRepository {
   }
 
   @override
-  Future<List<dynamic>> fetchUserAchievements() async {
+  Future<List<UserAchievement>> fetchUserAchievements() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return const [];
 
@@ -329,8 +330,32 @@ class ActivityRepositoryImpl implements ActivityRepository {
         .select('*, achievement_definitions(*)')
         .eq('user_id', userId);
 
-    return rows as List;
+    return (rows as List)
+        .map((row) => UserAchievement.fromJson(row as Map<String, dynamic>))
+        .toList();
   }
+
+  @override
+  Future<List<UserAchievement>> fetchMyAchievements({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return const [];
+
+    final result = await _supabase.rpc(
+      'get_my_achievements',
+      params: {
+        'p_limit': limit,
+        'p_offset': offset,
+      },
+    );
+
+    return (result as List)
+        .map((row) => UserAchievement.fromJson(row as Map<String, dynamic>))
+        .toList();
+  }
+
 
   @override
   Future<dynamic> getOrCreateUserGoal(String goalType) async {

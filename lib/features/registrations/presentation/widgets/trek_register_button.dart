@@ -6,6 +6,7 @@ import 'package:doon_walkers/features/registrations/domain/trek_checkin_window.d
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/registration_form_sheet.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
+import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -94,6 +95,16 @@ class TrekRegisterButton extends ConsumerWidget {
           return _AlreadyRegistered(registration: registration, trek: trek);
         }
         if (trek.isCompleted) return const _RegistrationClosed();
+
+        final spotsLeft = ref.watch(trekSpotsLeftProvider(trek.id)).valueOrNull;
+        if (spotsLeft == 0) {
+          return const AppButton(
+            label: 'Trek Full',
+            icon: AppIcons.hiking,
+            fullWidth: true,
+            onPressed: null,
+          );
+        }
         return _RegisterCta(onPressed: () => _guardedOpen(context, ref));
       },
     );

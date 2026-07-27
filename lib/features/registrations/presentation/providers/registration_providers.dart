@@ -8,6 +8,7 @@ import 'package:doon_walkers/features/registrations/domain/entities/registration
 import 'package:doon_walkers/features/registrations/domain/entities/trekking_streak.dart';
 import 'package:doon_walkers/features/registrations/presentation/providers/registration_pagination_provider.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
+import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Every registration across every trek — admin roster screen only.
@@ -140,6 +141,7 @@ class RegistrationController extends AsyncNotifier<void> {
     ref.invalidate(myRegistrationForTrekProvider(trekId));
     ref.invalidate(allRegistrationsProvider);
     ref.invalidate(registrationsForTrekProvider(trekId));
+    ref.invalidate(trekSpotsLeftProvider(trekId));
   }
 
   /// Registers the signed-in user for [trek].
@@ -222,13 +224,20 @@ class RegistrationController extends AsyncNotifier<void> {
     return created;
   }
 
-  /// Cancels (deletes) a registration. [trekId] is passed so the trek's
+  /// Cancels a registration with a reason. [trekId] is passed so the trek's
   /// own button state can be refreshed alongside the lists.
-  Future<bool> cancel({required String id, required String trekId}) async {
+  Future<bool> cancel({
+    required String id,
+    required String trekId,
+    required String reason,
+  }) async {
     state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
-      await ref.read(registrationRepositoryProvider).deleteRegistration(id);
+      await ref.read(registrationRepositoryProvider).cancelRegistration(
+            id: id,
+            reason: reason,
+          );
       success = true;
     });
     if (success) _invalidateRegistrationViews(trekId);

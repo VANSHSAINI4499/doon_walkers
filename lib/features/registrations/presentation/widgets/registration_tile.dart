@@ -63,6 +63,13 @@ class RegistrationTile extends StatelessWidget {
             text: r.userPhone ?? 'No phone on file',
             muted: r.userPhone == null,
           ),
+          if (r.paymentStatus == PaymentStatus.cancelled && r.cancellationReason != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            _DetailRow(
+              icon: AppIcons.info,
+              text: 'Reason: ${r.cancellationReason}',
+            ),
+          ],
           const SizedBox(height: AppSpacing.xs),
           Row(
             children: [

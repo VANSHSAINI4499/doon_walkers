@@ -4,6 +4,7 @@ import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/data/repositories/activity_repository_impl.dart';
 import 'package:doon_walkers/features/activity/domain/entities/daily_activity.dart';
+import 'package:doon_walkers/features/activity/domain/entities/user_achievement.dart';
 import 'package:doon_walkers/features/activity/domain/services/activity_period.dart';
 import 'package:doon_walkers/features/activity/domain/services/activity_summary.dart';
 import 'package:doon_walkers/features/auth/domain/entities/user_entity.dart';
@@ -116,9 +117,18 @@ final monthComparisonProvider = FutureProvider.autoDispose
     }, name: 'monthComparisonProvider');
 
 /// Unlocked achievements provider.
-final userAchievementsProvider = FutureProvider.autoDispose((ref) {
+final userAchievementsProvider = FutureProvider.autoDispose<List<UserAchievement>>((ref) {
   return ref.watch(activityRepositoryProvider).fetchUserAchievements();
 }, name: 'userAchievementsProvider');
+
+/// Unlocked achievements via RPC (supporting milestones & platinums)
+final myAchievementsProvider = FutureProvider.autoDispose.family<List<UserAchievement>, ({int limit, int offset})>((ref, args) {
+  return ref.watch(activityRepositoryProvider).fetchMyAchievements(
+        limit: args.limit,
+        offset: args.offset,
+      );
+}, name: 'myAchievementsProvider');
+
 
 /// User goal provider via Phase 19 RPC.
 final userGoalProvider = FutureProvider.autoDispose

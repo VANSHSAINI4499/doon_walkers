@@ -8,6 +8,7 @@ import 'package:doon_walkers/features/merchandise/presentation/widgets/my_wishli
 import 'package:doon_walkers/features/profile/presentation/providers/points_providers.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/loyalty_badge_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/points_summary_section.dart';
+import 'package:doon_walkers/features/profile/presentation/widgets/recent_achievements_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/profile_stats_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/streak_section.dart';
 import 'package:doon_walkers/features/registrations/presentation/widgets/my_registrations_section.dart';
@@ -133,6 +134,7 @@ class ProfileScreen extends ConsumerWidget {
           final blocks = <Widget>[
             _ProfileHeader(user: user),
             const PointsSummarySection(),
+            const RecentAchievementsSection(),
             const LoyaltyBadgeSection(),
             // Renders nothing until there's a real streak, so it never
             // leaves an empty gap for a brand-new member.

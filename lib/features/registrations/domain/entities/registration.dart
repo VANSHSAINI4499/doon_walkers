@@ -97,6 +97,10 @@ class Registration {
   final String? emergencyContact;
   final String? medicalNotes;
 
+  // ── Cancellation details (Phase 26) ─────────────────────────────
+  final String? cancellationReason;
+  final DateTime? cancelledAt;
+
   /// Joined from `public.users`. [userPhone] is nullable in the schema —
   /// callers must handle a missing number rather than assume one exists.
   final String userName;
@@ -144,6 +148,8 @@ class Registration {
     this.gender,
     this.emergencyContact,
     this.medicalNotes,
+    this.cancellationReason,
+    this.cancelledAt,
     required this.userName,
     required this.userEmail,
     this.userPhone,

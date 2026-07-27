@@ -102,6 +102,7 @@ class TrekAdminController extends AsyncNotifier<void> {
     DateTime? trekDate,
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
+    int? maxParticipants,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
     Uint8List? qrCodeBytes,
@@ -124,6 +125,7 @@ class TrekAdminController extends AsyncNotifier<void> {
         trekDate: trekDate,
         trekStartTime: trekStartTime,
         registrationFee: registrationFee,
+        maxParticipants: maxParticipants,
       );
       created = trek;
 
@@ -180,6 +182,7 @@ class TrekAdminController extends AsyncNotifier<void> {
     DateTime? trekDate,
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
+    int? maxParticipants,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
     String? previousCoverImageUrl,
@@ -205,6 +208,7 @@ class TrekAdminController extends AsyncNotifier<void> {
         trekDate: trekDate,
         trekStartTime: trekStartTime,
         registrationFee: registrationFee,
+        maxParticipants: maxParticipants,
       );
       success = true;
 
@@ -219,7 +223,7 @@ class TrekAdminController extends AsyncNotifier<void> {
         } catch (_) {
           throw const TrekImageUploadException(
             'Trek updated, but the new cover image failed to upload. '
-            'The previous image (if any) is unchanged.',
+            'The previous cover image is unchanged.',
           );
         }
       }
@@ -263,3 +267,8 @@ class TrekAdminController extends AsyncNotifier<void> {
     return success;
   }
 }
+
+/// Spots remaining provider (Phase 26)
+final trekSpotsLeftProvider = FutureProvider.autoDispose.family<int?, String>((ref, trekId) {
+  return ref.watch(trekRepositoryProvider).fetchSpotsLeft(trekId);
+}, name: 'trekSpotsLeftProvider');

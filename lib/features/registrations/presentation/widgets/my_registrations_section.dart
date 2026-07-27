@@ -68,37 +68,22 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
     final r = widget.registration;
     final palette = AppPalette.of(context);
 
-    final confirmed = await showDialog<bool>(
+    final reason = await showModalBottomSheet<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Cancel registration?'),
-        content: Text(
-          'This removes your registration for "${r.trekTitle}". '
-          'You can register again later if spots are still open.',
-        ),
-        actions: [
-          AppButton(
-            label: 'Keep it',
-            variant: AppButtonVariant.glass,
-            size: AppButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton(
-            label: 'Cancel registration',
-            variant: AppButtonVariant.danger,
-            size: AppButtonSize.small,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: palette.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
+      builder: (sheetContext) => _CancellationReasonSheet(trekTitle: r.trekTitle),
     );
 
-    if (confirmed != true || !mounted) return;
+    if (reason == null || !mounted) return;
 
     setState(() => _isPending = true);
     final success = await ref
         .read(registrationControllerProvider.notifier)
-        .cancel(id: r.id, trekId: r.trekId);
+        .cancel(id: r.id, trekId: r.trekId, reason: reason);
     if (!mounted) return;
     setState(() => _isPending = false);
 
@@ -171,28 +156,30 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _isPending
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                    child: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger),
+          if (group == RegistrationStatusGroup.upcoming) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _isPending
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                      child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: palette.danger),
+                      ),
+                    )
+                  : TextButton.icon(
+                      onPressed: _confirmCancel,
+                      icon: AppIcon(AppIcons.close, size: 18, color: palette.danger),
+                      label: Text(
+                        'Cancel registration',
+                        style: AppTextStyles.labelMedium.copyWith(color: palette.danger),
+                      ),
+                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
                     ),
-                  )
-                : TextButton.icon(
-                    onPressed: _confirmCancel,
-                    icon: AppIcon(AppIcons.close, size: 18, color: palette.danger),
-                    label: Text(
-                      'Cancel registration',
-                      style: AppTextStyles.labelMedium.copyWith(color: palette.danger),
-                    ),
-                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-                  ),
-          ),
+            ),
+          ],
         ],
       ),
     );
@@ -222,6 +209,134 @@ class _MetaLine extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Text(text, style: AppTextStyles.bodySmall.copyWith(color: color)),
       ],
+    );
+  }
+}
+
+class _CancellationReasonSheet extends StatefulWidget {
+  const _CancellationReasonSheet({required this.trekTitle});
+  final String trekTitle;
+
+  @override
+  State<_CancellationReasonSheet> createState() => _CancellationReasonSheetState();
+}
+
+class _CancellationReasonSheetState extends State<_CancellationReasonSheet> {
+  final _reasons = [
+    'Change of plans',
+    'Health / personal reasons',
+    'Transport issues',
+    'Found a better option',
+    'Other (please specify)',
+  ];
+
+  String? _selectedReason;
+  final _textController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final isOther = _selectedReason == 'Other (please specify)';
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: AppSpacing.lg,
+          right: AppSpacing.lg,
+          top: AppSpacing.lg,
+          bottom: MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Cancel Registration?',
+                style: AppTextStyles.titleMedium.copyWith(color: palette.textPrimary),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'This will cancel your spot for "${widget.trekTitle}". This action is irreversible.',
+                style: AppTextStyles.bodyMedium.copyWith(color: palette.textSecondary),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ..._reasons.map((reason) {
+                return RadioListTile<String>(
+                  title: Text(reason, style: AppTextStyles.bodyMedium.copyWith(color: palette.textPrimary)),
+                  value: reason,
+                  groupValue: _selectedReason,
+                  onChanged: (val) {
+                    setState(() => _selectedReason = val);
+                  },
+                  activeColor: palette.primary,
+                  contentPadding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                );
+              }),
+              if (isOther) ...[
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: _textController,
+                  decoration: const InputDecoration(
+                    labelText: 'Specify reason',
+                    hintText: 'Describe why you are cancelling...',
+                  ),
+                  maxLength: 200,
+                  maxLines: 2,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please specify a reason';
+                    }
+                    if (value.trim().length > 200) {
+                      return 'Reason must be 200 characters or less';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      label: 'Keep spot',
+                      variant: AppButtonVariant.glass,
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: AppButton(
+                      label: 'Yes, cancel spot',
+                      variant: AppButtonVariant.danger,
+                      onPressed: _selectedReason == null
+                          ? null
+                          : () {
+                              if (isOther && !_formKey.currentState!.validate()) {
+                                return;
+                              }
+                              final finalReason = isOther
+                                  ? _textController.text.trim()
+                                  : _selectedReason!;
+                              Navigator.pop(context, finalReason);
+                            },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

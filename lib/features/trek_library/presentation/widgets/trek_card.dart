@@ -1,7 +1,9 @@
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
+import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/difficulty_badge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Card summary for a trek in the public library grid — cover image,
 /// title, difficulty badge, date/distance/duration at a glance.
@@ -33,7 +35,7 @@ import 'package:flutter/material.dart';
 /// grid can pack varied-length descriptions without clipping or wasted
 /// space — every text child below caps itself with `maxLines`/ellipsis
 /// and the outer column shrink-wraps.
-class TrekCard extends StatelessWidget {
+class TrekCard extends ConsumerWidget {
   const TrekCard({
     super.key,
     required this.trek,
@@ -48,10 +50,11 @@ class TrekCard extends StatelessWidget {
   final Widget? adminActions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
     final coverImage = trek.coverImage;
     final isAdminView = adminActions != null;
+    final spotsLeftAsync = ref.watch(trekSpotsLeftProvider(trek.id));
 
     return AppCard(
       onTap: onTap,
@@ -129,6 +132,34 @@ class TrekCard extends StatelessWidget {
                       label: 'Upcoming',
                       background: palette.primary,
                       foreground: palette.onPrimary,
+                    ),
+                  ),
+                // Bottom-right spots left / full badge overlay
+                if (trek.isUpcoming && trek.isPublished)
+                  Positioned(
+                    bottom: AppSpacing.sm,
+                    right: AppSpacing.sm,
+                    child: spotsLeftAsync.maybeWhen(
+                      data: (spots) {
+                        if (spots == null) return const SizedBox.shrink();
+                        if (spots == 0) {
+                          return _CardBadge(
+                            icon: AppIcons.info,
+                            label: 'Full',
+                            background: palette.danger,
+                            foreground: palette.onDanger,
+                          );
+                        } else if (spots <= 10) {
+                          return _CardBadge(
+                            icon: AppIcons.info,
+                            label: '$spots left',
+                            background: palette.accent,
+                            foreground: palette.onAccent,
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                      orElse: () => const SizedBox.shrink(),
                     ),
                   ),
               ],
