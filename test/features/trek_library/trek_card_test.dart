@@ -8,7 +8,9 @@ import 'package:doon_walkers/core/theme/app_theme.dart';
 import 'package:doon_walkers/core/widgets/glass_card.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_card.dart';
+import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Trek _trek({
@@ -33,13 +35,18 @@ Future<void> _pumpCard(
   ThemeData? theme,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      theme: theme ?? AppTheme.dark,
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: SizedBox(
-            width: 320,
-            child: TrekCard(trek: trek, onTap: () {}, adminActions: adminActions),
+    ProviderScope(
+      overrides: [
+        trekSpotsLeftProvider(trek.id).overrideWith((ref) => Future.value(10)),
+      ],
+      child: MaterialApp(
+        theme: theme ?? AppTheme.dark,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: SizedBox(
+              width: 320,
+              child: TrekCard(trek: trek, onTap: () {}, adminActions: adminActions),
+            ),
           ),
         ),
       ),

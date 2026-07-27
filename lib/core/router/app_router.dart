@@ -21,7 +21,9 @@ import 'package:doon_walkers/features/challenges/presentation/screens/challenges
 import 'package:doon_walkers/features/challenges/presentation/screens/my_challenge_achievements_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
+import 'package:doon_walkers/features/community/presentation/screens/community_leaderboard_screen.dart';
 import 'package:doon_walkers/features/community/presentation/screens/community_screen.dart';
+import 'package:doon_walkers/features/community/presentation/screens/member_directory_screen.dart';
 import 'package:doon_walkers/features/design_demo/presentation/screens/design_system_demo_screen.dart';
 import 'package:doon_walkers/features/gallery/presentation/screens/trek_gallery_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
@@ -45,6 +47,7 @@ import 'package:doon_walkers/features/registrations/presentation/screens/my_regi
 import 'package:doon_walkers/features/registrations/presentation/screens/trek_checkin_scan_screen.dart';
 import 'package:doon_walkers/features/settings/presentation/screens/settings_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/admin_trek_form_screen.dart';
+import 'package:doon_walkers/features/trek_library/presentation/screens/trek_calendar_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_checkin_qr_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_detail_screen.dart';
 import 'package:doon_walkers/features/trek_library/presentation/screens/trek_library_screen.dart';
@@ -449,6 +452,25 @@ GoRouter _buildRouter(Ref ref, _RouterRefreshNotifier refreshNotifier) => GoRout
       builder: (context, state) => AdminChallengeFormScreen(
         challengeId: state.pathParameters['id']!,
       ),
+    ),
+
+    // Top-level Community sub-routes (outside StatefulShellRoute per nav crash prevention rule)
+    GoRoute(
+      path: '/community/leaderboard',
+      name: 'community-leaderboard',
+      builder: (context, state) => const CommunityLeaderboardScreen(),
+    ),
+    GoRoute(
+      path: '/community/members',
+      name: 'community-members',
+      builder: (context, state) => const MemberDirectoryScreen(),
+    ),
+
+    // Phase 30 — Top-level Trek Calendar route (outside StatefulShellRoute)
+    GoRoute(
+      path: '/treks/calendar',
+      name: 'treks-calendar',
+      builder: (context, state) => const TrekCalendarScreen(),
     ),
 
     // StatefulShellRoute for App Navigation Tabs & Drawer Screens

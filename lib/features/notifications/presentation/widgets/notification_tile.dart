@@ -27,11 +27,13 @@ class NotificationTile extends StatelessWidget {
     super.key,
     required this.notification,
     required this.isUnread,
+    this.onTap,
     this.now,
   });
 
   final NotificationItem notification;
   final bool isUnread;
+  final VoidCallback? onTap;
 
   /// Injectable for tests; defaults to the wall clock.
   final DateTime? now;
@@ -43,6 +45,7 @@ class NotificationTile extends StatelessWidget {
     final accent = targeted ? palette.accent : palette.textSecondary;
 
     return AppCard(
+      onTap: onTap,
       padding: const EdgeInsets.all(AppSpacing.lg),
       // An unread row is marked by a tinted hairline rather than a
       // different fill: a filled-vs-flat list reads as two kinds of card,

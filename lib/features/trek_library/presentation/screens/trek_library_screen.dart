@@ -46,7 +46,16 @@ class TrekLibraryScreen extends ConsumerWidget {
     final treksAsync = ref.watch(treksProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Trek Library')),
+      appBar: AppBar(
+        title: const Text('Trek Library'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            tooltip: 'Trek Calendar',
+            onPressed: () => context.push('/treks/calendar'),
+          ),
+        ],
+      ),
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
               onPressed: () => context.push(AppConstants.routeTrekNew),

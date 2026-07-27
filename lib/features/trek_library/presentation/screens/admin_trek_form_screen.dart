@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/widgets/admin_form.dart';
+import 'package:doon_walkers/features/registrations/domain/entities/registration.dart';
+import 'package:doon_walkers/features/registrations/presentation/providers/registration_providers.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/cover_image_picker.dart';

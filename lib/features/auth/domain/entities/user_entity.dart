@@ -88,4 +88,7 @@ class UserEntity {
   bool get isAdmin => role == UserRole.admin;
   bool get isRegisteredUser => role == UserRole.user || role == UserRole.admin;
   bool get isGuest => role == UserRole.guest;
+
+  /// Alias for profileImage matching Supabase column avatar_url (Phase 27).
+  String? get avatarUrl => profileImage;
 }

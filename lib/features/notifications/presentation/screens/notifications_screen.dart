@@ -1,39 +1,10 @@
 import 'package:doon_walkers/core/design_system.dart';
-import 'package:doon_walkers/features/notifications/domain/entities/notification_item.dart';
 import 'package:doon_walkers/features/notifications/domain/services/notification_grouping.dart';
 import 'package:doon_walkers/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:doon_walkers/features/notifications/presentation/widgets/notification_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// In-app notification list, grouped by day.
-///
-/// A plain top-level route (see `AppConstants.routeNotifications`), not
-/// nested under any bottom-nav branch — reached via the bell in AppShell's
-/// app bar (visible from every branch) or an FCM tap from any app state.
-/// Guests are redirected to sign-in before reaching it.
-///
-/// ## Phase 13 scope, and one correction to the brief
-///
-/// The brief asked to "preserve the existing mark-as-read-on-open
-/// behaviour and badge-count logic exactly (restyle only)". **Neither
-/// existed.** Verified against the live schema: `public.notifications` is
-/// `id, title, body, created_at, target_user_id` — no `read_at`, no
-/// `notification_reads` table — and there was no badge or unread code
-/// anywhere in `lib/`.
-///
-/// Since an Unread filter is meaningless without read state, and the phase
-/// forbade backend changes, read state is device-local (see
-/// `NotificationReadTracker`, which follows `ChallengeCelebrationTracker`'s
-/// established precedent for exactly this situation). Opening this screen
-/// marks everything currently in the list read, which is what clears the
-/// bell badge.
-///
-/// ## What the query still does, untouched
-///
-/// The repository filters on `target_user_id` (own targeted rows plus every
-/// broadcast) on top of RLS. Nothing in this file filters by recipient, and
-/// the All/Unread control operates purely on read state.
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -43,53 +14,43 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
-  /// The ids that were unread when this screen opened.
-  ///
-  /// Captured once and held, because the rows are marked read a moment
-  /// after arriving — without this snapshot every unread dot would vanish
-  /// while the user was still looking at the list, and the Unread filter
-  /// would empty itself the instant it was useful. The dots stay for this
-  /// visit; the badge clears immediately.
-  Set<String>? _unreadOnOpen;
+  Set<String> _optimisticReadIds = {};
 
-  @override
-  void initState() {
-    super.initState();
-    // After the first frame: the provider may still be loading, and
-    // marking read touches providers, which cannot happen during build.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _markVisibleRead());
+  void _markAllAsRead() {
+    setState(() {
+      final notifications = ref.read(notificationsProvider).valueOrNull ?? [];
+      _optimisticReadIds = notifications.map((n) => n.id).toSet();
+    });
+    ref.read(notificationReadControllerProvider.notifier).markAllRead();
   }
 
-  Future<void> _markVisibleRead() async {
-    final notifications = ref.read(notificationsProvider).valueOrNull;
-    if (notifications == null || notifications.isEmpty) return;
-
-    _unreadOnOpen ??= {
-      for (final n in notifications)
-        if (!ref.read(readNotificationIdsProvider).contains(n.id)) n.id,
-    };
-
-    await ref
-        .read(notificationReadControllerProvider.notifier)
-        .markRead(notifications.map((n) => n.id));
+  void _markOneAsRead(String id) {
+    setState(() {
+      _optimisticReadIds = {..._optimisticReadIds, id};
+    });
+    ref.read(notificationReadControllerProvider.notifier).markRead(id);
   }
-
-  /// True if [item] was unread when this screen opened.
-  bool _wasUnread(NotificationItem item) =>
-      _unreadOnOpen?.contains(item.id) ?? false;
 
   @override
   Widget build(BuildContext context) {
     final notificationsAsync = ref.watch(notificationsProvider);
+    final readIdsAsync = ref.watch(readNotificationIdsProvider);
     final filter = ref.watch(notificationFilterProvider);
 
-    // The list may resolve after initState's pass — mark read once it does.
-    ref.listen(notificationsProvider, (previous, next) {
-      if (next.hasValue) _markVisibleRead();
-    });
+    final serverReadIds = readIdsAsync.valueOrNull ?? const <String>{};
+    final effectiveReadIds = {...serverReadIds, ..._optimisticReadIds};
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          TextButton.icon(
+            onPressed: _markAllAsRead,
+            icon: const Icon(Icons.done_all, size: 18),
+            label: const Text('Mark all read'),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: notificationsAsync.when(
           loading: () => const _NotificationsSkeleton(),
@@ -100,8 +61,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             );
           },
           data: (notifications) {
-            Future<void> onRefresh() =>
-                ref.refresh(notificationsProvider.future);
+            Future<void> onRefresh() async {
+              await Future.wait([
+                ref.refresh(notificationsProvider.future),
+                ref.refresh(readNotificationIdsProvider.future),
+                ref.refresh(unreadNotificationCountProvider.future),
+              ]);
+            }
 
             if (notifications.isEmpty) {
               return RefreshIndicator(
@@ -113,19 +79,44 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       icon: AppIcons.notifications,
                       title: 'No notifications yet',
                       message:
-                          'Community announcements and updates will show up '
-                          'here.',
+                          'Community announcements and trek updates will show up here.',
                     ),
                   ],
                 ),
               );
             }
 
-            final visible = filter == NotificationFilter.unread
-                ? notifications.where(_wasUnread).toList()
-                : notifications;
+            final visible = notifications.where((item) {
+              final isUnread = !effectiveReadIds.contains(item.id);
+              switch (filter) {
+                case NotificationFilter.all:
+                  return true;
+                case NotificationFilter.unread:
+                  return isUnread;
+                case NotificationFilter.updates:
+                  return item.isTargeted;
+                case NotificationFilter.announcements:
+                  return !item.isTargeted;
+              }
+            }).toList();
 
             final groups = groupNotificationsByDay(visible);
+
+            final emptyTitle = switch (filter) {
+              NotificationFilter.all => 'No notifications yet',
+              NotificationFilter.unread => 'All caught up',
+              NotificationFilter.updates => 'No trek updates',
+              NotificationFilter.announcements => 'No announcements',
+            };
+
+            final emptyMessage = switch (filter) {
+              NotificationFilter.all => 'Announcements will appear here.',
+              NotificationFilter.unread => "You've read everything here.",
+              NotificationFilter.updates =>
+                'Targeted trek and booking updates will appear here.',
+              NotificationFilter.announcements =>
+                'Community broadcasts will appear here.',
+            };
 
             return RefreshIndicator(
               onRefresh: onRefresh,
@@ -138,21 +129,32 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   AppSpacing.xxl,
                 ),
                 children: [
-                  AppSegmentedControl<NotificationFilter>(
-                    value: filter,
-                    onChanged: (v) => ref
-                        .read(notificationFilterProvider.notifier)
-                        .state = v,
-                    segments: [
-                      for (final f in NotificationFilter.values) (f, f.label),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: NotificationFilter.values.map((f) {
+                        final isSelected = filter == f;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: AppSpacing.sm),
+                          child: ChoiceChip(
+                            label: Text(f.label),
+                            selected: isSelected,
+                            onSelected: (_) => ref
+                                .read(notificationFilterProvider.notifier)
+                                .state = f,
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   if (visible.isEmpty)
-                    const _NotificationsEmpty(
-                      icon: AppIcons.taskDone,
-                      title: 'All caught up',
-                      message: "You've read everything here.",
+                    _NotificationsEmpty(
+                      icon: filter == NotificationFilter.unread
+                          ? AppIcons.taskDone
+                          : AppIcons.notifications,
+                      title: emptyTitle,
+                      message: emptyMessage,
                     )
                   else
                     for (final group in groups) ...[
@@ -160,7 +162,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       for (final item in group.items) ...[
                         NotificationTile(
                           notification: item,
-                          isUnread: _wasUnread(item),
+                          isUnread: !effectiveReadIds.contains(item.id),
+                          onTap: () => _markOneAsRead(item.id),
                         ),
                         const SizedBox(height: AppSpacing.md),
                       ],

@@ -99,6 +99,9 @@ dependencies:
   # Pinch/double-tap zoom + pan for the fullscreen image viewer pages.
   photo_view: ^0.15.0
 
+  # Phase 30 — Trek Calendar Widget
+  table_calendar: ^3.1.2
+
   # Generates a JPEG frame from a video, client-side, at upload time —
   # used both as the gallery's video thumbnail and to derive that
   # video's masonry-tile aspect ratio (Android/iOS only; no web/desktop

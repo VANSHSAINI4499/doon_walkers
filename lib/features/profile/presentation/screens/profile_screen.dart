@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
@@ -5,6 +6,7 @@ import 'package:doon_walkers/features/auth/domain/entities/user_entity.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/level_badge.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/my_inquiries_section.dart';
 import 'package:doon_walkers/features/merchandise/presentation/widgets/my_wishlist_section.dart';
+import 'package:doon_walkers/features/profile/presentation/controllers/profile_controller.dart';
 import 'package:doon_walkers/features/profile/presentation/providers/points_providers.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/loyalty_badge_section.dart';
 import 'package:doon_walkers/features/profile/presentation/widgets/points_summary_section.dart';
@@ -47,24 +49,10 @@ import 'package:go_router/go_router.dart';
 /// [LevelBadge] is the same widget Phase 21's challenge leaderboard
 /// already uses — one level-badge widget in the codebase, not two.
 ///
-/// ## Omitted from the reference, deliberately
+/// ## Phase 27: Profile Photo & Display Name Editing
 ///
-/// No photo upload (no Storage bucket or picker for it), no "View
-/// Membership" card (there is no membership tier system — the loyalty
-/// badge is attendance-derived and already shown). No separate
-/// Achievements grid either: `user_achievements` exists as a schema
-/// (0036_phase19_schema_foundations.sql) but nothing anywhere awards
-/// into it, so it would always render empty — the real "what have I
-/// earned" answer is already the loyalty badge plus [ProfileStatsSection]'s
-/// tiers-earned count, both shown below. No "Events" stat (no events
-/// concept exists).
-///
-/// **"Member since" is new and real** — `users.created_at`, which has
-/// always been there.
-///
-/// The Trekking Streak remains a deliberately separate system from the
-/// Challenges module's fitness streaks: months with an attended trek, not
-/// days of recorded activity.
+/// Profile photo upload with caching, storage bucket RLS, display name editing,
+/// and fallback to initials avatar.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -181,8 +169,8 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-/// Identity: initial, name, email, role, level, and how long they've
-/// been a member.
+/// Identity: avatar photo (with camera edit affordance), display name
+/// (with inline edit button), email, role, level, and member since date.
 class _ProfileHeader extends ConsumerWidget {
   const _ProfileHeader({required this.user});
 
@@ -198,29 +186,120 @@ class _ProfileHeader extends ConsumerWidget {
     final palette = AppPalette.of(context);
     final created = user.createdAt.toLocal();
     final level = ref.watch(myPointsSummaryProvider).valueOrNull?.level;
+    final profileState = ref.watch(profileControllerProvider);
+    final isUploading = profileState.isLoading;
+
+    final hasAvatar = user.avatarUrl != null && user.avatarUrl!.isNotEmpty;
 
     return AppCard(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 76,
-            height: 76,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: palette.primarySubtle,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-              style: AppTextStyles.displaySmall.copyWith(
-                color: palette.primary,
-              ),
+          // Avatar Stack
+          SizedBox(
+            width: 86,
+            height: 86,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: palette.primarySubtle,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: palette.border, width: 2),
+                  ),
+                  child: ClipOval(
+                    child: hasAvatar
+                        ? CachedNetworkImage(
+                            imageUrl: user.avatarUrl!,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: palette.surface,
+                              child: Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: palette.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Center(
+                              child: Text(
+                                user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                                style: AppTextStyles.displaySmall.copyWith(
+                                  color: palette.primary,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                              style: AppTextStyles.displaySmall.copyWith(
+                                color: palette.primary,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                if (isUploading)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black45,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: palette.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Material(
+                    color: palette.primary,
+                    shape: const CircleBorder(),
+                    elevation: 2,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: isUploading
+                          ? null
+                          : () => _showAvatarOptionsSheet(context, ref, user),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: AppIcon(
+                          AppIcons.camera,
+                          size: 16,
+                          color: palette.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
+          // Name + Edit icon row
           Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Flexible(
                 child: Text(
@@ -231,6 +310,14 @@ class _ProfileHeader extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                 ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              IconButton(
+                icon: AppIcon(AppIcons.edit, size: 18, color: palette.textSecondary),
+                tooltip: 'Edit name',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () => _showEditNameDialog(context, ref, user.name),
               ),
               if (level != null) ...[
                 const SizedBox(width: AppSpacing.sm),
@@ -253,8 +340,6 @@ class _ProfileHeader extends ConsumerWidget {
             runSpacing: AppSpacing.sm,
             children: [
               if (user.isAdmin) const _RoleBadge(),
-              // Real `users.created_at` — the one reference element on this
-              // card that the schema genuinely backs.
               _Pill(
                 icon: AppIcons.calendar,
                 label:
@@ -262,6 +347,127 @@ class _ProfileHeader extends ConsumerWidget {
                     '${created.year}',
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAvatarOptionsSheet(
+      BuildContext context, WidgetRef ref, UserEntity user) {
+    final palette = AppPalette.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: palette.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: AppIcon(AppIcons.photo, color: palette.primary),
+              title: Text('Choose from gallery', style: AppTextStyles.titleMedium),
+              onTap: () async {
+                Navigator.of(context).pop();
+                final success = await ref
+                    .read(profileControllerProvider.notifier)
+                    .uploadAvatarFromGallery();
+                if (!success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content:
+                          const Text('Failed to upload photo. Please try again.'),
+                      backgroundColor: palette.danger,
+                    ),
+                  );
+                }
+              },
+            ),
+            if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
+              ListTile(
+                leading: AppIcon(AppIcons.delete, color: palette.danger),
+                title: Text('Remove photo',
+                    style: AppTextStyles.titleMedium
+                        .copyWith(color: palette.danger)),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  final success = await ref
+                      .read(profileControllerProvider.notifier)
+                      .removeAvatar();
+                  if (!success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Failed to remove photo.'),
+                        backgroundColor: palette.danger,
+                      ),
+                    );
+                  }
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditNameDialog(
+      BuildContext context, WidgetRef ref, String currentName) {
+    final controller = TextEditingController(text: currentName);
+    final formKey = GlobalKey<FormState>();
+    final palette = AppPalette.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Display Name'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 50,
+            decoration: const InputDecoration(
+              labelText: 'Display Name',
+              hintText: 'Enter your name',
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Name cannot be empty';
+              }
+              if (value.trim().length > 50) {
+                return 'Must be 50 characters or less';
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (formKey.currentState?.validate() ?? false) {
+                final newName = controller.text.trim();
+                Navigator.of(context).pop();
+                final success = await ref
+                    .read(profileControllerProvider.notifier)
+                    .updateDisplayName(newName);
+                if (!success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Failed to update display name.'),
+                      backgroundColor: palette.danger,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

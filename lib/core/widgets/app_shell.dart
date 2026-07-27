@@ -285,7 +285,8 @@ class _NotificationBellAction extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = AppPalette.of(context);
-    final unread = ref.watch(unreadNotificationCountProvider);
+    final unread =
+        ref.watch(unreadNotificationCountProvider).valueOrNull ?? 0;
 
     return IconButton(
       tooltip: unread > 0 ? 'Notifications ($unread unread)' : 'Notifications',

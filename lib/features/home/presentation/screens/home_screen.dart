@@ -1,142 +1,809 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/design_system.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/community_stats_section.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/home_hero_header.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/home_section_header.dart';
-import 'package:doon_walkers/features/home/presentation/widgets/join_community_section.dart';
+import 'package:doon_walkers/core/providers/supabase_provider.dart';
+import 'package:doon_walkers/features/activity/domain/services/activity_period.dart';
+import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
+import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
+import 'package:doon_walkers/features/challenges/presentation/widgets/level_badge.dart';
+import 'package:doon_walkers/features/community/presentation/providers/community_providers.dart';
+import 'package:doon_walkers/features/community/presentation/widgets/member_detail_sheet.dart';
+import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
+import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
+import 'package:doon_walkers/features/weather/domain/models/weather_model.dart';
+import 'package:doon_walkers/features/weather/presentation/providers/weather_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// The Home tab.
-///
-/// Redesign Phase 2: rebuilt entirely on the Phase 1 design system.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const HomeHeroHeader(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xl,
-                AppSpacing.lg,
-                AppSpacing.xxl,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: const _HomeBody(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _handleRefresh(WidgetRef ref) async {
+    final today = ActivityPeriod.day(DateTime.now());
+    await Future.wait([
+      ref.refresh(weatherProvider.future),
+      ref.refresh(activitySummaryProvider(today).future),
+      ref.refresh(myEnrollmentsProvider.future),
+      ref.refresh(activeChallengesProvider.future),
+      ref.refresh(
+          communityLeaderboardProvider((limit: 3, offset: 0)).future),
+      ref.refresh(publishedTreksProvider.future),
+    ]);
   }
-}
-
-class _HomeBody extends StatelessWidget {
-  const _HomeBody();
 
   @override
-  Widget build(BuildContext context) {
-    // Each entry is one staggered section; index drives the entrance delay.
-    final sections = <Widget>[
-      const _Section(
-        header: HomeSectionHeader(
-          title: 'Community at a Glance',
-          icon: AppIcons.insights,
-          accent: AppColors.primary,
-        ),
-        child: CommunityStatsSection(),
-      ),
-      const _ChallengesQuickCard(),
-      const JoinCommunitySection(),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var i = 0; i < sections.length; i++)
-          AppReveal(
-            index: i,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: i == sections.length - 1 ? 0 : AppSpacing.xxxl,
-              ),
-              child: sections[i],
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => _handleRefresh(ref),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: const [
+                _GreetingAndWeatherRow(),
+                SizedBox(height: AppSpacing.xl),
+                _TodayStepsCard(),
+                SizedBox(height: AppSpacing.xxl),
+                _ActiveChallengesSection(),
+                SizedBox(height: AppSpacing.xxl),
+                _CommunityStripSection(),
+                SizedBox(height: AppSpacing.xxl),
+                _ExploreTreksSection(),
+                SizedBox(height: AppSpacing.xxl),
+              ],
             ),
           ),
-      ],
+        ),
+      ),
     );
   }
 }
 
-/// A header + its content, with the standard gap between them.
-class _Section extends StatelessWidget {
-  const _Section({required this.header, required this.child});
+/// Section A: Time-aware Greeting + Open-Meteo Weather Widget
+class _GreetingAndWeatherRow extends ConsumerWidget {
+  const _GreetingAndWeatherRow();
 
-  final Widget header;
-  final Widget child;
+  String _getTimeAwareGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good morning';
+    } else if (hour < 17) {
+      return 'Good afternoon';
+    } else {
+      return 'Good evening';
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final user = ref.watch(currentUserProvider).valueOrNull;
+    final weatherAsync = ref.watch(weatherProvider);
+
+    final name = user?.name.isNotEmpty == true ? user!.name : null;
+    final greetingText = name != null
+        ? '${_getTimeAwareGreeting()},\n$name 👋'
+        : 'Welcome to\nDoonWalkers 👋';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        header,
-        const SizedBox(height: AppSpacing.md),
-        child,
+        Expanded(
+          child: Text(
+            greetingText,
+            style: AppTextStyles.headlineSmall.copyWith(
+              color: palette.textPrimary,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        weatherAsync.when(
+          data: (weather) => _WeatherChip(weather: weather),
+          loading: () => const _WeatherSkeleton(),
+          error: (_, __) => const _WeatherFallbackChip(),
+        ),
       ],
     );
   }
 }
 
-class _ChallengesQuickCard extends StatelessWidget {
-  const _ChallengesQuickCard();
+class _WeatherChip extends StatelessWidget {
+  const _WeatherChip({required this.weather});
+
+  final WeatherModel weather;
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
-    return AppCard(
-      onTap: () => context.push(AppConstants.routeChallenges),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: palette.primarySubtle,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: palette.primary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: palette.primarySubtle,
-              shape: BoxShape.circle,
-            ),
-            child: AppIcon(AppIcons.challenges, size: 24, color: palette.primary),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Explore Challenges', style: AppTextStyles.titleMedium),
-                const SizedBox(height: 2),
-                Text(
-                  'Join community challenges and earn streak badges.',
-                  style: AppTextStyles.secondary(AppTextStyles.bodySmall),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(weather.conditionIcon, color: palette.primary, size: 20),
+              const SizedBox(width: 6),
+              Text(
+                '${weather.temperature.round()}°C',
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: palette.primary,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            weather.recommendationLabel,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: palette.textSecondary,
+              fontSize: 10,
             ),
           ),
-          AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
         ],
       ),
     );
   }
 }
 
+class _WeatherFallbackChip extends StatelessWidget {
+  const _WeatherFallbackChip();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: palette.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cloud_off, color: palette.textSecondary, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            'Weather unavailable',
+            style: AppTextStyles.labelSmall.copyWith(
+              color: palette.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeatherSkeleton extends StatelessWidget {
+  const _WeatherSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Shimmer(
+      child: SkeletonBox(width: 100, height: 48, borderRadius: AppRadius.card),
+    );
+  }
+}
+
+/// Section B: Today's Steps Card
+class _TodayStepsCard extends ConsumerWidget {
+  const _TodayStepsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final isSignedIn = ref.watch(isSignedInProvider);
+    final goal = ref.watch(dailyStepGoalProvider);
+
+    final todayPeriod = ActivityPeriod.day(DateTime.now());
+    final summaryAsync = ref.watch(activitySummaryProvider(todayPeriod));
+
+    return AppCard(
+      onTap: () => context.go(AppConstants.routeActivity),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: palette.primarySubtle,
+                  shape: BoxShape.circle,
+                ),
+                child: AppIcon(AppIcons.walk, color: palette.primary),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Today's Steps",
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: palette.textSecondary,
+                      ),
+                    ),
+                    if (isSignedIn)
+                      summaryAsync.when(
+                        data: (summary) {
+                          final steps = summary.totalSteps;
+                          return Text(
+                            '$steps',
+                            style: AppTextStyles.headlineMedium.copyWith(
+                              color: palette.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        },
+                        loading: () => const Shimmer(
+                          child: SkeletonBox(
+                              width: 80, height: 28, borderRadius: AppRadius.xs),
+                        ),
+                        error: (_, __) => Text(
+                          '0',
+                          style: AppTextStyles.headlineMedium.copyWith(
+                            color: palette.textPrimary,
+                          ),
+                        ),
+                      )
+                    else
+                      Text(
+                        'Sign in to sync steps',
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: palette.primary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
+            ],
+          ),
+          if (isSignedIn) ...[
+            const SizedBox(height: AppSpacing.md),
+            summaryAsync.when(
+              data: (summary) {
+                final steps = summary.totalSteps;
+                final progress = (steps / goal).clamp(0.0, 1.0);
+                final remaining = goal - steps;
+
+                final motivational = remaining <= 0
+                    ? 'Goal reached! 🎉'
+                    : '$remaining steps to your daily goal ($goal)';
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: palette.primarySubtle,
+                      color: palette.primary,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      motivational,
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: palette.textSecondary,
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Section C: Active Challenges Strip
+class _ActiveChallengesSection extends ConsumerWidget {
+  const _ActiveChallengesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final isSignedIn = ref.watch(isSignedInProvider);
+    final enrollmentsAsync = ref.watch(myEnrollmentsProvider);
+    final challengesAsync = ref.watch(activeChallengesProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Active Challenges',
+              style: AppTextStyles.titleLarge.copyWith(
+                color: palette.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push(AppConstants.routeChallenges),
+              child: const Text('View All'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        if (!isSignedIn)
+          AppCard(
+            onTap: () => context.push(AppConstants.routeSignIn),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Row(
+                children: [
+                  AppIcon(AppIcons.challenges, color: palette.primary),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Sign in to join community challenges and earn points.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          enrollmentsAsync.when(
+            loading: () => const Shimmer(
+              child: SkeletonBox(height: 100, borderRadius: AppRadius.card),
+            ),
+            error: (_, __) => Text(
+              'Could not load challenges.',
+              style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+            ),
+            data: (enrollments) {
+              final enrolledIds = enrollments.map((e) => e.challengeId).toSet();
+
+              return challengesAsync.when(
+                loading: () => const Shimmer(
+                  child: SkeletonBox(height: 100, borderRadius: AppRadius.card),
+                ),
+                error: (_, __) => Text(
+                  'Could not load challenges.',
+                  style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+                ),
+                data: (allChallenges) {
+                  final activeEnrolled = allChallenges
+                      .where((c) => c.isActive && enrolledIds.contains(c.id))
+                      .take(3)
+                      .toList();
+
+                  if (activeEnrolled.isEmpty) {
+                    return AppCard(
+                      onTap: () => context.push(AppConstants.routeChallenges),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Row(
+                          children: [
+                            AppIcon(AppIcons.challenges, color: palette.primary),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Text(
+                                'Join a challenge to earn points and badges!',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: palette.textPrimary,
+                                ),
+                              ),
+                            ),
+                            AppIcon(AppIcons.chevronRight,
+                                color: palette.textSecondary),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SizedBox(
+                    height: 110,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: activeEnrolled.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: AppSpacing.md),
+                      itemBuilder: (context, index) {
+                        final challenge = activeEnrolled[index];
+                        return Container(
+                          width: 220,
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: palette.card,
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            border: Border.all(color: palette.border),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                challenge.title,
+                                style: AppTextStyles.titleSmall.copyWith(
+                                  color: palette.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: palette.primarySubtle,
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.xs),
+                                    ),
+                                    child: Text(
+                                      '+${challenge.pointValue} pts',
+                                      style: AppTextStyles.labelSmall.copyWith(
+                                        color: palette.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+      ],
+    );
+  }
+}
+
+/// Section D: Community Leaderboard Strip
+class _CommunityStripSection extends ConsumerWidget {
+  const _CommunityStripSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final leaderboardAsync =
+        ref.watch(communityLeaderboardProvider((limit: 3, offset: 0)));
+    final myRankAsync = ref.watch(myCommunityRankProvider);
+    final isSignedIn = ref.watch(isSignedInProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Community Top 3',
+              style: AppTextStyles.titleLarge.copyWith(
+                color: palette.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.push('/community/leaderboard'),
+              child: const Text('View Leaderboard'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        leaderboardAsync.when(
+          loading: () => const Shimmer(
+            child: SkeletonBox(height: 90, borderRadius: AppRadius.card),
+          ),
+          error: (_, __) => Text(
+            'Could not load community strip.',
+            style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+          ),
+          data: (top3) {
+            if (top3.isEmpty) {
+              return AppCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Center(
+                    child: Text(
+                      'No community rankings yet.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: palette.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return AppCard(
+              onTap: () => context.push('/community/leaderboard'),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: top3.map((entry) {
+                        return InkWell(
+                          onTap: () => showMemberDetailSheet(
+                            context: context,
+                            displayName: entry.displayName,
+                            avatarUrl: entry.avatarUrl,
+                            level: entry.level,
+                            totalPoints: entry.totalPoints,
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: palette.primarySubtle,
+                                  border: Border.all(color: palette.border),
+                                ),
+                                child: ClipOval(
+                                  child: entry.avatarUrl != null &&
+                                          entry.avatarUrl!.isNotEmpty
+                                      ? CachedNetworkImage(
+                                          imageUrl: entry.avatarUrl!,
+                                          fit: BoxFit.cover,
+                                          errorWidget: (_, __, ___) =>
+                                              _Initials(entry.displayName),
+                                        )
+                                      : _Initials(entry.displayName),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                entry.displayName,
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: palette.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              LevelBadge(level: entry.level),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    if (isSignedIn) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      const Divider(),
+                      const SizedBox(height: AppSpacing.xs),
+                      myRankAsync.when(
+                        data: (myEntry) => myEntry != null
+                            ? Text(
+                                'Your Rank: #${myEntry.rank} · ${myEntry.totalPoints} pts',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: palette.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Section E: Explore Treks Grid
+class _ExploreTreksSection extends ConsumerWidget {
+  const _ExploreTreksSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final treksAsync = ref.watch(publishedTreksProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Explore Treks',
+              style: AppTextStyles.titleLarge.copyWith(
+                color: palette.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.go(AppConstants.routeTrekLibrary),
+              child: const Text('Explore All Treks'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        treksAsync.when(
+          loading: () => const Shimmer(
+            child: SkeletonBox(height: 200, borderRadius: AppRadius.card),
+          ),
+          error: (_, __) => Text(
+            'Could not load treks.',
+            style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
+          ),
+          data: (treks) {
+            if (treks.isEmpty) {
+              return AppCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Center(
+                    child: Text(
+                      'No upcoming treks available right now.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: palette.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final displayTreks = treks.take(4).toList();
+
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: AppSpacing.md,
+                mainAxisSpacing: AppSpacing.md,
+                childAspectRatio: 0.85,
+              ),
+              itemCount: displayTreks.length,
+              itemBuilder: (context, index) {
+                final trek = displayTreks[index];
+                return _HomeTrekCard(trek: trek);
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeTrekCard extends ConsumerWidget {
+  const _HomeTrekCard({required this.trek});
+
+  final Trek trek;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final spotsLeftAsync = ref.watch(trekSpotsLeftProvider(trek.id));
+
+    return AppCard(
+      onTap: () => context.push('/trek-library/${trek.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadius.card),
+              ),
+              child: trek.coverImage != null && trek.coverImage!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: trek.coverImage!,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => Container(
+                        color: palette.primarySubtle,
+                        child: Icon(Icons.terrain, color: palette.primary),
+                      ),
+                    )
+                  : Container(
+                      color: palette.primarySubtle,
+                      child: Icon(Icons.terrain, color: palette.primary),
+                    ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  trek.title,
+                  style: AppTextStyles.titleSmall.copyWith(
+                    color: palette.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                spotsLeftAsync.when(
+                  data: (spots) {
+                    final remaining = spots ?? 0;
+                    final isWaitlist = remaining <= 0;
+                    return Text(
+                      isWaitlist ? 'Waitlist Only' : '$remaining spots left',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: isWaitlist ? palette.danger : palette.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Initials extends StatelessWidget {
+  const _Initials(this.name);
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Center(
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: AppTextStyles.titleMedium.copyWith(
+          color: palette.primary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}

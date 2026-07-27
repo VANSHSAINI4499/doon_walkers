@@ -6,13 +6,11 @@ import 'package:doon_walkers/features/notifications/domain/repositories/notifica
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Riverpod provider exposing the implementation of [NotificationRepository].
 final notificationRepositoryProvider = Provider<NotificationRepository>(
   (ref) => NotificationRepositoryImpl(ref.watch(supabaseClientProvider)),
   name: 'notificationRepositoryProvider',
 );
 
-/// Supabase implementation of [NotificationRepository].
 class NotificationRepositoryImpl implements NotificationRepository {
   final SupabaseClient _supabase;
 
@@ -20,14 +18,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
   @override
   Future<List<NotificationItem>> fetchNotifications() async {
-    // Explicit filter *as well as* RLS — the policy is the real
-    // boundary, but being explicit keeps this correct if an admin
-    // (who has no special SELECT bypass on this table — see
-    // 0021_notifications_targeting.sql, deliberately no is_admin() OR
-    // clause) opens their own notification list. A guest never reaches
-    // this call at all (the /notifications route redirect-guards
-    // them), but the null-safe fallback (broadcasts only) keeps this
-    // defensively correct even so.
     final userId = _supabase.auth.currentUser?.id;
     final query = _supabase.from(AppConstants.tableNotifications).select();
     final filtered = userId == null
@@ -54,5 +44,47 @@ class NotificationRepositoryImpl implements NotificationRepository {
         .select()
         .single();
     return NotificationModel.fromJson(row);
+  }
+
+  @override
+  Future<Set<String>> fetchReadNotificationIds() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return const {};
+
+    final response = await _supabase.rpc('get_my_read_notification_ids')
+        as List<dynamic>;
+
+    return response
+        .map((e) => (e as Map<String, dynamic>)['notification_id'] as String)
+        .toSet();
+  }
+
+  @override
+  Future<void> markAsRead(String notificationId) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    await _supabase.rpc(
+      'mark_notification_read',
+      params: {'p_notification_id': notificationId},
+    );
+  }
+
+  @override
+  Future<int> markAllAsRead() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return 0;
+
+    final response = await _supabase.rpc('mark_all_notifications_read');
+    return (response as num?)?.toInt() ?? 0;
+  }
+
+  @override
+  Future<int> getUnreadCount() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return 0;
+
+    final response = await _supabase.rpc('get_unread_notification_count');
+    return (response as num?)?.toInt() ?? 0;
   }
 }

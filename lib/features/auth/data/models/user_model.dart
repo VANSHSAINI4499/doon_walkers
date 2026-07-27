@@ -25,7 +25,8 @@ class UserModel extends UserEntity {
       email: (json['email'] as String?) ?? '',
       phone: json['phone'] as String?,
       role: UserRole.fromString(json['role'] as String?),
-      profileImage: json['profile_image'] as String?,
+      profileImage:
+          (json['avatar_url'] as String?) ?? (json['profile_image'] as String?),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -54,6 +55,7 @@ class UserModel extends UserEntity {
       if (phone != null) 'phone': phone,
       'role': role.toDbString(),
       if (profileImage != null) 'profile_image': profileImage,
+      if (profileImage != null) 'avatar_url': profileImage,
       'created_at': createdAt.toIso8601String(),
       'show_on_leaderboard': showOnLeaderboard,
       'daily_step_goal': dailyStepGoal,
