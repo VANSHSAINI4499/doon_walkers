@@ -125,6 +125,7 @@ abstract final class AppIcons {
   static const IconData hidden = LucideIcons.eyeOff;
   static const IconData book = LucideIcons.bookOpen;
   static const IconData desktop = LucideIcons.monitor;
+  static const IconData cloudOff = LucideIcons.cloudOff;
 
   // ── Drawer destinations ───────────────────────────────────────────
   static const IconData settings = LucideIcons.settings;
@@ -249,6 +250,7 @@ abstract final class AppIcons {
     'themeSystem': themeSystem,
     'themeLight': themeLight,
     'themeDark': themeDark,
+    'cloudOff': cloudOff,
   };
 }
 

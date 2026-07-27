@@ -264,6 +264,33 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+
+                  // Difficulty colour legend — explains the calendar dots
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _LegendDot(
+                          color: const Color(0xFF4CAF50),
+                          label: 'Easy',
+                        ),
+                        const SizedBox(width: AppSpacing.lg),
+                        _LegendDot(
+                          color: const Color(0xFFFFC107),
+                          label: 'Moderate',
+                        ),
+                        const SizedBox(width: AppSpacing.lg),
+                        _LegendDot(
+                          color: const Color(0xFFE53935),
+                          label: 'Hard / Extreme',
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xl),
 
                   // Header section for list below
@@ -505,6 +532,37 @@ class _CalendarSkeleton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A small coloured dot with a text label used in the calendar legend.
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: palette.textSecondary,
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 }

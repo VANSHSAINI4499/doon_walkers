@@ -275,12 +275,21 @@ class _CoverPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(color: palette.cardHigh),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            palette.primary.withValues(alpha: 0.18),
+            palette.primarySubtle,
+          ],
+        ),
+      ),
       child: Center(
         child: AppIcon(
           AppIcons.landscape,
           size: 40,
-          color: palette.textDisabled,
+          color: palette.primary.withValues(alpha: 0.5),
         ),
       ),
     );
@@ -344,7 +353,7 @@ class _FactChip extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: palette.cardHigh,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

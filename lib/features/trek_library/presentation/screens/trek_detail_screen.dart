@@ -205,177 +205,232 @@ class _TrekDetailBody extends StatelessWidget {
     final palette = AppPalette.of(context);
     final coverImage = trek.coverImage;
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          expandedHeight: 280,
-          pinned: true,
-          backgroundColor: palette.background,
-          surfaceTintColor: Colors.transparent,
-          iconTheme: IconThemeData(color: palette.textPrimary),
-          actions: [
-            if (isAdmin)
-              TrekAdminActions(
-                trek: trek,
-                iconColor: palette.textPrimary,
-                // The trek this screen is showing no longer exists — pop
-                // rather than sit on a dangling detail view.
-                onDeleted: () {
-                  if (Navigator.of(context).canPop())
-                    Navigator.of(context).pop();
-                },
-              ),
-          ],
-          flexibleSpace: FlexibleSpaceBar(
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                AppHero(
-                  tag: AppHeroTags.trekCover(trek.id),
-                  fromRadius: 0,
-                  toRadius: 0,
-                  child:
-                      (coverImage == null || coverImage.isEmpty)
-                          ? const _CoverFallback(icon: AppIcons.landscape)
-                          : Image.network(
-                            coverImage,
-                            fit: BoxFit.cover,
-                            errorBuilder:
-                                (context, error, stack) => const _CoverFallback(
-                                  icon: AppIcons.imageBroken,
-                                ),
-                          ),
-                ),
-                // Top scrim keeps the back button + admin menu legible over
-                // a bright photo; bottom scrim melts the image into the page.
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0x99000000),
-                        const Color(0x00000000),
-                        palette.background,
-                      ],
-                      stops: const [0, 0.35, 1],
-                    ),
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 280,
+              pinned: true,
+              backgroundColor: palette.background,
+              surfaceTintColor: Colors.transparent,
+              iconTheme: IconThemeData(color: palette.textPrimary),
+              actions: [
+                if (isAdmin)
+                  TrekAdminActions(
+                    trek: trek,
+                    iconColor: palette.textPrimary,
+                    onDeleted: () {
+                      if (Navigator.of(context).canPop())
+                        Navigator.of(context).pop();
+                    },
                   ),
-                ),
               ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    // Only an admin can reach an unpublished trek at all
-                    // (treks_select gates it), so this banner doubles as a
-                    // reminder that members can't see this page yet.
-                    if (isAdmin && !trek.isPublished) ...[
-                      _DraftBanner(),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            trek.title,
-                            style: AppTextStyles.headlineSmall.copyWith(
-                              color: palette.textPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        DifficultyBadge(difficulty: trek.difficulty),
-                      ],
+                    AppHero(
+                      tag: AppHeroTags.trekCover(trek.id),
+                      fromRadius: 0,
+                      toRadius: 0,
+                      child:
+                          (coverImage == null || coverImage.isEmpty)
+                              ? const _CoverFallback(icon: AppIcons.landscape)
+                              : Image.network(
+                                coverImage,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (context, error, stack) =>
+                                        const _CoverFallback(
+                                          icon: AppIcons.imageBroken,
+                                        ),
+                              ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _QuickFactsRow(trek: trek),
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    if (trek.description.trim().isNotEmpty) ...[
-                      const SectionTitle(
-                        title: 'About This Trek',
-                        icon: AppIcons.book,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        trek.description,
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: palette.textSecondary,
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            const Color(0x99000000),
+                            const Color(0x00000000),
+                            palette.background,
+                          ],
+                          stops: const [0, 0.35, 1],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.xxl),
-                    ],
-
-                    if ((trek.thingsToCarry ?? '').trim().isNotEmpty) ...[
-                      SectionTitle(
-                        title: 'Things to Carry',
-                        icon: AppIcons.packing,
-                        accent: palette.accent,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        trek.thingsToCarry!,
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: palette.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xxl),
-                    ],
-
-                    if ((trek.googleMapLink ?? '').trim().isNotEmpty) ...[
-                      AppButton(
-                        label: 'Open Route in Google Maps',
-                        icon: AppIcons.map,
-                        variant: AppButtonVariant.secondary,
-                        fullWidth: true,
-                        onPressed:
-                            () =>
-                                openExternalLink(context, trek.googleMapLink!),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
-
-                    // Admins manage treks, they don't register for them —
-                    // nothing renders in this slot at all for them (the app
-                    // bar's TrekAdminActions menu is their management
-                    // surface), rather than a disabled/placeholder CTA.
-                    if (!isAdmin) ...[
-                      TrekRegisterButton(trek: trek),
-                      const SizedBox(height: AppSpacing.xxl),
-                    ],
-
-                    const Divider(),
-                    const SizedBox(height: AppSpacing.xl),
-                    SectionTitle(
-                      title: 'Gallery & Videos',
-                      icon: AppIcons.photo,
-                      accent: palette.secondary,
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    TrekGallerySection(trekId: trek.id, trekTitle: trek.title),
-                    const SizedBox(height: AppSpacing.xxl),
-
-                    const SectionTitle(title: 'Comments', icon: AppIcons.forum),
-                    const SizedBox(height: AppSpacing.md),
-                    CommentThread(trekId: trek.id, autoFocusInput: openComment),
-                    const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
               ),
             ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (isAdmin && !trek.isPublished) ...[
+                          _DraftBanner(),
+                          const SizedBox(height: AppSpacing.lg),
+                        ],
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                trek.title,
+                                style: AppTextStyles.headlineSmall.copyWith(
+                                  color: palette.textPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            DifficultyBadge(difficulty: trek.difficulty),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        _QuickFactsRow(trek: trek),
+                        const SizedBox(height: AppSpacing.xxl),
+
+                        if (trek.description.trim().isNotEmpty) ...[
+                          const SectionTitle(
+                            title: 'About This Trek',
+                            icon: AppIcons.book,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            trek.description,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: palette.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xxl),
+                        ],
+
+                        if ((trek.thingsToCarry ?? '').trim().isNotEmpty) ...[
+                          SectionTitle(
+                            title: 'Things to Carry',
+                            icon: AppIcons.packing,
+                            accent: palette.accent,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          Text(
+                            trek.thingsToCarry!,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: palette.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xxl),
+                        ],
+
+                        if ((trek.googleMapLink ?? '').trim().isNotEmpty) ...[
+                          AppButton(
+                            label: 'Open Route in Google Maps',
+                            icon: AppIcons.map,
+                            variant: AppButtonVariant.secondary,
+                            fullWidth: true,
+                            onPressed:
+                                () => openExternalLink(
+                                  context,
+                                  trek.googleMapLink!,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                        ],
+
+                        // Bottom padding so the sticky bar doesn't obscure
+                        // the comments section for members.
+                        const SizedBox(height: AppSpacing.huge),
+
+                        const Divider(),
+                        const SizedBox(height: AppSpacing.xl),
+                        SectionTitle(
+                          title: 'Gallery & Videos',
+                          icon: AppIcons.photo,
+                          accent: palette.secondary,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TrekGallerySection(
+                          trekId: trek.id,
+                          trekTitle: trek.title,
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
+
+                        const SectionTitle(
+                          title: 'Comments',
+                          icon: AppIcons.forum,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        CommentThread(
+                          trekId: trek.id,
+                          autoFocusInput: openComment,
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // Sticky CTA — only visible for non-admin members
+        _buildStickyBar(context),
+      ],
+    );
+  }
+
+  // ── Sticky bottom bar ───────────────────────────────────────────────────────
+
+  /// Replaces the inline TrekRegisterButton when the viewer is a regular member.
+  /// Admins have no CTA here (they use the AppBar menu), completed treks show
+  /// nothing (TrekRegisterButton already handles that state).
+  Widget _buildStickyBar(BuildContext context) {
+    if (isAdmin) return const SizedBox.shrink();
+    return _StickyRegisterBar(trek: trek);
+  }
+}
+
+class _StickyRegisterBar extends StatelessWidget {
+  const _StickyRegisterBar({required this.trek});
+  final Trek trek;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: palette.surface,
+          border: Border(top: BorderSide(color: palette.border, width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.md,
+            ),
+            child: TrekRegisterButton(trek: trek),
           ),
         ),
-      ],
+      ),
     );
   }
 }

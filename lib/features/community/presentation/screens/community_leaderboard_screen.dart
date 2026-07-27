@@ -98,11 +98,11 @@ class _CommunityLeaderboardScreenState
                           (val) => setState(() => _searchQuery = val.trim()),
                       decoration: InputDecoration(
                         hintText: 'Search members...',
-                        prefixIcon: const Icon(Icons.search),
+                        prefixIcon: const AppIcon(AppIcons.search),
                         suffixIcon:
                             _searchQuery.isNotEmpty
                                 ? IconButton(
-                                  icon: const Icon(Icons.clear),
+                                  icon: const AppIcon(AppIcons.close),
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => _searchQuery = '');

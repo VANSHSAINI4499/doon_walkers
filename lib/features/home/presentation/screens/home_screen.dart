@@ -5,7 +5,7 @@ import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/domain/services/activity_period.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
-import 'package:doon_walkers/features/challenges/presentation/widgets/level_badge.dart';
+import 'package:doon_walkers/features/community/domain/entities/community_leaderboard_entry.dart';
 import 'package:doon_walkers/features/community/presentation/providers/community_providers.dart';
 import 'package:doon_walkers/features/community/presentation/widgets/member_detail_sheet.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
@@ -184,7 +184,7 @@ class _WeatherFallbackChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off, color: palette.textSecondary, size: 18),
+          AppIcon(AppIcons.cloudOff, color: palette.textSecondary, size: 18),
           const SizedBox(width: 6),
           Text(
             'Weather unavailable',
@@ -559,7 +559,7 @@ class _CommunityStripSection extends ConsumerWidget {
         leaderboardAsync.when(
           loading:
               () => const Shimmer(
-                child: SkeletonBox(height: 90, borderRadius: AppRadius.card),
+                child: SkeletonBox(height: 120, borderRadius: AppRadius.card),
               ),
           error:
               (_, __) => Text(
@@ -583,92 +583,198 @@ class _CommunityStripSection extends ConsumerWidget {
               );
             }
 
+            // Build mini-podium: [#2] [#1] [#3]
+            final first = top3.isNotEmpty ? top3[0] : null;
+            final second = top3.length > 1 ? top3[1] : null;
+            final third = top3.length > 2 ? top3[2] : null;
+
             return AppCard(
               onTap: () => context.push('/community/leaderboard'),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children:
-                          top3.map((entry) {
-                            return InkWell(
-                              onTap:
-                                  () => showMemberDetailSheet(
-                                    context: context,
-                                    displayName: entry.displayName,
-                                    avatarUrl: entry.avatarUrl,
-                                    level: entry.level,
-                                    totalPoints: entry.totalPoints,
-                                  ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 44,
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: palette.primarySubtle,
-                                      border: Border.all(color: palette.border),
-                                    ),
-                                    child: ClipOval(
-                                      child:
-                                          entry.avatarUrl != null &&
-                                                  entry.avatarUrl!.isNotEmpty
-                                              ? CachedNetworkImage(
-                                                imageUrl: entry.avatarUrl!,
-                                                fit: BoxFit.cover,
-                                                errorWidget:
-                                                    (_, __, ___) => _Initials(
-                                                      entry.displayName,
-                                                    ),
-                                              )
-                                              : _Initials(entry.displayName),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    entry.displayName,
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      color: palette.textPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  LevelBadge(level: entry.level),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                    ),
-                    if (isSignedIn) ...[
-                      const SizedBox(height: AppSpacing.md),
-                      const Divider(),
-                      const SizedBox(height: AppSpacing.xs),
-                      myRankAsync.when(
-                        data:
-                            (myEntry) =>
-                                myEntry != null
-                                    ? Text(
-                                      'Your Rank: #${myEntry.rank} · ${myEntry.totalPoints} pts',
-                                      style: AppTextStyles.labelMedium.copyWith(
-                                        color: palette.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )
-                                    : const SizedBox.shrink(),
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
-                      ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (second != null)
+                        Expanded(
+                          child: _MiniPodiumEntry(
+                            entry: second,
+                            position: 2,
+                            avatarSize: 44,
+                          ),
+                        )
+                      else
+                        const Spacer(),
+                      if (first != null)
+                        Expanded(
+                          child: _MiniPodiumEntry(
+                            entry: first,
+                            position: 1,
+                            avatarSize: 56,
+                          ),
+                        )
+                      else
+                        const Spacer(),
+                      if (third != null)
+                        Expanded(
+                          child: _MiniPodiumEntry(
+                            entry: third,
+                            position: 3,
+                            avatarSize: 44,
+                          ),
+                        )
+                      else
+                        const Spacer(),
                     ],
+                  ),
+                  if (isSignedIn) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    const Divider(),
+                    const SizedBox(height: AppSpacing.xs),
+                    myRankAsync.when(
+                      data:
+                          (myEntry) =>
+                              myEntry != null
+                                  ? Text(
+                                    'Your Rank: #${myEntry.rank} · ${myEntry.totalPoints} pts',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      color: palette.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                  : const SizedBox.shrink(),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
                   ],
-                ),
+                ],
               ),
             );
           },
         ),
       ],
+    );
+  }
+}
+
+/// A single column in the home screen's mini-podium — avatar with rank ring,
+/// name, and point count. No pedestal bar (too tall for a home strip).
+class _MiniPodiumEntry extends StatelessWidget {
+  const _MiniPodiumEntry({
+    required this.entry,
+    required this.position,
+    required this.avatarSize,
+  });
+
+  final CommunityLeaderboardEntry entry;
+  final int position;
+  final double avatarSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+
+    final rankColor = switch (position) {
+      1 => const Color(0xFFFFD700), // Gold
+      2 => const Color(0xFFC0C0C0), // Silver
+      3 => const Color(0xFFCD7F32), // Bronze
+      _ => palette.primary,
+    };
+
+    final isFirst = position == 1;
+
+    return InkWell(
+      onTap:
+          () => showMemberDetailSheet(
+            context: context,
+            displayName: entry.displayName,
+            avatarUrl: entry.avatarUrl,
+            level: entry.level,
+            totalPoints: entry.totalPoints,
+          ),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Crown sparkle above #1
+            if (isFirst) ...[
+              AppIcon(AppIcons.celebrate, color: rankColor, size: 16),
+              const SizedBox(height: 2),
+            ],
+
+            // Avatar with rank ring
+            Container(
+              width: avatarSize,
+              height: avatarSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: rankColor, width: isFirst ? 2.5 : 2),
+                color: palette.primarySubtle,
+              ),
+              child: ClipOval(
+                child:
+                    entry.avatarUrl != null && entry.avatarUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                          imageUrl: entry.avatarUrl!,
+                          fit: BoxFit.cover,
+                          errorWidget:
+                              (_, __, ___) => _Initials(entry.displayName),
+                        )
+                        : _Initials(entry.displayName),
+              ),
+            ),
+
+            // Rank badge overlay (medal pill)
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: rankColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: rankColor.withValues(alpha: 0.6)),
+              ),
+              child: Text(
+                '#$position',
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: rankColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Name
+            Text(
+              entry.displayName,
+              style: AppTextStyles.labelSmall.copyWith(
+                color: palette.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+
+            // Points
+            Text(
+              '${entry.totalPoints} pts',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: palette.textSecondary,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -782,15 +888,18 @@ class _HomeTrekCard extends ConsumerWidget {
                         errorWidget:
                             (_, __, ___) => Container(
                               color: palette.primarySubtle,
-                              child: Icon(
-                                Icons.terrain,
+                              child: AppIcon(
+                                AppIcons.landscape,
                                 color: palette.primary,
                               ),
                             ),
                       )
                       : Container(
                         color: palette.primarySubtle,
-                        child: Icon(Icons.terrain, color: palette.primary),
+                        child: AppIcon(
+                          AppIcons.landscape,
+                          color: palette.primary,
+                        ),
                       ),
             ),
           ),
