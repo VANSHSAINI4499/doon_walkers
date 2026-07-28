@@ -136,9 +136,9 @@ class ProfileScreen extends ConsumerWidget {
           return Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.lg,
+                AppSpacing.xl,
+                AppSpacing.xxl,
+                AppSpacing.xl,
                 AppSpacing.xxl,
               ),
               child: ConstrainedBox(

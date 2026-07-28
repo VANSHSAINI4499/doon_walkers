@@ -71,6 +71,47 @@ class _CommunityLeaderboardScreenState
               ),
             ),
         data: (entries) {
+          if (entries.isEmpty || entries.every((e) => e.totalPoints == 0)) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: AppCard(
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppIcon(
+                          AppIcons.leaderboard,
+                          size: 40,
+                          color: palette.textDisabled,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'No rankings yet.',
+                          style: AppTextStyles.titleMedium.copyWith(
+                            color: palette.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Complete treks and challenges to earn points.',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: palette.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
           final top3 = entries.take(3).toList();
           final rest = entries.skip(3).toList();
 

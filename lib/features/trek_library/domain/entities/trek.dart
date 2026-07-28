@@ -193,3 +193,43 @@ List<Trek> sortTreksForLibrary(List<Trek> treks) {
   final unscheduled = treks.where((t) => t.trekDate == null).toList();
   return [...upcoming, ...completed, ...unscheduled];
 }
+
+/// The booking / registration capacity status of a trek — Phase 28.
+enum TrekBookingStatus {
+  open,
+  almostFull,
+  waitlist,
+  closed,
+  completed,
+  cancelled;
+
+  String get label => switch (this) {
+    TrekBookingStatus.open => 'Open',
+    TrekBookingStatus.almostFull => 'Almost Full',
+    TrekBookingStatus.waitlist => 'Waitlist Only',
+    TrekBookingStatus.closed => 'Closed',
+    TrekBookingStatus.completed => 'Completed',
+    TrekBookingStatus.cancelled => 'Cancelled',
+  };
+}
+
+/// Resolves a trek's booking status based on its date, publication state, and capacity/spots left.
+TrekBookingStatus resolveTrekStatus(Trek trek, int? spotsLeft) {
+  if (trek.isCompleted) {
+    return TrekBookingStatus.completed;
+  }
+  if (!trek.isPublished) {
+    return TrekBookingStatus.closed;
+  }
+  if (spotsLeft == null) {
+    return TrekBookingStatus.open;
+  }
+  if (spotsLeft <= 0) {
+    return TrekBookingStatus.waitlist;
+  }
+  if (spotsLeft <= 10) {
+    return TrekBookingStatus.almostFull;
+  }
+  return TrekBookingStatus.open;
+}
+

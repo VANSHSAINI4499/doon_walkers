@@ -6,6 +6,7 @@ import 'package:doon_walkers/features/activity/data/repositories/activity_reposi
 import 'package:doon_walkers/features/activity/data/services/activity_sync_service.dart';
 import 'package:doon_walkers/features/activity/domain/repositories/activity_provider.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
+import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -90,6 +91,7 @@ class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
       ref.invalidate(myTierHistoryProvider);
       ref.invalidate(lastActivitySyncProvider);
       ref.invalidate(activityPermissionGrantedProvider);
+      ref.invalidate(activityRangeProvider);
     }
 
     return state.valueOrNull;

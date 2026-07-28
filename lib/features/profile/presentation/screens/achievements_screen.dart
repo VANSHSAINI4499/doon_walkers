@@ -99,45 +99,59 @@ class AchievementsScreen extends ConsumerWidget {
                             mainAxisSpacing: AppSpacing.md,
                             childAspectRatio: 1.35,
                             children: [
-                              _CategoryCard(
-                                icon: AppIcons.medal,
-                                label: 'Challenges',
-                                status:
-                                    platinumCount > 0
-                                        ? '$platinumCount completed'
-                                        : 'Locked',
-                                isLocked: platinumCount == 0,
-                                accentColor: palette.primary,
+                              AppScaleReveal(
+                                index: 0,
+                                child: _CategoryCard(
+                                  icon: AppIcons.medal,
+                                  label: 'Challenges',
+                                  status:
+                                      platinumCount > 0
+                                          ? '$platinumCount completed'
+                                          : 'Locked',
+                                  isLocked: platinumCount == 0,
+                                  accentColor: palette.primary,
+                                ),
                               ),
-                              _CategoryCard(
-                                icon: AppIcons.star,
-                                label: 'Milestones',
-                                status:
-                                    milestoneCount > 0
-                                        ? '$milestoneCount unlocked'
-                                        : 'Locked',
-                                isLocked: milestoneCount == 0,
-                                accentColor: palette.accent,
+                              AppScaleReveal(
+                                index: 1,
+                                child: _CategoryCard(
+                                  icon: AppIcons.star,
+                                  label: 'Milestones',
+                                  status:
+                                      milestoneCount > 0
+                                          ? '$milestoneCount unlocked'
+                                          : 'Locked',
+                                  isLocked: milestoneCount == 0,
+                                  accentColor: palette.accent,
+                                ),
                               ),
-                              _CategoryCard(
-                                icon: AppIcons.verified,
-                                label: 'Loyalty Badge',
-                                status:
-                                    hasLoyaltyBadge
-                                        ? loyaltyBadgeName
-                                        : 'No badge yet',
-                                isLocked: !hasLoyaltyBadge,
-                                accentColor: const Color(0xFF26A69A), // Teal
+                              AppScaleReveal(
+                                index: 2,
+                                child: _CategoryCard(
+                                  icon: AppIcons.verified,
+                                  label: 'Loyalty Badge',
+                                  status:
+                                      hasLoyaltyBadge
+                                          ? loyaltyBadgeName
+                                          : 'No badge yet',
+                                  isLocked: !hasLoyaltyBadge,
+                                  accentColor: const Color(0xFF26A69A), // Teal
+                                ),
                               ),
-                              _CategoryCard(
-                                icon: AppIcons.walk,
-                                label: 'Trek Check-ins',
-                                status:
-                                    attended > 0
-                                        ? '$attended checked in'
-                                        : 'No check-ins',
-                                isLocked: attended == 0,
-                                accentColor: const Color(0xFFFF7043), // Orange
+                              AppScaleReveal(
+                                index: 3,
+                                child: _CategoryCard(
+                                  icon: AppIcons.walk,
+                                  label: 'Trek Check-ins',
+                                  status:
+                                      attended > 0
+                                          ? '$attended checked in'
+                                          : 'No check-ins',
+                                  isLocked: attended == 0,
+                                  accentColor: const Color(
+                                    0xFFFF7043,
+                                  ), // Orange
+                                ),
                               ),
                             ],
                           );
@@ -223,45 +237,49 @@ class AchievementsScreen extends ConsumerWidget {
                                 const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (context, index) {
                           final item = recent[index];
-                          return AppCard(
-                            padding: const EdgeInsets.all(AppSpacing.md),
-                            child: Row(
-                              children: [
-                                _ActivityIcon(
-                                  type: item.achievementType,
-                                  palette: palette,
-                                ),
-                                const SizedBox(width: AppSpacing.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.title,
-                                        style: AppTextStyles.titleSmall
-                                            .copyWith(
-                                              color: palette.textPrimary,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        item.description,
-                                        style: AppTextStyles.bodySmall.copyWith(
-                                          color: palette.textSecondary,
+                          return AppReveal(
+                            index: index,
+                            child: AppCard(
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              child: Row(
+                                children: [
+                                  _ActivityIcon(
+                                    type: item.achievementType,
+                                    palette: palette,
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.title,
+                                          style: AppTextStyles.titleSmall
+                                              .copyWith(
+                                                color: palette.textPrimary,
+                                              ),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          item.description,
+                                          style: AppTextStyles.bodySmall
+                                              .copyWith(
+                                                color: palette.textSecondary,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: AppSpacing.md),
-                                Text(
-                                  _formatRelativeDate(item.unlockedAt),
-                                  style: AppTextStyles.labelSmall.copyWith(
-                                    color: palette.textDisabled,
+                                  const SizedBox(width: AppSpacing.md),
+                                  Text(
+                                    _formatRelativeDate(item.unlockedAt),
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: palette.textDisabled,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           );
                         },

@@ -200,3 +200,84 @@ class _AppRevealState extends State<AppReveal>
     );
   }
 }
+
+/// A staggered fade + scale entrance animation for badges, icons, or chips.
+class AppScaleReveal extends StatefulWidget {
+  const AppScaleReveal({
+    super.key,
+    required this.child,
+    this.index = 0,
+    this.duration = AppMotion.medium,
+    this.fromScale = 0.82,
+    this.curve = AppMotion.emphasized,
+    this.enabled = true,
+  });
+
+  final Widget child;
+
+  /// Position in a staggered sequence. 0 starts immediately.
+  final int index;
+
+  final Duration duration;
+
+  /// Starting scale factor.
+  final double fromScale;
+
+  final Curve curve;
+
+  /// Set false to render child instantly with no animation.
+  final bool enabled;
+
+  @override
+  State<AppScaleReveal> createState() => _AppScaleRevealState();
+}
+
+class _AppScaleRevealState extends State<AppScaleReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.enabled) {
+      _controller.value = 1;
+      return;
+    }
+    final delay = AppMotion.staggerStep * widget.index;
+    if (delay == Duration.zero) {
+      _controller.forward();
+    } else {
+      Future<void>.delayed(delay, () {
+        if (mounted) _controller.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.enabled) return widget.child;
+
+    final curved = CurvedAnimation(parent: _controller, curve: widget.curve);
+    return AnimatedBuilder(
+      animation: curved,
+      builder:
+          (context, child) => Opacity(
+            opacity: curved.value.clamp(0, 1),
+            child: Transform.scale(
+              scale: widget.fromScale + (1.0 - widget.fromScale) * curved.value,
+              child: child,
+            ),
+          ),
+      child: widget.child,
+    );
+  }
+}

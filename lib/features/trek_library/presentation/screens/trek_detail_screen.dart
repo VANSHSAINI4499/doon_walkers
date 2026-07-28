@@ -11,6 +11,7 @@ import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/difficulty_badge.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_admin_actions.dart';
+import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_status_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -539,21 +540,20 @@ class _QuickFactsRow extends ConsumerWidget {
             loading: () => const _QuickFactTileSkeleton(),
             error: (_, __) => const SizedBox.shrink(),
             data: (spots) {
-              if (spots == null) return const SizedBox.shrink();
-              final Color color;
+              final status = resolveTrekStatus(trek, spots);
+              final color = getTrekStatusColor(status, palette);
               final String value;
-              if (spots == 0) {
-                color = palette.danger;
-                value = 'Full';
-              } else if (spots <= 10) {
-                color = palette.accent;
+              if (status == TrekBookingStatus.almostFull) {
                 value = 'Only $spots left';
-              } else {
-                color = const Color(0xFF26A69A); // Teal/green
+              } else if (status == TrekBookingStatus.waitlist) {
+                value = 'Waitlist Only';
+              } else if (status == TrekBookingStatus.open && spots != null) {
                 value = '$spots spots left';
+              } else {
+                value = status.label;
               }
               return _QuickFactTile(
-                fact: _QuickFact(AppIcons.info, 'Spots Left', value, color),
+                fact: _QuickFact(AppIcons.info, 'Status', value, color),
               );
             },
           ),

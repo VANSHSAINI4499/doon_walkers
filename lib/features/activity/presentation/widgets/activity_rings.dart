@@ -23,21 +23,28 @@ class ActivityRings extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
 
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _ConcentricRingsPainter(
-          stepsProgress: stepsProgress.clamp(0.0, 1.0),
-          caloriesProgress: caloriesProgress.clamp(0.0, 1.0),
-          activeTimeProgress: activeTimeProgress.clamp(0.0, 1.0),
-          outerColor: palette.primary,
-          middleColor: const Color(0xFFFF6B6B),
-          innerColor: const Color(0xFF4ECDC4),
-          trackColor: palette.cardHigh,
-          strokeWidth: strokeWidth,
-        ),
-      ),
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 1400),
+      curve: Curves.easeOutCubic,
+      builder: (context, val, child) {
+        return SizedBox(
+          width: size,
+          height: size,
+          child: CustomPaint(
+            painter: _ConcentricRingsPainter(
+              stepsProgress: (stepsProgress * val).clamp(0.0, 1.0),
+              caloriesProgress: (caloriesProgress * val).clamp(0.0, 1.0),
+              activeTimeProgress: (activeTimeProgress * val).clamp(0.0, 1.0),
+              outerColor: palette.primary,
+              middleColor: const Color(0xFFFF6B6B),
+              innerColor: const Color(0xFF4ECDC4),
+              trackColor: palette.cardHigh,
+              strokeWidth: strokeWidth,
+            ),
+          ),
+        );
+      },
     );
   }
 }

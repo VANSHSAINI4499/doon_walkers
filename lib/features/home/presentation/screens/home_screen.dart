@@ -10,6 +10,7 @@ import 'package:doon_walkers/features/community/presentation/providers/community
 import 'package:doon_walkers/features/community/presentation/widgets/member_detail_sheet.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
+import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_status_colors.dart';
 import 'package:doon_walkers/features/weather/domain/models/weather_model.dart';
 import 'package:doon_walkers/features/weather/presentation/providers/weather_providers.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,12 @@ class HomeScreen extends ConsumerWidget {
           onRefresh: () => _handleRefresh(ref),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.xxl,
+              AppSpacing.xl,
+              AppSpacing.xxl,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: const [
@@ -306,12 +312,18 @@ class _TodayStepsCard extends ConsumerWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: palette.primarySubtle,
-                      color: palette.primary,
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: progress),
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                      builder:
+                          (context, val, child) => LinearProgressIndicator(
+                            value: val,
+                            backgroundColor: palette.primarySubtle,
+                            color: palette.primary,
+                            minHeight: 8,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
@@ -567,17 +579,36 @@ class _CommunityStripSection extends ConsumerWidget {
                 style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
               ),
           data: (top3) {
-            if (top3.isEmpty) {
+            if (top3.isEmpty || top3.every((e) => e.totalPoints == 0)) {
               return AppCard(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Center(
-                    child: Text(
-                      'No community rankings yet.',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: palette.textSecondary,
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIcon(
+                        AppIcons.leaderboard,
+                        size: 40,
+                        color: palette.textDisabled,
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'No rankings yet.',
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: palette.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Complete treks and challenges to earn points.',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: palette.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -920,12 +951,18 @@ class _HomeTrekCard extends ConsumerWidget {
                 const SizedBox(height: 2),
                 spotsLeftAsync.when(
                   data: (spots) {
-                    final remaining = spots ?? 0;
-                    final isWaitlist = remaining <= 0;
+                    final status = resolveTrekStatus(trek, spots);
+                    if (status == TrekBookingStatus.open && spots == null) {
+                      return const SizedBox.shrink();
+                    }
+                    final color = getTrekStatusColor(status, palette);
+                    final String text = status == TrekBookingStatus.almostFull
+                        ? '$spots spots left'
+                        : (status == TrekBookingStatus.waitlist ? 'Waitlist Only' : status.label);
                     return Text(
-                      isWaitlist ? 'Waitlist Only' : '$remaining spots left',
+                      text,
                       style: AppTextStyles.labelSmall.copyWith(
-                        color: isWaitlist ? palette.danger : palette.primary,
+                        color: color,
                         fontWeight: FontWeight.bold,
                       ),
                     );

@@ -100,10 +100,10 @@ class TrekLibraryScreen extends ConsumerWidget {
                 // Extra bottom padding for admins so the FAB never covers
                 // the last row's action menu.
                 padding: EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                  isAdmin ? 96 : AppSpacing.lg,
+                  AppSpacing.xl,
+                  AppSpacing.xxl,
+                  AppSpacing.xl,
+                  isAdmin ? 96 : AppSpacing.xxl,
                 ),
                 gridDelegate:
                     const SliverSimpleGridDelegateWithMaxCrossAxisExtent(

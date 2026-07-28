@@ -104,9 +104,9 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      AppSpacing.md,
-                      AppSpacing.lg,
+                      AppSpacing.xl,
+                      AppSpacing.xxl,
+                      AppSpacing.xl,
                       AppSpacing.xxl,
                     ),
                     children: [

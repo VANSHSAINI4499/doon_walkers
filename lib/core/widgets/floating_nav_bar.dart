@@ -108,34 +108,42 @@ class _NavTab extends StatelessWidget {
         onTap: onTap,
         scale: AppMotion.pressScale,
         haptic: true,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: AppMotion.medium,
-              curve: AppMotion.standard,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.xs,
+        child: SizedBox(
+          height: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: AppMotion.medium,
+                curve: AppMotion.standard,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: selected ? palette.primarySubtle : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: AnimatedScale(
+                  scale: selected ? 1.15 : 1.0,
+                  duration: AppMotion.fast,
+                  curve: AppMotion.standard,
+                  child: AppIcon(destination.icon, color: color, size: 22),
+                ),
               ),
-              decoration: BoxDecoration(
-                color: selected ? palette.primarySubtle : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+              const SizedBox(height: 3),
+              AnimatedDefaultTextStyle(
+                duration: AppMotion.fast,
+                style: AppTextStyles.labelSmall.copyWith(color: color),
+                child: Text(
+                  destination.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              child: AppIcon(destination.icon, color: color, size: 22),
-            ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: AppMotion.fast,
-              style: AppTextStyles.labelSmall.copyWith(color: color),
-              child: Text(
-                destination.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

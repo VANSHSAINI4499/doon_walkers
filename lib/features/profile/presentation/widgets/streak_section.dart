@@ -61,7 +61,12 @@ class _StreakCard extends StatelessWidget {
               color: streak.isActive ? palette.primarySubtle : palette.cardHigh,
               shape: BoxShape.circle,
             ),
-            child: AppIcon(AppIcons.streak, color: ink, size: 22),
+            child: AnimatedStreakFlame(
+              icon: AppIcons.streak,
+              color: ink,
+              size: 22,
+              isActive: streak.isActive,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

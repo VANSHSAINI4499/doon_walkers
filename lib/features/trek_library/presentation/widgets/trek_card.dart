@@ -2,6 +2,7 @@ import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/difficulty_badge.dart';
+import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_status_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -145,23 +146,19 @@ class TrekCard extends ConsumerWidget {
                     right: AppSpacing.sm,
                     child: spotsLeftAsync.maybeWhen(
                       data: (spots) {
-                        if (spots == null) return const SizedBox.shrink();
-                        if (spots == 0) {
-                          return _CardBadge(
-                            icon: AppIcons.info,
-                            label: 'Full',
-                            background: palette.danger,
-                            foreground: palette.onDanger,
-                          );
-                        } else if (spots <= 10) {
-                          return _CardBadge(
-                            icon: AppIcons.info,
-                            label: '$spots left',
-                            background: palette.accent,
-                            foreground: palette.onAccent,
-                          );
+                        final status = resolveTrekStatus(trek, spots);
+                        if (status == TrekBookingStatus.open && spots == null) {
+                          return const SizedBox.shrink();
                         }
-                        return const SizedBox.shrink();
+                        final label = status == TrekBookingStatus.almostFull
+                            ? '$spots left'
+                            : (status == TrekBookingStatus.waitlist ? 'Waitlist' : status.label);
+                        return _CardBadge(
+                          icon: AppIcons.info,
+                          label: label,
+                          background: getTrekStatusColor(status, palette),
+                          foreground: Colors.white,
+                        );
                       },
                       orElse: () => const SizedBox.shrink(),
                     ),

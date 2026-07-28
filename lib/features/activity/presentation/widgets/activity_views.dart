@@ -248,11 +248,30 @@ class ActivityDayView extends ConsumerWidget {
                       value: summary.goalFraction(goal),
                       size: 184,
                       strokeWidth: 12,
-                      child: StatDisplay(
-                        value: ActivityFormat.steps(steps),
-                        label: 'steps',
-                        size: StatSize.large,
-                        alignment: CrossAxisAlignment.center,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder:
+                            (child, animation) => FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(
+                                  begin: 0.92,
+                                  end: 1.0,
+                                ).animate(animation),
+                                child: child,
+                              ),
+                            ),
+                        child: AnimatedStatDisplay(
+                          key: ValueKey<int>(steps),
+                          value: steps,
+                          format: (v) => ActivityFormat.steps(v.round()),
+                          label: 'steps',
+                          size: StatSize.large,
+                          alignment: CrossAxisAlignment.center,
+                          duration: AppMotion.slow,
+                        ),
                       ),
                     ),
                   ),
@@ -688,11 +707,16 @@ class _PeriodBody extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: StatDisplay(
-                      value:
-                          '${summary.daysWithData}/${summary.period.dayCount}',
-                      label: 'days synced',
-                      size: StatSize.medium,
+                    child: Tooltip(
+                      message:
+                          'Synced days represent the number of days for which health data has been successfully imported from Health Connect.',
+                      triggerMode: TooltipTriggerMode.tap,
+                      child: StatDisplay(
+                        value:
+                            '${summary.daysWithData}/${summary.period.dayCount}',
+                        label: 'days synced ⓘ',
+                        size: StatSize.medium,
+                      ),
                     ),
                   ),
                 ],

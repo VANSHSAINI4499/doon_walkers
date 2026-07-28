@@ -59,8 +59,14 @@ class RecentAchievementsSection extends ConsumerWidget {
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
                 children:
-                    achievements.map((achievement) {
-                      return _AchievementChip(achievement: achievement);
+                    achievements.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final achievement = entry.value;
+                      return AppScaleReveal(
+                        index: index,
+                        duration: AppMotion.medium,
+                        child: _AchievementChip(achievement: achievement),
+                      );
                     }).toList(),
               ),
             ],

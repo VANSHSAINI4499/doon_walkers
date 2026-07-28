@@ -46,3 +46,4 @@ export 'package:doon_walkers/core/widgets/otp_input.dart';
 export 'package:doon_walkers/core/widgets/premium_button.dart';
 export 'package:doon_walkers/core/widgets/skeleton.dart';
 export 'package:doon_walkers/core/widgets/stat_display.dart';
+export 'package:doon_walkers/core/widgets/animated_streak_flame.dart';

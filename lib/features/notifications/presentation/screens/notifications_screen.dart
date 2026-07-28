@@ -46,7 +46,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         actions: [
           TextButton.icon(
             onPressed: _markAllAsRead,
-            icon: const Icon(Icons.done_all, size: 18),
+            icon: const AppIcon(AppIcons.checkCircle, size: 18),
             label: const Text('Mark all read'),
           ),
         ],

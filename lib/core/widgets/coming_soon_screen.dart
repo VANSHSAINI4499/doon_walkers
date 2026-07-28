@@ -1,5 +1,4 @@
-import 'package:doon_walkers/core/theme/app_colors.dart';
-import 'package:doon_walkers/core/theme/app_text_styles.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Shared placeholder screen shown for every feature that hasn't been
@@ -11,7 +10,7 @@ class ComingSoonScreen extends StatelessWidget {
   const ComingSoonScreen({
     super.key,
     required this.featureName,
-    this.icon = Icons.terrain_outlined,
+    this.icon = AppIcons.landscape,
   });
 
   final String featureName;
@@ -35,7 +34,7 @@ class ComingSoonScreen extends StatelessWidget {
                     color: AppColors.primaryLight.withAlpha(30),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: 48, color: AppColors.primary),
+                  child: AppIcon(icon, size: 48, color: AppColors.primary),
                 ),
                 const SizedBox(height: 24),
 

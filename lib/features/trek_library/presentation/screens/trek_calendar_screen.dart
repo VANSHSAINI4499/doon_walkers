@@ -3,6 +3,7 @@ import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
+import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_status_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -259,6 +260,7 @@ class _TrekCalendarScreenState extends ConsumerState<TrekCalendarScreen> {
                         onPageChanged: (focusedDay) {
                           setState(() {
                             _focusedDay = focusedDay;
+                            _selectedDay = null;
                           });
                         },
                       ),
@@ -481,15 +483,18 @@ class _CalendarTrekCard extends ConsumerWidget {
                       const SizedBox(width: AppSpacing.sm),
                       spotsLeftAsync.when(
                         data: (spots) {
-                          final remaining = spots ?? 0;
-                          final isWaitlist = remaining <= 0;
+                          final status = resolveTrekStatus(trek, spots);
+                          if (status == TrekBookingStatus.open && spots == null) {
+                            return const SizedBox.shrink();
+                          }
+                          final color = getTrekStatusColor(status, palette);
+                          final String text = status == TrekBookingStatus.almostFull
+                              ? '$spots spots left'
+                              : (status == TrekBookingStatus.waitlist ? 'Waitlist Only' : status.label);
                           return Text(
-                            isWaitlist
-                                ? 'Waitlist Only'
-                                : '$remaining spots left',
+                            text,
                             style: AppTextStyles.labelSmall.copyWith(
-                              color:
-                                  isWaitlist ? palette.danger : palette.primary,
+                              color: color,
                               fontWeight: FontWeight.bold,
                             ),
                           );

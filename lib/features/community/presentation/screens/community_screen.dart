@@ -23,7 +23,12 @@ class CommunityScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Community')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xxl,
+          AppSpacing.xl,
+          AppSpacing.xxl,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -91,17 +96,36 @@ class _LeaderboardPreviewSection extends ConsumerWidget {
                 style: AppTextStyles.bodyMedium.copyWith(color: palette.danger),
               ),
           data: (entries) {
-            if (entries.isEmpty) {
+            if (entries.isEmpty || entries.every((e) => e.totalPoints == 0)) {
               return AppCard(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.xl),
-                  child: Center(
-                    child: Text(
-                      'No leaderboard data yet.',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: palette.textSecondary,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppIcon(
+                        AppIcons.leaderboard,
+                        size: 40,
+                        color: palette.textDisabled,
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'No rankings yet.',
+                        style: AppTextStyles.titleMedium.copyWith(
+                          color: palette.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Complete treks and challenges to earn points.',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: palette.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -289,7 +313,7 @@ class _MemberChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
 
-    return InkWell(
+    return Pressable(
       onTap:
           () => showMemberDetailSheet(
             context: context,
@@ -299,9 +323,9 @@ class _MemberChip extends StatelessWidget {
             totalPoints: member.totalPoints,
             createdAt: member.createdAt,
           ),
-      borderRadius: BorderRadius.circular(AppRadius.card),
+      scale: AppMotion.pressScale,
       child: Container(
-        width: 90,
+        width: 96,
         padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
           color: palette.card,

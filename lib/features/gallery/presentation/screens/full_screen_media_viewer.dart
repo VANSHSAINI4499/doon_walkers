@@ -246,8 +246,8 @@ class _PhotoPage extends StatelessWidget {
           ),
       errorBuilder:
           (context, error, stack) => const Center(
-            child: Icon(
-              Icons.broken_image_outlined,
+            child: AppIcon(
+              AppIcons.imageBroken,
               color: Colors.white54,
               size: 48,
             ),

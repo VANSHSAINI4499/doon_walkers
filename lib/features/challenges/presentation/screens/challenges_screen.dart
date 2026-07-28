@@ -551,7 +551,12 @@ class _StreakMotivationCard extends ConsumerWidget {
               shape: BoxShape.circle,
               color: palette.accentContainer,
             ),
-            child: AppIcon(AppIcons.streak, size: 20, color: palette.accent),
+            child: AnimatedStreakFlame(
+              icon: AppIcons.streak,
+              size: 20,
+              color: palette.accent,
+              isActive: streak > 0,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

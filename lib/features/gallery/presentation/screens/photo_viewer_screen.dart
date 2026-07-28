@@ -1,4 +1,4 @@
-import 'package:doon_walkers/core/theme/app_colors.dart';
+import 'package:doon_walkers/core/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// Full-screen photo view — pinch/drag to zoom via [InteractiveViewer].
@@ -35,8 +35,8 @@ class PhotoViewerScreen extends StatelessWidget {
                 imageUrl,
                 fit: BoxFit.contain,
                 errorBuilder:
-                    (context, error, stack) => const Icon(
-                      Icons.broken_image_outlined,
+                    (context, error, stack) => const AppIcon(
+                      AppIcons.imageBroken,
                       color: Colors.white54,
                       size: 48,
                     ),
