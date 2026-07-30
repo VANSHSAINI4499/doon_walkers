@@ -52,7 +52,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   }
 
   Future<void> _refresh() async {
-    await ref.read(activitySyncControllerProvider.notifier).sync();
+    await ref.read(activitySyncControllerProvider.notifier).sync(force: true);
     ref.invalidate(activityRangeProvider);
     ref.invalidate(trailingWeekProvider);
     ref.invalidate(activityPercentileProvider);
@@ -110,6 +110,17 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                       AppSpacing.xxl,
                     ),
                     children: [
+                      if (ref.watch(activitySyncControllerProvider).isLoading)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: AppSpacing.md),
+                          child: Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
                       const _SyncNotice(),
                       AppSegmentedControl<ActivityGranularity>(
                         value: _granularity,
@@ -203,12 +214,13 @@ class _SyncNotice extends ConsumerWidget {
     // Permission granted but nothing has ever synced — distinct from the
     // above, and from a period that simply has no data in it.
     if (lastSynced.hasValue && lastSynced.value == null) {
-      return const _Notice(
+      final isSyncing = ref.watch(activitySyncControllerProvider).isLoading;
+      return _Notice(
         icon: AppIcons.refresh,
-        title: 'Nothing synced yet',
-        message:
-            'Pull down to sync your activity from Health Connect. It can '
-            'take a moment the first time.',
+        title: isSyncing ? 'Syncing...' : 'Nothing synced yet',
+        message: isSyncing
+            ? 'Importing your fitness data from Health Connect...'
+            : 'Pull down to sync your activity from Health Connect. It can take a moment the first time.',
       );
     }
 

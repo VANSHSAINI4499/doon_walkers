@@ -7,6 +7,7 @@ import 'package:doon_walkers/features/activity/data/services/activity_sync_servi
 import 'package:doon_walkers/features/activity/domain/repositories/activity_provider.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -72,29 +73,84 @@ final activitySyncControllerProvider =
     );
 
 class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
+  static DateTime? _lastSuccessfulSyncTime;
+
   @override
   FutureOr<ActivitySyncOutcome?> build() => null;
 
-  Future<ActivitySyncOutcome?> sync() async {
+  /// Triggered automatically on screen visibility. Checks if we have already successfully
+  /// synced today, and respects the 60-second cooldown to avoid redundant operations.
+  Future<ActivitySyncOutcome?> autoSync() async {
+    final now = DateTime.now();
+    
+    // Check if synced within the last 60 seconds (cooldown)
+    if (_lastSuccessfulSyncTime != null) {
+      final elapsed = now.difference(_lastSuccessfulSyncTime!);
+      if (elapsed.inSeconds < 60) {
+        debugPrint('[ActivitySync] autoSync: Skipping sync, cooldown active (${elapsed.inSeconds}s elapsed).');
+        return ActivitySyncOutcome.success;
+      }
+    }
+
+    // Check if the user has already granted permission. If not, request it.
+    final hasPerm = await ref.read(activityProviderProvider).hasPermission();
+    if (!hasPerm) {
+      debugPrint('[ActivitySync] autoSync: Permission missing, requesting...');
+      final granted = await ref.read(activityProviderProvider).requestPermission();
+      if (!granted) {
+        debugPrint('[ActivitySync] autoSync: Permission denied by user.');
+        return ActivitySyncOutcome.permissionDenied;
+      }
+    }
+
+    // Call sync (which handles the network request and invalidations)
+    return sync(force: false);
+  }
+
+  Future<ActivitySyncOutcome?> sync({bool force = false}) async {
+    final now = DateTime.now();
+
+    // Check cooldown unless force is true (manual refresh)
+    if (!force && _lastSuccessfulSyncTime != null) {
+      final elapsed = now.difference(_lastSuccessfulSyncTime!);
+      if (elapsed.inSeconds < 60) {
+        debugPrint('[ActivitySync] sync: Cooldown active (${elapsed.inSeconds}s elapsed). Reusing cached data.');
+        return ActivitySyncOutcome.success;
+      }
+    }
+
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
+    final result = await AsyncValue.guard(
       () => ref.read(activitySyncServiceProvider).sync(),
     );
+    state = result;
 
-    if (state.valueOrNull == ActivitySyncOutcome.success) {
-      // Fresh activity data changes everything downstream: challenge
-      // progress, tier history (celebration detection reads this via
-      // myChallengeProgressProvider), and the last-synced timestamp.
-      // Leaderboards aren't invalidated here — they're autoDispose and
-      // re-fetch on their own each time a leaderboard screen is opened.
+    if (result.valueOrNull == ActivitySyncOutcome.success) {
+      _lastSuccessfulSyncTime = now;
+      
+      // Invalidate everything downstream
       ref.invalidate(myChallengeProgressProvider);
       ref.invalidate(myTierHistoryProvider);
       ref.invalidate(lastActivitySyncProvider);
       ref.invalidate(activityPermissionGrantedProvider);
       ref.invalidate(activityRangeProvider);
+      
+      ref.invalidate(trailingWeekProvider);
+      ref.invalidate(activityPercentileProvider);
+      ref.invalidate(dailyPercentileProvider);
+      ref.invalidate(bestDayProvider);
+      ref.invalidate(activeDaysProvider);
+      ref.invalidate(weeklyAggregatesProvider);
+      ref.invalidate(monthComparisonProvider);
+      
+      ref.invalidate(myActivityStreakProvider);
+      ref.invalidate(myUserPointsProvider);
+      ref.invalidate(activeChallengesProvider);
+      ref.invalidate(myEnrollmentsProvider);
+      ref.invalidate(adminAllChallengesProvider);
     }
 
-    return state.valueOrNull;
+    return result.valueOrNull;
   }
 }
 

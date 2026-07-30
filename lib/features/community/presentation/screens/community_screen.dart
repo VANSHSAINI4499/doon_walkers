@@ -6,7 +6,6 @@ import 'package:doon_walkers/features/challenges/presentation/widgets/level_badg
 import 'package:doon_walkers/features/community/domain/entities/member_directory_entry.dart';
 import 'package:doon_walkers/features/community/presentation/providers/community_providers.dart';
 import 'package:doon_walkers/features/community/presentation/widgets/community_podium.dart';
-import 'package:doon_walkers/features/community/presentation/widgets/member_detail_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,33 +21,41 @@ class CommunityScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Community')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xl,
-          AppSpacing.xxl,
-          AppSpacing.xl,
-          AppSpacing.xxl,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (!isSignedIn) ...[
-              const _GuestCommunityBanner(),
-              const SizedBox(height: AppSpacing.xl),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(communityLeaderboardProvider);
+          ref.invalidate(myCommunityRankProvider);
+          ref.invalidate(memberDirectoryProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.xxl,
+            AppSpacing.xl,
+            AppSpacing.xxl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!isSignedIn) ...[
+                const _GuestCommunityBanner(),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+  
+              // Section A: Community Leaderboard Preview
+              const _LeaderboardPreviewSection(),
+              const SizedBox(height: AppSpacing.xxl),
+  
+              // Section B: Members Section
+              const _MembersPreviewSection(),
+              const SizedBox(height: AppSpacing.xxl),
+  
+              // Section C: Social Feed Placeholder
+              const _FeedPlaceholderCard(),
+              const SizedBox(height: AppSpacing.xxl),
             ],
-
-            // Section A: Community Leaderboard Preview
-            const _LeaderboardPreviewSection(),
-            const SizedBox(height: AppSpacing.xxl),
-
-            // Section B: Members Section
-            const _MembersPreviewSection(),
-            const SizedBox(height: AppSpacing.xxl),
-
-            // Section C: Social Feed Placeholder
-            const _FeedPlaceholderCard(),
-            const SizedBox(height: AppSpacing.xxl),
-          ],
+          ),
         ),
       ),
     );
@@ -167,14 +174,16 @@ class _LeaderboardPreviewSection extends ConsumerWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        onTap:
-                            () => showMemberDetailSheet(
-                              context: context,
-                              displayName: entry.displayName,
-                              avatarUrl: entry.avatarUrl,
-                              level: entry.level,
-                              totalPoints: entry.totalPoints,
-                            ),
+                        onTap: () {
+                          final member = MemberDirectoryEntry(
+                            userId: entry.userId,
+                            displayName: entry.displayName,
+                            avatarUrl: entry.avatarUrl,
+                            totalPoints: entry.totalPoints,
+                            level: entry.level,
+                          );
+                          context.push('/community/members/profile', extra: member);
+                        },
                       ),
                   ],
                   if (isSignedIn) ...[
@@ -315,14 +324,7 @@ class _MemberChip extends StatelessWidget {
 
     return Pressable(
       onTap:
-          () => showMemberDetailSheet(
-            context: context,
-            displayName: member.displayName,
-            avatarUrl: member.avatarUrl,
-            level: member.level,
-            totalPoints: member.totalPoints,
-            createdAt: member.createdAt,
-          ),
+          () => context.push('/community/members/profile', extra: member),
       scale: AppMotion.pressScale,
       child: Container(
         width: 96,

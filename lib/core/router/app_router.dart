@@ -21,9 +21,11 @@ import 'package:doon_walkers/features/challenges/presentation/screens/challenges
 import 'package:doon_walkers/features/challenges/presentation/screens/my_challenge_achievements_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
+import 'package:doon_walkers/features/community/domain/entities/member_directory_entry.dart';
 import 'package:doon_walkers/features/community/presentation/screens/community_leaderboard_screen.dart';
 import 'package:doon_walkers/features/community/presentation/screens/community_screen.dart';
 import 'package:doon_walkers/features/community/presentation/screens/member_directory_screen.dart';
+import 'package:doon_walkers/features/community/presentation/screens/member_profile_screen.dart';
 import 'package:doon_walkers/features/design_demo/presentation/screens/design_system_demo_screen.dart';
 import 'package:doon_walkers/features/gallery/presentation/screens/trek_gallery_screen.dart';
 import 'package:doon_walkers/features/home/presentation/screens/home_screen.dart';
@@ -477,6 +479,17 @@ GoRouter _buildRouter(
       path: '/community/members',
       name: 'community-members',
       builder: (context, state) => const MemberDirectoryScreen(),
+    ),
+    GoRoute(
+      path: '/community/members/profile',
+      name: 'community-member-profile',
+      builder: (context, state) {
+        final member = state.extra as MemberDirectoryEntry?;
+        if (member == null) {
+          return const MemberDirectoryScreen();
+        }
+        return MemberProfileScreen(member: member);
+      },
     ),
 
     // Phase 30 — Top-level Trek Calendar route (outside StatefulShellRoute)

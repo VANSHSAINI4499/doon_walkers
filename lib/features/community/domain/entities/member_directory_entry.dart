@@ -4,7 +4,7 @@ class MemberDirectoryEntry {
   final String? avatarUrl;
   final int totalPoints;
   final int level;
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   const MemberDirectoryEntry({
     required this.userId,
@@ -12,7 +12,7 @@ class MemberDirectoryEntry {
     this.avatarUrl,
     required this.totalPoints,
     required this.level,
-    required this.createdAt,
+    this.createdAt,
   });
 
   factory MemberDirectoryEntry.fromJson(Map<String, dynamic> json) {
@@ -28,7 +28,7 @@ class MemberDirectoryEntry {
       createdAt:
           json['created_at'] != null
               ? DateTime.parse(json['created_at'] as String)
-              : DateTime.now(),
+              : null,
     );
   }
 }

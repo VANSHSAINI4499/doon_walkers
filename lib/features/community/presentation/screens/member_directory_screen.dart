@@ -3,9 +3,9 @@ import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/level_badge.dart';
 import 'package:doon_walkers/features/community/domain/entities/member_directory_entry.dart';
 import 'package:doon_walkers/features/community/presentation/providers/community_providers.dart';
-import 'package:doon_walkers/features/community/presentation/widgets/member_detail_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class MemberDirectoryScreen extends ConsumerStatefulWidget {
   const MemberDirectoryScreen({super.key});
@@ -122,18 +122,12 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
                   );
                 }
 
-                return GridView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: AppSpacing.md,
-                    mainAxisSpacing: AppSpacing.md,
-                    childAspectRatio: 0.82,
-                  ),
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   itemCount: members.length,
                   itemBuilder: (context, index) {
                     final member = members[index];
-                    return _MemberCard(member: member);
+                    return _MemberDirectoryRow(member: member, index: index);
                   },
                 );
               },
@@ -145,70 +139,99 @@ class _MemberDirectoryScreenState extends ConsumerState<MemberDirectoryScreen> {
   }
 }
 
-class _MemberCard extends StatelessWidget {
-  const _MemberCard({required this.member});
+class _MemberDirectoryRow extends StatelessWidget {
+  const _MemberDirectoryRow({required this.member, required this.index});
 
   final MemberDirectoryEntry member;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
 
-    return AppCard(
-      onTap:
-          () => showMemberDetailSheet(
-            context: context,
-            displayName: member.displayName,
-            avatarUrl: member.avatarUrl,
-            level: member.level,
-            totalPoints: member.totalPoints,
-            createdAt: member.createdAt,
+    // Staggered slide and fade entrance animation:
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 300 + (index * 40).clamp(0, 250)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0.0, 16.0 * (1.0 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
           ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: palette.primarySubtle,
-              border: Border.all(color: palette.border, width: 1.5),
-            ),
-            child: ClipOval(
-              child:
-                  member.avatarUrl != null && member.avatarUrl!.isNotEmpty
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.xs,
+        ),
+        child: AppCard(
+          onTap: () => context.push('/community/members/profile', extra: member),
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: palette.primarySubtle,
+                  border: Border.all(color: palette.border, width: 1.5),
+                ),
+                child: ClipOval(
+                  child: member.avatarUrl != null && member.avatarUrl!.isNotEmpty
                       ? CachedNetworkImage(
-                        imageUrl: member.avatarUrl!,
-                        fit: BoxFit.cover,
-                        errorWidget:
-                            (_, __, ___) => _Initials(member.displayName),
-                      )
+                          imageUrl: member.avatarUrl!,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => _Initials(member.displayName),
+                        )
                       : _Initials(member.displayName),
-            ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              // Name and Level Badge
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      member.displayName,
+                      style: AppTextStyles.titleSmall.copyWith(
+                        color: palette.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    LevelBadge(level: member.level, compact: true),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              // Points
+              Text(
+                '${member.totalPoints} pts',
+                style: AppTextStyles.titleSmall.copyWith(
+                  color: palette.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              // Chevron
+              AppIcon(
+                AppIcons.chevronRight,
+                size: 20,
+                color: palette.textDisabled,
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            member.displayName,
-            style: AppTextStyles.titleSmall.copyWith(
-              color: palette.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          LevelBadge(level: member.level),
-          const SizedBox(height: 4),
-          Text(
-            '${member.totalPoints} pts',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: palette.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -239,18 +262,14 @@ class _DirectorySkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer(
-      child: GridView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: AppSpacing.md,
-          mainAxisSpacing: AppSpacing.md,
-          childAspectRatio: 0.82,
+        itemCount: 8,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => const SkeletonBox(
+          height: 72,
+          borderRadius: AppRadius.card,
         ),
-        itemCount: 6,
-        itemBuilder:
-            (context, index) =>
-                const SkeletonBox(height: 140, borderRadius: AppRadius.card),
       ),
     );
   }

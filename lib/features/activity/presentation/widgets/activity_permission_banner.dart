@@ -78,11 +78,9 @@ class ActivityPermissionBanner extends ConsumerWidget {
       title: 'Activity synced',
       message:
           lastSynced == null
-              ? 'Tap Sync Now to pull in your latest activity.'
+              ? 'Activity synced with Health Connect.'
               : 'Last synced ${_formatRelative(lastSynced)}.',
-      actionLabel: 'Sync Now',
       isLoading: syncState.isLoading,
-      onAction: () => ref.read(activitySyncControllerProvider.notifier).sync(),
       isSubtle: true,
     );
   }
@@ -102,8 +100,8 @@ class _Banner extends StatelessWidget {
     required this.accent,
     required this.title,
     required this.message,
-    required this.actionLabel,
-    required this.onAction,
+    this.actionLabel,
+    this.onAction,
     this.isLoading = false,
     this.isSubtle = false,
   });
@@ -112,8 +110,8 @@ class _Banner extends StatelessWidget {
   final Color accent;
   final String title;
   final String message;
-  final String actionLabel;
-  final VoidCallback onAction;
+  final String? actionLabel;
+  final VoidCallback? onAction;
   final bool isLoading;
 
   /// The "already working fine, just showing status" state glows quieter
@@ -153,22 +151,24 @@ class _Banner extends StatelessWidget {
                     message,
                     style: AppTextStyles.secondary(AppTextStyles.bodySmall),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  isLoading
-                      ? SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: accent,
+                  if (isLoading || (actionLabel != null && onAction != null)) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    isLoading
+                        ? SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: accent,
+                          ),
+                        )
+                        : PremiumButton(
+                          label: actionLabel!,
+                          variant: PremiumButtonVariant.glass,
+                          size: PremiumButtonSize.small,
+                          onPressed: onAction!,
                         ),
-                      )
-                      : PremiumButton(
-                        label: actionLabel,
-                        variant: PremiumButtonVariant.glass,
-                        size: PremiumButtonSize.small,
-                        onPressed: onAction,
-                      ),
+                  ],
                 ],
               ),
             ),

@@ -3,11 +3,12 @@ import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/challenges/presentation/widgets/level_badge.dart';
 import 'package:doon_walkers/features/community/domain/entities/community_leaderboard_entry.dart';
+import 'package:doon_walkers/features/community/domain/entities/member_directory_entry.dart';
 import 'package:doon_walkers/features/community/presentation/providers/community_providers.dart';
 import 'package:doon_walkers/features/community/presentation/widgets/community_podium.dart';
-import 'package:doon_walkers/features/community/presentation/widgets/member_detail_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class CommunityLeaderboardScreen extends ConsumerStatefulWidget {
   const CommunityLeaderboardScreen({super.key});
@@ -230,14 +231,16 @@ class _LeaderboardRow extends StatelessWidget {
     final palette = AppPalette.of(context);
 
     return AppCard(
-      onTap:
-          () => showMemberDetailSheet(
-            context: context,
-            displayName: entry.displayName,
-            avatarUrl: entry.avatarUrl,
-            level: entry.level,
-            totalPoints: entry.totalPoints,
-          ),
+      onTap: () {
+        final member = MemberDirectoryEntry(
+          userId: entry.userId,
+          displayName: entry.displayName,
+          avatarUrl: entry.avatarUrl,
+          totalPoints: entry.totalPoints,
+          level: entry.level,
+        );
+        context.push('/community/members/profile', extra: member);
+      },
       child: Row(
         children: [
           SizedBox(

@@ -1,4 +1,5 @@
 import 'package:doon_walkers/core/design_system.dart';
+import 'package:doon_walkers/features/activity/presentation/widgets/activity_format.dart';
 import 'package:flutter/material.dart';
 
 /// One bar in an [ActivityBarChart].
@@ -78,12 +79,16 @@ class ActivityBarChart extends StatelessWidget {
     if (bars.isEmpty) return const SizedBox.shrink();
 
     final maxValue = bars.fold<int>(0, (m, b) => b.value > m ? b.value : m);
+    // Scales dynamically: minimum Y is max(maxValue * 0.2, 1000)
+    final double minScale = (maxValue * 0.2 > 1000) ? (maxValue * 0.2) : 1000;
+    
     // The reference line has to fit inside the plot too, so it joins the
     // scale — otherwise a goal above every bar would be drawn off the top.
     final scale = [
-      maxValue,
-      if (goal != null) goal!,
-    ].fold<int>(0, (m, v) => v > m ? v : m);
+      maxValue.toDouble(),
+      if (goal != null) goal!.toDouble(),
+      minScale,
+    ].fold<double>(0.0, (m, v) => v > m ? v : m);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -162,49 +167,58 @@ class _Bar extends StatelessWidget {
   Widget build(BuildContext context) {
     final fill = bar.highlight ? palette.primary : palette.cardHigh;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          if (showValue)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(
-                bar.value == 0 ? '' : _short(bar.value),
-                maxLines: 1,
-                style: AppTextStyles.labelSmall.copyWith(
-                  fontSize: 9,
-                  color: palette.textSecondary,
-                ),
-              ),
-            ),
-          // Animates up from the baseline — one of the four sanctioned
-          // motions ("progress animation"). One tween for the whole
-          // column, so the bars rise together rather than staggering.
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: fraction),
-            duration: AppMotion.slow,
-            curve: AppMotion.emphasized,
-            builder:
-                (context, value, _) => FractionallySizedBox(
-                  heightFactor: value.clamp(0.0, 1.0),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: fill,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(4),
-                      ),
-                      border:
-                          bar.emphasise
-                              ? Border.all(color: palette.primary, width: 1.5)
-                              : null,
+    return Tooltip(
+      message: '${ActivityFormat.steps(bar.value)} steps',
+      triggerMode: TooltipTriggerMode.tap,
+      preferBelow: false,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {},
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (showValue)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    bar.value == 0 ? '' : _short(bar.value),
+                    maxLines: 1,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      fontSize: 9,
+                      color: palette.textSecondary,
                     ),
-                    child: const SizedBox.expand(),
                   ),
                 ),
+              // Animates up from the baseline — one of the four sanctioned
+              // motions ("progress animation"). One tween for the whole
+              // column, so the bars rise together rather than staggering.
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: fraction),
+                duration: AppMotion.slow,
+                curve: AppMotion.emphasized,
+                builder:
+                    (context, value, _) => FractionallySizedBox(
+                      heightFactor: value.clamp(0.0, 1.0),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: fill,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
+                          border:
+                              bar.emphasise
+                                  ? Border.all(color: palette.primary, width: 1.5)
+                                  : null,
+                        ),
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

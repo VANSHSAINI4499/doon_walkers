@@ -42,6 +42,34 @@ class ChallengesScreen extends ConsumerStatefulWidget {
 class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
   bool _celebrationQueueRunning = false;
   _ChallengesView _view = _ChallengesView.mine;
+  GoRouter? _router;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final router = GoRouter.of(context);
+    if (_router != router) {
+      _router?.routerDelegate.removeListener(_onRouterChanged);
+      _router = router;
+      _router?.routerDelegate.addListener(_onRouterChanged);
+    }
+    // Check initially
+    _onRouterChanged();
+  }
+
+  @override
+  void dispose() {
+    _router?.routerDelegate.removeListener(_onRouterChanged);
+    super.dispose();
+  }
+
+  void _onRouterChanged() {
+    if (!mounted) return;
+    final currentPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.toString();
+    if (currentPath == AppConstants.routeChallenges) {
+      ref.read(activitySyncControllerProvider.notifier).autoSync();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +271,7 @@ class _MyChallengesView extends ConsumerWidget {
       },
       data: (challenges) {
         Future<void> onRefresh() {
-          return ref.read(activitySyncControllerProvider.notifier).sync().then((
+          return ref.read(activitySyncControllerProvider.notifier).sync(force: true).then((
             _,
           ) {
             ref.invalidate(myChallengeProgressProvider);

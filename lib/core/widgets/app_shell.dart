@@ -167,12 +167,33 @@ class _AppShellState extends ConsumerState<AppShell>
     // from DoonWalkersApp) since that's an auth-state concern, not an
     // app-lifecycle one.
     WidgetsBinding.instance.addObserver(this);
+    
+    // Check initial tab on launch/mount
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _handleTabChange(widget.navigationShell.currentIndex);
+      }
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(AppShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigationShell.currentIndex != widget.navigationShell.currentIndex) {
+      _handleTabChange(widget.navigationShell.currentIndex);
+    }
+  }
+
+  void _handleTabChange(int index) {
+    if (index == 1) { // Index 1 is Activity tab
+      ref.read(activitySyncControllerProvider.notifier).autoSync();
+    }
   }
 
   @override

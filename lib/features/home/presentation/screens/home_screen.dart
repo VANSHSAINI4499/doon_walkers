@@ -6,8 +6,8 @@ import 'package:doon_walkers/features/activity/domain/services/activity_period.d
 import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:doon_walkers/features/community/domain/entities/community_leaderboard_entry.dart';
+import 'package:doon_walkers/features/community/domain/entities/member_directory_entry.dart';
 import 'package:doon_walkers/features/community/presentation/providers/community_providers.dart';
-import 'package:doon_walkers/features/community/presentation/widgets/member_detail_sheet.dart';
 import 'package:doon_walkers/features/trek_library/domain/entities/trek.dart';
 import 'package:doon_walkers/features/trek_library/presentation/providers/trek_providers.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_status_colors.dart';
@@ -720,14 +720,16 @@ class _MiniPodiumEntry extends StatelessWidget {
     final isFirst = position == 1;
 
     return InkWell(
-      onTap:
-          () => showMemberDetailSheet(
-            context: context,
-            displayName: entry.displayName,
-            avatarUrl: entry.avatarUrl,
-            level: entry.level,
-            totalPoints: entry.totalPoints,
-          ),
+      onTap: () {
+        final member = MemberDirectoryEntry(
+          userId: entry.userId,
+          displayName: entry.displayName,
+          avatarUrl: entry.avatarUrl,
+          totalPoints: entry.totalPoints,
+          level: entry.level,
+        );
+        context.push('/community/members/profile', extra: member);
+      },
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
