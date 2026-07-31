@@ -4,6 +4,7 @@ import 'package:doon_walkers/core/design_system.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
 import 'package:doon_walkers/features/activity/domain/services/activity_period.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
+import 'package:doon_walkers/features/celebrations/presentation/widgets/streak_badge.dart';
 import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:doon_walkers/features/community/domain/entities/community_leaderboard_entry.dart';
 import 'package:doon_walkers/features/community/domain/entities/member_directory_entry.dart';
@@ -293,6 +294,10 @@ class _TodayStepsCard extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (isSignedIn) ...[
+                const StreakBadge(),
+                const SizedBox(width: AppSpacing.sm),
+              ],
               AppIcon(AppIcons.chevronRight, color: palette.textSecondary),
             ],
           ),
@@ -551,8 +556,17 @@ class _CommunityStripSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // Wrap with spaceBetween, not Row: at a large system text-scale
+        // factor the button alone (not just the title) can outgrow a
+        // narrow screen's width — a Flexible-wrapped title next to a
+        // non-flex button doesn't help once the button itself is the
+        // one that no longer fits. WrapAlignment.spaceBetween matches
+        // Row's spaceBetween exactly whenever both fit on one line (the
+        // normal case); only under extreme scale does the button drop
+        // to its own line instead of throwing a RenderFlex overflow.
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               'Community Top 3',
@@ -804,6 +818,9 @@ class _MiniPodiumEntry extends StatelessWidget {
                 color: palette.textSecondary,
                 fontSize: 10,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -824,8 +841,12 @@ class _ExploreTreksSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // Wrap, not Row — same reasoning as the Community Top 3 header
+        // above: the button can outgrow the row on its own at a large
+        // text-scale factor, which a Flexible title alone can't fix.
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               'Explore Treks',

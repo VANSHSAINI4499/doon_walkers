@@ -214,5 +214,65 @@ void main() {
         PaymentStatus.pending,
       );
     });
+
+    // 0049_free_trek_auto_paid.sql — treks(..., registration_fee) joined
+    // alongside title/trek_date.
+    test('parses the joined trek registration_fee into trekRegistrationFee', () {
+      final json = {
+        ...fullJson,
+        'treks': {
+          'title': 'Nag Tibba Weekend Trek',
+          'trek_date': '2026-08-15',
+          'registration_fee': 500,
+        },
+      };
+
+      expect(RegistrationModel.fromJson(json).trekRegistrationFee, 500);
+    });
+
+    test('a missing registration_fee defaults to 0 (free), not a crash', () {
+      final json = {
+        ...fullJson,
+        'treks': {'title': 'Nag Tibba Weekend Trek'},
+      };
+
+      expect(RegistrationModel.fromJson(json).trekRegistrationFee, 0);
+    });
+  });
+
+  group('Registration.isFreeTrek', () {
+    Registration reg(double fee) => Registration(
+      id: 'r1',
+      trekId: 't1',
+      userId: 'u1',
+      paymentStatus: PaymentStatus.paid,
+      createdAt: DateTime(2026, 1, 1),
+      userName: 'Asha',
+      userEmail: 'asha@example.com',
+      trekTitle: 'Roopkund',
+      trekRegistrationFee: fee,
+    );
+
+    test('is true for a zero fee', () {
+      expect(reg(0).isFreeTrek, isTrue);
+    });
+
+    test('is false for any positive fee', () {
+      expect(reg(500).isFreeTrek, isFalse);
+    });
+
+    test('defaults to free (fee 0) when not supplied', () {
+      final registration = Registration(
+        id: 'r1',
+        trekId: 't1',
+        userId: 'u1',
+        paymentStatus: PaymentStatus.paid,
+        createdAt: DateTime(2026, 1, 1),
+        userName: 'Asha',
+        userEmail: 'asha@example.com',
+        trekTitle: 'Roopkund',
+      );
+      expect(registration.isFreeTrek, isTrue);
+    });
   });
 }

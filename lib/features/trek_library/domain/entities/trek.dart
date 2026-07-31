@@ -106,6 +106,16 @@ class Trek {
   /// Optional capacity/limit on registrations. NULL means unlimited.
   final int? maxParticipants;
 
+  /// Trip Tracking (0046_trek_destination_coordinates.sql). All three
+  /// nullable and independent of [googleMapLink] — that field still just
+  /// launches an external Maps app; these are what the in-app
+  /// destination-arrival tracker (TripTrackingController) navigates
+  /// against. "Start Navigation" only appears on Trek Detail once
+  /// [destinationLat]/[destinationLng] are both set.
+  final String? destinationName;
+  final double? destinationLat;
+  final double? destinationLng;
+
   const Trek({
     required this.id,
     required this.title,
@@ -125,7 +135,15 @@ class Trek {
     this.paymentQrCode,
     this.trekStartTime,
     this.maxParticipants,
+    this.destinationName,
+    this.destinationLat,
+    this.destinationLng,
   });
+
+  /// True once both destination coordinates are set — the gate for
+  /// showing "Start Navigation" on Trek Detail.
+  bool get hasNavigableDestination =>
+      destinationLat != null && destinationLng != null;
 
   /// True when registering for this trek requires payment.
   bool get requiresPayment => registrationFee > 0;

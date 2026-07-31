@@ -86,6 +86,26 @@
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
 
+    <!-- Trip Tracking — destination-arrival notifications
+         (TripTrackingController). ACCESS_FINE_LOCATION/COARSE_LOCATION
+         are the plain foreground location permissions requested via
+         permission_handler's Permission.locationWhenInUse.
+         ACCESS_BACKGROUND_LOCATION is requested best-effort via
+         Permission.locationAlways (see startNavigation's doc for why
+         its denial isn't treated as fatal — the foreground service
+         below already keeps updates flowing without it on most OEMs).
+         FOREGROUND_SERVICE/FOREGROUND_SERVICE_LOCATION are required
+         for the persistent "Tracking your trip" notification
+         (AndroidSettings.foregroundNotificationConfig) that keeps
+         location updates flowing with the screen locked — the actual
+         foreground service component itself is declared in
+         geolocator_android's own manifest, merged in automatically. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+
     <!-- Phase QR-2 — the member-facing check-in QR scanner
          (mobile_scanner). required="false": every real device this app
          targets has a camera, but this avoids the Play Store filtering

@@ -137,6 +137,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
   @override
   Widget build(BuildContext context) {
     final r = widget.registration;
+    final palette = AppPalette.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -161,7 +162,10 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        RegistrationStatusChip(status: r.paymentStatus),
+                        RegistrationStatusChip(
+                          status: r.paymentStatus,
+                          isFreeTrek: r.isFreeTrek,
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -253,44 +257,81 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
               Text('Payment Status', style: AppTextStyles.titleSmall),
               const SizedBox(height: AppSpacing.sm),
               AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    DropdownButtonFormField<PaymentStatus>(
-                      value: r.paymentStatus,
-                      decoration: const InputDecoration(
-                        labelText: 'Payment status',
-                      ),
-                      items:
-                          PaymentStatus.values
-                              .map(
-                                (s) => DropdownMenuItem(
-                                  value: s,
-                                  child: Text(s.label),
-                                ),
+                child:
+                    r.isFreeTrek
+                        // Free trek (0049_free_trek_auto_paid.sql): the
+                        // database trigger already guarantees this row
+                        // can't sit at 'pending', so there's nothing for
+                        // admin to verify or mark — showing the dropdown
+                        // here would just invite manual busywork over a
+                        // decision that isn't really admin's to make.
+                        ? Row(
+                          children: [
+                            AppIcon(AppIcons.checkCircle, color: palette.primary),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Free Trek — Auto Paid',
+                                    style: AppTextStyles.titleSmall,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'This trek has no registration fee, so payment '
+                                    'was automatically marked complete. There is '
+                                    'nothing to verify.',
+                                    style: AppTextStyles.secondary(
+                                      AppTextStyles.bodySmall,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                        : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            DropdownButtonFormField<PaymentStatus>(
+                              value: r.paymentStatus,
+                              decoration: const InputDecoration(
+                                labelText: 'Payment status',
+                              ),
+                              items:
+                                  PaymentStatus.values
+                                      .map(
+                                        (s) => DropdownMenuItem(
+                                          value: s,
+                                          child: Text(s.label),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged:
+                                  _isSaving
+                                      ? null
+                                      : (value) {
+                                        if (value != null) _updateStatus(value);
+                                      },
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            if (_isSaving)
+                              const Padding(
+                                padding: EdgeInsets.only(top: AppSpacing.xs),
+                                child: LinearProgressIndicator(),
                               )
-                              .toList(),
-                      onChanged:
-                          _isSaving
-                              ? null
-                              : (value) {
-                                if (value != null) _updateStatus(value);
-                              },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    if (_isSaving)
-                      const Padding(
-                        padding: EdgeInsets.only(top: AppSpacing.xs),
-                        child: LinearProgressIndicator(),
-                      )
-                    else
-                      Text(
-                        'Payments are recorded manually for now — set this once you '
-                        'have confirmation from the member.',
-                        style: AppTextStyles.secondary(AppTextStyles.bodySmall),
-                      ),
-                  ],
-                ),
+                            else
+                              Text(
+                                'Payments are recorded manually for now — set this once you '
+                                'have confirmation from the member.',
+                                style: AppTextStyles.secondary(
+                                  AppTextStyles.bodySmall,
+                                ),
+                              ),
+                          ],
+                        ),
               ),
               const SizedBox(height: AppSpacing.xxl),
             ],

@@ -12,6 +12,8 @@ import 'package:doon_walkers/features/trek_library/presentation/providers/trek_p
 import 'package:doon_walkers/features/trek_library/presentation/widgets/difficulty_badge.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_admin_actions.dart';
 import 'package:doon_walkers/features/trek_library/presentation/widgets/trek_status_colors.dart';
+import 'package:doon_walkers/features/trip_tracking/domain/entities/navigation_session.dart';
+import 'package:doon_walkers/features/trip_tracking/presentation/providers/trip_tracking_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -344,6 +346,11 @@ class _TrekDetailBody extends StatelessWidget {
                           const SizedBox(height: AppSpacing.lg),
                         ],
 
+                        if (trek.hasNavigableDestination) ...[
+                          _NavigationSection(trek: trek),
+                          const SizedBox(height: AppSpacing.lg),
+                        ],
+
                         // Bottom padding so the sticky bar doesn't obscure
                         // the comments section for members.
                         const SizedBox(height: AppSpacing.huge),
@@ -475,6 +482,89 @@ class _DraftBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Start Navigation" — only rendered when the trek has both
+/// destination coordinates set (see [Trek.hasNavigableDestination]);
+/// the existing "Open Route in Google Maps" button above stays
+/// untouched either way, this is purely additive.
+///
+/// Shows a "Trip in progress" banner with a Cancel action instead, when
+/// [TripTrackingController]'s active session matches this trek's
+/// destination — matched by coordinates, not a trek id, since
+/// [NavigationSession] is deliberately destination-agnostic (see its
+/// own doc).
+class _NavigationSection extends ConsumerWidget {
+  const _NavigationSection({required this.trek});
+
+  final Trek trek;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final palette = AppPalette.of(context);
+    final sessionAsync = ref.watch(tripTrackingControllerProvider);
+    final activeSession = sessionAsync.valueOrNull;
+    final isThisTrek =
+        activeSession != null &&
+        activeSession.status == NavigationSessionStatus.active &&
+        activeSession.destinationLat == trek.destinationLat &&
+        activeSession.destinationLng == trek.destinationLng;
+
+    if (isThisTrek) {
+      return AppCard(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            AppIcon(AppIcons.map, size: 20, color: palette.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Trip in progress — tracking your arrival.',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: palette.textPrimary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed:
+                  () => ref
+                      .read(tripTrackingControllerProvider.notifier)
+                      .cancelNavigation(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AppButton(
+      label: 'Start Navigation',
+      icon: AppIcons.map,
+      variant: AppButtonVariant.secondary,
+      fullWidth: true,
+      isLoading: sessionAsync.isLoading,
+      onPressed: () async {
+        final started = await ref
+            .read(tripTrackingControllerProvider.notifier)
+            .startNavigation(
+              destinationName: trek.destinationName ?? trek.title,
+              destinationLat: trek.destinationLat!,
+              destinationLng: trek.destinationLng!,
+            );
+        if (!context.mounted) return;
+        if (!started) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Could not start navigation — check location permission '
+                'and that GPS is turned on.',
+              ),
+            ),
+          );
+        }
+      },
     );
   }
 }

@@ -100,6 +100,9 @@ class TrekAdminController extends AsyncNotifier<void> {
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
     int? maxParticipants,
+    String? destinationName,
+    double? destinationLat,
+    double? destinationLng,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
     Uint8List? qrCodeBytes,
@@ -123,6 +126,9 @@ class TrekAdminController extends AsyncNotifier<void> {
         trekStartTime: trekStartTime,
         registrationFee: registrationFee,
         maxParticipants: maxParticipants,
+        destinationName: destinationName,
+        destinationLat: destinationLat,
+        destinationLng: destinationLng,
       );
       created = trek;
 
@@ -180,6 +186,9 @@ class TrekAdminController extends AsyncNotifier<void> {
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
     int? maxParticipants,
+    String? destinationName,
+    double? destinationLat,
+    double? destinationLng,
     Uint8List? coverImageBytes,
     String? coverImageExtension,
     String? previousCoverImageUrl,
@@ -206,6 +215,9 @@ class TrekAdminController extends AsyncNotifier<void> {
         trekStartTime: trekStartTime,
         registrationFee: registrationFee,
         maxParticipants: maxParticipants,
+        destinationName: destinationName,
+        destinationLat: destinationLat,
+        destinationLng: destinationLng,
       );
       success = true;
 

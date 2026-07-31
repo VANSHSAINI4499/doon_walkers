@@ -19,6 +19,9 @@ import 'package:doon_walkers/features/challenges/presentation/screens/challenge_
 import 'package:doon_walkers/features/challenges/presentation/screens/challenge_leaderboard_screen.dart';
 import 'package:doon_walkers/features/challenges/presentation/screens/challenges_screen.dart';
 import 'package:doon_walkers/features/challenges/presentation/screens/my_challenge_achievements_screen.dart';
+import 'package:doon_walkers/features/celebrations/presentation/screens/goal_celebration_screen.dart';
+import 'package:doon_walkers/features/celebrations/presentation/screens/streak_celebration_screen.dart';
+import 'package:doon_walkers/features/celebrations/presentation/screens/streak_details_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/admin_blocklist_screen.dart';
 import 'package:doon_walkers/features/comments/presentation/screens/comment_moderation_screen.dart';
 import 'package:doon_walkers/features/community/domain/entities/member_directory_entry.dart';
@@ -307,6 +310,34 @@ GoRouter _buildRouter(
       path: AppConstants.routeNotifications,
       name: 'notifications',
       builder: (context, state) => const NotificationsScreen(),
+    ),
+    // Celebration system — top-level for the same reason as
+    // /notifications: ActivitySyncController pushes these
+    // programmatically right after a sync, which can happen from any
+    // tab. See AppConstants.routeDailyGoalCelebration's doc.
+    GoRoute(
+      path: AppConstants.routeDailyGoalCelebration,
+      name: 'daily-goal-celebration',
+      builder: (context, state) {
+        final data = state.extra as ({int steps, int goal})?;
+        return GoalCelebrationScreen(
+          steps: data?.steps ?? 0,
+          goal: data?.goal ?? 0,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppConstants.routeStreakCelebration,
+      name: 'streak-celebration',
+      builder: (context, state) {
+        final streakCount = state.extra as int? ?? 0;
+        return StreakCelebrationScreen(streakCount: streakCount);
+      },
+    ),
+    GoRoute(
+      path: AppConstants.routeStreakDetails,
+      name: 'streak-details',
+      builder: (context, state) => const StreakDetailsScreen(),
     ),
     // ── Drawer destinations (Redesign 2.0, Phase 10) ────────────────
     // All top-level, outside the shell, for the same reason as
@@ -933,6 +964,9 @@ GoRouter _buildRouter(
         location == AppConstants.routeNotifications ||
         location == AppConstants.routeChallengeHistory ||
         location == AppConstants.routePhoneVerification ||
+        location == AppConstants.routeDailyGoalCelebration ||
+        location == AppConstants.routeStreakCelebration ||
+        location == AppConstants.routeStreakDetails ||
         _isAdminRoute(location) ||
         _isTrekAdminRoute(location) ||
         _isTrekCheckinRoute(location) ||

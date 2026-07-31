@@ -11,6 +11,50 @@ import 'package:permission_handler/permission_handler.dart';
 /// [_types]/[_permissions] request READ access to exactly three data
 /// types — nothing else — matching the explanation shown to the user
 /// before requesting (see ActivityPermissionBanner).
+///
+/// ### Why steps used to come out roughly double Google Fit's number
+///
+/// Health Connect is a shared platform datastore: more than one
+/// installed app can write `StepsRecord`s into it independently (most
+/// commonly Google Fit *and* the phone manufacturer's own health app —
+/// Samsung Health, Xiaomi/Mi Fitness, etc. — once both are granted
+/// write access). [readDailyActivity] used to read steps with
+/// `Health.getTotalStepsInInterval`, which (see the `health` package's
+/// Android implementation, `HealthDataReader.getAggregatedStepCount`)
+/// calls Health Connect's own `AggregateRequest(StepsRecord.COUNT_TOTAL)`
+/// with no `dataOriginFilter`. That aggregate is real and correct for
+/// what it does — it just sums the `COUNT_TOTAL` metric across *every*
+/// contributing app in range. Health Connect has no way to know that
+/// two apps' step counts for the same walk represent the same physical
+/// steps, so a device with two step-tracking sources hooked up reports
+/// roughly the sum of both — the classic "almost double" symptom,
+/// because Google Fit alone only shows its own count.
+///
+/// This was never a bug in *our* code manually summing raw records —
+/// quite the opposite: we were correctly using the platform's own
+/// recommended aggregate call. The bug is that the aggregate's
+/// contract (sum every origin, no cross-app dedup) doesn't match what
+/// a step count displayed to a user should mean when multiple sources
+/// exist. [readDailyActivity] now reads raw `StepsRecord`s first to see
+/// how many distinct data origins (`HealthDataPoint.sourceName`, which
+/// is Health Connect's `Metadata.dataOrigin.packageName`) actually
+/// contributed that day:
+///  - Exactly one origin (the common case) → still uses
+///    `getTotalStepsInInterval`'s aggregate, since Health Connect's
+///    own aggregation correctly de-duplicates overlapping records
+///    *within* a single origin (e.g. a source that logs both live
+///    increments and periodic corrections) — a naive re-sum of raw
+///    records wouldn't reliably do that, so the platform aggregate is
+///    still the better answer for a single source, matching Health
+///    Connect's own recommended usage.
+///  - More than one origin → sums each origin's records separately and
+///    takes the LARGEST single origin's total, instead of the sum of
+///    all of them. This assumes overlapping trackers are recording the
+///    same physical activity rather than genuinely additive activity,
+///    which is the standard mitigation for Health Connect's
+///    documented lack of cross-app deduplication, and is what brings
+///    the displayed number back in line with what a single app like
+///    Google Fit shows.
 class HealthConnectProvider implements ActivityProvider {
   HealthConnectProvider() : _health = Health();
 
@@ -112,11 +156,9 @@ class HealthConnectProvider implements ActivityProvider {
       final dayEnd = day.add(const Duration(days: 1));
 
       try {
-        final steps =
-            await _health.getTotalStepsInInterval(dayStart, dayEnd) ?? 0;
-
-        final distanceAndCalories = await _health.getHealthDataFromTypes(
+        final points = await _health.getHealthDataFromTypes(
           types: const [
+            HealthDataType.STEPS,
             HealthDataType.DISTANCE_DELTA,
             HealthDataType.TOTAL_CALORIES_BURNED,
           ],
@@ -124,9 +166,13 @@ class HealthConnectProvider implements ActivityProvider {
           endTime: dayEnd,
         );
 
+        final stepPoints =
+            points.where((p) => p.type == HealthDataType.STEPS).toList();
+        final steps = await _resolveStepCount(dayStart, dayEnd, stepPoints);
+
         var distanceMeters = 0.0;
         var calories = 0.0;
-        for (final point in distanceAndCalories) {
+        for (final point in points) {
           final value = point.value;
           if (value is! NumericHealthValue) continue;
           if (point.type == HealthDataType.DISTANCE_DELTA) {
@@ -164,6 +210,53 @@ class HealthConnectProvider implements ActivityProvider {
     }
 
     return results;
+  }
+
+  /// Decides one day's step count from raw [stepPoints] — see this
+  /// class's doc for the full reasoning. Single origin: trust Health
+  /// Connect's own aggregate (correct within-origin dedup). Multiple
+  /// origins: sum per origin and take the largest, rather than the
+  /// platform aggregate's sum-of-everything.
+  Future<int> _resolveStepCount(
+    DateTime dayStart,
+    DateTime dayEnd,
+    List<HealthDataPoint> stepPoints,
+  ) async {
+    final origins = stepPoints.map((p) => p.sourceName).toSet();
+
+    if (origins.length <= 1) {
+      try {
+        final aggregated = await _health.getTotalStepsInInterval(
+          dayStart,
+          dayEnd,
+        );
+        if (aggregated != null) return aggregated;
+      } catch (e) {
+        debugPrint(
+          'HealthConnectProvider: aggregate step read failed for '
+          '${dayStart.toIso8601String()}, falling back to raw records: $e',
+        );
+      }
+    } else {
+      debugPrint(
+        'HealthConnectProvider: ${origins.length} step data origins for '
+        '${dayStart.toIso8601String()}: $origins — using the single '
+        'largest origin instead of summing all of them (see class doc).',
+      );
+    }
+
+    final totalsByOrigin = <String, int>{};
+    for (final point in stepPoints) {
+      final value = point.value;
+      if (value is! NumericHealthValue) continue;
+      totalsByOrigin.update(
+        point.sourceName,
+        (existing) => existing + value.numericValue.round(),
+        ifAbsent: () => value.numericValue.round(),
+      );
+    }
+    if (totalsByOrigin.isEmpty) return 0;
+    return totalsByOrigin.values.reduce((a, b) => a > b ? a : b);
   }
 
   @override

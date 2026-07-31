@@ -46,6 +46,9 @@ abstract class TrekRepository {
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
     int? maxParticipants,
+    String? destinationName,
+    double? destinationLat,
+    double? destinationLng,
   });
 
   Future<void> updateTrek({
@@ -63,6 +66,9 @@ abstract class TrekRepository {
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
     int? maxParticipants,
+    String? destinationName,
+    double? destinationLat,
+    double? destinationLng,
   });
 
   /// Fetches spots remaining for the trek via the get_trek_spots_left RPC.

@@ -191,7 +191,7 @@ class _MyStatsGrid extends ConsumerWidget {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: AppSpacing.md,
           mainAxisSpacing: AppSpacing.md,
-          childAspectRatio: 1.5,
+          childAspectRatio: 1.3,
           children: [
             _StatCard(
               icon: AppIcons.rupee, // Points / value
@@ -237,7 +237,7 @@ class _PrivateStatsGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: AppSpacing.md,
       mainAxisSpacing: AppSpacing.md,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.3,
       children: [
         _StatCard(
           icon: AppIcons.rupee,
@@ -294,6 +294,7 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -316,11 +317,22 @@ class _StatCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            isPrivate ? 'Private' : value,
-            style: AppTextStyles.titleLarge.copyWith(
-              color: isPrivate ? palette.textDisabled : palette.textPrimary,
-              fontWeight: FontWeight.bold,
+          // FittedBox as a safety net on top of the taller
+          // childAspectRatio below — the grid cell's height is fixed
+          // (GridView.count), so at a large system text-scale factor
+          // this value text is the one thing here that could still
+          // outgrow the cell; scaling it down slightly is preferable to
+          // a RenderFlex overflow, and is a no-op at normal text sizes.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              isPrivate ? 'Private' : value,
+              style: AppTextStyles.titleLarge.copyWith(
+                color: isPrivate ? palette.textDisabled : palette.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
             ),
           ),
         ],
@@ -437,10 +449,14 @@ class _PrivateAchievementsPlaceholder extends StatelessWidget {
         children: [
           AppIcon(AppIcons.lock, size: 16, color: palette.textDisabled),
           const SizedBox(width: AppSpacing.xs),
-          Text(
-            'Achievements are private to this member.',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: palette.textSecondary,
+          Flexible(
+            child: Text(
+              'Achievements are private to this member.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: palette.textSecondary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -517,7 +533,7 @@ class _StatsGridSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: AppSpacing.md,
         mainAxisSpacing: AppSpacing.md,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.3,
         children: List.generate(
           4,
           (_) => const SkeletonBox(height: 60, borderRadius: AppRadius.card),

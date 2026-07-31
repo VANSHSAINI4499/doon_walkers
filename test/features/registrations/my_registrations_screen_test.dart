@@ -62,9 +62,10 @@ Registration _registration({
   trekTitle: title,
   trekDate: trekDate,
   checkedInAt: checkedInAt,
-  // A screenshot url is what makes `involvedPayment` true — irrelevant to
-  // grouping, kept null so the status chip doesn't add noise to text
-  // finders in these tests.
+  // trekRegistrationFee defaults to 0, so every fixture here renders as
+  // a free trek (an "Auto Paid" chip) — irrelevant to what these tests
+  // actually assert (tab grouping, search, the milestone banner), and
+  // no test here searches for or asserts the chip's absence.
 );
 
 final _future = DateTime(2026, 8, 20);

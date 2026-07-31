@@ -251,6 +251,8 @@ class _LeaderboardRow extends StatelessWidget {
                 color: palette.textSecondary,
                 fontWeight: FontWeight.bold,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -291,11 +293,17 @@ class _LeaderboardRow extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            '${entry.totalPoints} pts',
-            style: AppTextStyles.titleSmall.copyWith(
-              color: palette.primary,
-              fontWeight: FontWeight.bold,
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              '${entry.totalPoints} pts',
+              style: AppTextStyles.titleSmall.copyWith(
+                color: palette.primary,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
             ),
           ),
         ],
@@ -335,31 +343,40 @@ class _StickyRankBar extends StatelessWidget {
         top: false,
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: palette.primary,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Text(
-                'Your Rank: #${entry!.rank}',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: palette.onPrimary,
-                  fontWeight: FontWeight.bold,
+            Flexible(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.primary,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  'Your Rank: #${entry!.rank}',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: palette.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
             const Spacer(),
             LevelBadge(level: entry!.level),
             const SizedBox(width: AppSpacing.sm),
-            Text(
-              '${entry!.totalPoints} pts',
-              style: AppTextStyles.titleMedium.copyWith(
-                color: palette.primary,
-                fontWeight: FontWeight.bold,
+            Flexible(
+              child: Text(
+                '${entry!.totalPoints} pts',
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: palette.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
               ),
             ),
           ],

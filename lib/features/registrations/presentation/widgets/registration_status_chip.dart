@@ -9,11 +9,23 @@ import 'package:flutter/material.dart';
 /// colour — used by member-facing surfaces to show
 /// [Registration.memberFacingStatusLabel] ("Pending Verification")
 /// instead of the generic admin-facing [PaymentStatus.label] ("Pending").
+///
+/// [isFreeTrek] (0049_free_trek_auto_paid.sql) overrides the label to
+/// "Auto Paid" regardless of [label] — a free trek's registration is
+/// always [PaymentStatus.paid] (the database trigger guarantees it),
+/// but "Paid" alone reads as "admin verified a payment," which didn't
+/// happen; "Auto Paid" says plainly that there was nothing to verify.
 class RegistrationStatusChip extends StatelessWidget {
-  const RegistrationStatusChip({super.key, required this.status, this.label});
+  const RegistrationStatusChip({
+    super.key,
+    required this.status,
+    this.label,
+    this.isFreeTrek = false,
+  });
 
   final PaymentStatus status;
   final String? label;
+  final bool isFreeTrek;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +52,7 @@ class RegistrationStatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        label ?? status.label,
+        isFreeTrek ? 'Auto Paid' : (label ?? status.label),
         style: theme.textTheme.labelSmall?.copyWith(
           color: fg,
           fontWeight: FontWeight.bold,

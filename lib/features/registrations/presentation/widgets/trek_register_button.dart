@@ -182,14 +182,19 @@ class _AlreadyRegistered extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // A free-trek registration shows no payment_status detail at all —
-    // "nothing to verify" — per the Part C brief. involvedPayment is
-    // derived from whether a screenshot was ever attached, not the trek's
-    // current fee (which may have changed since).
+    // A free trek (0049_free_trek_auto_paid.sql) says so explicitly —
+    // positive confirmation that payment was auto-completed, not
+    // silence. A paid trek without a screenshot yet
+    // ([Registration.involvedPayment] false) still shows nothing;
+    // involvedPayment is derived from whether a screenshot was ever
+    // attached, not the trek's current fee (which may have changed
+    // since).
     final subtitle =
-        registration.involvedPayment
-            ? 'Payment: ${registration.memberFacingStatusLabel} · Manage this from your Profile.'
-            : 'Manage this from your Profile.';
+        registration.isFreeTrek
+            ? 'Free trek — payment automatically completed. Manage this from your Profile.'
+            : (registration.involvedPayment
+                ? 'Payment: ${registration.memberFacingStatusLabel} · Manage this from your Profile.'
+                : 'Manage this from your Profile.');
 
     // Phase QR-2 — only offered once already checked in isn't the case,
     // and only near/within the active check-in window, so the button

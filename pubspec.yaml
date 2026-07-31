@@ -74,6 +74,15 @@ dependencies:
   health: ^13.1.3
   permission_handler: ^12.0.3
 
+  # Trip Tracking — destination-arrival notifications. Only used for
+  # foreground/background position updates; there is no map/directions
+  # UI in this app, so no maps SDK is pulled in alongside it. Its Android
+  # implementation runs background updates via a built-in foreground
+  # service (see AndroidSettings.foregroundNotificationConfig in
+  # TripTrackingController), which is what keeps updates flowing with the
+  # screen locked without any hand-written native service code.
+  geolocator: ^13.0.0
+
   # Phase QR-1 — renders the trek check-in token as a scannable QR
   # code on the admin "Display Check-in QR" screen. Pure rendering
   # only (no camera/scanning) — that's Phase QR-2's concern, and would
@@ -117,6 +126,25 @@ dependencies:
   # so SupabaseStorageUploader PUTs directly to the Storage REST
   # endpoint via Dio instead.
   dio: ^5.7.0
+
+  # Celebration system — full-screen confetti on the daily-goal and
+  # streak celebrations (goal_celebration_screen.dart /
+  # streak_celebration_screen.dart). Pure Dart/CustomPainter, no native
+  # code — the existing tier_celebration_overlay.dart hand-rolls a
+  # small particle burst for its popup, but a full-screen "Pacer-style"
+  # celebration needs denser, more convincing confetti than that was
+  # ever designed for.
+  confetti: ^0.8.0
+
+  # Scheduled local reminders (morning/evening — see
+  # PushNotificationService.scheduleDailyReminders). flutter_local_
+  # notifications' zonedSchedule requires a resolved IANA Location;
+  # flutter_timezone reads the device's current zone name, timezone
+  # resolves it into one. Neither existed in this project before —
+  # every local notification until now was a one-off `show()`, never
+  # a recurring schedule.
+  timezone: ^0.10.0
+  flutter_timezone: ^3.0.1
 
 dev_dependencies:
   flutter_test:

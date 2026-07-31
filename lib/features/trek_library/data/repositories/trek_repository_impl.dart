@@ -66,6 +66,9 @@ class TrekRepositoryImpl implements TrekRepository {
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
     int? maxParticipants,
+    String? destinationName,
+    double? destinationLat,
+    double? destinationLng,
   }) async {
     final row =
         await _supabase
@@ -85,6 +88,9 @@ class TrekRepositoryImpl implements TrekRepository {
                 trekStartTime: trekStartTime,
                 registrationFee: registrationFee,
                 maxParticipants: maxParticipants,
+                destinationName: destinationName,
+                destinationLat: destinationLat,
+                destinationLng: destinationLng,
               ),
             )
             .select()
@@ -111,6 +117,9 @@ class TrekRepositoryImpl implements TrekRepository {
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
     int? maxParticipants,
+    String? destinationName,
+    double? destinationLat,
+    double? destinationLng,
   }) async {
     await _supabase
         .from(AppConstants.tableTreks)
@@ -129,6 +138,9 @@ class TrekRepositoryImpl implements TrekRepository {
             trekStartTime: trekStartTime,
             registrationFee: registrationFee,
             maxParticipants: maxParticipants,
+            destinationName: destinationName,
+            destinationLat: destinationLat,
+            destinationLng: destinationLng,
           ),
         )
         .eq('id', id);
@@ -299,6 +311,9 @@ class TrekRepositoryImpl implements TrekRepository {
     TrekStartTime? trekStartTime,
     double registrationFee = 0,
     int? maxParticipants,
+    String? destinationName,
+    double? destinationLat,
+    double? destinationLng,
   }) {
     return {
       'title': title,
@@ -310,6 +325,9 @@ class TrekRepositoryImpl implements TrekRepository {
       'best_season': bestSeason,
       'things_to_carry': thingsToCarry,
       'google_map_link': googleMapLink,
+      'destination_name': destinationName,
+      'destination_lat': destinationLat,
+      'destination_lng': destinationLng,
       // Postgres `date` accepts a plain "YYYY-MM-DD" string; slicing off
       // the time avoids sending timezone-dependent instant data for a
       // column that only ever stores a calendar day.

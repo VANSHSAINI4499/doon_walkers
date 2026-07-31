@@ -22,6 +22,9 @@ class TrekModel extends Trek {
     super.paymentQrCode,
     super.trekStartTime,
     super.maxParticipants,
+    super.destinationName,
+    super.destinationLat,
+    super.destinationLng,
   });
 
   factory TrekModel.fromJson(Map<String, dynamic> json) {
@@ -61,6 +64,9 @@ class TrekModel extends Trek {
         json['trek_start_time'] as String?,
       ),
       maxParticipants: (json['max_participants'] as num?)?.toInt(),
+      destinationName: json['destination_name'] as String?,
+      destinationLat: (json['destination_lat'] as num?)?.toDouble(),
+      destinationLng: (json['destination_lng'] as num?)?.toDouble(),
     );
   }
 }

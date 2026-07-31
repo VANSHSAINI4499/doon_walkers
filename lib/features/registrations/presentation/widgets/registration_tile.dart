@@ -46,7 +46,10 @@ class RegistrationTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              RegistrationStatusChip(status: r.paymentStatus),
+              RegistrationStatusChip(
+                status: r.paymentStatus,
+                isFreeTrek: r.isFreeTrek,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),

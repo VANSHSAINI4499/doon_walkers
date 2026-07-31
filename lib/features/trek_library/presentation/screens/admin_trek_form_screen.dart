@@ -39,6 +39,9 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
   final _googleMapController = TextEditingController();
   final _feeController = TextEditingController(text: '0');
   final _capacityController = TextEditingController();
+  final _destinationNameController = TextEditingController();
+  final _destinationLatController = TextEditingController();
+  final _destinationLngController = TextEditingController();
 
   TrekDifficulty _difficulty = TrekDifficulty.moderate;
   DateTime? _trekDate;
@@ -69,6 +72,9 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _googleMapController.dispose();
     _feeController.dispose();
     _capacityController.dispose();
+    _destinationNameController.dispose();
+    _destinationLatController.dispose();
+    _destinationLngController.dispose();
     super.dispose();
   }
 
@@ -85,6 +91,11 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     _googleMapController.text = trek.googleMapLink ?? '';
     _feeController.text = _trimZero(trek.registrationFee);
     _capacityController.text = trek.maxParticipants?.toString() ?? '';
+    _destinationNameController.text = trek.destinationName ?? '';
+    _destinationLatController.text =
+        trek.destinationLat == null ? '' : _trimZero(trek.destinationLat!);
+    _destinationLngController.text =
+        trek.destinationLng == null ? '' : _trimZero(trek.destinationLng!);
     _difficulty = trek.difficulty;
     _trekDate = trek.trekDate;
     _trekStartTime = trek.trekStartTime;
@@ -158,6 +169,9 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
     final thingsToCarry = _emptyToNull(_thingsToCarryController.text);
     final googleMapLink = _emptyToNull(_googleMapController.text);
     final maxParticipants = _parseOrNullInt(_capacityController.text);
+    final destinationName = _emptyToNull(_destinationNameController.text);
+    final destinationLat = _parseOrNullDouble(_destinationLatController.text);
+    final destinationLng = _parseOrNullDouble(_destinationLngController.text);
 
     if (widget.isEdit) {
       final success = await controller.updateTrek(
@@ -175,6 +189,9 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         trekStartTime: _trekStartTime,
         registrationFee: _registrationFee,
         maxParticipants: maxParticipants,
+        destinationName: destinationName,
+        destinationLat: destinationLat,
+        destinationLng: destinationLng,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
         previousCoverImageUrl: _existingCoverImage,
@@ -207,6 +224,9 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
         trekStartTime: _trekStartTime,
         registrationFee: _registrationFee,
         maxParticipants: maxParticipants,
+        destinationName: destinationName,
+        destinationLat: destinationLat,
+        destinationLng: destinationLng,
         coverImageBytes: _pickedImageBytes,
         coverImageExtension: _pickedImageExtension,
         qrCodeBytes: _registrationFee > 0 ? _pickedQrBytes : null,
@@ -224,6 +244,19 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
   int? _parseOrNullInt(String text) =>
       text.trim().isEmpty ? null : int.tryParse(text.trim());
   String? _emptyToNull(String text) => text.trim().isEmpty ? null : text.trim();
+
+  /// Validates an optional lat/lng field — empty is fine (both stay
+  /// null together in that case), but a non-empty value must parse and
+  /// fall within the valid coordinate range, matching the DB CHECK
+  /// constraints in 0046_trek_destination_coordinates.sql.
+  String? _validateLatLng(String? value, {required num min, required num max}) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return null;
+    final parsed = double.tryParse(text);
+    if (parsed == null) return 'Invalid number';
+    if (parsed < min || parsed > max) return 'Must be between $min and $max';
+    return null;
+  }
 
   String _cleanError(Object error) {
     debugPrint('AdminTrekFormScreen: mutation failed: $error');
@@ -563,6 +596,71 @@ class _AdminTrekFormScreenState extends ConsumerState<AdminTrekFormScreen> {
                                   hintText: 'https://maps.app.goo.gl/...',
                                 ),
                                 keyboardType: TextInputType.url,
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              const Divider(),
+                              const SizedBox(height: AppSpacing.xl),
+
+                              const AdminFormSectionLabel(
+                                'Navigation',
+                                subtitle:
+                                    'Set both coordinates to let members start '
+                                    'in-app arrival tracking to this trek.',
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              TextFormField(
+                                controller: _destinationNameController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Destination name (optional)',
+                                  hintText:
+                                      'Defaults to the trek title if left blank',
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _destinationLatController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Destination latitude',
+                                        hintText: '30.4167',
+                                      ),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                            signed: true,
+                                          ),
+                                      validator:
+                                          (value) => _validateLatLng(
+                                            value,
+                                            min: -90,
+                                            max: 90,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _destinationLngController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Destination longitude',
+                                        hintText: '78.0537',
+                                      ),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                            signed: true,
+                                          ),
+                                      validator:
+                                          (value) => _validateLatLng(
+                                            value,
+                                            min: -180,
+                                            max: 180,
+                                          ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: AppSpacing.xl),
                               const Divider(),

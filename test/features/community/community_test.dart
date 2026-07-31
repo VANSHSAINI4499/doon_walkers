@@ -39,7 +39,7 @@ void main() {
       expect(entry.avatarUrl, isNull);
       expect(entry.totalPoints, 520);
       expect(entry.level, 3);
-      expect(entry.createdAt.year, 2026);
+      expect(entry.createdAt!.year, 2026);
     });
   });
 }

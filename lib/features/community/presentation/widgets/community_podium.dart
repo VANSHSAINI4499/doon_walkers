@@ -146,6 +146,10 @@ class _PodiumColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(builder: _build);
+  }
+
+  Widget _build(BuildContext context, BoxConstraints constraints) {
     final palette = AppPalette.of(context);
     final isFirst = position == 1;
 
@@ -157,8 +161,17 @@ class _PodiumColumn extends StatelessWidget {
       _ => palette.primary,
     };
 
-    // Avatar size: slightly larger for #1
-    final avatarSize = isFirst ? 64.0 : 52.0;
+    // Avatar size: slightly larger for #1 on a normal-width screen, but
+    // derived from this column's actual available width (via
+    // LayoutBuilder) rather than that constant alone — on a column
+    // narrower than the design intends (small device, many entries)
+    // the avatar shrinks with it instead of demanding more width than
+    // it has been given.
+    final maxAvatarSize = isFirst ? 64.0 : 52.0;
+    final avatarSize =
+        constraints.maxWidth.isFinite
+            ? (constraints.maxWidth * 0.72).clamp(32.0, maxAvatarSize)
+            : maxAvatarSize;
 
     // Pedestal gradient for #1 (gold-tinted), muted metallic for #2/#3
     final pedestalDecoration =
@@ -250,21 +263,27 @@ class _PodiumColumn extends StatelessWidget {
         ),
         const SizedBox(height: 2),
 
-        // Level badge + points
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        // Level badge + points. Wrap rather than Row: LevelBadge has no
+        // shrink logic of its own (it's a fixed pill sized to its
+        // label), so at a large system text-scale factor it alone can
+        // exceed this column's narrow share of the podium row even
+        // though the points Text beside it is Flexible — Wrap falls
+        // back to a second line instead of throwing a RenderFlex
+        // overflow, with no visual change in the normal case where
+        // both fit on one line.
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 4,
           children: [
             LevelBadge(level: entry.level),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                '${entry.totalPoints} pts',
-                style: AppTextStyles.labelSmall.copyWith(
-                  color: palette.textSecondary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              '${entry.totalPoints} pts',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: palette.textSecondary,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

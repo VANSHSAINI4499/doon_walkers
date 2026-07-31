@@ -1,12 +1,19 @@
 import 'dart:async';
 
+import 'package:doon_walkers/core/constants/app_constants.dart';
 import 'package:doon_walkers/core/providers/supabase_provider.dart';
+import 'package:doon_walkers/core/router/app_router.dart';
+import 'package:doon_walkers/core/services/push_notification_service.dart';
 import 'package:doon_walkers/features/activity/data/providers/health_connect_provider.dart';
 import 'package:doon_walkers/features/activity/data/repositories/activity_repository_impl.dart';
 import 'package:doon_walkers/features/activity/data/services/activity_sync_service.dart';
 import 'package:doon_walkers/features/activity/domain/repositories/activity_provider.dart';
-import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
+import 'package:doon_walkers/features/activity/domain/services/activity_period.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_dashboard_providers.dart';
+import 'package:doon_walkers/features/celebrations/data/services/celebration_tracker.dart';
+import 'package:doon_walkers/features/celebrations/domain/services/celebration_detection.dart';
+import 'package:doon_walkers/features/celebrations/presentation/providers/celebration_providers.dart';
+import 'package:doon_walkers/features/challenges/presentation/providers/challenge_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -119,6 +126,15 @@ class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
       }
     }
 
+    // Celebration system (Parts 1-2): baseline snapshot from whatever is
+    // currently cached, taken BEFORE the sync/invalidation below discards
+    // it — the only way to know what changed as a result of this sync.
+    final todayPeriod = ActivityPeriod.day(now);
+    final beforeSteps =
+        ref.read(activitySummaryProvider(todayPeriod)).valueOrNull?.totalSteps ??
+        0;
+    final beforeStreak = ref.read(myActivityStreakProvider).valueOrNull ?? 0;
+
     state = const AsyncLoading();
     final result = await AsyncValue.guard(
       () => ref.read(activitySyncServiceProvider).sync(),
@@ -127,14 +143,14 @@ class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
 
     if (result.valueOrNull == ActivitySyncOutcome.success) {
       _lastSuccessfulSyncTime = now;
-      
+
       // Invalidate everything downstream
       ref.invalidate(myChallengeProgressProvider);
       ref.invalidate(myTierHistoryProvider);
       ref.invalidate(lastActivitySyncProvider);
       ref.invalidate(activityPermissionGrantedProvider);
       ref.invalidate(activityRangeProvider);
-      
+
       ref.invalidate(trailingWeekProvider);
       ref.invalidate(activityPercentileProvider);
       ref.invalidate(dailyPercentileProvider);
@@ -142,15 +158,84 @@ class ActivitySyncController extends AsyncNotifier<ActivitySyncOutcome?> {
       ref.invalidate(activeDaysProvider);
       ref.invalidate(weeklyAggregatesProvider);
       ref.invalidate(monthComparisonProvider);
-      
+
       ref.invalidate(myActivityStreakProvider);
       ref.invalidate(myUserPointsProvider);
       ref.invalidate(activeChallengesProvider);
       ref.invalidate(myEnrollmentsProvider);
       ref.invalidate(adminAllChallengesProvider);
+
+      await _runCelebrationFlow(beforeSteps: beforeSteps, beforeStreak: beforeStreak);
     }
 
     return result.valueOrNull;
+  }
+
+  /// Parts 1, 2, 5, 6: re-reads the same two providers post-invalidation,
+  /// detects a goal-crossing and/or streak-increase against the baseline
+  /// captured before this sync, and — gated by [CelebrationTracker] so
+  /// each fires at most once per calendar day — fires the matching local
+  /// notification and pushes the matching full-screen celebration route.
+  /// Never touches streak/challenge calculation, only reads their output.
+  Future<void> _runCelebrationFlow({
+    required int beforeSteps,
+    required int beforeStreak,
+  }) async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+
+    final todayPeriod = ActivityPeriod.day(DateTime.now());
+    final afterSteps =
+        (await ref.read(activitySummaryProvider(todayPeriod).future)).totalSteps;
+    final afterStreak = await ref.read(myActivityStreakProvider.future);
+    final goal = ref.read(dailyStepGoalProvider);
+
+    final crossedGoal = didCrossDailyGoal(
+      beforeSteps: beforeSteps,
+      afterSteps: afterSteps,
+      goal: goal,
+    );
+    final streakIncreased = didStreakIncrease(
+      beforeStreak: beforeStreak,
+      afterStreak: afterStreak,
+    );
+
+    final tracker = ref.read(celebrationTrackerProvider);
+    final pushService = ref.read(pushNotificationServiceProvider);
+
+    if (crossedGoal) {
+      if (!tracker.hasHappenedToday(CelebrationFlag.goalNotificationSent, userId)) {
+        await tracker.markHappenedToday(CelebrationFlag.goalNotificationSent, userId);
+        await pushService.showGoalCompletedNotification(steps: afterSteps);
+      }
+      if (!tracker.hasHappenedToday(CelebrationFlag.goalCelebrationShown, userId)) {
+        await tracker.markHappenedToday(CelebrationFlag.goalCelebrationShown, userId);
+        await ref.read(routerProvider).push(
+          AppConstants.routeDailyGoalCelebration,
+          extra: (steps: afterSteps, goal: goal),
+        );
+      }
+    }
+
+    if (streakIncreased) {
+      if (!tracker.hasHappenedToday(CelebrationFlag.streakNotificationSent, userId)) {
+        await tracker.markHappenedToday(CelebrationFlag.streakNotificationSent, userId);
+        await pushService.showStreakNotification(streakCount: afterStreak);
+      }
+      if (!tracker.hasHappenedToday(CelebrationFlag.streakCelebrationShown, userId)) {
+        await tracker.markHappenedToday(CelebrationFlag.streakCelebrationShown, userId);
+        await ref.read(routerProvider).push(
+          AppConstants.routeStreakCelebration,
+          extra: afterStreak,
+        );
+      }
+    }
+
+    // Best-effort evening nudge content — reflects steps as of this sync,
+    // not a live background count (no backend, no schema change involved).
+    await pushService.rescheduleEveningReminder(
+      remainingSteps: goal - afterSteps,
+    );
   }
 }
 

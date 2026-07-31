@@ -338,6 +338,29 @@ class AppConstants {
   /// "whole screen requires sign-in" case those two already establish.
   static const String routeChallengeHistory = '$routeChallenges/history';
 
+  /// Celebration system — full-screen daily-goal celebration, pushed
+  /// programmatically by [ActivitySyncController] right after a sync
+  /// crosses today's step goal for the first time (same
+  /// `ref.read(routerProvider).push(...)` pattern already used by
+  /// PushNotificationService). Top-level, outside the shell — same
+  /// reasoning as [routeNotifications]: a sync (and therefore this
+  /// push) can happen from any tab. Router-level auth-gated like
+  /// [routeActivity] — this is the signed-in user's own step data.
+  static const String routeDailyGoalCelebration = '/celebration/daily-goal';
+
+  /// Same reasoning as [routeDailyGoalCelebration], for the streak
+  /// celebration pushed when [ActivitySyncController] detects the
+  /// activity streak grew.
+  static const String routeStreakCelebration = '/celebration/streak';
+
+  /// Streak Details — reached from the streak celebration's "View
+  /// Streak Details" button and from the home screen's streak badge.
+  /// Distinct from the unrelated trekking-attendance `StreakSection`
+  /// on Profile; this shows the daily ACTIVITY streak
+  /// ([myActivityStreakProvider]). Router-level auth-gated like
+  /// [routeActivity] for the same reason.
+  static const String routeStreakDetails = '/activity/streak-details';
+
   // ── Supabase table names ─────────────────────────────────────────
   static const String tableUsers = 'users';
   static const String tableTreks = 'treks';
@@ -507,4 +530,10 @@ class AppConstants {
   /// flag — deliberately not tied to any signed-in account (a guest
   /// browsing without ever signing in should still only see it once).
   static const String prefsHasSeenOnboarding = 'has_seen_onboarding';
+
+  /// Trip Tracking — the single in-progress [NavigationSession], JSON-
+  /// encoded. Device-local only (not synced to Supabase); see
+  /// TripTrackingRepository's doc for why. Absent/null means no active
+  /// session.
+  static const String prefsActiveNavigationSession = 'active_navigation_session';
 }

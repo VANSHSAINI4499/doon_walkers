@@ -180,8 +180,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     onPressed: _submitGoogle,
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  // Wrap, not Row: the button is a non-flex sibling with
+                  // no shrink logic of its own, so at a large system
+                  // text-scale factor "Create Account" alone can exceed
+                  // a narrow screen's available width even with the
+                  // Text beside it already ellipsizing. Wrap falls back
+                  // to a second line instead of throwing a RenderFlex
+                  // overflow, with no visual change when both fit on
+                  // one line.
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         "Don't have an account? ",
@@ -200,16 +209,33 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  TextButton.icon(
+                  // Composed manually rather than TextButton.icon — its
+                  // internal Row has no way to wrap the label in
+                  // Flexible/ellipsis, so at a large system text-scale
+                  // factor on a narrow screen the label alone can
+                  // outgrow the available width and overflow.
+                  TextButton(
                     onPressed: () => context.go(AppConstants.routeHome),
-                    icon: const AppIcon(
-                      AppIcons.explore,
-                      size: 18,
-                      color: AppColors.textSecondary,
-                    ),
-                    label: Text(
-                      'Continue as Guest',
-                      style: AppTextStyles.secondary(AppTextStyles.labelLarge),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const AppIcon(
+                          AppIcons.explore,
+                          size: 18,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Flexible(
+                          child: Text(
+                            'Continue as Guest',
+                            style: AppTextStyles.secondary(
+                              AppTextStyles.labelLarge,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

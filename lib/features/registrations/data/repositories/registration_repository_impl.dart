@@ -26,7 +26,7 @@ final registrationRepositoryProvider = Provider<RegistrationRepository>(
 /// short-circuit on `is_admin()`, which is SECURITY DEFINER so it reads
 /// `users` outside RLS without recursion.
 const _selectWithJoins =
-    '*, users(name, email, phone), treks(title, trek_date)';
+    '*, users(name, email, phone), treks(title, trek_date, registration_fee)';
 
 /// Postgres unique-violation SQLSTATE — raised by `UNIQUE(trek_id, user_id)`.
 const _uniqueViolation = '23505';

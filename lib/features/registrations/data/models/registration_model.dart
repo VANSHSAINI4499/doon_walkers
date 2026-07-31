@@ -49,6 +49,8 @@ class RegistrationModel {
           json['checked_in_at'] != null
               ? DateTime.parse(json['checked_in_at'] as String)
               : null,
+      trekRegistrationFee:
+          (trek?['registration_fee'] as num?)?.toDouble() ?? 0,
     );
   }
 

@@ -126,9 +126,20 @@ class _MyRegistrationTileState extends ConsumerState<MyRegistrationTile> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // A free-trek registration shows no payment_status badge —
-              // "nothing to verify" — per the Part C brief.
-              if (r.involvedPayment) ...[
+              // A free trek shows an explicit "Free Trek" badge
+              // (0049_free_trek_auto_paid.sql) — the earlier "show
+              // nothing, nothing to verify" behaviour left the member
+              // with no positive confirmation that anything happened
+              // at all. A paid-trek registration still shows nothing
+              // until a screenshot is actually attached
+              // ([Registration.involvedPayment]).
+              if (r.isFreeTrek) ...[
+                const SizedBox(width: AppSpacing.sm),
+                const RegistrationStatusChip(
+                  status: PaymentStatus.paid,
+                  isFreeTrek: true,
+                ),
+              ] else if (r.involvedPayment) ...[
                 const SizedBox(width: AppSpacing.sm),
                 RegistrationStatusChip(
                   status: r.paymentStatus,

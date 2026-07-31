@@ -6,6 +6,8 @@ import 'package:doon_walkers/core/theme/app_theme.dart';
 import 'package:doon_walkers/core/theme/theme_mode_provider.dart';
 import 'package:doon_walkers/core/widgets/app_splash_screen.dart';
 import 'package:doon_walkers/features/activity/presentation/providers/activity_providers.dart';
+import 'package:doon_walkers/features/celebrations/presentation/providers/celebration_providers.dart';
+import 'package:doon_walkers/features/trip_tracking/presentation/providers/trip_tracking_providers.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -94,6 +96,14 @@ class DoonWalkersApp extends ConsumerWidget {
     // Module pivot) — "sync on resume" is a separate hook in AppShell,
     // since that needs WidgetsBindingObserver, not just an auth listener.
     ref.watch(activityLaunchSyncProvider);
+    // Trip Tracking's pragmatic reboot/app-kill resume path — see
+    // tripTrackingResumeProvider's doc for why this can't do more than
+    // this (no native boot receiver).
+    ref.watch(tripTrackingResumeProvider);
+    // Celebration system's morning/evening reminders (Part 5) — see
+    // this provider's own doc for why goal changes reschedule them
+    // automatically instead of needing a second call site.
+    ref.watch(activityReminderScheduleProvider);
 
     return MaterialApp.router(
       title: 'Doon Walkers',

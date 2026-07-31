@@ -138,6 +138,16 @@ class Registration {
   /// registration's own owner. See [RegistrationRepository.verifyCheckin].
   final DateTime? checkedInAt;
 
+  /// The trek's *current* `registration_fee`, joined alongside
+  /// [trekTitle]/[trekDate] (0049_free_trek_auto_paid.sql). Unlike
+  /// [involvedPayment] (a point-in-time signal from whether a
+  /// screenshot was ever attached), this reflects the trek's fee right
+  /// now — which is what "should this registration's payment status be
+  /// admin-editable" actually depends on: a trek that's free today has
+  /// nothing to verify regardless of how any of its registrations were
+  /// originally created.
+  final double trekRegistrationFee;
+
   const Registration({
     required this.id,
     required this.trekId,
@@ -157,7 +167,17 @@ class Registration {
     this.paymentScreenshotUrl,
     this.trekDate,
     this.checkedInAt,
+    this.trekRegistrationFee = 0,
   });
+
+  /// True when the trek this registration belongs to is currently free
+  /// (0049_free_trek_auto_paid.sql — same `<= 0` rule as
+  /// [Trek.requiresPayment], inverted). Drives the admin UI: a free
+  /// trek's registration never shows the payment-status editor, only a
+  /// read-only "Auto Paid" indicator — the database trigger already
+  /// guarantees [paymentStatus] can't sit at [PaymentStatus.pending]
+  /// for one, so there is nothing for admin to verify.
+  bool get isFreeTrek => trekRegistrationFee <= 0;
 
   /// True when this registration required payment — derived from
   /// whether a screenshot was ever attached, not from the trek's

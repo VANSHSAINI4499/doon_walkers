@@ -8,7 +8,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 
 /// Must be a top-level (or static) function — firebase_messaging's
 /// requirement for `FirebaseMessaging.onBackgroundMessage`, since it
@@ -64,6 +67,34 @@ class PushNotificationService {
     importance: Importance.high,
   );
 
+  /// Celebration system (daily goal / streak / reminder notifications)
+  /// — a separate channel from [_androidChannel] since it's a
+  /// different kind of alert (the signed-in user's own activity, not
+  /// a community broadcast) that a user may want to mute independently
+  /// in system settings.
+  static const _activityChannel = AndroidNotificationChannel(
+    'doon_walkers_activity',
+    'Activity & Streaks',
+    description:
+        'Daily goal, streak, and reminder notifications for your activity.',
+    importance: Importance.high,
+  );
+
+  // Fixed ids so re-showing/re-scheduling replaces rather than
+  // duplicates — flutter_local_notifications treats a `show`/
+  // `zonedSchedule` call with an already-used id as a replacement, not
+  // a second notification.
+  static const _goalCompletedNotificationId = 2001;
+  static const _streakNotificationId = 2002;
+  static const _morningReminderId = 2003;
+  static const _eveningReminderId = 2004;
+
+  /// Local-notification taps carry this payload for every celebration-
+  /// system notification (goal/streak/reminders) — they all want the
+  /// same destination, the Activity tab, distinct from every other
+  /// local/FCM notification's [_openNotifications] default.
+  static const _activityPayload = 'activity';
+
   /// Call once at app startup, after `Firebase.initializeApp()` — sets
   /// up local notifications, requests permission, and wires every
   /// message/tap/refresh listener. Only ever called once from
@@ -72,22 +103,49 @@ class PushNotificationService {
   Future<void> initialize() async {
     debugPrint('[Push] initialize() starting...');
 
-    await _localNotifications
+    final androidPlugin = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(_androidChannel);
+        >();
+    await androidPlugin?.createNotificationChannel(_androidChannel);
+    await androidPlugin?.createNotificationChannel(_activityChannel);
     debugPrint(
-      '[Push] local notification channel "${_androidChannel.id}" created',
+      '[Push] local notification channels "${_androidChannel.id}" and '
+      '"${_activityChannel.id}" created',
     );
+
+    // Required for zonedSchedule (scheduleDailyReminders) — resolves
+    // this device's IANA zone so TZDateTime computes "8:00 AM" in the
+    // user's actual local time, not UTC. Best-effort: a failure here
+    // just means the two reminders below won't be scheduled (caught in
+    // their own call sites), not a startup crash.
+    tz_data.initializeTimeZones();
+    try {
+      final locationName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(locationName));
+      debugPrint('[Push] local timezone resolved: $locationName');
+    } catch (e) {
+      debugPrint('[Push] failed to resolve local timezone: $e');
+    }
 
     await _localNotifications.initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       ),
       // Foreground local-notification tap (Android taps the heads-up
-      // banner we posted ourselves in _showForegroundNotification).
-      onDidReceiveNotificationResponse: (_) => _openNotifications(),
+      // banner we posted ourselves in _showForegroundNotification, or
+      // any of the celebration-system notifications below). Branches
+      // on payload: the celebration system's own notifications all
+      // carry [_activityPayload] and open the Activity tab instead of
+      // the in-app notification list — there's no notification-list
+      // row backing an ephemeral local reminder/celebration alert.
+      onDidReceiveNotificationResponse: (response) {
+        if (response.payload == _activityPayload) {
+          _ref.read(routerProvider).push(AppConstants.routeActivity);
+          return;
+        }
+        _openNotifications();
+      },
     );
     debugPrint('[Push] flutter_local_notifications initialized');
 
@@ -162,6 +220,153 @@ class PushNotificationService {
 
   void _openNotifications() {
     _ref.read(routerProvider).push(AppConstants.routeNotifications);
+  }
+
+  static String _withThousandsSeparator(int value) {
+    final digits = value.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(digits[i]);
+    }
+    return buffer.toString();
+  }
+
+  AndroidNotificationDetails get _activityAndroidDetails =>
+      AndroidNotificationDetails(
+        _activityChannel.id,
+        _activityChannel.name,
+        channelDescription: _activityChannel.description,
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+
+  /// Part 1 of the celebration brief — shown by [ActivitySyncController]
+  /// the moment a sync crosses today's step goal for the first time.
+  /// Called at most once a day: the caller checks
+  /// [CelebrationTracker.hasHappenedToday] first, this method itself
+  /// has no duplicate-guard of its own.
+  Future<void> showGoalCompletedNotification({required int steps}) async {
+    await _localNotifications.show(
+      _goalCompletedNotificationId,
+      '🎉 Daily Goal Completed!',
+      'You reached today\'s goal with '
+          '${_withThousandsSeparator(steps)} steps.\nKeep moving!',
+      NotificationDetails(android: _activityAndroidDetails),
+      payload: _activityPayload,
+    );
+  }
+
+  /// Part 3/5 — shown alongside the streak celebration when a sync
+  /// grows the activity streak. Copy switches to the brief's "Amazing"
+  /// framing at a week or more, per Part 5's weekly-streak example;
+  /// below that it's a plainer "keep it going" nudge.
+  Future<void> showStreakNotification({required int streakCount}) async {
+    final isWeekOrMore = streakCount >= 7;
+    await _localNotifications.show(
+      _streakNotificationId,
+      isWeekOrMore ? '🔥 Amazing!' : '🔥 Streak Alive!',
+      isWeekOrMore
+          ? "You've maintained a $streakCount-day streak."
+          : '$streakCount Day Streak! Keep it going.',
+      NotificationDetails(android: _activityAndroidDetails),
+      payload: _activityPayload,
+    );
+  }
+
+  tz.TZDateTime _nextInstanceOfLocalTime(int hour, int minute) {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    return scheduled;
+  }
+
+  /// Part 5 — the two daily-repeating local reminders. Call once at
+  /// app startup (see main.dart); fixed ids mean calling it again
+  /// (e.g. every app launch) reschedules the same two notifications
+  /// rather than accumulating duplicates.
+  ///
+  /// [AndroidScheduleMode.inexactAllowWhileIdle] deliberately, not
+  /// `exactAllowWhileIdle`: an exact alarm needs the
+  /// `SCHEDULE_EXACT_ALARM`/`USE_EXACT_ALARM` runtime permission on
+  /// Android 12+, a real user-facing settings trip that isn't
+  /// justified for a nudge that's fine landing a few minutes off
+  /// schedule.
+  Future<void> scheduleDailyReminders({required int goal}) async {
+    try {
+      await _localNotifications.zonedSchedule(
+        _morningReminderId,
+        'Good morning!',
+        'Ready to reach today\'s '
+            '${_withThousandsSeparator(goal)}-step goal?',
+        _nextInstanceOfLocalTime(8, 0),
+        NotificationDetails(android: _activityAndroidDetails),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: _activityPayload,
+      );
+
+      // A placeholder evening reminder — rescheduleEveningReminder is
+      // called after every successful sync and replaces this with the
+      // actual remaining-steps figure (or cancels it outright if the
+      // goal's already met). This just guarantees something is
+      // scheduled for this evening even before the day's first sync.
+      await _localNotifications.zonedSchedule(
+        _eveningReminderId,
+        'Still time today!',
+        'Take a short walk to complete today\'s goal.',
+        _nextInstanceOfLocalTime(19, 0),
+        NotificationDetails(android: _activityAndroidDetails),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: _activityPayload,
+      );
+      debugPrint('[Push] daily reminders scheduled (8:00 AM / 7:00 PM local)');
+    } catch (e) {
+      debugPrint('[Push] scheduleDailyReminders failed: $e');
+    }
+  }
+
+  /// Called after every successful sync (Part 5's "evening reminder
+  /// only when the goal is incomplete") to keep today's evening
+  /// reminder honest. Best-effort by nature — "local notifications, no
+  /// backend" means this reflects steps as of the last sync, not a
+  /// live background count; it cannot know about steps taken between
+  /// that sync and the evening the notification would fire.
+  Future<void> rescheduleEveningReminder({required int remainingSteps}) async {
+    if (remainingSteps <= 0) {
+      await _localNotifications.cancel(_eveningReminderId);
+      return;
+    }
+    try {
+      await _localNotifications.zonedSchedule(
+        _eveningReminderId,
+        'Only ${_withThousandsSeparator(remainingSteps)} steps left!',
+        'Take a short walk to complete today\'s goal.',
+        _nextInstanceOfLocalTime(19, 0),
+        NotificationDetails(android: _activityAndroidDetails),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+        payload: _activityPayload,
+      );
+    } catch (e) {
+      debugPrint('[Push] rescheduleEveningReminder failed: $e');
+    }
   }
 
   /// Registers (upserts) this device's current FCM token for the
