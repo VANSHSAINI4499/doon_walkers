@@ -114,11 +114,12 @@ class _JoinButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppButton(
-      label: 'Coming Soon',
-      icon: AppIcons.lock,
-      variant: AppButtonVariant.glass,
-      onPressed: null,
+    return AppButton(
+      label: 'Join Challenge',
+      icon: AppIcons.add,
+      variant: AppButtonVariant.primary,
+      isLoading: isLoading,
+      onPressed: isLoading ? null : onPressed,
     );
   }
 }

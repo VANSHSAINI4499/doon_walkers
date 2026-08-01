@@ -78,9 +78,9 @@ Future<_FakeEnrollmentController> _pump(
 
 void main() {
   group('JoinChallengeButton state', () {
-    testWidgets('not enrolled shows Coming Soon, disabled', (tester) async {
+    testWidgets('not enrolled shows Join Challenge, enabled', (tester) async {
       await _pump(tester, challenge: _challenge(), enrolled: false);
-      expect(find.text('Coming Soon'), findsOneWidget);
+      expect(find.text('Join Challenge'), findsOneWidget);
       expect(find.text('Leave Challenge'), findsNothing);
       expect(find.text('Challenge Ended'), findsNothing);
     });
@@ -119,7 +119,7 @@ void main() {
     );
 
     testWidgets(
-      'an active custom-range challenge (future end date) is not ended, shows Coming Soon',
+      'an active custom-range challenge (future end date) is not ended, shows Join Challenge',
       (tester) async {
         await _pump(
           tester,
@@ -129,20 +129,20 @@ void main() {
           ),
           enrolled: false,
         );
-        expect(find.text('Coming Soon'), findsOneWidget);
+        expect(find.text('Join Challenge'), findsOneWidget);
         expect(find.text('Challenge Ended'), findsNothing);
       },
     );
 
-    testWidgets('tapping Join is disabled and does not call the enrollment controller', (tester) async {
+    testWidgets('tapping Join calls the enrollment controller', (tester) async {
       final fake = await _pump(
         tester,
         challenge: _challenge(),
         enrolled: false,
       );
-      await tester.tap(find.text('Coming Soon'));
+      await tester.tap(find.text('Join Challenge'));
       await tester.pump();
-      expect(fake.enrollCalled, isFalse);
+      expect(fake.enrollCalled, isTrue);
       expect(fake.unenrollCalled, isFalse);
     });
 
